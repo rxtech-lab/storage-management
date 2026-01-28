@@ -169,7 +169,7 @@ export function ItemForm({
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6" noValidate>
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6" noValidate data-testid="item-form">
       <Card>
         <CardHeader>
           <CardTitle>Basic Information</CardTitle>
@@ -179,6 +179,7 @@ export function ItemForm({
             <Label htmlFor="title">Title *</Label>
             <Input
               id="title"
+              data-testid="item-title-input"
               {...register("title")}
               placeholder="Item title"
             />
@@ -191,6 +192,7 @@ export function ItemForm({
             <Label htmlFor="description">Description</Label>
             <Textarea
               id="description"
+              data-testid="item-description-textarea"
               {...register("description")}
               placeholder="Item description"
               rows={4}
@@ -202,10 +204,15 @@ export function ItemForm({
               <Label htmlFor="price">Price</Label>
               <Input
                 id="price"
+                data-testid="item-price-input"
                 type="number"
                 step="0.01"
                 {...register("price", {
-                  setValueAs: (v) => (v === "" ? null : parseFloat(v)),
+                  setValueAs: (v) => {
+                    if (v === "" || v === null || v === undefined) return null;
+                    const parsed = parseFloat(v);
+                    return isNaN(parsed) ? null : parsed;
+                  },
                 })}
                 placeholder="0.00"
               />
@@ -243,6 +250,7 @@ export function ItemForm({
           <div className="flex items-center space-x-2">
             <Switch
               id="visibility"
+              data-testid="item-visibility-switch"
               checked={visibility === "public"}
               onCheckedChange={(checked) =>
                 setValue("visibility", checked ? "public" : "private")
@@ -472,10 +480,11 @@ export function ItemForm({
           variant="outline"
           onClick={() => router.back()}
           disabled={isPending}
+          data-testid="item-cancel-button"
         >
           Cancel
         </Button>
-        <Button type="submit" disabled={isPending}>
+        <Button type="submit" disabled={isPending} data-testid="item-submit-button">
           {isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
           {item ? "Update Item" : "Create Item"}
         </Button>

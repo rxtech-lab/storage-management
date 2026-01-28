@@ -3,7 +3,28 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { eq, like, or, desc, isNull, and, ne } from "drizzle-orm";
+import { z } from "zod";
 import { db, items, categories, locations, authors, type Item, type NewItem } from "@/lib/db";
+import { ensureSchemaInitialized } from "@/lib/db/client";
+
+// Zod schema for item validation
+const itemInsertSchema = z.object({
+  title: z.string().min(1, "Title is required"),
+  description: z.string().nullable().optional(),
+  originalQrCode: z.string().nullable().optional(),
+  categoryId: z.number().int().positive().nullable().optional(),
+  locationId: z.number().int().positive().nullable().optional(),
+  authorId: z.number().int().positive().nullable().optional(),
+  parentId: z.number().int().positive().nullable().optional(),
+  price: z.number().nullable().optional(),
+  currency: z.string().optional(),
+  visibility: z.enum(["public", "private"]),
+  images: z.array(z.string()).optional(),
+});
+
+const itemUpdateSchema = itemInsertSchema.partial().omit({ visibility: true }).extend({
+  visibility: z.enum(["public", "private"]).optional(),
+});
 
 export interface ItemWithRelations extends Item {
   category?: { id: number; name: string } | null;
@@ -22,6 +43,7 @@ export interface ItemFilters {
 }
 
 export async function getItems(filters?: ItemFilters): Promise<ItemWithRelations[]> {
+  await ensureSchemaInitialized();
   let query = db
     .select({
       id: items.id,
@@ -103,6 +125,7 @@ export async function getItems(filters?: ItemFilters): Promise<ItemWithRelations
 }
 
 export async function getItem(id: number): Promise<ItemWithRelations | undefined> {
+  await ensureSchemaInitialized();
   const results = await db
     .select({
       id: items.id,
@@ -158,7 +181,42 @@ export async function createItemAction(
   data: Omit<NewItem, "id" | "createdAt" | "updatedAt">
 ): Promise<{ success: boolean; data?: Item; error?: string }> {
   try {
-    const result = await db.insert(items).values(data).returning();
+    await ensureSchemaInitialized();
+
+    // Validate data with Zod schema
+    const validationResult = itemInsertSchema.safeParse(data);
+    if (!validationResult.success) {
+      const errors = validationResult.error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', ');
+      return {
+        success: false,
+        error: `Validation failed: ${errors}`,
+      };
+    }
+
+    const validatedData = validationResult.data;
+    const now = new Date();
+
+    // Build insert data explicitly, converting empty strings to null
+    const insertData = {
+      title: validatedData.title,
+      description: validatedData.description || null,
+      originalQrCode: validatedData.originalQrCode || null,
+      categoryId: validatedData.categoryId || null,
+      locationId: validatedData.locationId || null,
+      authorId: validatedData.authorId || null,
+      parentId: validatedData.parentId || null,
+      price: validatedData.price ?? null,
+      currency: validatedData.currency || "USD",
+      visibility: validatedData.visibility,
+      images: validatedData.images || [],
+      createdAt: now,
+      updatedAt: now,
+    };
+
+    const result = await db
+      .insert(items)
+      .values(insertData)
+      .returning();
     revalidatePath("/items");
     return { success: true, data: result[0] };
   } catch (error) {

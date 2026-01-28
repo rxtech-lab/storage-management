@@ -4,8 +4,10 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { eq } from "drizzle-orm";
 import { db, positionSchemas, type PositionSchema, type NewPositionSchema } from "@/lib/db";
+import { ensureSchemaInitialized } from "@/lib/db/client";
 
 export async function getPositionSchemas(): Promise<PositionSchema[]> {
+  await ensureSchemaInitialized();
   return db.select().from(positionSchemas).orderBy(positionSchemas.name);
 }
 
@@ -22,9 +24,14 @@ export async function createPositionSchemaAction(
   data: Omit<NewPositionSchema, "id" | "createdAt" | "updatedAt">
 ): Promise<{ success: boolean; data?: PositionSchema; error?: string }> {
   try {
+    const now = new Date();
     const result = await db
       .insert(positionSchemas)
-      .values(data)
+      .values({
+        ...data,
+        createdAt: now,
+        updatedAt: now,
+      })
       .returning();
     revalidatePath("/position-schemas");
     return { success: true, data: result[0] };

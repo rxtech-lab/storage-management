@@ -3,8 +3,10 @@
 import { revalidatePath } from "next/cache";
 import { eq, and } from "drizzle-orm";
 import { db, itemWhitelists, type ItemWhitelist, type NewItemWhitelist } from "@/lib/db";
+import { ensureSchemaInitialized } from "@/lib/db/client";
 
 export async function getItemWhitelist(itemId: number): Promise<ItemWhitelist[]> {
+  await ensureSchemaInitialized();
   return db
     .select()
     .from(itemWhitelists)
