@@ -1,0 +1,83 @@
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Plus, Edit, Trash, FileJson } from "lucide-react";
+import { getPositionSchemas, deletePositionSchemaFormAction } from "@/lib/actions/position-schema-actions";
+import { formatDistanceToNow } from "date-fns";
+
+export default async function PositionSchemasPage() {
+  const schemas = await getPositionSchemas();
+
+  return (
+    <div className="flex flex-col gap-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold">Position Schemas</h1>
+          <p className="text-muted-foreground">
+            Define schemas for item positioning
+          </p>
+        </div>
+        <Link href="/position-schemas/new">
+          <Button>
+            <Plus className="h-4 w-4 mr-2" />
+            New Schema
+          </Button>
+        </Link>
+      </div>
+
+      {schemas.length === 0 ? (
+        <Card>
+          <CardContent className="py-12 text-center">
+            <p className="text-muted-foreground mb-4">No position schemas yet</p>
+            <Link href="/position-schemas/new">
+              <Button>
+                <Plus className="h-4 w-4 mr-2" />
+                Create your first schema
+              </Button>
+            </Link>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {schemas.map((schema) => {
+            const schemaObj = schema.schema as { properties?: Record<string, unknown> };
+            const fieldCount = schemaObj.properties
+              ? Object.keys(schemaObj.properties).length
+              : 0;
+
+            return (
+              <Card key={schema.id}>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <FileJson className="h-4 w-4 text-muted-foreground" />
+                    {schema.name}
+                  </CardTitle>
+                  <div className="flex gap-1">
+                    <Link href={`/position-schemas/${schema.id}`}>
+                      <Button variant="ghost" size="icon">
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                    </Link>
+                    <form action={deletePositionSchemaFormAction.bind(null, schema.id)}>
+                      <Button variant="ghost" size="icon" type="submit">
+                        <Trash className="h-4 w-4 text-destructive" />
+                      </Button>
+                    </form>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-muted-foreground mb-2">
+                    {fieldCount} field{fieldCount !== 1 ? "s" : ""}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Updated {formatDistanceToNow(new Date(schema.updatedAt), { addSuffix: true })}
+                  </p>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
