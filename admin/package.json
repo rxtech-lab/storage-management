@@ -9,6 +9,9 @@
     "lint": "eslint",
     "test": "vitest",
     "test:run": "vitest run",
+    "test:e2e": "IS_E2E=true playwright test",
+    "test:e2e:ui": "IS_E2E=true playwright test --ui",
+    "test:e2e:debug": "IS_E2E=true playwright test --debug",
     "db:generate": "drizzle-kit generate",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio"
@@ -58,6 +61,7 @@
     "zod": "^3.25.76"
   },
   "devDependencies": {
+    "@playwright/test": "^1.58.0",
     "@tailwindcss/postcss": "^4.1.18",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",

@@ -1,6 +1,20 @@
 import { auth } from "@/auth";
 
 export default auth((req) => {
+  // Auto-authenticate for e2e tests
+  if (process.env.IS_E2E === "true") {
+    req.auth = {
+      user: {
+        id: "test-user-id",
+        name: "Test User",
+        email: "test@example.com",
+        image: null,
+      },
+      expires: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // 24 hours from now
+    };
+    return; // Skip all auth checks
+  }
+
   const isLoggedIn = !!req.auth;
   const { pathname } = req.nextUrl;
 

@@ -3,12 +3,14 @@
 import { revalidatePath } from "next/cache";
 import { eq } from "drizzle-orm";
 import { db, positions, positionSchemas, type Position, type NewPosition } from "@/lib/db";
+import { ensureSchemaInitialized } from "@/lib/db/client";
 
 export interface PositionWithSchema extends Position {
   positionSchema?: { id: number; name: string; schema: object } | null;
 }
 
 export async function getItemPositions(itemId: number): Promise<PositionWithSchema[]> {
+  await ensureSchemaInitialized();
   const results = await db
     .select({
       id: positions.id,

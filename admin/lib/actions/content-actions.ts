@@ -3,8 +3,10 @@
 import { revalidatePath } from "next/cache";
 import { eq } from "drizzle-orm";
 import { db, contents, type Content, type NewContent, type ContentData } from "@/lib/db";
+import { ensureSchemaInitialized } from "@/lib/db/client";
 
 export async function getItemContents(itemId: number): Promise<Content[]> {
+  await ensureSchemaInitialized();
   return db
     .select()
     .from(contents)

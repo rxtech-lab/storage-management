@@ -4,8 +4,10 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { eq } from "drizzle-orm";
 import { db, categories, type Category, type NewCategory } from "@/lib/db";
+import { ensureSchemaInitialized } from "@/lib/db/client";
 
 export async function getCategories(): Promise<Category[]> {
+  await ensureSchemaInitialized();
   return db.select().from(categories).orderBy(categories.name);
 }
 
@@ -22,9 +24,14 @@ export async function createCategoryAction(
   data: Omit<NewCategory, "id" | "createdAt" | "updatedAt">
 ): Promise<{ success: boolean; data?: Category; error?: string }> {
   try {
+    const now = new Date();
     const result = await db
       .insert(categories)
-      .values(data)
+      .values({
+        ...data,
+        createdAt: now,
+        updatedAt: now,
+      })
       .returning();
     revalidatePath("/categories");
     return { success: true, data: result[0] };

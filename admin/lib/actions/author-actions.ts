@@ -4,8 +4,10 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { eq } from "drizzle-orm";
 import { db, authors, type Author, type NewAuthor } from "@/lib/db";
+import { ensureSchemaInitialized } from "@/lib/db/client";
 
 export async function getAuthors(): Promise<Author[]> {
+  await ensureSchemaInitialized();
   return db.select().from(authors).orderBy(authors.name);
 }
 
@@ -22,9 +24,14 @@ export async function createAuthorAction(
   data: Omit<NewAuthor, "id" | "createdAt" | "updatedAt">
 ): Promise<{ success: boolean; data?: Author; error?: string }> {
   try {
+    const now = new Date();
     const result = await db
       .insert(authors)
-      .values(data)
+      .values({
+        ...data,
+        createdAt: now,
+        updatedAt: now,
+      })
       .returning();
     revalidatePath("/authors");
     return { success: true, data: result[0] };
