@@ -73,7 +73,7 @@ export default function ItemsPage() {
           </p>
         </div>
         <Link href="/items/new">
-          <Button>
+          <Button data-testid="items-new-button">
             <Plus className="h-4 w-4 mr-2" />
             New Item
           </Button>

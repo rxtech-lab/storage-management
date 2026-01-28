@@ -41,3 +41,10 @@ yarn-error.log*
 next-env.d.ts
 package-lock.json
 .DS_Store
+
+# playwright
+/playwright-report/
+/test-results/
+e2e-test.db
+e2e-test.db-shm
+e2e-test.db-wal

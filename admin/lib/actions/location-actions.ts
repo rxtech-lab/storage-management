@@ -4,12 +4,15 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { eq } from "drizzle-orm";
 import { db, locations, type Location, type NewLocation } from "@/lib/db";
+import { ensureSchemaInitialized } from "@/lib/db/client";
 
 export async function getLocations(): Promise<Location[]> {
+  await ensureSchemaInitialized();
   return db.select().from(locations).orderBy(locations.title);
 }
 
 export async function getLocation(id: number): Promise<Location | undefined> {
+  await ensureSchemaInitialized();
   const results = await db
     .select()
     .from(locations)
@@ -22,9 +25,14 @@ export async function createLocationAction(
   data: Omit<NewLocation, "id" | "createdAt" | "updatedAt">
 ): Promise<{ success: boolean; data?: Location; error?: string }> {
   try {
+    const now = new Date();
     const result = await db
       .insert(locations)
-      .values(data)
+      .values({
+        ...data,
+        createdAt: now,
+        updatedAt: now,
+      })
       .returning();
     revalidatePath("/locations");
     return { success: true, data: result[0] };
