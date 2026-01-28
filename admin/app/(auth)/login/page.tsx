@@ -9,7 +9,13 @@ import {
 } from "@/components/ui/card";
 import { Package } from "lucide-react";
 
-export default function LoginPage() {
+interface LoginPageProps {
+  searchParams: Promise<{ callbackUrl?: string }>;
+}
+
+export default async function LoginPage({ searchParams }: LoginPageProps) {
+  const { callbackUrl } = await searchParams;
+  const redirectTo = callbackUrl || "/";
   return (
     <div className="flex min-h-screen items-center justify-center bg-muted/40 p-4">
       <Card className="w-full max-w-md">
@@ -26,7 +32,7 @@ export default function LoginPage() {
           <form
             action={async () => {
               "use server";
-              await signIn("rxlab", { redirectTo: "/" });
+              await signIn("rxlab", { redirectTo });
             }}
           >
             <Button type="submit" className="w-full" size="lg">

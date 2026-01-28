@@ -9,7 +9,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { LocationPicker } from "@/components/maps/location-picker";
 import type { Location } from "@/lib/db";
-import { createLocationAction, updateLocationAction } from "@/lib/actions/location-actions";
+import {
+  createLocationAction,
+  updateLocationAction,
+  deleteLocationAndRedirect,
+} from "@/lib/actions/location-actions";
+import { DeleteConfirmButton } from "@/components/ui/delete-confirm-button";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -113,6 +118,21 @@ export function LocationForm({ location }: LocationFormProps) {
             >
               Cancel
             </Button>
+            {isEditing && (
+              <DeleteConfirmButton
+                onConfirm={async () => {
+                  const result = await deleteLocationAndRedirect(location.id);
+                  if (result.success) {
+                    toast.success("Location deleted");
+                    router.push("/locations");
+                  } else {
+                    toast.error(result.error || "Failed to delete location");
+                  }
+                }}
+                title={`Delete "${location.title}"?`}
+                description="This action cannot be undone. This will permanently delete this location."
+              />
+            )}
           </div>
         </form>
       </CardContent>

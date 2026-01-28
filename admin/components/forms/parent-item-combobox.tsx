@@ -40,9 +40,7 @@ export function ParentItemCombobox({
   }, [excludeId]);
 
   const handleInputChange = useCallback(
-    (_value: unknown, event: React.ChangeEvent<HTMLInputElement>) => {
-      const query = event.target.value;
-
+    (inputValue: string) => {
       if (debounceRef.current) {
         clearTimeout(debounceRef.current);
       }
@@ -50,7 +48,7 @@ export function ParentItemCombobox({
       debounceRef.current = setTimeout(async () => {
         setLoading(true);
         try {
-          const results = await searchItems(query, excludeId, 20);
+          const results = await searchItems(inputValue, excludeId, 20);
           setOptions([NONE_OPTION, ...results]);
         } finally {
           setLoading(false);

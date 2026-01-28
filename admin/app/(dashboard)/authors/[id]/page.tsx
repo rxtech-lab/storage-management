@@ -15,7 +15,7 @@ export default async function EditAuthorPage({ params }: EditAuthorPageProps) {
   }
 
   return (
-    <div className="max-w-2xl mx-auto">
+    <div className="max-w-2xl">
       <div className="mb-6">
         <h1 className="text-3xl font-bold">Edit Author</h1>
         <p className="text-muted-foreground">

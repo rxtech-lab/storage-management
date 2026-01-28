@@ -9,7 +9,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import type { Author } from "@/lib/db";
-import { createAuthorAction, updateAuthorAction } from "@/lib/actions/author-actions";
+import {
+  createAuthorAction,
+  updateAuthorAction,
+  deleteAuthorAndRedirect,
+} from "@/lib/actions/author-actions";
+import { DeleteConfirmButton } from "@/components/ui/delete-confirm-button";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -98,6 +103,21 @@ export function AuthorForm({ author }: AuthorFormProps) {
             >
               Cancel
             </Button>
+            {isEditing && (
+              <DeleteConfirmButton
+                onConfirm={async () => {
+                  const result = await deleteAuthorAndRedirect(author.id);
+                  if (result.success) {
+                    toast.success("Author deleted");
+                    router.push("/authors");
+                  } else {
+                    toast.error(result.error || "Failed to delete author");
+                  }
+                }}
+                title={`Delete "${author.name}"?`}
+                description="This action cannot be undone. This will permanently delete this author."
+              />
+            )}
           </div>
         </form>
       </CardContent>

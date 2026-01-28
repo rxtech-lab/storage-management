@@ -1,11 +1,10 @@
 "use client";
 
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import type { PositionSchema } from "@/lib/db";
@@ -17,10 +16,11 @@ import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Loader2 } from "lucide-react";
+import { JsonSchemaEditor, type JsonSchema } from "@/lib/json-schema-editor";
 
 const positionSchemaSchema = z.object({
   name: z.string().min(1, "Name is required"),
-  schema: z.string().min(1, "Schema is required"),
+  schema: z.custom<JsonSchema | null>((val) => val !== null, "Schema is required"),
 });
 
 type PositionSchemaFormData = z.infer<typeof positionSchemaSchema>;
@@ -29,60 +29,48 @@ interface PositionSchemaFormProps {
   positionSchema?: PositionSchema;
 }
 
-const exampleSchema = `{
-  "type": "object",
-  "properties": {
-    "bookshelf": {
-      "type": "integer",
-      "title": "Bookshelf Number"
+const defaultSchema: JsonSchema = {
+  type: "object",
+  properties: {
+    bookshelf: {
+      type: "integer",
+      title: "Bookshelf Number",
     },
-    "row": {
-      "type": "integer",
-      "title": "Row"
+    row: {
+      type: "integer",
+      title: "Row",
     },
-    "column": {
-      "type": "integer",
-      "title": "Column"
-    }
+    column: {
+      type: "integer",
+      title: "Column",
+    },
   },
-  "required": ["bookshelf", "row"]
-}`;
+  required: ["bookshelf", "row"],
+};
 
 export function PositionSchemaForm({ positionSchema }: PositionSchemaFormProps) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [schemaError, setSchemaError] = useState<string | null>(null);
   const isEditing = !!positionSchema;
 
   const {
     register,
     handleSubmit,
+    control,
     formState: { errors },
   } = useForm<PositionSchemaFormData>({
     resolver: zodResolver(positionSchemaSchema),
     defaultValues: {
       name: positionSchema?.name || "",
       schema: positionSchema?.schema
-        ? JSON.stringify(positionSchema.schema, null, 2)
-        : exampleSchema,
+        ? (positionSchema.schema as JsonSchema)
+        : defaultSchema,
     },
   });
 
   const onSubmit = async (data: PositionSchemaFormData) => {
-    setSchemaError(null);
-
-    // Validate JSON Schema
-    let parsedSchema;
-    try {
-      parsedSchema = JSON.parse(data.schema);
-    } catch {
-      setSchemaError("Invalid JSON. Please check your schema syntax.");
-      return;
-    }
-
-    // Basic JSON Schema validation
-    if (typeof parsedSchema !== "object" || !parsedSchema.type) {
-      setSchemaError("Invalid JSON Schema. Must have a 'type' property.");
+    if (!data.schema) {
+      toast.error("Schema is required");
       return;
     }
 
@@ -91,11 +79,11 @@ export function PositionSchemaForm({ positionSchema }: PositionSchemaFormProps) 
       const result = isEditing
         ? await updatePositionSchemaAction(positionSchema.id, {
             name: data.name,
-            schema: parsedSchema,
+            schema: data.schema,
           })
         : await createPositionSchemaAction({
             name: data.name,
-            schema: parsedSchema,
+            schema: data.schema,
           });
 
       if (result.success) {
@@ -134,22 +122,24 @@ export function PositionSchemaForm({ positionSchema }: PositionSchemaFormProps) 
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="schema">JSON Schema *</Label>
-            <Textarea
-              id="schema"
-              {...register("schema")}
-              placeholder="Enter JSON Schema"
-              rows={15}
-              className="font-mono text-sm"
+            <Label>JSON Schema *</Label>
+            <Controller
+              name="schema"
+              control={control}
+              render={({ field }) => (
+                <JsonSchemaEditor
+                  value={field.value}
+                  onChange={field.onChange}
+                  disabled={isSubmitting}
+                  placeholder="Define fields like bookshelf, row, column, drawer, etc."
+                />
+              )}
             />
             {errors.schema && (
               <p className="text-sm text-destructive">{errors.schema.message}</p>
             )}
-            {schemaError && (
-              <p className="text-sm text-destructive">{schemaError}</p>
-            )}
             <p className="text-sm text-muted-foreground">
-              Use JSON Schema format to define fields like bookshelf, row, column, drawer, etc.
+              Use the visual editor to define fields or switch to Raw JSON for advanced editing.
             </p>
           </div>
 

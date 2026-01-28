@@ -25,7 +25,7 @@ export default async function DashboardLayout({
         <AppSidebar variant="inset" />
         <SidebarInset className="max-h-svh overflow-hidden">
           <SiteHeader />
-          <div className="flex-1 overflow-auto p-4 md:p-6">{children}</div>
+          <div className="flex-1 overflow-y-auto overflow-x-hidden p-4 md:p-6">{children}</div>
         </SidebarInset>
       </SidebarProvider>
     </TooltipProvider>

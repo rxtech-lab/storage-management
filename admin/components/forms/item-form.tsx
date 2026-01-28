@@ -21,13 +21,20 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { EntitySheet } from "./entity-sheet";
+import { ImageUpload } from "./image-upload";
 import { ParentItemCombobox } from "./parent-item-combobox";
+import { PositionSheet, type PendingPosition } from "./position-sheet";
 import {
   createItemAction,
   updateItemAction,
   type ItemWithRelations,
 } from "@/lib/actions/item-actions";
-import type { Category, Location, Author } from "@/lib/db";
+import {
+  createPositionAction,
+  deletePositionAction,
+  type PositionWithSchema,
+} from "@/lib/actions/position-actions";
+import type { Category, Location, Author, PositionSchema } from "@/lib/db";
 
 const CURRENCIES = ["USD", "EUR", "GBP", "JPY", "CNY", "CAD", "AUD", "CHF", "HKD", "SGD", "TWD"] as const;
 
@@ -52,6 +59,8 @@ interface ItemFormProps {
   categories: Category[];
   locations: Location[];
   authors: Author[];
+  positionSchemas: PositionSchema[];
+  positions?: PositionWithSchema[];
   defaultParentId?: number;
 }
 
@@ -60,6 +69,8 @@ export function ItemForm({
   categories: initialCategories,
   locations: initialLocations,
   authors: initialAuthors,
+  positionSchemas: initialPositionSchemas,
+  positions: initialPositions,
   defaultParentId,
 }: ItemFormProps) {
   const router = useRouter();
@@ -67,6 +78,9 @@ export function ItemForm({
   const [categories, setCategories] = useState(initialCategories);
   const [locations, setLocations] = useState(initialLocations);
   const [authors, setAuthors] = useState(initialAuthors);
+  const [positionSchemas, setPositionSchemas] = useState(initialPositionSchemas);
+  const [positions, setPositions] = useState<PositionWithSchema[]>(initialPositions ?? []);
+  const [pendingPositions, setPendingPositions] = useState<PendingPosition[]>([]);
 
   const {
     register,
@@ -97,6 +111,27 @@ export function ItemForm({
   const locationId = watch("locationId");
   const authorId = watch("authorId");
   const parentId = watch("parentId");
+  const images = watch("images");
+
+  const handleDeletePosition = async (positionId: number) => {
+    startTransition(async () => {
+      try {
+        const result = await deletePositionAction(positionId);
+        if (result.success) {
+          setPositions(positions.filter((p) => p.id !== positionId));
+          toast.success("Position deleted");
+        } else {
+          toast.error(result.error || "Failed to delete position");
+        }
+      } catch {
+        toast.error("Failed to delete position");
+      }
+    });
+  };
+
+  const handleRemovePendingPosition = (tempId: string) => {
+    setPendingPositions(pendingPositions.filter((p) => p.tempId !== tempId));
+  };
 
   const onSubmit = (data: ItemFormData) => {
     startTransition(async () => {
@@ -106,6 +141,18 @@ export function ItemForm({
           : await createItemAction(data);
 
         if (result.success) {
+          // If creating a new item and there are pending positions, create them
+          if (!item && result.data && pendingPositions.length > 0) {
+            const itemId = result.data.id;
+            for (const pending of pendingPositions) {
+              await createPositionAction({
+                itemId,
+                positionSchemaId: pending.positionSchemaId,
+                data: pending.data,
+              });
+            }
+          }
+
           toast.success(item ? "Item updated" : "Item created");
           if (!item && result.data) {
             router.push(`/items/${result.data.id}`);
@@ -313,6 +360,109 @@ export function ItemForm({
               excludeId={item?.id}
             />
           </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Images</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ImageUpload
+            value={images ?? []}
+            onChange={(urls) => setValue("images", urls)}
+            maxImages={10}
+            maxSizeMB={5}
+            disabled={isPending}
+          />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle>Positions</CardTitle>
+            <PositionSheet
+              itemId={item?.id}
+              positionSchemas={positionSchemas}
+              onPositionCreated={(position) => {
+                setPositions([...positions, position]);
+              }}
+              onPendingPosition={(pending) => {
+                setPendingPositions([...pendingPositions, pending]);
+              }}
+              onSchemaCreated={(schema) => {
+                setPositionSchemas([...positionSchemas, schema]);
+              }}
+            />
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {positions.length === 0 && pendingPositions.length === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-4">
+              No positions added yet. Click &quot;Add Position&quot; to add one.
+            </p>
+          ) : (
+            <div className="space-y-2">
+              {positions.map((position) => (
+                <div
+                  key={position.id}
+                  className="flex items-center justify-between p-3 border rounded-lg"
+                >
+                  <div>
+                    <p className="font-medium">
+                      {position.positionSchema?.name || "Unknown Schema"}
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      {Object.entries(position.data)
+                        .map(([k, v]) => `${k}: ${v}`)
+                        .join(", ")}
+                    </p>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleDeletePosition(position.id)}
+                    disabled={isPending}
+                  >
+                    <Loader2
+                      className={`h-4 w-4 text-destructive ${isPending ? "animate-spin" : "hidden"}`}
+                    />
+                    <span className={isPending ? "hidden" : ""}>Delete</span>
+                  </Button>
+                </div>
+              ))}
+              {pendingPositions.map((pending) => (
+                <div
+                  key={pending.tempId}
+                  className="flex items-center justify-between p-3 border rounded-lg border-dashed"
+                >
+                  <div>
+                    <p className="font-medium">
+                      {pending.schema.name}{" "}
+                      <span className="text-xs text-muted-foreground">
+                        (pending)
+                      </span>
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      {Object.entries(pending.data)
+                        .map(([k, v]) => `${k}: ${v}`)
+                        .join(", ")}
+                    </p>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleRemovePendingPosition(pending.tempId)}
+                  >
+                    Remove
+                  </Button>
+                </div>
+              ))}
+            </div>
+          )}
         </CardContent>
       </Card>
 

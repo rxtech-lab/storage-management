@@ -30,13 +30,16 @@ export default async function PreviewPage({ params }: PreviewPageProps) {
   if (item.visibility === "private") {
     const session = await auth();
 
-    if (!session?.user?.email) {
+    if (!session?.user) {
       // Redirect to login with return URL
+      console.log("User not signed in, redirecting to login");
       redirect(`/login?callbackUrl=/preview/${itemId}`);
     }
 
-    // Check whitelist
-    const hasAccess = await isEmailWhitelisted(itemId, session.user.email);
+    // Check whitelist if user has email. Otherwise, just allow access
+    const hasAccess = session.user.email
+      ? await isEmailWhitelisted(itemId, session.user.email)
+      : true;
 
     if (!hasAccess) {
       return (
@@ -46,8 +49,8 @@ export default async function PreviewPage({ params }: PreviewPageProps) {
               <Lock className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
               <h1 className="text-xl font-bold mb-2">Access Restricted</h1>
               <p className="text-muted-foreground mb-4">
-                You don&apos;t have permission to view this item.
-                Contact the owner to request access.
+                You don&apos;t have permission to view this item. Contact the
+                owner to request access.
               </p>
               <p className="text-sm text-muted-foreground">
                 Signed in as: {session.user.email}
@@ -127,8 +130,8 @@ export default async function PreviewPage({ params }: PreviewPageProps) {
         {/* Details */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
           {item.price !== null && (
-            <Card>
-              <CardContent className="pt-6">
+            <Card size="sm">
+              <CardContent>
                 <p className="text-sm text-muted-foreground mb-1">Price</p>
                 <p className="text-2xl font-bold">${item.price.toFixed(2)}</p>
               </CardContent>
@@ -136,8 +139,8 @@ export default async function PreviewPage({ params }: PreviewPageProps) {
           )}
 
           {item.location && (
-            <Card>
-              <CardContent className="pt-6">
+            <Card size="sm">
+              <CardContent>
                 <p className="text-sm text-muted-foreground mb-1 flex items-center gap-1">
                   <MapPin className="h-4 w-4" />
                   Location
@@ -148,8 +151,8 @@ export default async function PreviewPage({ params }: PreviewPageProps) {
           )}
 
           {item.category && (
-            <Card>
-              <CardContent className="pt-6">
+            <Card size="sm">
+              <CardContent>
                 <p className="text-sm text-muted-foreground mb-1 flex items-center gap-1">
                   <Tag className="h-4 w-4" />
                   Category
@@ -160,8 +163,8 @@ export default async function PreviewPage({ params }: PreviewPageProps) {
           )}
 
           {item.author && (
-            <Card>
-              <CardContent className="pt-6">
+            <Card size="sm">
+              <CardContent>
                 <p className="text-sm text-muted-foreground mb-1 flex items-center gap-1">
                   <User className="h-4 w-4" />
                   Author
@@ -201,14 +204,19 @@ export default async function PreviewPage({ params }: PreviewPageProps) {
             <CardContent>
               <div className="space-y-4">
                 {contents.map((content) => {
-                  const data = content.data as { title: string; description?: string };
+                  const data = content.data as {
+                    title: string;
+                    description?: string;
+                  };
                   return (
                     <div
                       key={content.id}
                       className="flex items-center justify-between p-3 rounded-lg border"
                     >
                       <div>
-                        <p className="font-medium">{data.title || "Untitled"}</p>
+                        <p className="font-medium">
+                          {data.title || "Untitled"}
+                        </p>
                         {data.description && (
                           <p className="text-sm text-muted-foreground">
                             {data.description}
@@ -227,7 +235,8 @@ export default async function PreviewPage({ params }: PreviewPageProps) {
         {/* Footer */}
         <div className="text-center text-sm text-muted-foreground">
           <p>
-            Last updated {formatDistanceToNow(new Date(item.updatedAt), { addSuffix: true })}
+            Last updated{" "}
+            {formatDistanceToNow(new Date(item.updatedAt), { addSuffix: true })}
           </p>
         </div>
       </div>

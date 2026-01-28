@@ -124,3 +124,14 @@
     @apply bg-background text-foreground;
   }
 }
+
+@keyframes scrolled-button {
+  from {
+    background-color: transparent;
+    color: var(--foreground);
+  }
+  to {
+    background-color: var(--primary);
+    color: var(--primary-foreground);
+  }
+}

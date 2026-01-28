@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import Form from "@rjsf/core";
+import Form from "@rjsf/shadcn";
 import validator from "@rjsf/validator-ajv8";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,6 +12,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Label } from "@/components/ui/label";
 import { Loader2, Plus, Trash } from "lucide-react";
 import { toast } from "sonner";
@@ -89,8 +100,6 @@ export function PositionForm({
   };
 
   const handleDeletePosition = async (positionId: number) => {
-    if (!confirm("Are you sure you want to delete this position?")) return;
-
     setLoading(true);
     try {
       const result = await deletePositionAction(positionId);
@@ -132,14 +141,34 @@ export function PositionForm({
                   <h4 className="font-medium">
                     {position.positionSchema?.name || "Unknown Schema"}
                   </h4>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleDeletePosition(position.id)}
-                    disabled={loading}
-                  >
-                    <Trash className="h-4 w-4 text-destructive" />
-                  </Button>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        disabled={loading}
+                      >
+                        <Trash className="h-4 w-4 text-destructive" />
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Delete position?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          This action cannot be undone. This will permanently delete the {position.positionSchema?.name || "position"} data.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                          variant="destructive"
+                          onClick={() => handleDeletePosition(position.id)}
+                        >
+                          Delete
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
                 </div>
                 {position.positionSchema?.schema && (
                   <Form

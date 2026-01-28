@@ -9,7 +9,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import type { Category } from "@/lib/db";
-import { createCategoryAction, updateCategoryAction } from "@/lib/actions/category-actions";
+import {
+  createCategoryAction,
+  updateCategoryAction,
+  deleteCategoryAndRedirect,
+} from "@/lib/actions/category-actions";
+import { DeleteConfirmButton } from "@/components/ui/delete-confirm-button";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -98,6 +103,21 @@ export function CategoryForm({ category }: CategoryFormProps) {
             >
               Cancel
             </Button>
+            {isEditing && (
+              <DeleteConfirmButton
+                onConfirm={async () => {
+                  const result = await deleteCategoryAndRedirect(category.id);
+                  if (result.success) {
+                    toast.success("Category deleted");
+                    router.push("/categories");
+                  } else {
+                    toast.error(result.error || "Failed to delete category");
+                  }
+                }}
+                title={`Delete "${category.name}"?`}
+                description="This action cannot be undone. This will permanently delete this category."
+              />
+            )}
           </div>
         </form>
       </CardContent>
