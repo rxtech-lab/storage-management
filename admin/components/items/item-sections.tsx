@@ -303,8 +303,8 @@ export function ItemSections({
     <div className="space-y-4">
       {/* Positions Section */}
       <Collapsible defaultOpen className="border rounded-xl overflow-hidden">
-        <CollapsibleTrigger className="flex items-center justify-between w-full p-4 hover:bg-muted/50 transition-colors [&[data-state=open]>svg:first-child]:rotate-90">
-          <div className="flex items-center gap-3">
+        <div className="flex items-center justify-between p-4 hover:bg-muted/50 transition-colors">
+          <CollapsibleTrigger className="flex items-center gap-3 flex-1 [&[data-state=open]>svg:first-child]:rotate-90">
             <ChevronRight className="h-4 w-4 transition-transform duration-200" />
             <div className="flex items-center gap-2">
               <MapPin className="h-4 w-4 text-muted-foreground" />
@@ -313,7 +313,7 @@ export function ItemSections({
             <Badge variant="secondary" className="rounded-full">
               {positions.length}
             </Badge>
-          </div>
+          </CollapsibleTrigger>
           <PositionSheet
             itemId={item.id}
             positionSchemas={positionSchemas}
@@ -324,7 +324,7 @@ export function ItemSections({
               setPositionSchemas([...positionSchemas, schema]);
             }}
           />
-        </CollapsibleTrigger>
+        </div>
         <CollapsibleContent>
           <div className="px-4 pb-4 space-y-2">
             {positions.length === 0 ? (
@@ -476,8 +476,8 @@ export function ItemSections({
 
       {/* Children Section */}
       <Collapsible className="border rounded-xl overflow-hidden">
-        <CollapsibleTrigger className="flex items-center justify-between w-full p-4 hover:bg-muted/50 transition-colors [&[data-state=open]>svg:first-child]:rotate-90">
-          <div className="flex items-center gap-3">
+        <div className="flex items-center justify-between p-4 hover:bg-muted/50 transition-colors">
+          <CollapsibleTrigger className="flex items-center gap-3 flex-1 [&[data-state=open]>svg:first-child]:rotate-90">
             <ChevronRight className="h-4 w-4 transition-transform duration-200" />
             <div className="flex items-center gap-2">
               <Box className="h-4 w-4 text-muted-foreground" />
@@ -486,17 +486,14 @@ export function ItemSections({
             <Badge variant="secondary" className="rounded-full">
               {children.length}
             </Badge>
-          </div>
-          <Link
-            href={`/items/new?parentId=${item.id}`}
-            onClick={(e) => e.stopPropagation()}
-          >
+          </CollapsibleTrigger>
+          <Link href={`/items/new?parentId=${item.id}`}>
             <Button size="sm" variant="ghost" className="gap-1">
               <Plus className="h-4 w-4" />
               Add
             </Button>
           </Link>
-        </CollapsibleTrigger>
+        </div>
         <CollapsibleContent>
           <div className="px-4 pb-4 space-y-2">
             {children.length === 0 ? (

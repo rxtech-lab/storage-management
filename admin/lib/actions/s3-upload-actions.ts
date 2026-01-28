@@ -2,7 +2,7 @@
 
 import { PutObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
-import { s3Client, S3_BUCKET, S3_PUBLIC_URL } from "@/lib/s3";
+import { s3Client, S3_BUCKET, S3_ENDPOINT, S3_PUBLIC_URL } from "@/lib/s3";
 
 export interface PresignedUploadResult {
   uploadUrl: string;
@@ -25,8 +25,21 @@ function generateObjectKey(filename: string, folder: string = "items"): string {
 }
 
 function getPublicUrl(key: string): string {
-  const baseUrl = S3_PUBLIC_URL.replace(/\/$/, "");
-  return `${baseUrl}/${key}`;
+  if (S3_PUBLIC_URL) {
+    const baseUrl = S3_PUBLIC_URL.replace(/\/$/, "");
+    return `${baseUrl}/${key}`;
+  }
+  // Fallback: construct URL from endpoint and bucket
+  const endpoint = S3_ENDPOINT.replace(/\/$/, "");
+  return `${endpoint}/${S3_BUCKET}/${key}`;
+}
+
+function getBaseUrl(): string {
+  if (S3_PUBLIC_URL) {
+    return S3_PUBLIC_URL.replace(/\/$/, "");
+  }
+  const endpoint = S3_ENDPOINT.replace(/\/$/, "");
+  return `${endpoint}/${S3_BUCKET}`;
 }
 
 export async function getImageUploadUrlAction(
@@ -76,7 +89,7 @@ export async function deleteImageAction(
   publicUrl: string
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    const baseUrl = S3_PUBLIC_URL.replace(/\/$/, "");
+    const baseUrl = getBaseUrl();
     if (!publicUrl.startsWith(baseUrl)) {
       return { success: false, error: "Invalid image URL" };
     }

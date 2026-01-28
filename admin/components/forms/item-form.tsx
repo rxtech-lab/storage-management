@@ -169,7 +169,7 @@ export function ItemForm({
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6" noValidate>
       <Card>
         <CardHeader>
           <CardTitle>Basic Information</CardTitle>

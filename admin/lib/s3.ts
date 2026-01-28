@@ -11,4 +11,6 @@ export const s3Client = new S3Client({
 });
 
 export const S3_BUCKET = process.env.S3_BUCKET!;
-export const S3_PUBLIC_URL = process.env.S3_PUBLIC_URL!;
+export const S3_ENDPOINT = process.env.S3_ENDPOINT!;
+// Optional: If not set, falls back to endpoint/bucket/key format
+export const S3_PUBLIC_URL = process.env.S3_PUBLIC_URL;
