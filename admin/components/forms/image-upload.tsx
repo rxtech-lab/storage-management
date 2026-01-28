@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useRef, useCallback } from "react";
-import Image from "next/image";
 import { Upload, X, Loader2, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -10,6 +9,7 @@ import {
   getImageUploadUrlAction,
   deleteImageAction,
 } from "@/lib/actions/s3-upload-actions";
+import { useSignedImages, getSignedUrl } from "@/lib/hooks/use-signed-images";
 
 interface ImageUploadProps {
   value: string[];
@@ -40,6 +40,7 @@ export function ImageUpload({
   const [isDragOver, setIsDragOver] = useState(false);
   const [deletingUrls, setDeletingUrls] = useState<Set<string>>(new Set());
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { signedUrls } = useSignedImages(value);
 
   const canAddMore = value.length + uploading.length < maxImages;
 
@@ -247,12 +248,11 @@ export function ImageUpload({
               key={url}
               className="relative aspect-square rounded-lg border bg-muted overflow-hidden group"
             >
-              <Image
-                src={url}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={getSignedUrl(signedUrls, url)}
                 alt={`Image ${index + 1}`}
-                fill
-                className="object-cover"
-                sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, 25vw"
+                className="absolute inset-0 h-full w-full object-cover"
               />
               {!disabled && (
                 <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1">
@@ -307,11 +307,11 @@ export function ImageUpload({
               key={item.id}
               className="relative aspect-square rounded-lg border bg-muted overflow-hidden"
             >
-              <Image
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
                 src={item.preview}
                 alt="Uploading"
-                fill
-                className="object-cover opacity-50"
+                className="absolute inset-0 h-full w-full object-cover opacity-50"
               />
               <div className="absolute inset-0 flex flex-col items-center justify-center">
                 {item.error ? (

@@ -63,30 +63,27 @@ export function ItemPageClient({
   };
 
   return (
-    <div className="space-y-6">
-      {/* Hero Section with Overlaid Top Bar */}
-      <div className="relative -mt-6">
-        {/* Sticky Top Bar - overlays on hero map */}
-        <div className="sticky -top-5 z-50 flex items-center justify-between px-4 md:px-6 lg:px-8 py-3">
-          <BackButton />
-          <ItemActionBar
-            itemId={item.id}
-            itemTitle={item.title}
-            onEditClick={() => setIsEditOpen(true)}
-          />
-        </div>
-
-        {/* Hero Map - pulled up behind the top bar */}
-        <div className="-mt-14">
-          <HeroMap
-            latitude={location?.latitude}
-            longitude={location?.longitude}
-            title={location?.title}
-          />
-        </div>
+    <div>
+      {/* Sticky Top Bar */}
+      <div className="sticky top-0 z-50 -mt-6 -mx-4 md:-mx-6 lg:-mx-8 px-4 md:px-6 lg:px-8 pb-3 flex items-center justify-between">
+        <BackButton />
+        <ItemActionBar
+          itemId={item.id}
+          itemTitle={item.title}
+          onEditClick={() => setIsEditOpen(true)}
+        />
       </div>
 
-      <div className="space-y-8 max-w-4xl">
+      {/* Hero Map */}
+      <div className="-mt-14">
+        <HeroMap
+          latitude={location?.latitude}
+          longitude={location?.longitude}
+          title={location?.title}
+        />
+      </div>
+
+      <div className="space-y-8 max-w-4xl mt-6">
         {/* Item Info Section - Always visible */}
         <ItemDetailView item={item} />
 

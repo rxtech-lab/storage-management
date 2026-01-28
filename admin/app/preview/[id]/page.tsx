@@ -2,15 +2,14 @@ import { notFound, redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { MapPin, User, Tag, Lock, Calendar } from "lucide-react";
 import { LocationDisplay } from "@/components/maps/location-display";
 import { getItem } from "@/lib/actions/item-actions";
 import { getLocation } from "@/lib/actions/location-actions";
 import { getItemContents } from "@/lib/actions/content-actions";
 import { isEmailWhitelisted } from "@/lib/actions/whitelist-actions";
+import { signImageUrlsAction } from "@/lib/actions/s3-upload-actions";
 import { formatDistanceToNow, format } from "date-fns";
-import Link from "next/link";
 
 interface PreviewPageProps {
   params: Promise<{ id: string }>;
@@ -63,10 +62,21 @@ export default async function PreviewPage({ params }: PreviewPageProps) {
   }
 
   // Fetch additional data for display
-  const [location, contents] = await Promise.all([
+  const [location, contents, signedImagesResult] = await Promise.all([
     item.locationId ? getLocation(item.locationId) : null,
     getItemContents(itemId),
+    item.images && item.images.length > 0
+      ? signImageUrlsAction(item.images)
+      : null,
   ]);
+
+  // Create map for signed URLs
+  const signedImageMap = new Map<string, string>();
+  if (signedImagesResult?.data) {
+    signedImagesResult.data.forEach((r) => {
+      signedImageMap.set(r.originalUrl, r.signedUrl);
+    });
+  }
 
   return (
     <div className="min-h-screen bg-muted/30 py-8">
@@ -106,7 +116,7 @@ export default async function PreviewPage({ params }: PreviewPageProps) {
               {item.images.map((image, index) => (
                 <img
                   key={index}
-                  src={image}
+                  src={signedImageMap.get(image) || image}
                   alt={`${item.title} - Image ${index + 1}`}
                   className="w-full h-64 object-cover rounded-lg"
                 />

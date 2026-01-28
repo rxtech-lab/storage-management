@@ -1,6 +1,10 @@
 "use server";
 
-import { PutObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3";
+import {
+  PutObjectCommand,
+  DeleteObjectCommand,
+  GetObjectCommand,
+} from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { s3Client, S3_BUCKET, S3_ENDPOINT, S3_PUBLIC_URL } from "@/lib/s3";
 
@@ -129,5 +133,98 @@ export async function deleteImagesAction(
     success: failed.length === 0,
     failed,
     error: failed.length > 0 ? `Failed to delete ${failed.length} images` : undefined,
+  };
+}
+
+// --- Signed URL for GET (viewing) ---
+
+export interface SignedUrlResult {
+  originalUrl: string;
+  signedUrl: string;
+  expiresAt: string;
+}
+
+function getKeyFromPublicUrl(publicUrl: string): string | null {
+  const baseUrl = getBaseUrl();
+  if (!publicUrl.startsWith(baseUrl)) {
+    return null;
+  }
+  return publicUrl.replace(`${baseUrl}/`, "");
+}
+
+export async function signImageUrlAction(
+  publicUrl: string,
+  expiresIn: number = 3600
+): Promise<{ success: boolean; data?: SignedUrlResult; error?: string }> {
+  try {
+    const key = getKeyFromPublicUrl(publicUrl);
+    if (!key) {
+      return { success: false, error: "Invalid image URL" };
+    }
+
+    const command = new GetObjectCommand({
+      Bucket: S3_BUCKET,
+      Key: key,
+    });
+
+    const signedUrl = await getSignedUrl(s3Client, command, { expiresIn });
+    const expiresAt = new Date(Date.now() + expiresIn * 1000).toISOString();
+
+    return {
+      success: true,
+      data: {
+        originalUrl: publicUrl,
+        signedUrl,
+        expiresAt,
+      },
+    };
+  } catch (error) {
+    console.error("Failed to sign image URL:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Failed to sign URL",
+    };
+  }
+}
+
+export async function signImageUrlsAction(
+  publicUrls: string[],
+  expiresIn: number = 3600
+): Promise<{
+  success: boolean;
+  data?: SignedUrlResult[];
+  failed?: string[];
+  error?: string;
+}> {
+  if (publicUrls.length === 0) {
+    return { success: true, data: [] };
+  }
+
+  const results: SignedUrlResult[] = [];
+  const failed: string[] = [];
+
+  const promises = publicUrls.map(async (url) => {
+    const result = await signImageUrlAction(url, expiresIn);
+    if (result.success && result.data) {
+      return { success: true as const, data: result.data };
+    }
+    return { success: false as const, url };
+  });
+
+  const resolved = await Promise.all(promises);
+
+  resolved.forEach((result) => {
+    if (result.success) {
+      results.push(result.data);
+    } else {
+      failed.push(result.url);
+    }
+  });
+
+  return {
+    success: failed.length === 0,
+    data: results,
+    failed: failed.length > 0 ? failed : undefined,
+    error: failed.length > 0 ? `Failed to sign ${failed.length} URLs` : undefined,
   };
 }

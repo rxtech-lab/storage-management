@@ -20,6 +20,7 @@ import { Switch } from "@/components/ui/switch";
 import { Loader2, X, Check } from "lucide-react";
 import { toast } from "sonner";
 import { EntitySheet } from "@/components/forms/entity-sheet";
+import { ImageUpload } from "@/components/forms/image-upload";
 import { ParentItemCombobox } from "@/components/forms/parent-item-combobox";
 import {
   updateItemAction,
@@ -109,6 +110,7 @@ export function ItemDetailEdit({
   const locationId = watch("locationId");
   const authorId = watch("authorId");
   const parentId = watch("parentId");
+  const images = watch("images");
 
   const onSubmit = (data: ItemFormData) => {
     startTransition(async () => {
@@ -319,6 +321,18 @@ export function ItemDetailEdit({
             excludeId={item.id}
           />
         </div>
+      </div>
+
+      {/* Images */}
+      <div className="border-t pt-6 space-y-4">
+        <h3 className="font-semibold">Images</h3>
+        <ImageUpload
+          value={images ?? []}
+          onChange={(urls) => setValue("images", urls)}
+          maxImages={10}
+          maxSizeMB={5}
+          disabled={isPending}
+        />
       </div>
 
       {/* Action Buttons */}

@@ -11,6 +11,7 @@ import {
   Calendar,
   Box,
 } from "lucide-react";
+import { useSignedImages, getSignedUrl } from "@/lib/hooks/use-signed-images";
 import { formatDistanceToNow } from "date-fns";
 import type { ItemWithRelations } from "@/lib/actions/item-actions";
 
@@ -19,6 +20,8 @@ interface ItemDetailViewProps {
 }
 
 export function ItemDetailView({ item }: ItemDetailViewProps) {
+  const { signedUrls } = useSignedImages(item.images ?? []);
+
   return (
     <div className="space-y-6">
       {/* Header: Title */}
@@ -81,6 +84,32 @@ export function ItemDetailView({ item }: ItemDetailViewProps) {
           </span>
         </div>
       </div>
+
+      {/* Images */}
+      {item.images && item.images.length > 0 && (
+        <div className="space-y-2 mt-3">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            {item.images.map((image, index) => (
+              <div
+                key={index}
+                className="relative aspect-square rounded-lg overflow-hidden bg-muted"
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={getSignedUrl(signedUrls, image)}
+                  alt={`${item.title} - Image ${index + 1}`}
+                  className="absolute inset-0 h-full w-full object-cover"
+                />
+                {index === 0 && (
+                  <span className="absolute bottom-2 left-2 bg-primary text-primary-foreground text-xs px-2 py-1 rounded">
+                    Main
+                  </span>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Description */}
       {item.description && (

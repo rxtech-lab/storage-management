@@ -6,6 +6,7 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/componen
 import { Eye, EyeOff, MapPin, User, Tag, ExternalLink } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import type { ItemWithRelations } from "@/lib/actions/item-actions";
+import { useSignedImages, getSignedUrl } from "@/lib/hooks/use-signed-images";
 
 interface ItemPreviewProps {
   item: ItemWithRelations;
@@ -13,14 +14,18 @@ interface ItemPreviewProps {
 }
 
 export function ItemPreview({ item, view }: ItemPreviewProps) {
+  const imageUrls = item.images && item.images.length > 0 ? [item.images[0]] : [];
+  const { signedUrls } = useSignedImages(imageUrls);
+  const thumbnailUrl = item.images?.[0] ? getSignedUrl(signedUrls, item.images[0]) : null;
+
   if (view === "list") {
     return (
       <Link href={`/items/${item.id}`}>
         <div className="flex items-center justify-between p-4 rounded-lg border hover:bg-muted/50 transition-colors">
           <div className="flex items-center gap-4">
-            {item.images && item.images.length > 0 ? (
+            {thumbnailUrl ? (
               <img
-                src={item.images[0]}
+                src={thumbnailUrl}
                 alt={item.title}
                 className="w-16 h-16 object-cover rounded-md"
               />
@@ -78,9 +83,9 @@ export function ItemPreview({ item, view }: ItemPreviewProps) {
     <Link href={`/items/${item.id}`}>
       <Card className="hover:shadow-lg transition-shadow h-full">
         <CardHeader className="p-0">
-          {item.images && item.images.length > 0 ? (
+          {thumbnailUrl ? (
             <img
-              src={item.images[0]}
+              src={thumbnailUrl}
               alt={item.title}
               className="w-full h-40 object-cover rounded-t-lg"
             />
