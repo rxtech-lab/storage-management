@@ -1,0 +1,16 @@
+// Debug.xcconfig
+// Development environment configuration
+
+// Include secrets if available (gitignored)
+#include? "Secrets.xcconfig"
+
+// API Configuration - Development
+API_BASE_URL = http:/$()/localhost:3000
+
+// OAuth Configuration - Development
+AUTH_ISSUER = https:/$()/auth.rxlab.app
+AUTH_REDIRECT_URI = rxstorage:/$()/oauth/callback
+
+// Override with your development client ID
+// Either set AUTH_CLIENT_ID here, or better yet, add it to Secrets.xcconfig
+AUTH_CLIENT_ID = $(AUTH_CLIENT_ID_DEV)

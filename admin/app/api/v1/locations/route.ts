@@ -3,7 +3,7 @@ import { getSession } from "@/lib/auth-helper";
 import { getLocations, createLocationAction } from "@/lib/actions/location-actions";
 
 export async function GET() {
-  const session = await getSession();
+  const session = await getSession(request);
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -13,7 +13,7 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
-  const session = await getSession();
+  const session = await getSession(request);
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }

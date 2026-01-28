@@ -6,56 +6,107 @@
 //
 
 import SwiftUI
-import SwiftData
+import RxStorageCore
 
 struct ContentView: View {
-    @Environment(\.modelContext) private var modelContext
-    @Query private var items: [Item]
+    @State private var authManager = OAuthManager.shared
 
     var body: some View {
-        NavigationSplitView {
-            List {
-                ForEach(items) { item in
-                    NavigationLink {
-                        Text("Item at \(item.timestamp, format: Date.FormatStyle(date: .numeric, time: .standard))")
-                    } label: {
-                        Text(item.timestamp, format: Date.FormatStyle(date: .numeric, time: .standard))
-                    }
-                }
-                .onDelete(perform: deleteItems)
-            }
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    EditButton()
-                }
-                ToolbarItem {
-                    Button(action: addItem) {
-                        Label("Add Item", systemImage: "plus")
-                    }
-                }
-            }
-        } detail: {
-            Text("Select an item")
-        }
-    }
-
-    private func addItem() {
-        withAnimation {
-            let newItem = Item(timestamp: Date())
-            modelContext.insert(newItem)
-        }
-    }
-
-    private func deleteItems(offsets: IndexSet) {
-        withAnimation {
-            for index in offsets {
-                modelContext.delete(items[index])
+        Group {
+            if authManager.isAuthenticated {
+                RootView()
+            } else {
+                LoginView()
             }
         }
     }
 }
 
+/// Login screen
+struct LoginView: View {
+    @State private var authManager = OAuthManager.shared
+    @State private var isAuthenticating = false
+    @State private var errorMessage: String?
+
+    var body: some View {
+        NavigationStack {
+            VStack(spacing: 32) {
+                Spacer()
+
+                // App Icon/Logo
+                Image(systemName: "shippingbox.fill")
+                    .font(.system(size: 80))
+                    .foregroundStyle(.blue)
+
+                VStack(spacing: 8) {
+                    Text("RxStorage")
+                        .font(.largeTitle)
+                        .fontWeight(.bold)
+
+                    Text("Storage Management System")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
+
+                Spacer()
+
+                VStack(spacing: 16) {
+                    if let errorMessage = errorMessage {
+                        Text(errorMessage)
+                            .font(.caption)
+                            .foregroundStyle(.red)
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal)
+                    }
+
+                    Button {
+                        Task {
+                            await signIn()
+                        }
+                    } label: {
+                        HStack {
+                            if isAuthenticating {
+                                ProgressView()
+                                    .progressViewStyle(.circular)
+                                    .tint(.white)
+                            } else {
+                                Text("Sign In with OAuth")
+                            }
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(Color.blue)
+                        .foregroundStyle(.white)
+                        .cornerRadius(12)
+                    }
+                    .disabled(isAuthenticating)
+                    .padding(.horizontal, 32)
+                }
+
+                Spacer()
+            }
+            .navigationTitle("Welcome")
+        }
+    }
+
+    private func signIn() async {
+        isAuthenticating = true
+        errorMessage = nil
+
+        do {
+            try await authManager.authenticate()
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+
+        isAuthenticating = false
+    }
+}
+
 #Preview {
     ContentView()
-        .modelContainer(for: Item.self, inMemory: true)
+}
+
+#Preview("Login") {
+    LoginView()
 }

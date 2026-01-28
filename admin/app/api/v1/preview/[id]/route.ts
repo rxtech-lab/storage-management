@@ -21,7 +21,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
   // Check visibility
   if (item.visibility === "private") {
-    const session = await getSession();
+    const session = await getSession(request);
 
     if (!session?.user?.email) {
       return NextResponse.json(

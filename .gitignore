@@ -1,2 +1,13 @@
 .DS_Store
 *.db
+RxStorage/RxStorageCore/.build
+*.xcuserstate
+RxStorage/RxStorage.xcodeproj/project.xcworkspace/xcuserdata/qiweili.xcuserdatad/UserInterfaceState.xcuserstate
+
+# Build artifacts
+.build/
+build.log
+test.log
+*.xcresult
+test-results.xcresult
+build.sh

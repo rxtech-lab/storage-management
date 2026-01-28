@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		DF6625B52F29138400333552 /* RxStorageClips.app in Embed App Clips */ = {isa = PBXBuildFile; fileRef = DF6625902F29138300333552 /* RxStorageClips.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		DF6626072F2A54C200333552 /* RxStorageCore in Frameworks */ = {isa = PBXBuildFile; productRef = DF6626062F2A54C200333552 /* RxStorageCore */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -132,6 +133,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				DF6626072F2A54C200333552 /* RxStorageCore in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -221,6 +223,7 @@
 			);
 			name = RxStorage;
 			packageProductDependencies = (
+				DF6626062F2A54C200333552 /* RxStorageCore */,
 			);
 			productName = RxStorage;
 			productReference = DF66255D2F29136F00333552 /* RxStorage.app */;
@@ -383,6 +386,9 @@
 			);
 			mainGroup = DF6625542F29136F00333552;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				DF6626052F2A54C200333552 /* XCLocalSwiftPackageReference "RxStorageCore" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = DF66255E2F29136F00333552 /* Products */;
 			projectDirPath = "";
@@ -587,6 +593,8 @@
 		};
 		DF6625842F29137000333552 /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReferenceAnchor = DF66255F2F29136F00333552 /* RxStorage */;
+			baseConfigurationReferenceRelativePath = Config/Debug.xcconfig;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
@@ -651,6 +659,8 @@
 		};
 		DF6625852F29137000333552 /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReferenceAnchor = DF66255F2F29136F00333552 /* RxStorage */;
+			baseConfigurationReferenceRelativePath = Config/Release.xcconfig;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
@@ -910,11 +920,17 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = P9KK452K8P;
+				ENABLE_APP_SANDBOX = YES;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_OUTGOING_NETWORK_CONNECTIONS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = rxlab.RxStorage.RxStorageClipsUITests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				REGISTER_APP_GROUPS = YES;
 				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
+				SUPPORTS_MACCATALYST = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
@@ -935,6 +951,8 @@
 				PRODUCT_BUNDLE_IDENTIFIER = rxlab.RxStorage.RxStorageClipsUITests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
+				SUPPORTS_MACCATALYST = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
@@ -1011,6 +1029,20 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		DF6626052F2A54C200333552 /* XCLocalSwiftPackageReference "RxStorageCore" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = RxStorageCore;
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		DF6626062F2A54C200333552 /* RxStorageCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = RxStorageCore;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = DF6625552F29136F00333552 /* Project object */;
 }
