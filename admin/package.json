@@ -15,6 +15,7 @@
   },
   "dependencies": {
     "@ai-sdk/mcp": "^1.0.14",
+    "@ai-sdk/openai": "^3.0.21",
     "@ai-sdk/rsc": "^2.0.57",
     "@auth/core": "^0.39.1",
     "@aws-sdk/client-s3": "^3.975.0",

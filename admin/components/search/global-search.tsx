@@ -3,23 +3,25 @@
 import { useState, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
-  Command,
-  CommandDialog,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command";
-import { Button } from "@/components/ui/button";
-import { Search, Package, Eye, EyeOff } from "lucide-react";
+  SearchTrigger,
+  SearchCommand,
+  type BaseSearchResult,
+  type ToolAction,
+  type SearchParams,
+} from "@rx-lab/dashboard-searching-ui";
+import "@rx-lab/dashboard-searching-ui/style.css";
+import { Package, Eye, EyeOff, Loader2 } from "lucide-react";
 import { getItems, type ItemWithRelations } from "@/lib/actions/item-actions";
+import { toolResultRenderers } from "./tool-renderers";
+
+// Extend BaseSearchResult with item-specific metadata
+interface ItemSearchResult extends BaseSearchResult<ItemWithRelations> {
+  category?: string;
+  visibility: "public" | "private";
+}
 
 export function GlobalSearch() {
   const [open, setOpen] = useState(false);
-  const [query, setQuery] = useState("");
-  const [results, setResults] = useState<ItemWithRelations[]>([]);
-  const [loading, setLoading] = useState(false);
   const router = useRouter();
 
   // Handle keyboard shortcut
@@ -27,110 +29,147 @@ export function GlobalSearch() {
     const down = (e: KeyboardEvent) => {
       if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
         e.preventDefault();
-        setOpen((open) => !open);
+        setOpen((prev) => !prev);
       }
     };
     document.addEventListener("keydown", down);
     return () => document.removeEventListener("keydown", down);
   }, []);
 
-  // Search items when query changes
-  useEffect(() => {
-    if (!query.trim()) {
-      setResults([]);
-      return;
-    }
+  // Search function for quick search mode
+  const handleSearch = useCallback(
+    async (params: SearchParams): Promise<ItemSearchResult[]> => {
+      const { query, limit = 10 } = params;
+      if (!query.trim()) return [];
 
-    const searchItems = async () => {
-      setLoading(true);
       try {
         const items = await getItems({ search: query });
-        setResults(items.slice(0, 10));
+        return items.slice(0, limit).map(
+          (item): ItemSearchResult => ({
+            id: item.id,
+            title: item.title,
+            snippet: item.description || undefined,
+            category: item.category?.name,
+            visibility: item.visibility,
+            metadata: item,
+          })
+        );
       } catch (error) {
         console.error("Search error:", error);
-        setResults([]);
-      } finally {
-        setLoading(false);
+        return [];
       }
-    };
+    },
+    []
+  );
 
-    const timeoutId = setTimeout(searchItems, 300);
-    return () => clearTimeout(timeoutId);
-  }, [query]);
-
-  const handleSelect = useCallback(
-    (itemId: number) => {
+  // Handle result selection
+  const handleResultSelect = useCallback(
+    (result: ItemSearchResult) => {
       setOpen(false);
-      setQuery("");
-      router.push(`/items/${itemId}`);
+      router.push(`/items/${result.id}`);
     },
     [router]
   );
 
+  // Handle tool actions from agent mode
+  const handleToolAction = useCallback(
+    (action: ToolAction) => {
+      if (action.type === "navigate" && typeof action.payload === "string") {
+        setOpen(false);
+        router.push(action.payload);
+      }
+    },
+    [router]
+  );
+
+  // Custom result renderer
+  const renderResult = useCallback(
+    (result: ItemSearchResult, onSelect: () => void) => (
+      <button
+        key={result.id}
+        onClick={onSelect}
+        className="flex items-center gap-3 w-full p-2 rounded-lg hover:bg-muted/50 cursor-pointer"
+      >
+        <Package className="size-4 text-muted-foreground shrink-0" />
+        <div className="flex-1 text-left min-w-0">
+          <div className="font-medium truncate">{result.title}</div>
+          {result.category && (
+            <div className="text-xs text-muted-foreground">{result.category}</div>
+          )}
+        </div>
+        {result.visibility === "public" ? (
+          <Eye className="size-4 text-green-500 shrink-0" />
+        ) : (
+          <EyeOff className="size-4 text-muted-foreground shrink-0" />
+        )}
+      </button>
+    ),
+    []
+  );
+
+  // Custom empty state renderer
+  const renderEmpty = useCallback((query: string, hasResults: boolean) => {
+    if (hasResults) return null;
+    return (
+      <div className="py-6 text-center text-sm text-muted-foreground">
+        <Package className="h-8 w-8 mx-auto mb-2 opacity-50" />
+        <p>No items found for &quot;{query}&quot;</p>
+        <p className="text-xs mt-1">Try AI mode for more advanced queries</p>
+      </div>
+    );
+  }, []);
+
+  // Loading state renderer
+  const renderLoading = useCallback(
+    () => (
+      <div className="py-6 text-center text-sm text-muted-foreground">
+        <Loader2 className="h-6 w-6 mx-auto mb-2 animate-spin" />
+        <p>Searching items...</p>
+      </div>
+    ),
+    []
+  );
+
   return (
     <>
-      <Button
-        variant="outline"
-        className="relative h-9 w-64 justify-start text-sm text-muted-foreground"
+      <SearchTrigger
         onClick={() => setOpen(true)}
-      >
-        <Search className="mr-2 h-4 w-4" />
-        Search items...
-        <kbd className="pointer-events-none absolute right-2 top-2 hidden h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium opacity-100 sm:flex">
-          <span className="text-xs">⌘</span>K
-        </kbd>
-      </Button>
+        placeholder="Search items..."
+        shortcut={{ key: "K", modifier: "⌘" }}
+        className="h-9 w-64"
+        variant="outline"
+      />
 
-      <CommandDialog open={open} onOpenChange={setOpen}>
-        <CommandInput
-          placeholder="Search items..."
-          value={query}
-          onValueChange={setQuery}
-        />
-        <CommandList>
-          {loading && (
-            <div className="py-6 text-center text-sm text-muted-foreground">
-              Searching...
-            </div>
-          )}
-          {!loading && query && results.length === 0 && (
-            <CommandEmpty>No items found.</CommandEmpty>
-          )}
-          {!loading && results.length > 0 && (
-            <CommandGroup heading="Items">
-              {results.map((item) => (
-                <CommandItem
-                  key={item.id}
-                  value={item.title}
-                  onSelect={() => handleSelect(item.id)}
-                  className="cursor-pointer"
-                >
-                  <Package className="mr-2 h-4 w-4" />
-                  <div className="flex-1">
-                    <p className="font-medium">{item.title}</p>
-                    {item.category && (
-                      <p className="text-xs text-muted-foreground">
-                        {item.category.name}
-                      </p>
-                    )}
-                  </div>
-                  {item.visibility === "public" ? (
-                    <Eye className="h-4 w-4 text-green-500" />
-                  ) : (
-                    <EyeOff className="h-4 w-4 text-muted-foreground" />
-                  )}
-                </CommandItem>
-              ))}
-            </CommandGroup>
-          )}
-          {!loading && !query && (
-            <div className="py-6 text-center text-sm text-muted-foreground">
-              <Package className="h-8 w-8 mx-auto mb-2 opacity-50" />
-              <p>Start typing to search items</p>
-            </div>
-          )}
-        </CommandList>
-      </CommandDialog>
+      <SearchCommand
+        open={open}
+        onOpenChange={setOpen}
+        onSearch={handleSearch}
+        onResultSelect={handleResultSelect}
+        renderResult={renderResult}
+        renderEmpty={renderEmpty}
+        renderLoading={renderLoading}
+        debounceMs={300}
+        limit={10}
+        placeholder="Search items or ask AI..."
+        className="max-w-[80vw] md:min-w-2xl lg:min-w-4xl"
+        enableAgentMode
+        agentConfig={{
+          apiEndpoint: "/api/search-agent",
+          toolResultRenderers,
+          onToolAction: handleToolAction,
+          header: {
+            title: "Storage AI Assistant",
+            showBackButton: true,
+            showClearButton: true,
+          },
+          input: {
+            placeholder: "Ask about your items...",
+            placeholderProcessing: "Searching...",
+            streamingText: "Thinking...",
+          },
+        }}
+        chatHistoryStorageKey="storage-search-history"
+      />
     </>
   );
 }

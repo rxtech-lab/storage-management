@@ -11,14 +11,6 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import {
   ChevronRight,
   Plus,
@@ -36,15 +28,16 @@ import {
   Box,
 } from "lucide-react";
 import { toast } from "sonner";
-import Form from "@rjsf/core";
+import Form from "@rjsf/shadcn";
 import validator from "@rjsf/validator-ajv8";
 import { PositionSheet } from "@/components/forms/position-sheet";
+import { ContentSheet } from "@/components/forms/content-sheet";
+import { contentSchemas } from "@/lib/schemas/content-schemas";
 import {
   deletePositionAction,
   type PositionWithSchema,
 } from "@/lib/actions/position-actions";
 import {
-  createContentAction,
   updateContentAction,
   deleteContentAction,
 } from "@/lib/actions/content-actions";
@@ -55,54 +48,6 @@ import {
 } from "@/lib/actions/whitelist-actions";
 import type { Content, ContentData, ItemWhitelist, PositionSchema } from "@/lib/db";
 import type { ItemWithRelations } from "@/lib/actions/item-actions";
-import type { JSONSchema7 } from "json-schema";
-
-// Content schemas
-const fileSchema: JSONSchema7 = {
-  type: "object",
-  required: ["title", "mime_type", "size", "file_path"],
-  properties: {
-    title: { type: "string", title: "Title" },
-    description: { type: "string", title: "Description" },
-    mime_type: { type: "string", title: "MIME Type" },
-    size: { type: "number", title: "Size (bytes)" },
-    file_path: { type: "string", title: "File Path" },
-  },
-};
-
-const imageSchema: JSONSchema7 = {
-  type: "object",
-  required: ["title", "mime_type", "size", "file_path"],
-  properties: {
-    title: { type: "string", title: "Title" },
-    description: { type: "string", title: "Description" },
-    mime_type: { type: "string", title: "MIME Type" },
-    size: { type: "number", title: "Size (bytes)" },
-    file_path: { type: "string", title: "File Path" },
-    preview_image_url: { type: "string", title: "Preview Image URL" },
-  },
-};
-
-const videoSchema: JSONSchema7 = {
-  type: "object",
-  required: ["title", "mime_type", "size", "file_path", "video_length"],
-  properties: {
-    title: { type: "string", title: "Title" },
-    description: { type: "string", title: "Description" },
-    mime_type: { type: "string", title: "MIME Type" },
-    size: { type: "number", title: "Size (bytes)" },
-    file_path: { type: "string", title: "File Path" },
-    preview_image_url: { type: "string", title: "Preview Image URL" },
-    video_length: { type: "number", title: "Video Length (seconds)" },
-    preview_video_url: { type: "string", title: "Preview Video URL" },
-  },
-};
-
-const contentSchemas: Record<"file" | "image" | "video", JSONSchema7> = {
-  file: fileSchema,
-  image: imageSchema,
-  video: videoSchema,
-};
 
 const contentIcons = {
   file: File,
@@ -136,9 +81,6 @@ export function ItemSections({
   const [whitelist, setWhitelist] = useState(initialWhitelist);
 
   // Content state
-  const [selectedContentType, setSelectedContentType] = useState<
-    "file" | "image" | "video" | null
-  >(null);
   const [contentLoading, setContentLoading] = useState(false);
 
   // Whitelist state
@@ -165,29 +107,6 @@ export function ItemSections({
   };
 
   // Content handlers
-  const handleAddContent = async () => {
-    if (!selectedContentType) return;
-    setContentLoading(true);
-    try {
-      const result = await createContentAction({
-        itemId: item.id,
-        type: selectedContentType,
-        data: { title: "", mime_type: "", size: 0, file_path: "" } as ContentData,
-      });
-      if (result.success && result.data) {
-        setContents([...contents, result.data]);
-        toast.success("Content added");
-        setSelectedContentType(null);
-      } else {
-        toast.error(result.error || "Failed to add content");
-      }
-    } catch {
-      toast.error("Failed to add content");
-    } finally {
-      setContentLoading(false);
-    }
-  };
-
   const handleUpdateContent = async (
     contentId: number,
     type: "file" | "image" | "video",
@@ -369,8 +288,8 @@ export function ItemSections({
 
       {/* Contents Section */}
       <Collapsible className="border rounded-xl overflow-hidden">
-        <CollapsibleTrigger className="flex items-center justify-between w-full p-4 hover:bg-muted/50 transition-colors [&[data-state=open]>svg:first-child]:rotate-90">
-          <div className="flex items-center gap-3">
+        <div className="flex items-center justify-between p-4 hover:bg-muted/50 transition-colors">
+          <CollapsibleTrigger className="flex items-center gap-3 flex-1 [&[data-state=open]>svg:first-child]:rotate-90">
             <ChevronRight className="h-4 w-4 transition-transform duration-200" />
             <div className="flex items-center gap-2">
               <File className="h-4 w-4 text-muted-foreground" />
@@ -379,8 +298,14 @@ export function ItemSections({
             <Badge variant="secondary" className="rounded-full">
               {contents.length}
             </Badge>
-          </div>
-        </CollapsibleTrigger>
+          </CollapsibleTrigger>
+          <ContentSheet
+            itemId={item.id}
+            onContentCreated={(content) => {
+              setContents([...contents, content]);
+            }}
+          />
+        </div>
         <CollapsibleContent>
           <div className="px-4 pb-4 space-y-4">
             {contents.length === 0 ? (
@@ -425,51 +350,6 @@ export function ItemSections({
                 );
               })
             )}
-            <div className="flex items-end gap-2">
-              <div className="flex-1 space-y-2">
-                <Label>Add Content</Label>
-                <Select
-                  value={selectedContentType ?? ""}
-                  onValueChange={(v) =>
-                    setSelectedContentType(v as "file" | "image" | "video" | null)
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="file">
-                      <div className="flex items-center gap-2">
-                        <File className="h-4 w-4" />
-                        File
-                      </div>
-                    </SelectItem>
-                    <SelectItem value="image">
-                      <div className="flex items-center gap-2">
-                        <Image className="h-4 w-4" />
-                        Image
-                      </div>
-                    </SelectItem>
-                    <SelectItem value="video">
-                      <div className="flex items-center gap-2">
-                        <Video className="h-4 w-4" />
-                        Video
-                      </div>
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <Button
-                onClick={handleAddContent}
-                disabled={contentLoading || !selectedContentType}
-              >
-                {contentLoading ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Plus className="h-4 w-4" />
-                )}
-              </Button>
-            </div>
           </div>
         </CollapsibleContent>
       </Collapsible>
