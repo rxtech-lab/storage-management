@@ -1,0 +1,1016 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		DF6625B52F29138400333552 /* RxStorageClips.app in Embed App Clips */ = {isa = PBXBuildFile; fileRef = DF6625902F29138300333552 /* RxStorageClips.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		DF66256F2F29137000333552 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = DF6625552F29136F00333552 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = DF66255C2F29136F00333552;
+			remoteInfo = RxStorage;
+		};
+		DF6625792F29137000333552 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = DF6625552F29136F00333552 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = DF66255C2F29136F00333552;
+			remoteInfo = RxStorage;
+		};
+		DF6625A22F29138400333552 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = DF6625552F29136F00333552 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = DF66258F2F29138300333552;
+			remoteInfo = RxStorageClips;
+		};
+		DF6625AC2F29138400333552 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = DF6625552F29136F00333552 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = DF66258F2F29138300333552;
+			remoteInfo = RxStorageClips;
+		};
+		DF6625B32F29138400333552 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = DF6625552F29136F00333552 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = DF66258F2F29138300333552;
+			remoteInfo = RxStorageClips;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		DF6625BA2F29138400333552 /* Embed App Clips */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "$(CONTENTS_FOLDER_PATH)/AppClips";
+			dstSubfolderSpec = 16;
+			files = (
+				DF6625B52F29138400333552 /* RxStorageClips.app in Embed App Clips */,
+			);
+			name = "Embed App Clips";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		DF66255D2F29136F00333552 /* RxStorage.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = RxStorage.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		DF66256E2F29137000333552 /* RxStorageTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = RxStorageTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		DF6625782F29137000333552 /* RxStorageUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = RxStorageUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		DF6625902F29138300333552 /* RxStorageClips.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = RxStorageClips.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		DF6625A12F29138400333552 /* RxStorageClipsTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = RxStorageClipsTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		DF6625AB2F29138400333552 /* RxStorageClipsUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = RxStorageClipsUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		DF6625802F29137000333552 /* Exceptions for "RxStorage" folder in "RxStorage" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = DF66255C2F29136F00333552 /* RxStorage */;
+		};
+		DF6625B92F29138400333552 /* Exceptions for "RxStorageClips" folder in "RxStorageClips" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = DF66258F2F29138300333552 /* RxStorageClips */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		DF66255F2F29136F00333552 /* RxStorage */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				DF6625802F29137000333552 /* Exceptions for "RxStorage" folder in "RxStorage" target */,
+			);
+			path = RxStorage;
+			sourceTree = "<group>";
+		};
+		DF6625712F29137000333552 /* RxStorageTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = RxStorageTests;
+			sourceTree = "<group>";
+		};
+		DF66257B2F29137000333552 /* RxStorageUITests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = RxStorageUITests;
+			sourceTree = "<group>";
+		};
+		DF6625912F29138300333552 /* RxStorageClips */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				DF6625B92F29138400333552 /* Exceptions for "RxStorageClips" folder in "RxStorageClips" target */,
+			);
+			path = RxStorageClips;
+			sourceTree = "<group>";
+		};
+		DF6625A42F29138400333552 /* RxStorageClipsTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = RxStorageClipsTests;
+			sourceTree = "<group>";
+		};
+		DF6625AE2F29138400333552 /* RxStorageClipsUITests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = RxStorageClipsUITests;
+			sourceTree = "<group>";
+		};
+/* End PBXFileSystemSynchronizedRootGroup section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		DF66255A2F29136F00333552 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		DF66256B2F29137000333552 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		DF6625752F29137000333552 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		DF66258D2F29138300333552 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		DF66259E2F29138400333552 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		DF6625A82F29138400333552 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		DF6625542F29136F00333552 = {
+			isa = PBXGroup;
+			children = (
+				DF66255F2F29136F00333552 /* RxStorage */,
+				DF6625712F29137000333552 /* RxStorageTests */,
+				DF66257B2F29137000333552 /* RxStorageUITests */,
+				DF6625912F29138300333552 /* RxStorageClips */,
+				DF6625A42F29138400333552 /* RxStorageClipsTests */,
+				DF6625AE2F29138400333552 /* RxStorageClipsUITests */,
+				DF66255E2F29136F00333552 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		DF66255E2F29136F00333552 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				DF66255D2F29136F00333552 /* RxStorage.app */,
+				DF66256E2F29137000333552 /* RxStorageTests.xctest */,
+				DF6625782F29137000333552 /* RxStorageUITests.xctest */,
+				DF6625902F29138300333552 /* RxStorageClips.app */,
+				DF6625A12F29138400333552 /* RxStorageClipsTests.xctest */,
+				DF6625AB2F29138400333552 /* RxStorageClipsUITests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		DF66255C2F29136F00333552 /* RxStorage */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = DF6625812F29137000333552 /* Build configuration list for PBXNativeTarget "RxStorage" */;
+			buildPhases = (
+				DF6625592F29136F00333552 /* Sources */,
+				DF66255A2F29136F00333552 /* Frameworks */,
+				DF66255B2F29136F00333552 /* Resources */,
+				DF6625BA2F29138400333552 /* Embed App Clips */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				DF6625B42F29138400333552 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				DF66255F2F29136F00333552 /* RxStorage */,
+			);
+			name = RxStorage;
+			packageProductDependencies = (
+			);
+			productName = RxStorage;
+			productReference = DF66255D2F29136F00333552 /* RxStorage.app */;
+			productType = "com.apple.product-type.application";
+		};
+		DF66256D2F29137000333552 /* RxStorageTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = DF6625862F29137000333552 /* Build configuration list for PBXNativeTarget "RxStorageTests" */;
+			buildPhases = (
+				DF66256A2F29137000333552 /* Sources */,
+				DF66256B2F29137000333552 /* Frameworks */,
+				DF66256C2F29137000333552 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				DF6625702F29137000333552 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				DF6625712F29137000333552 /* RxStorageTests */,
+			);
+			name = RxStorageTests;
+			packageProductDependencies = (
+			);
+			productName = RxStorageTests;
+			productReference = DF66256E2F29137000333552 /* RxStorageTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		DF6625772F29137000333552 /* RxStorageUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = DF6625892F29137000333552 /* Build configuration list for PBXNativeTarget "RxStorageUITests" */;
+			buildPhases = (
+				DF6625742F29137000333552 /* Sources */,
+				DF6625752F29137000333552 /* Frameworks */,
+				DF6625762F29137000333552 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				DF66257A2F29137000333552 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				DF66257B2F29137000333552 /* RxStorageUITests */,
+			);
+			name = RxStorageUITests;
+			packageProductDependencies = (
+			);
+			productName = RxStorageUITests;
+			productReference = DF6625782F29137000333552 /* RxStorageUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+		DF66258F2F29138300333552 /* RxStorageClips */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = DF6625B62F29138400333552 /* Build configuration list for PBXNativeTarget "RxStorageClips" */;
+			buildPhases = (
+				DF66258C2F29138300333552 /* Sources */,
+				DF66258D2F29138300333552 /* Frameworks */,
+				DF66258E2F29138300333552 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				DF6625912F29138300333552 /* RxStorageClips */,
+			);
+			name = RxStorageClips;
+			packageProductDependencies = (
+			);
+			productName = RxStorageClips;
+			productReference = DF6625902F29138300333552 /* RxStorageClips.app */;
+			productType = "com.apple.product-type.application.on-demand-install-capable";
+		};
+		DF6625A02F29138400333552 /* RxStorageClipsTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = DF6625BB2F29138400333552 /* Build configuration list for PBXNativeTarget "RxStorageClipsTests" */;
+			buildPhases = (
+				DF66259D2F29138400333552 /* Sources */,
+				DF66259E2F29138400333552 /* Frameworks */,
+				DF66259F2F29138400333552 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				DF6625A32F29138400333552 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				DF6625A42F29138400333552 /* RxStorageClipsTests */,
+			);
+			name = RxStorageClipsTests;
+			packageProductDependencies = (
+			);
+			productName = RxStorageClipsTests;
+			productReference = DF6625A12F29138400333552 /* RxStorageClipsTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		DF6625AA2F29138400333552 /* RxStorageClipsUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = DF6625BE2F29138400333552 /* Build configuration list for PBXNativeTarget "RxStorageClipsUITests" */;
+			buildPhases = (
+				DF6625A72F29138400333552 /* Sources */,
+				DF6625A82F29138400333552 /* Frameworks */,
+				DF6625A92F29138400333552 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				DF6625AD2F29138400333552 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				DF6625AE2F29138400333552 /* RxStorageClipsUITests */,
+			);
+			name = RxStorageClipsUITests;
+			packageProductDependencies = (
+			);
+			productName = RxStorageClipsUITests;
+			productReference = DF6625AB2F29138400333552 /* RxStorageClipsUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		DF6625552F29136F00333552 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 2620;
+				LastUpgradeCheck = 2620;
+				TargetAttributes = {
+					DF66255C2F29136F00333552 = {
+						CreatedOnToolsVersion = 26.2;
+					};
+					DF66256D2F29137000333552 = {
+						CreatedOnToolsVersion = 26.2;
+						TestTargetID = DF66255C2F29136F00333552;
+					};
+					DF6625772F29137000333552 = {
+						CreatedOnToolsVersion = 26.2;
+						TestTargetID = DF66255C2F29136F00333552;
+					};
+					DF66258F2F29138300333552 = {
+						CreatedOnToolsVersion = 26.2;
+					};
+					DF6625A02F29138400333552 = {
+						CreatedOnToolsVersion = 26.2;
+						TestTargetID = DF66258F2F29138300333552;
+					};
+					DF6625AA2F29138400333552 = {
+						CreatedOnToolsVersion = 26.2;
+						TestTargetID = DF66258F2F29138300333552;
+					};
+				};
+			};
+			buildConfigurationList = DF6625582F29136F00333552 /* Build configuration list for PBXProject "RxStorage" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = DF6625542F29136F00333552;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			productRefGroup = DF66255E2F29136F00333552 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				DF66255C2F29136F00333552 /* RxStorage */,
+				DF66256D2F29137000333552 /* RxStorageTests */,
+				DF6625772F29137000333552 /* RxStorageUITests */,
+				DF66258F2F29138300333552 /* RxStorageClips */,
+				DF6625A02F29138400333552 /* RxStorageClipsTests */,
+				DF6625AA2F29138400333552 /* RxStorageClipsUITests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		DF66255B2F29136F00333552 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		DF66256C2F29137000333552 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		DF6625762F29137000333552 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		DF66258E2F29138300333552 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		DF66259F2F29138400333552 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		DF6625A92F29138400333552 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		DF6625592F29136F00333552 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		DF66256A2F29137000333552 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		DF6625742F29137000333552 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		DF66258C2F29138300333552 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		DF66259D2F29138400333552 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		DF6625A72F29138400333552 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		DF6625702F29137000333552 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = DF66255C2F29136F00333552 /* RxStorage */;
+			targetProxy = DF66256F2F29137000333552 /* PBXContainerItemProxy */;
+		};
+		DF66257A2F29137000333552 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = DF66255C2F29136F00333552 /* RxStorage */;
+			targetProxy = DF6625792F29137000333552 /* PBXContainerItemProxy */;
+		};
+		DF6625A32F29138400333552 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = DF66258F2F29138300333552 /* RxStorageClips */;
+			targetProxy = DF6625A22F29138400333552 /* PBXContainerItemProxy */;
+		};
+		DF6625AD2F29138400333552 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = DF66258F2F29138300333552 /* RxStorageClips */;
+			targetProxy = DF6625AC2F29138400333552 /* PBXContainerItemProxy */;
+		};
+		DF6625B42F29138400333552 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = DF66258F2F29138300333552 /* RxStorageClips */;
+			targetProxy = DF6625B32F29138400333552 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		DF6625822F29137000333552 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = RxStorage/RxStorage.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = P9KK452K8P;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = RxStorage/Info.plist;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = rxlab.RxStorage;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		DF6625832F29137000333552 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = RxStorage/RxStorage.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = P9KK452K8P;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = RxStorage/Info.plist;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = rxlab.RxStorage;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		DF6625842F29137000333552 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = P9KK452K8P;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.2;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		DF6625852F29137000333552 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = P9KK452K8P;
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.2;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		DF6625872F29137000333552 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = P9KK452K8P;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.2;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = rxlab.RxStorageTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/RxStorage.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/RxStorage";
+			};
+			name = Debug;
+		};
+		DF6625882F29137000333552 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = P9KK452K8P;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.2;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = rxlab.RxStorageTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/RxStorage.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/RxStorage";
+			};
+			name = Release;
+		};
+		DF66258A2F29137000333552 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = P9KK452K8P;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = rxlab.RxStorageUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = RxStorage;
+			};
+			name = Debug;
+		};
+		DF66258B2F29137000333552 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = P9KK452K8P;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = rxlab.RxStorageUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = RxStorage;
+			};
+			name = Release;
+		};
+		DF6625B72F29138400333552 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = RxStorageClips/RxStorageClips.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = P9KK452K8P;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = RxStorageClips/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = RxStorage;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = rxlab.RxStorage.Clip;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		DF6625B82F29138400333552 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = RxStorageClips/RxStorageClips.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = P9KK452K8P;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = RxStorageClips/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = RxStorage;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = rxlab.RxStorage.Clip;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		DF6625BC2F29138400333552 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = P9KK452K8P;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.2;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = rxlab.RxStorage.RxStorageClipsTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/RxStorageClips.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/RxStorageClips";
+			};
+			name = Debug;
+		};
+		DF6625BD2F29138400333552 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = P9KK452K8P;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.2;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = rxlab.RxStorage.RxStorageClipsTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/RxStorageClips.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/RxStorageClips";
+			};
+			name = Release;
+		};
+		DF6625BF2F29138400333552 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = P9KK452K8P;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = rxlab.RxStorage.RxStorageClipsUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = RxStorageClips;
+			};
+			name = Debug;
+		};
+		DF6625C02F29138400333552 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = P9KK452K8P;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = rxlab.RxStorage.RxStorageClipsUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = RxStorageClips;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		DF6625582F29136F00333552 /* Build configuration list for PBXProject "RxStorage" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				DF6625842F29137000333552 /* Debug */,
+				DF6625852F29137000333552 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		DF6625812F29137000333552 /* Build configuration list for PBXNativeTarget "RxStorage" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				DF6625822F29137000333552 /* Debug */,
+				DF6625832F29137000333552 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		DF6625862F29137000333552 /* Build configuration list for PBXNativeTarget "RxStorageTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				DF6625872F29137000333552 /* Debug */,
+				DF6625882F29137000333552 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		DF6625892F29137000333552 /* Build configuration list for PBXNativeTarget "RxStorageUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				DF66258A2F29137000333552 /* Debug */,
+				DF66258B2F29137000333552 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		DF6625B62F29138400333552 /* Build configuration list for PBXNativeTarget "RxStorageClips" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				DF6625B72F29138400333552 /* Debug */,
+				DF6625B82F29138400333552 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		DF6625BB2F29138400333552 /* Build configuration list for PBXNativeTarget "RxStorageClipsTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				DF6625BC2F29138400333552 /* Debug */,
+				DF6625BD2F29138400333552 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		DF6625BE2F29138400333552 /* Build configuration list for PBXNativeTarget "RxStorageClipsUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				DF6625BF2F29138400333552 /* Debug */,
+				DF6625C02F29138400333552 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = DF6625552F29136F00333552 /* Project object */;
+}
