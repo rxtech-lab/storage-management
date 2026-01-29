@@ -14,12 +14,12 @@ test.describe.serial("Items API", () => {
 
     expect(response.status()).toBe(201);
     const body = await response.json();
-    expect(body.data).toHaveProperty("id");
-    expect(body.data.title).toBe("Test Item from API");
-    expect(body.data.description).toBe("Created via API test");
-    expect(body.data.visibility).toBe("private");
+    expect(body).toHaveProperty("id");
+    expect(body.title).toBe("Test Item from API");
+    expect(body.description).toBe("Created via API test");
+    expect(body.visibility).toBe("private");
 
-    createdItemId = body.data.id;
+    createdItemId = body.id;
   });
 
   test("GET /api/v1/items - should list all items", async ({ request }) => {
@@ -94,20 +94,7 @@ test.describe.serial("Items API", () => {
 
     expect(response.status()).toBe(200);
     const body = await response.json();
-    expect(body.data).toBeInstanceOf(Array);
-  });
-
-  test("GET /api/v1/items/{id}/qr - should get QR code for item", async ({
-    request,
-  }) => {
-    const response = await request.get(`/api/v1/items/${createdItemId}/qr`);
-
-    expect(response.status()).toBe(200);
-    const body = await response.json();
-    expect(body.data).toHaveProperty("item_id", createdItemId);
-    expect(body.data).toHaveProperty("preview_url");
-    expect(body.data).toHaveProperty("qr_code_data_url");
-    expect(body.data.qr_code_data_url).toMatch(/^data:image\/png;base64,/);
+    expect(body).toBeInstanceOf(Array);
   });
 
   test("DELETE /api/v1/items/{id} - should delete item", async ({

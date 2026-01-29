@@ -57,7 +57,7 @@ export async function POST(request: NextRequest) {
     const result = await createItemAction(body, session.user.id);
 
     if (result.success) {
-      return NextResponse.json({ data: result.data }, { status: 201 });
+      return NextResponse.json(result.data, { status: 201 });
     } else {
       return NextResponse.json({ error: result.error }, { status: 400 });
     }

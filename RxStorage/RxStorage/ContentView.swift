@@ -13,12 +13,30 @@ struct ContentView: View {
 
     var body: some View {
         Group {
-            if authManager.isAuthenticated {
+            switch authManager.authState {
+            case .unknown:
+                AuthLoadingView()
+            case .authenticated:
                 RootView()
-            } else {
+            case .unauthenticated:
                 LoginView()
             }
         }
+    }
+}
+
+/// Loading view shown while checking authentication status
+private struct AuthLoadingView: View {
+    var body: some View {
+        VStack(spacing: 16) {
+            ProgressView()
+                .scaleEffect(1.5)
+            Text("Loading...")
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(Color(.systemBackground))
     }
 }
 

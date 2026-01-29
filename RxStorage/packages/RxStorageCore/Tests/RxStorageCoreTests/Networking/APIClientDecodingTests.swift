@@ -42,18 +42,6 @@ struct APIClientDecodingTests {
         #expect(category.updatedAt != nil)
     }
 
-    @Test("APIResponse-wrapped model decodes successfully")
-    func wrappedModelDecoding() throws {
-        let json = """
-            {"data":{"id":3,"name":"Wrapped"}}
-            """
-        let data = json.data(using: .utf8)!
-
-        let category: CategoryModel = try APIClientTestHelper.decodeResponse(data: data, responseType: CategoryModel.self)
-        #expect(category.id == 3)
-        #expect(category.name == "Wrapped")
-    }
-
     @Test("APIResponse with error throws serverError")
     func errorResponseThrows() throws {
         let json = """
@@ -125,17 +113,5 @@ struct APIClientDecodingTests {
         #expect(throws: APIError.self) {
             let _: CategoryModel = try APIClientTestHelper.decodeResponse(data: data, responseType: CategoryModel.self)
         }
-    }
-
-    @Test("Wrapped array response decodes successfully")
-    func wrappedArrayDecoding() throws {
-        let json = """
-            {"data":[{"id":1,"name":"First"},{"id":2,"name":"Second"}]}
-            """
-        let data = json.data(using: .utf8)!
-
-        let categories: [CategoryModel] = try APIClientTestHelper.decodeResponse(
-            data: data, responseType: [CategoryModel].self)
-        #expect(categories.count == 2)
     }
 }

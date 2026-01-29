@@ -24,7 +24,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     return NextResponse.json({ error: "Permission denied" }, { status: 403 });
   }
 
-  return NextResponse.json({ data: author });
+  return NextResponse.json(author);
 }
 
 export async function PUT(request: NextRequest, { params }: RouteParams) {
@@ -40,7 +40,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     const result = await updateAuthorAction(parseInt(id), body, session.user.id);
 
     if (result.success) {
-      return NextResponse.json({ data: result.data });
+      return NextResponse.json(result.data);
     } else if (result.error === "Permission denied") {
       return NextResponse.json({ error: result.error }, { status: 403 });
     } else {

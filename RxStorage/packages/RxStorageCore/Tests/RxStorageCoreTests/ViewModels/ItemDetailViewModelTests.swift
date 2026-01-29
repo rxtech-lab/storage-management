@@ -75,38 +75,6 @@ struct ItemDetailViewModelTests {
         #expect(mockService.fetchItemCalled == true)
     }
 
-    // MARK: - Generate QR Code Tests
-
-    @Test("Generate QR code successfully")
-    @MainActor
-    func testGenerateQRCodeSuccess() async throws {
-        // Given
-        let mockService = MockItemService()
-        mockService.fetchItemResult = .success(Self.testItem)
-        mockService.fetchChildrenResult = .success([])
-        mockService.generateQRCodeResult = .success(
-            TestHelpers.makeQRCodeData(
-                itemId: 1,
-                itemTitle: "Test Item",
-                previewUrl: "https://example.com/preview/1"
-            )
-        )
-        let sut = ItemDetailViewModel(itemService: mockService)
-
-        await sut.fetchItem(id: 1)
-
-        // When
-        await sut.generateQRCode()
-
-        // Then
-        #expect(sut.qrCodeData != nil)
-        #expect(sut.qrCodeData?.previewUrl == "https://example.com/preview/1")
-        #expect(sut.qrCodeData?.itemId == 1)
-        #expect(sut.isGeneratingQR == false)
-        #expect(mockService.generateQRCodeCalled == true)
-        #expect(mockService.lastGenerateQRCodeItemId == 1)
-    }
-
     // MARK: - Refresh Tests
 
     @Test("Refresh reloads item")

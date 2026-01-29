@@ -50,10 +50,8 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
   ]);
 
   return NextResponse.json({
-    data: {
-      ...item,
-      location: location || item.location,
-      contents,
-    },
+    ...item,
+    location: location || item.location,
+    contents,
   });
 }

@@ -9,7 +9,7 @@ export async function GET(request: NextRequest) {
   }
 
   const locations = await getLocations(session.user.id);
-  return NextResponse.json({ data: locations });
+  return NextResponse.json(locations);
 }
 
 export async function POST(request: NextRequest) {
@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
     const result = await createLocationAction(body, session.user.id);
 
     if (result.success) {
-      return NextResponse.json({ data: result.data }, { status: 201 });
+      return NextResponse.json(result.data, { status: 201 });
     } else {
       return NextResponse.json({ error: result.error }, { status: 400 });
     }

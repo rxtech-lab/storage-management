@@ -119,48 +119,7 @@ struct ItemListView: View {
                 }
             }
         }
-    }
-}
-
-/// Item row in list
-struct ItemRow: View {
-    let item: StorageItem
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text(item.title)
-                .font(.headline)
-
-            if let description = item.description {
-                Text(description)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .lineLimit(2)
-            }
-
-            HStack(spacing: 12) {
-                if let category = item.category {
-                    Label(category.name, systemImage: "folder")
-                        .font(.caption2)
-                        .foregroundStyle(.secondary)
-                }
-
-                if let location = item.location {
-                    Label(location.title, systemImage: "mappin")
-                        .font(.caption2)
-                        .foregroundStyle(.secondary)
-                }
-
-                Spacer()
-
-                if item.visibility == .private {
-                    Image(systemName: "lock.fill")
-                        .font(.caption2)
-                        .foregroundStyle(.secondary)
-                }
-            }
-        }
-        .padding(.vertical, 4)
+        .listStyle(.inset)
     }
 }
 

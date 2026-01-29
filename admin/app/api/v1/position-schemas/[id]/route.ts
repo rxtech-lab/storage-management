@@ -28,7 +28,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     return NextResponse.json({ error: "Permission denied" }, { status: 403 });
   }
 
-  return NextResponse.json({ data: schema });
+  return NextResponse.json(schema);
 }
 
 export async function PUT(request: NextRequest, { params }: RouteParams) {
@@ -44,7 +44,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     const result = await updatePositionSchemaAction(parseInt(id), body, session.user.id);
 
     if (result.success) {
-      return NextResponse.json({ data: result.data });
+      return NextResponse.json(result.data);
     } else if (result.error === "Permission denied") {
       return NextResponse.json({ error: result.error }, { status: 403 });
     } else {

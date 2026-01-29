@@ -31,7 +31,7 @@ test.describe.serial("Permission Tests", () => {
       });
       expect(response.status()).toBe(201);
       const body = await response.json();
-      user1LocationId = body.data.id;
+      user1LocationId = body.id;
     });
 
     test("should create author", async ({ request }) => {
@@ -41,7 +41,7 @@ test.describe.serial("Permission Tests", () => {
       });
       expect(response.status()).toBe(201);
       const body = await response.json();
-      user1AuthorId = body.data.id;
+      user1AuthorId = body.id;
     });
 
     test("should create private item", async ({ request }) => {
@@ -58,7 +58,7 @@ test.describe.serial("Permission Tests", () => {
       });
       expect(response.status()).toBe(201);
       const body = await response.json();
-      user1ItemId = body.data.id;
+      user1ItemId = body.id;
     });
   });
 
@@ -89,7 +89,7 @@ test.describe.serial("Permission Tests", () => {
       });
       expect(response.status()).toBe(200);
       const body = await response.json();
-      const user1Locations = body.data.filter((l: any) => l.id === user1LocationId);
+      const user1Locations = body.filter((l: any) => l.id === user1LocationId);
       expect(user1Locations.length).toBe(0);
     });
 
@@ -99,7 +99,7 @@ test.describe.serial("Permission Tests", () => {
       });
       expect(response.status()).toBe(200);
       const body = await response.json();
-      const user1Authors = body.data.filter((a: any) => a.id === user1AuthorId);
+      const user1Authors = body.filter((a: any) => a.id === user1AuthorId);
       expect(user1Authors.length).toBe(0);
     });
 
@@ -200,7 +200,7 @@ test.describe.serial("Permission Tests", () => {
       });
       expect(response.status()).toBe(200);
       const body = await response.json();
-      expect(body.data.visibility).toBe("public");
+      expect(body.visibility).toBe("public");
     });
   });
 
@@ -222,8 +222,8 @@ test.describe.serial("Permission Tests", () => {
       });
       expect(response.status()).toBe(200);
       const body = await response.json();
-      expect(body.data.id).toBe(user1ItemId);
-      expect(body.data.visibility).toBe("public");
+      expect(body.id).toBe(user1ItemId);
+      expect(body.visibility).toBe("public");
     });
 
     test("should still get 403 when trying to update public item", async ({ request }) => {

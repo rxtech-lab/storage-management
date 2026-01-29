@@ -13,6 +13,16 @@ import Observation
 import UIKit
 #endif
 
+/// Authentication state representing the current auth status
+public enum AuthenticationState: Sendable {
+    /// Initial state - authentication check is in progress
+    case unknown
+    /// User is authenticated and has valid tokens
+    case authenticated
+    /// User is not authenticated (no tokens or expired)
+    case unauthenticated
+}
+
 /// User information from OAuth
 public struct User: Codable, Identifiable, Sendable {
     public let id: String
@@ -39,8 +49,13 @@ public final class OAuthManager {
     private let tokenStorage: TokenStorage
     private let apiClient: APIClient
 
-    /// Whether user is currently authenticated
-    public private(set) var isAuthenticated: Bool = false
+    /// Current authentication state
+    public private(set) var authState: AuthenticationState = .unknown
+
+    /// Whether user is currently authenticated (backward-compatible computed property)
+    public var isAuthenticated: Bool {
+        authState == .authenticated
+    }
 
     /// Current authenticated user
     public private(set) var currentUser: User?
@@ -82,7 +97,7 @@ public final class OAuthManager {
     /// Clear tokens and update auth state when session expires
     private func handleSessionExpiration() async {
         try? await tokenStorage.clearAll()
-        isAuthenticated = false
+        authState = .unauthenticated
         currentUser = nil
     }
 
@@ -230,7 +245,7 @@ public final class OAuthManager {
         // Fetch user info
         try await fetchUserInfo()
 
-        isAuthenticated = true
+        authState = .authenticated
     }
 
     /// Fetch user information from userinfo endpoint
@@ -277,7 +292,7 @@ public final class OAuthManager {
     /// Logout user
     public func logout() async {
         try? await tokenStorage.clearAll()
-        isAuthenticated = false
+        authState = .unauthenticated
         currentUser = nil
     }
 
@@ -298,8 +313,10 @@ public final class OAuthManager {
 
     private func checkAuthenticationStatus() async {
         if let _ = await tokenStorage.getAccessToken(), await !tokenStorage.isTokenExpired() {
-            isAuthenticated = true
+            authState = .authenticated
             try? await fetchUserInfo()
+        } else {
+            authState = .unauthenticated
         }
     }
 

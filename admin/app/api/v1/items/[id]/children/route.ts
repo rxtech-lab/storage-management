@@ -15,5 +15,5 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
   const { id } = await params;
   const children = await getItemChildren(parseInt(id));
 
-  return NextResponse.json({ data: children });
+  return NextResponse.json(children);
 }

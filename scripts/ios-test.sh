@@ -56,8 +56,37 @@ rm -rf "$RESULT_BUNDLE_PATH"
 
 echo ""
 
+# Run Swift Package tests
+echo "🧪 Running Swift Package tests..."
+echo ""
+
+PACKAGES_DIR="RxStorage/packages"
+PACKAGE_TEST_FAILED=0
+
+for package_dir in "$PACKAGES_DIR"/*/; do
+    if [ -f "${package_dir}Package.swift" ]; then
+        package_name=$(basename "$package_dir")
+        echo -e "${BLUE}📦 Testing package: ${package_name}${NC}"
+
+        if swift test --package-path "$package_dir"; then
+            echo -e "${GREEN}✅ ${package_name} tests passed${NC}"
+        else
+            echo -e "${RED}❌ ${package_name} tests failed${NC}"
+            PACKAGE_TEST_FAILED=1
+        fi
+        echo ""
+    fi
+done
+
+if [ $PACKAGE_TEST_FAILED -ne 0 ]; then
+    echo -e "${RED}❌ One or more Swift Package tests failed!${NC}"
+    exit 1
+fi
+
+echo ""
+
 # Run tests
-echo "🧪 Running tests..."
+echo "🧪 Running xcodebuild tests..."
 echo ""
 
 xcodebuild test \

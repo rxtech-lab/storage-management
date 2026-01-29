@@ -14,12 +14,12 @@ test.describe.serial('Locations API', () => {
 
     expect(response.status()).toBe(201);
     const body = await response.json();
-    expect(body.data).toHaveProperty('id');
-    expect(body.data.title).toBe('Test Location');
-    expect(body.data.latitude).toBe(37.7749);
-    expect(body.data.longitude).toBe(-122.4194);
+    expect(body).toHaveProperty('id');
+    expect(body.title).toBe('Test Location');
+    expect(body.latitude).toBe(37.7749);
+    expect(body.longitude).toBe(-122.4194);
 
-    createdLocationId = body.data.id;
+    createdLocationId = body.id;
   });
 
   test('GET /api/v1/locations - should list all locations', async ({ request }) => {
@@ -27,8 +27,8 @@ test.describe.serial('Locations API', () => {
 
     expect(response.status()).toBe(200);
     const body = await response.json();
-    expect(body.data).toBeInstanceOf(Array);
-    expect(body.data.length).toBeGreaterThan(0);
+    expect(body).toBeInstanceOf(Array);
+    expect(body.length).toBeGreaterThan(0);
   });
 
   test('GET /api/v1/locations/{id} - should get location by ID', async ({ request }) => {
@@ -36,8 +36,8 @@ test.describe.serial('Locations API', () => {
 
     expect(response.status()).toBe(200);
     const body = await response.json();
-    expect(body.data.id).toBe(createdLocationId);
-    expect(body.data.title).toBe('Test Location');
+    expect(body.id).toBe(createdLocationId);
+    expect(body.title).toBe('Test Location');
   });
 
   test('PUT /api/v1/locations/{id} - should update location', async ({ request }) => {
@@ -51,8 +51,8 @@ test.describe.serial('Locations API', () => {
 
     expect(response.status()).toBe(200);
     const body = await response.json();
-    expect(body.data.title).toBe('Updated Location');
-    expect(body.data.latitude).toBe(40.7128);
+    expect(body.title).toBe('Updated Location');
+    expect(body.latitude).toBe(40.7128);
   });
 
   test('DELETE /api/v1/locations/{id} - should delete location', async ({ request }) => {
