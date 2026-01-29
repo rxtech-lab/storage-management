@@ -192,7 +192,7 @@ export async function getItemChildren(parentId: number): Promise<ItemWithRelatio
 }
 
 export async function createItemAction(
-  data: Omit<NewItem, "id" | "createdAt" | "updatedAt">,
+  data: Omit<NewItem, "id" | "userId" | "createdAt" | "updatedAt">,
   userId?: string
 ): Promise<{ success: boolean; data?: Item; error?: string }> {
   try {
@@ -255,7 +255,7 @@ export async function createItemAction(
 
 export async function updateItemAction(
   id: number,
-  data: Partial<Omit<NewItem, "id" | "createdAt" | "updatedAt">>,
+  data: Partial<Omit<NewItem, "id" | "userId" | "createdAt" | "updatedAt">>,
   userId?: string
 ): Promise<{ success: boolean; data?: Item; error?: string }> {
   try {
@@ -334,7 +334,7 @@ export async function deleteItemAction(
 }
 
 export async function createItemAndRedirect(
-  data: Omit<NewItem, "id" | "createdAt" | "updatedAt">,
+  data: Omit<NewItem, "id" | "userId" | "createdAt" | "updatedAt">,
   userId?: string
 ) {
   const result = await createItemAction(data, userId);

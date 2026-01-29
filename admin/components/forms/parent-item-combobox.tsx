@@ -34,7 +34,7 @@ export function ParentItemCombobox({
 
   // Load initial options on mount
   useEffect(() => {
-    searchItems("", excludeId, 20).then((results) => {
+    searchItems("", undefined, excludeId, 20).then((results) => {
       setOptions([NONE_OPTION, ...results]);
     });
   }, [excludeId]);
@@ -48,7 +48,7 @@ export function ParentItemCombobox({
       debounceRef.current = setTimeout(async () => {
         setLoading(true);
         try {
-          const results = await searchItems(inputValue, excludeId, 20);
+          const results = await searchItems(inputValue, undefined, excludeId, 20);
           setOptions([NONE_OPTION, ...results]);
         } finally {
           setLoading(false);

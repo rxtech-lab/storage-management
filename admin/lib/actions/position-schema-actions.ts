@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { eq } from "drizzle-orm";
 import { db, positionSchemas, type PositionSchema, type NewPositionSchema } from "@/lib/db";
 import { ensureSchemaInitialized } from "@/lib/db/client";
+import { getSession } from "@/lib/auth-helper";
 
 export async function getPositionSchemas(userId?: string): Promise<PositionSchema[]> {
   await ensureSchemaInitialized();
@@ -24,16 +25,26 @@ export async function getPositionSchema(id: number): Promise<PositionSchema | un
 }
 
 export async function createPositionSchemaAction(
-  data: Omit<NewPositionSchema, "id" | "createdAt" | "updatedAt">,
-  userId: string
+  data: Omit<NewPositionSchema, "id" | "userId" | "createdAt" | "updatedAt">,
+  userId?: string
 ): Promise<{ success: boolean; data?: PositionSchema; error?: string }> {
   try {
+    // Get userId from session if not provided
+    let resolvedUserId = userId;
+    if (!resolvedUserId) {
+      const session = await getSession();
+      if (!session?.user?.id) {
+        return { success: false, error: "Unauthorized" };
+      }
+      resolvedUserId = session.user.id;
+    }
+
     const now = new Date();
     const result = await db
       .insert(positionSchemas)
       .values({
         ...data,
-        userId,
+        userId: resolvedUserId,
         createdAt: now,
         updatedAt: now,
       })
@@ -50,10 +61,20 @@ export async function createPositionSchemaAction(
 
 export async function updatePositionSchemaAction(
   id: number,
-  data: Partial<Omit<NewPositionSchema, "id" | "createdAt" | "updatedAt">>,
-  userId: string
+  data: Partial<Omit<NewPositionSchema, "id" | "userId" | "createdAt" | "updatedAt">>,
+  userId?: string
 ): Promise<{ success: boolean; data?: PositionSchema; error?: string }> {
   try {
+    // Get userId from session if not provided
+    let resolvedUserId = userId;
+    if (!resolvedUserId) {
+      const session = await getSession();
+      if (!session?.user?.id) {
+        return { success: false, error: "Unauthorized" };
+      }
+      resolvedUserId = session.user.id;
+    }
+
     // Verify ownership
     const existing = await db
       .select({ userId: positionSchemas.userId })
@@ -61,7 +82,7 @@ export async function updatePositionSchemaAction(
       .where(eq(positionSchemas.id, id))
       .limit(1);
 
-    if (!existing[0] || existing[0].userId !== userId) {
+    if (!existing[0] || existing[0].userId !== resolvedUserId) {
       return { success: false, error: "Permission denied" };
     }
 
@@ -83,9 +104,19 @@ export async function updatePositionSchemaAction(
 
 export async function deletePositionSchemaAction(
   id: number,
-  userId: string
+  userId?: string
 ): Promise<{ success: boolean; error?: string }> {
   try {
+    // Get userId from session if not provided
+    let resolvedUserId = userId;
+    if (!resolvedUserId) {
+      const session = await getSession();
+      if (!session?.user?.id) {
+        return { success: false, error: "Unauthorized" };
+      }
+      resolvedUserId = session.user.id;
+    }
+
     // Verify ownership
     const existing = await db
       .select({ userId: positionSchemas.userId })
@@ -93,7 +124,7 @@ export async function deletePositionSchemaAction(
       .where(eq(positionSchemas.id, id))
       .limit(1);
 
-    if (!existing[0] || existing[0].userId !== userId) {
+    if (!existing[0] || existing[0].userId !== resolvedUserId) {
       return { success: false, error: "Permission denied" };
     }
 
@@ -109,8 +140,8 @@ export async function deletePositionSchemaAction(
 }
 
 export async function createPositionSchemaAndRedirect(
-  data: Omit<NewPositionSchema, "id" | "createdAt" | "updatedAt">,
-  userId: string
+  data: Omit<NewPositionSchema, "id" | "userId" | "createdAt" | "updatedAt">,
+  userId?: string
 ) {
   const result = await createPositionSchemaAction(data, userId);
   if (result.success) {
@@ -119,7 +150,7 @@ export async function createPositionSchemaAndRedirect(
   return result;
 }
 
-export async function deletePositionSchemaAndRedirect(id: number, userId: string) {
+export async function deletePositionSchemaAndRedirect(id: number, userId?: string) {
   const result = await deletePositionSchemaAction(id, userId);
   if (result.success) {
     redirect("/position-schemas");
@@ -127,7 +158,7 @@ export async function deletePositionSchemaAndRedirect(id: number, userId: string
   return result;
 }
 
-export async function deletePositionSchemaFormAction(id: number, userId: string): Promise<void> {
-  await deletePositionSchemaAction(id, userId);
+export async function deletePositionSchemaFormAction(id: number): Promise<void> {
+  await deletePositionSchemaAction(id);
   revalidatePath("/position-schemas");
 }

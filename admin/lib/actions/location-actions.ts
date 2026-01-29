@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { eq } from "drizzle-orm";
 import { db, locations, type Location, type NewLocation } from "@/lib/db";
 import { ensureSchemaInitialized } from "@/lib/db/client";
+import { getSession } from "@/lib/auth-helper";
 
 export async function getLocations(userId?: string): Promise<Location[]> {
   await ensureSchemaInitialized();
@@ -25,16 +26,26 @@ export async function getLocation(id: number): Promise<Location | undefined> {
 }
 
 export async function createLocationAction(
-  data: Omit<NewLocation, "id" | "createdAt" | "updatedAt">,
-  userId: string
+  data: Omit<NewLocation, "id" | "userId" | "createdAt" | "updatedAt">,
+  userId?: string
 ): Promise<{ success: boolean; data?: Location; error?: string }> {
   try {
+    // Get userId from session if not provided
+    let resolvedUserId = userId;
+    if (!resolvedUserId) {
+      const session = await getSession();
+      if (!session?.user?.id) {
+        return { success: false, error: "Unauthorized" };
+      }
+      resolvedUserId = session.user.id;
+    }
+
     const now = new Date();
     const result = await db
       .insert(locations)
       .values({
         ...data,
-        userId,
+        userId: resolvedUserId,
         createdAt: now,
         updatedAt: now,
       })
@@ -51,10 +62,20 @@ export async function createLocationAction(
 
 export async function updateLocationAction(
   id: number,
-  data: Partial<Omit<NewLocation, "id" | "createdAt" | "updatedAt">>,
-  userId: string
+  data: Partial<Omit<NewLocation, "id" | "userId" | "createdAt" | "updatedAt">>,
+  userId?: string
 ): Promise<{ success: boolean; data?: Location; error?: string }> {
   try {
+    // Get userId from session if not provided
+    let resolvedUserId = userId;
+    if (!resolvedUserId) {
+      const session = await getSession();
+      if (!session?.user?.id) {
+        return { success: false, error: "Unauthorized" };
+      }
+      resolvedUserId = session.user.id;
+    }
+
     // Verify ownership
     const existing = await db
       .select({ userId: locations.userId })
@@ -62,7 +83,7 @@ export async function updateLocationAction(
       .where(eq(locations.id, id))
       .limit(1);
 
-    if (!existing[0] || existing[0].userId !== userId) {
+    if (!existing[0] || existing[0].userId !== resolvedUserId) {
       return { success: false, error: "Permission denied" };
     }
 
@@ -84,9 +105,19 @@ export async function updateLocationAction(
 
 export async function deleteLocationAction(
   id: number,
-  userId: string
+  userId?: string
 ): Promise<{ success: boolean; error?: string }> {
   try {
+    // Get userId from session if not provided
+    let resolvedUserId = userId;
+    if (!resolvedUserId) {
+      const session = await getSession();
+      if (!session?.user?.id) {
+        return { success: false, error: "Unauthorized" };
+      }
+      resolvedUserId = session.user.id;
+    }
+
     // Verify ownership
     const existing = await db
       .select({ userId: locations.userId })
@@ -94,7 +125,7 @@ export async function deleteLocationAction(
       .where(eq(locations.id, id))
       .limit(1);
 
-    if (!existing[0] || existing[0].userId !== userId) {
+    if (!existing[0] || existing[0].userId !== resolvedUserId) {
       return { success: false, error: "Permission denied" };
     }
 
@@ -110,8 +141,8 @@ export async function deleteLocationAction(
 }
 
 export async function createLocationAndRedirect(
-  data: Omit<NewLocation, "id" | "createdAt" | "updatedAt">,
-  userId: string
+  data: Omit<NewLocation, "id" | "userId" | "createdAt" | "updatedAt">,
+  userId?: string
 ) {
   const result = await createLocationAction(data, userId);
   if (result.success) {
@@ -120,7 +151,7 @@ export async function createLocationAndRedirect(
   return result;
 }
 
-export async function deleteLocationAndRedirect(id: number, userId: string) {
+export async function deleteLocationAndRedirect(id: number, userId?: string) {
   const result = await deleteLocationAction(id, userId);
   if (result.success) {
     redirect("/locations");
@@ -128,7 +159,7 @@ export async function deleteLocationAndRedirect(id: number, userId: string) {
   return result;
 }
 
-export async function deleteLocationFormAction(id: number, userId: string): Promise<void> {
-  await deleteLocationAction(id, userId);
+export async function deleteLocationFormAction(id: number): Promise<void> {
+  await deleteLocationAction(id);
   revalidatePath("/locations");
 }

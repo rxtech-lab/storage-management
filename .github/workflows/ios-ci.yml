@@ -1,19 +1,8 @@
 name: iOS CI
 
 on:
-  push:
-    branches: [main, mobile-app]
-    paths:
-      - 'RxStorage/**'
-      - 'scripts/ios-*.sh'
-      - '.github/workflows/ios-ci.yml'
-  pull_request:
-    branches: [main]
-    paths:
-      - 'RxStorage/**'
-      - 'scripts/ios-*.sh'
-      - '.github/workflows/ios-ci.yml'
-
+  push
+  
 env:
   SCHEME: RxStorage
   CONFIGURATION: Debug
@@ -29,6 +18,10 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
+      
+      - uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
 
       - name: Setup Secrets.xcconfig from GitHub Secrets
         env:
