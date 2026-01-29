@@ -1,0 +1,17 @@
+// Release.xcconfig
+// Production environment configuration
+
+// Include secrets if available (gitignored)
+#include? "Secrets.xcconfig"
+
+// API Configuration - Production
+// Update this to your production API URL
+API_BASE_URL = https:/$()/api.yourdomain.com
+
+// OAuth Configuration - Production
+AUTH_ISSUER = https:/$()/auth.rxlab.app
+AUTH_REDIRECT_URI = rxstorage:/$()/oauth/callback
+
+// Override with your production client ID
+// Either set AUTH_CLIENT_ID here, or better yet, add it to Secrets.xcconfig
+AUTH_CLIENT_ID = $(AUTH_CLIENT_ID_PROD)

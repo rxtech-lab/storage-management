@@ -1,0 +1,787 @@
+openapi: 3.0.3
+info:
+  title: Storage Management API
+  description: REST API for managing storage items
+  version: 1.0.0
+
+servers:
+  - url: /api/v1
+    description: API v1
+
+security:
+  - bearerAuth: []
+
+paths:
+  /items:
+    get:
+      summary: List all items
+      tags: [Items]
+      parameters:
+        - name: categoryId
+          in: query
+          schema:
+            type: integer
+        - name: locationId
+          in: query
+          schema:
+            type: integer
+        - name: authorId
+          in: query
+          schema:
+            type: integer
+        - name: parentId
+          in: query
+          schema:
+            type: string
+          description: Use "null" for root items only
+        - name: visibility
+          in: query
+          schema:
+            type: string
+            enum: [public, private]
+        - name: search
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of items
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Item'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    post:
+      summary: Create a new item
+      tags: [Items]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NewItem'
+      responses:
+        '201':
+          description: Item created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Item'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /items/{id}:
+    get:
+      summary: Get item by ID
+      tags: [Items]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Item details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Item'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    put:
+      summary: Update item
+      tags: [Items]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NewItem'
+      responses:
+        '200':
+          description: Item updated
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      summary: Delete item
+      tags: [Items]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Item deleted
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /items/{id}/children:
+    get:
+      summary: Get item children
+      tags: [Items]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: List of child items
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Item'
+
+  /items/{id}/qr:
+    get:
+      summary: Get QR code for item
+      tags: [Items]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: QR code data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      itemId:
+                        type: integer
+                      previewUrl:
+                        type: string
+                      qrCodeDataUrl:
+                        type: string
+
+  /categories:
+    get:
+      summary: List all categories
+      tags: [Categories]
+      responses:
+        '200':
+          description: List of categories
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Category'
+
+    post:
+      summary: Create category
+      tags: [Categories]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NewCategory'
+      responses:
+        '201':
+          description: Category created
+
+  /categories/{id}:
+    get:
+      summary: Get category by ID
+      tags: [Categories]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Category details
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    put:
+      summary: Update category
+      tags: [Categories]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Category updated
+
+    delete:
+      summary: Delete category
+      tags: [Categories]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Category deleted
+
+  /locations:
+    get:
+      summary: List all locations
+      tags: [Locations]
+      responses:
+        '200':
+          description: List of locations
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Location'
+
+    post:
+      summary: Create location
+      tags: [Locations]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NewLocation'
+      responses:
+        '201':
+          description: Location created
+
+  /locations/{id}:
+    get:
+      summary: Get location by ID
+      tags: [Locations]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Location details
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    put:
+      summary: Update location
+      tags: [Locations]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Location updated
+
+    delete:
+      summary: Delete location
+      tags: [Locations]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Location deleted
+
+  /authors:
+    get:
+      summary: List all authors
+      tags: [Authors]
+      responses:
+        '200':
+          description: List of authors
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Author'
+
+    post:
+      summary: Create author
+      tags: [Authors]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NewAuthor'
+      responses:
+        '201':
+          description: Author created
+
+  /authors/{id}:
+    get:
+      summary: Get author by ID
+      tags: [Authors]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Author details
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    put:
+      summary: Update author
+      tags: [Authors]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Author updated
+
+    delete:
+      summary: Delete author
+      tags: [Authors]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Author deleted
+
+  /position-schemas:
+    get:
+      summary: List all position schemas
+      tags: [Position Schemas]
+      responses:
+        '200':
+          description: List of position schemas
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/PositionSchema'
+
+    post:
+      summary: Create position schema
+      tags: [Position Schemas]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NewPositionSchema'
+      responses:
+        '201':
+          description: Position schema created
+
+  /position-schemas/{id}:
+    get:
+      summary: Get position schema by ID
+      tags: [Position Schemas]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Position schema details
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    put:
+      summary: Update position schema
+      tags: [Position Schemas]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Position schema updated
+
+    delete:
+      summary: Delete position schema
+      tags: [Position Schemas]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Position schema deleted
+
+  /preview/{id}:
+    get:
+      summary: Get item preview
+      description: |
+        Public items are accessible without authentication.
+        Private items require authentication and email whitelist access.
+      tags: [Preview]
+      security: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Item preview data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/ItemPreview'
+        '401':
+          description: Authentication required (private item)
+        '403':
+          description: Access denied (not whitelisted)
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /openapi.json:
+    get:
+      summary: Get OpenAPI specification
+      tags: [Meta]
+      security: []
+      responses:
+        '200':
+          description: OpenAPI 3.0 specification
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    NotFound:
+      description: Not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+  schemas:
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+
+    Item:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        description:
+          type: string
+          nullable: true
+        categoryId:
+          type: integer
+          nullable: true
+        locationId:
+          type: integer
+          nullable: true
+        authorId:
+          type: integer
+          nullable: true
+        parentId:
+          type: integer
+          nullable: true
+        price:
+          type: string
+          nullable: true
+        visibility:
+          type: string
+          enum: [public, private]
+        images:
+          type: array
+          items:
+            type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        previewUrl:
+          type: string
+          format: uri
+          description: URL to preview the item
+        category:
+          $ref: '#/components/schemas/Category'
+        location:
+          $ref: '#/components/schemas/Location'
+        author:
+          $ref: '#/components/schemas/Author'
+
+    NewItem:
+      type: object
+      required: [title]
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        categoryId:
+          type: integer
+          nullable: true
+        locationId:
+          type: integer
+          nullable: true
+        authorId:
+          type: integer
+          nullable: true
+        parentId:
+          type: integer
+          nullable: true
+        price:
+          type: number
+          nullable: true
+        visibility:
+          type: string
+          enum: [public, private]
+        images:
+          type: array
+          items:
+            type: string
+
+    ItemPreview:
+      allOf:
+        - $ref: '#/components/schemas/Item'
+        - type: object
+          properties:
+            contents:
+              type: array
+              items:
+                $ref: '#/components/schemas/Content'
+
+    Category:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    NewCategory:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+
+    Location:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        latitude:
+          type: number
+        longitude:
+          type: number
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    NewLocation:
+      type: object
+      required: [title, latitude, longitude]
+      properties:
+        title:
+          type: string
+        latitude:
+          type: number
+        longitude:
+          type: number
+
+    Author:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        bio:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    NewAuthor:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+        bio:
+          type: string
+
+    PositionSchema:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        schema:
+          type: object
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    NewPositionSchema:
+      type: object
+      required: [name, schema]
+      properties:
+        name:
+          type: string
+        schema:
+          type: object
+
+    Content:
+      type: object
+      properties:
+        id:
+          type: integer
+        itemId:
+          type: integer
+        type:
+          type: string
+          enum: [file, image, video]
+        data:
+          type: object
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+tags:
+  - name: Items
+    description: Item management
+  - name: Categories
+    description: Category management
+  - name: Locations
+    description: Location management
+  - name: Authors
+    description: Author management
+  - name: Position Schemas
+    description: Position schema management
+  - name: Preview
+    description: Public item preview
+  - name: Meta
+    description: API metadata

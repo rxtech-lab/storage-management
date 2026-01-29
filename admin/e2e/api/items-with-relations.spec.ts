@@ -13,21 +13,21 @@ test.describe.serial('Items API with Relations', () => {
       data: { name: 'Electronics', description: 'Electronic devices' },
     });
     const categoryBody = await categoryResponse.json();
-    categoryId = categoryBody.data.id;
+    categoryId = categoryBody.id;
 
     // Create location
     const locationResponse = await request.post('/api/v1/locations', {
       data: { title: 'Warehouse A', latitude: 37.7749, longitude: -122.4194 },
     });
     const locationBody = await locationResponse.json();
-    locationId = locationBody.data.id;
+    locationId = locationBody.id;
 
     // Create author
     const authorResponse = await request.post('/api/v1/authors', {
       data: { name: 'John Doe', bio: 'Storage manager' },
     });
     const authorBody = await authorResponse.json();
-    authorId = authorBody.data.id;
+    authorId = authorBody.id;
   });
 
   test('POST /api/v1/items - should create item with all relations', async ({ request }) => {
@@ -45,13 +45,13 @@ test.describe.serial('Items API with Relations', () => {
 
     expect(response.status()).toBe(201);
     const body = await response.json();
-    expect(body.data.title).toBe('Laptop with Relations');
-    expect(body.data.categoryId).toBe(categoryId);
-    expect(body.data.locationId).toBe(locationId);
-    expect(body.data.authorId).toBe(authorId);
-    expect(body.data.price).toBe(999.99);
+    expect(body.title).toBe('Laptop with Relations');
+    expect(body.categoryId).toBe(categoryId);
+    expect(body.locationId).toBe(locationId);
+    expect(body.authorId).toBe(authorId);
+    expect(body.price).toBe(999.99);
 
-    parentItemId = body.data.id;
+    parentItemId = body.id;
   });
 
   test('GET /api/v1/items/{id} - should return item with relation details', async ({ request }) => {
@@ -61,12 +61,12 @@ test.describe.serial('Items API with Relations', () => {
     const body = await response.json();
 
     // Check that relations are populated
-    expect(body.data.category).toHaveProperty('id', categoryId);
-    expect(body.data.category).toHaveProperty('name', 'Electronics');
-    expect(body.data.location).toHaveProperty('id', locationId);
-    expect(body.data.location).toHaveProperty('title', 'Warehouse A');
-    expect(body.data.author).toHaveProperty('id', authorId);
-    expect(body.data.author).toHaveProperty('name', 'John Doe');
+    expect(body.category).toHaveProperty('id', categoryId);
+    expect(body.category).toHaveProperty('name', 'Electronics');
+    expect(body.location).toHaveProperty('id', locationId);
+    expect(body.location).toHaveProperty('title', 'Warehouse A');
+    expect(body.author).toHaveProperty('id', authorId);
+    expect(body.author).toHaveProperty('name', 'John Doe');
   });
 
   test('GET /api/v1/items?categoryId={id} - should filter by category', async ({ request }) => {
@@ -74,8 +74,8 @@ test.describe.serial('Items API with Relations', () => {
 
     expect(response.status()).toBe(200);
     const body = await response.json();
-    expect(body.data).toBeInstanceOf(Array);
-    expect(body.data.every((item: any) => item.categoryId === categoryId)).toBeTruthy();
+    expect(body).toBeInstanceOf(Array);
+    expect(body.every((item: any) => item.categoryId === categoryId)).toBeTruthy();
   });
 
   test('GET /api/v1/items?locationId={id} - should filter by location', async ({ request }) => {
@@ -83,8 +83,8 @@ test.describe.serial('Items API with Relations', () => {
 
     expect(response.status()).toBe(200);
     const body = await response.json();
-    expect(body.data).toBeInstanceOf(Array);
-    expect(body.data.every((item: any) => item.locationId === locationId)).toBeTruthy();
+    expect(body).toBeInstanceOf(Array);
+    expect(body.every((item: any) => item.locationId === locationId)).toBeTruthy();
   });
 
   test('GET /api/v1/items?authorId={id} - should filter by author', async ({ request }) => {
@@ -92,8 +92,8 @@ test.describe.serial('Items API with Relations', () => {
 
     expect(response.status()).toBe(200);
     const body = await response.json();
-    expect(body.data).toBeInstanceOf(Array);
-    expect(body.data.every((item: any) => item.authorId === authorId)).toBeTruthy();
+    expect(body).toBeInstanceOf(Array);
+    expect(body.every((item: any) => item.authorId === authorId)).toBeTruthy();
   });
 
   test('POST /api/v1/items - should create child item with parent', async ({ request }) => {
@@ -109,9 +109,9 @@ test.describe.serial('Items API with Relations', () => {
 
     expect(response.status()).toBe(201);
     const body = await response.json();
-    expect(body.data.parentId).toBe(parentItemId);
+    expect(body.parentId).toBe(parentItemId);
 
-    childItemId = body.data.id;
+    childItemId = body.id;
   });
 
   test('GET /api/v1/items/{id}/children - should return child items', async ({ request }) => {
@@ -119,10 +119,10 @@ test.describe.serial('Items API with Relations', () => {
 
     expect(response.status()).toBe(200);
     const body = await response.json();
-    expect(body.data).toBeInstanceOf(Array);
-    expect(body.data.length).toBeGreaterThan(0);
+    expect(body).toBeInstanceOf(Array);
+    expect(body.length).toBeGreaterThan(0);
 
-    const childItem = body.data.find((item: any) => item.id === childItemId);
+    const childItem = body.find((item: any) => item.id === childItemId);
     expect(childItem).toBeDefined();
     expect(childItem.title).toBe('Laptop Charger');
   });
@@ -132,8 +132,8 @@ test.describe.serial('Items API with Relations', () => {
 
     expect(response.status()).toBe(200);
     const body = await response.json();
-    expect(body.data).toBeInstanceOf(Array);
-    expect(body.data.every((item: any) => item.visibility === 'public')).toBeTruthy();
+    expect(body).toBeInstanceOf(Array);
+    expect(body.every((item: any) => item.visibility === 'public')).toBeTruthy();
   });
 
   test('Cleanup - delete test data', async ({ request }) => {

@@ -5,6 +5,7 @@ import { positionSchemas } from "./position-schemas";
 
 export const positions = sqliteTable("positions", {
   id: integer("id").primaryKey({ autoIncrement: true }),
+  userId: text("user_id").notNull(),
   itemId: integer("item_id")
     .notNull()
     .references(() => items.id, { onDelete: "cascade" }),

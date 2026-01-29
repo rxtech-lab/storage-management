@@ -2,6 +2,7 @@ import { sqliteTable, text, integer, real } from "drizzle-orm/sqlite-core";
 
 export const locations = sqliteTable("locations", {
   id: integer("id").primaryKey({ autoIncrement: true }),
+  userId: text("user_id").notNull(),
   title: text("title").notNull(),
   latitude: real("latitude").notNull(),
   longitude: real("longitude").notNull(),

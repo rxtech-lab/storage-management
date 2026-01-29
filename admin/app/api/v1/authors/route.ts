@@ -2,28 +2,28 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth-helper";
 import { getAuthors, createAuthorAction } from "@/lib/actions/author-actions";
 
-export async function GET() {
-  const session = await getSession();
+export async function GET(request: NextRequest) {
+  const session = await getSession(request);
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const authors = await getAuthors();
-  return NextResponse.json({ data: authors });
+  const authors = await getAuthors(session.user.id);
+  return NextResponse.json(authors);
 }
 
 export async function POST(request: NextRequest) {
-  const session = await getSession();
+  const session = await getSession(request);
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   try {
     const body = await request.json();
-    const result = await createAuthorAction(body);
+    const result = await createAuthorAction(body, session.user.id);
 
     if (result.success) {
-      return NextResponse.json({ data: result.data }, { status: 201 });
+      return NextResponse.json(result.data, { status: 201 });
     } else {
       return NextResponse.json({ error: result.error }, { status: 400 });
     }

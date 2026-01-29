@@ -19,7 +19,8 @@ export default auth((req) => {
   const { pathname } = req.nextUrl;
 
   // Public paths that don't require authentication
-  const publicPaths = ["/login", "/api/auth", "/preview", "/api/v1/preview"];
+  // API v1 routes handle their own auth (supports Bearer tokens for mobile)
+  const publicPaths = ["/login", "/api/auth", "/preview", "/api/v1"];
   const isPublicPath = publicPaths.some((path) => pathname.startsWith(path));
 
   // Redirect logged-in users away from login page

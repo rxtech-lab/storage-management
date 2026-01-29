@@ -13,11 +13,11 @@ test.describe.serial('Authors API', () => {
 
     expect(response.status()).toBe(201);
     const body = await response.json();
-    expect(body.data).toHaveProperty('id');
-    expect(body.data.name).toBe('Test Author');
-    expect(body.data.bio).toBe('Created via API test');
+    expect(body).toHaveProperty('id');
+    expect(body.name).toBe('Test Author');
+    expect(body.bio).toBe('Created via API test');
 
-    createdAuthorId = body.data.id;
+    createdAuthorId = body.id;
   });
 
   test('GET /api/v1/authors - should list all authors', async ({ request }) => {
@@ -25,8 +25,8 @@ test.describe.serial('Authors API', () => {
 
     expect(response.status()).toBe(200);
     const body = await response.json();
-    expect(body.data).toBeInstanceOf(Array);
-    expect(body.data.length).toBeGreaterThan(0);
+    expect(body).toBeInstanceOf(Array);
+    expect(body.length).toBeGreaterThan(0);
   });
 
   test('GET /api/v1/authors/{id} - should get author by ID', async ({ request }) => {
@@ -34,8 +34,8 @@ test.describe.serial('Authors API', () => {
 
     expect(response.status()).toBe(200);
     const body = await response.json();
-    expect(body.data.id).toBe(createdAuthorId);
-    expect(body.data.name).toBe('Test Author');
+    expect(body.id).toBe(createdAuthorId);
+    expect(body.name).toBe('Test Author');
   });
 
   test('PUT /api/v1/authors/{id} - should update author', async ({ request }) => {
@@ -48,7 +48,7 @@ test.describe.serial('Authors API', () => {
 
     expect(response.status()).toBe(200);
     const body = await response.json();
-    expect(body.data.name).toBe('Updated Author');
+    expect(body.name).toBe('Updated Author');
   });
 
   test('DELETE /api/v1/authors/{id} - should delete author', async ({ request }) => {

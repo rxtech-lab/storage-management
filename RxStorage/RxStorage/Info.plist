@@ -2,9 +2,105 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<key>UIBackgroundModes</key>
+	<!-- API Configuration -->
+	<key>API_BASE_URL</key>
+	<string>$(API_BASE_URL)</string>
+
+	<!-- OAuth Configuration -->
+	<key>AUTH_ISSUER</key>
+	<string>$(AUTH_ISSUER)</string>
+
+	<key>AUTH_CLIENT_ID</key>
+	<string>$(AUTH_CLIENT_ID)</string>
+
+	<key>AUTH_REDIRECT_URI</key>
+	<string>$(AUTH_REDIRECT_URI)</string>
+
+	<key>AUTH_SCOPES</key>
 	<array>
-		<string>remote-notification</string>
+		<string>openid</string>
+		<string>profile</string>
+		<string>email</string>
+	</array>
+
+	<!-- Permissions -->
+	<key>NSCameraUsageDescription</key>
+	<string>Camera access is needed to scan QR codes</string>
+
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>Save QR codes to your photo library</string>
+
+	<key>NFCReaderUsageDescription</key>
+	<string>NFC access is needed to write item information to NFC tags</string>
+
+	<!-- App Information (Xcode manages these) -->
+	<key>CFBundleDisplayName</key>
+	<string>$(PRODUCT_NAME)</string>
+
+	<key>CFBundleExecutable</key>
+	<string>$(EXECUTABLE_NAME)</string>
+
+	<key>CFBundleIdentifier</key>
+	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+
+	<key>CFBundleInfoDictionaryVersion</key>
+	<string>6.0</string>
+
+	<key>CFBundleName</key>
+	<string>$(PRODUCT_NAME)</string>
+
+	<key>CFBundlePackageType</key>
+	<string>$(PRODUCT_BUNDLE_PACKAGE_TYPE)</string>
+
+	<key>CFBundleShortVersionString</key>
+	<string>1.0</string>
+
+	<key>CFBundleVersion</key>
+	<string>1</string>
+
+	<!-- URL Scheme for OAuth Callback -->
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLName</key>
+			<string>com.yourcompany.rxstorage</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>rxstorage</string>
+			</array>
+		</dict>
+	</array>
+
+	<!-- iOS Configuration -->
+	<key>LSRequiresIPhoneOS</key>
+	<true/>
+
+	<key>UIApplicationSceneManifest</key>
+	<dict>
+		<key>UIApplicationSupportsMultipleScenes</key>
+		<true/>
+	</dict>
+
+	<key>UIRequiredDeviceCapabilities</key>
+	<array>
+		<string>arm64</string>
+	</array>
+
+	<key>UISupportedInterfaceOrientations</key>
+	<array>
+		<string>UIInterfaceOrientationPortrait</string>
+		<string>UIInterfaceOrientationLandscapeLeft</string>
+		<string>UIInterfaceOrientationLandscapeRight</string>
+	</array>
+
+	<key>UISupportedInterfaceOrientations~ipad</key>
+	<array>
+		<string>UIInterfaceOrientationPortrait</string>
+		<string>UIInterfaceOrientationPortraitUpsideDown</string>
+		<string>UIInterfaceOrientationLandscapeLeft</string>
+		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
 </dict>
 </plist>

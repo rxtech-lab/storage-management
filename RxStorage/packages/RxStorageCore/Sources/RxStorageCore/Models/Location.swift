@@ -1,0 +1,66 @@
+//
+//  Location.swift
+//  RxStorageCore
+//
+//  Location model matching API schema
+//
+
+import Foundation
+import CoreLocation
+
+/// Geographic location with coordinates
+/// Note: When embedded in Item responses, only id and title are returned
+public struct Location: Codable, Identifiable, Hashable, Sendable {
+    public let id: Int
+    public let title: String
+    public let latitude: Double?
+    public let longitude: Double?
+    public let createdAt: Date?
+    public let updatedAt: Date?
+
+    public init(
+        id: Int,
+        title: String,
+        latitude: Double? = nil,
+        longitude: Double? = nil,
+        createdAt: Date? = nil,
+        updatedAt: Date? = nil
+    ) {
+        self.id = id
+        self.title = title
+        self.latitude = latitude
+        self.longitude = longitude
+        self.createdAt = createdAt
+        self.updatedAt = updatedAt
+    }
+
+    /// Convert to CLLocationCoordinate2D for MapKit
+    /// Returns nil if latitude or longitude is not available
+    public var coordinate: CLLocationCoordinate2D? {
+        guard let latitude = latitude, let longitude = longitude else { return nil }
+        return CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
+    }
+}
+
+/// Request body for creating a new location
+public struct NewLocationRequest: Codable, Sendable {
+    public let title: String
+    public let latitude: Double
+    public let longitude: Double
+
+    public init(title: String, latitude: Double, longitude: Double) {
+        self.title = title
+        self.latitude = latitude
+        self.longitude = longitude
+    }
+
+    /// Convenience initializer from CLLocationCoordinate2D
+    public init(title: String, coordinate: CLLocationCoordinate2D) {
+        self.title = title
+        self.latitude = coordinate.latitude
+        self.longitude = coordinate.longitude
+    }
+}
+
+/// Request body for updating a location
+public typealias UpdateLocationRequest = NewLocationRequest
