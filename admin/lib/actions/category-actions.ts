@@ -6,8 +6,11 @@ import { eq } from "drizzle-orm";
 import { db, categories, type Category, type NewCategory } from "@/lib/db";
 import { ensureSchemaInitialized } from "@/lib/db/client";
 
-export async function getCategories(): Promise<Category[]> {
+export async function getCategories(userId?: string): Promise<Category[]> {
   await ensureSchemaInitialized();
+  if (userId) {
+    return db.select().from(categories).where(eq(categories.userId, userId)).orderBy(categories.name);
+  }
   return db.select().from(categories).orderBy(categories.name);
 }
 
@@ -21,7 +24,8 @@ export async function getCategory(id: number): Promise<Category | undefined> {
 }
 
 export async function createCategoryAction(
-  data: Omit<NewCategory, "id" | "createdAt" | "updatedAt">
+  data: Omit<NewCategory, "id" | "createdAt" | "updatedAt">,
+  userId: string
 ): Promise<{ success: boolean; data?: Category; error?: string }> {
   try {
     const now = new Date();
@@ -29,6 +33,7 @@ export async function createCategoryAction(
       .insert(categories)
       .values({
         ...data,
+        userId,
         createdAt: now,
         updatedAt: now,
       })
@@ -45,9 +50,21 @@ export async function createCategoryAction(
 
 export async function updateCategoryAction(
   id: number,
-  data: Partial<Omit<NewCategory, "id" | "createdAt" | "updatedAt">>
+  data: Partial<Omit<NewCategory, "id" | "createdAt" | "updatedAt">>,
+  userId: string
 ): Promise<{ success: boolean; data?: Category; error?: string }> {
   try {
+    // Verify ownership
+    const existing = await db
+      .select({ userId: categories.userId })
+      .from(categories)
+      .where(eq(categories.id, id))
+      .limit(1);
+
+    if (!existing[0] || existing[0].userId !== userId) {
+      return { success: false, error: "Permission denied" };
+    }
+
     const result = await db
       .update(categories)
       .set({ ...data, updatedAt: new Date() })
@@ -65,9 +82,21 @@ export async function updateCategoryAction(
 }
 
 export async function deleteCategoryAction(
-  id: number
+  id: number,
+  userId: string
 ): Promise<{ success: boolean; error?: string }> {
   try {
+    // Verify ownership
+    const existing = await db
+      .select({ userId: categories.userId })
+      .from(categories)
+      .where(eq(categories.id, id))
+      .limit(1);
+
+    if (!existing[0] || existing[0].userId !== userId) {
+      return { success: false, error: "Permission denied" };
+    }
+
     await db.delete(categories).where(eq(categories.id, id));
     revalidatePath("/categories");
     return { success: true };
@@ -80,24 +109,25 @@ export async function deleteCategoryAction(
 }
 
 export async function createCategoryAndRedirect(
-  data: Omit<NewCategory, "id" | "createdAt" | "updatedAt">
+  data: Omit<NewCategory, "id" | "createdAt" | "updatedAt">,
+  userId: string
 ) {
-  const result = await createCategoryAction(data);
+  const result = await createCategoryAction(data, userId);
   if (result.success) {
     redirect("/categories");
   }
   return result;
 }
 
-export async function deleteCategoryAndRedirect(id: number) {
-  const result = await deleteCategoryAction(id);
+export async function deleteCategoryAndRedirect(id: number, userId: string) {
+  const result = await deleteCategoryAction(id, userId);
   if (result.success) {
     redirect("/categories");
   }
   return result;
 }
 
-export async function deleteCategoryFormAction(id: number): Promise<void> {
-  await deleteCategoryAction(id);
+export async function deleteCategoryFormAction(id: number, userId: string): Promise<void> {
+  await deleteCategoryAction(id, userId);
   revalidatePath("/categories");
 }

@@ -116,3 +116,23 @@ Required in `.env`:
 - Public/private visibility with email whitelist access control
 - REST APIs for iOS mobile app consumption
 - S3-compatible file upload
+
+## E2E Testing
+
+E2E tests use Playwright and run against an **in-memory SQLite database** (not the real Turso database).
+
+```bash
+bunx playwright test              # Run all E2E tests
+bunx playwright test e2e/api      # Run API tests only
+```
+
+**Key files:**
+- `playwright.config.ts` - Playwright configuration
+- `playwright.global-setup.ts` - Test setup
+- `lib/db/client.ts` - Creates in-memory DB when `IS_E2E=true`
+- `lib/db/init-schema.ts` - Initializes schema from migration file
+- `lib/db/migrations/0000_certain_jack_flag.sql` - Schema SQL for in-memory DB
+
+**Important:** When adding new columns to schema files in `lib/db/schema/`, you must also update the migration SQL file at `lib/db/migrations/0000_certain_jack_flag.sql` for E2E tests to work.
+
+**Multi-user testing:** Use `X-Test-User-Id` header to simulate different users in E2E tests.

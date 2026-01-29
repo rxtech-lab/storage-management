@@ -63,10 +63,12 @@ export async function getSession(
   request?: Request
 ): Promise<Session | null> {
   // Return mock session for e2e tests
+  // Support custom test user ID via X-Test-User-Id header for multi-user testing
   if (process.env.IS_E2E === "true") {
+    const testUserId = request?.headers.get("X-Test-User-Id") || "test-user-id";
     return {
       user: {
-        id: "test-user-id",
+        id: testUserId,
         name: "Test User",
         email: "test@example.com",
         image: null,

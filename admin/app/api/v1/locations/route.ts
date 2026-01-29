@@ -2,13 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth-helper";
 import { getLocations, createLocationAction } from "@/lib/actions/location-actions";
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   const session = await getSession(request);
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const locations = await getLocations();
+  const locations = await getLocations(session.user.id);
   return NextResponse.json({ data: locations });
 }
 
@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const result = await createLocationAction(body);
+    const result = await createLocationAction(body, session.user.id);
 
     if (result.success) {
       return NextResponse.json({ data: result.data }, { status: 201 });

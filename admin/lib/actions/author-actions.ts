@@ -6,8 +6,11 @@ import { eq } from "drizzle-orm";
 import { db, authors, type Author, type NewAuthor } from "@/lib/db";
 import { ensureSchemaInitialized } from "@/lib/db/client";
 
-export async function getAuthors(): Promise<Author[]> {
+export async function getAuthors(userId?: string): Promise<Author[]> {
   await ensureSchemaInitialized();
+  if (userId) {
+    return db.select().from(authors).where(eq(authors.userId, userId)).orderBy(authors.name);
+  }
   return db.select().from(authors).orderBy(authors.name);
 }
 
@@ -21,7 +24,8 @@ export async function getAuthor(id: number): Promise<Author | undefined> {
 }
 
 export async function createAuthorAction(
-  data: Omit<NewAuthor, "id" | "createdAt" | "updatedAt">
+  data: Omit<NewAuthor, "id" | "createdAt" | "updatedAt">,
+  userId: string
 ): Promise<{ success: boolean; data?: Author; error?: string }> {
   try {
     const now = new Date();
@@ -29,6 +33,7 @@ export async function createAuthorAction(
       .insert(authors)
       .values({
         ...data,
+        userId,
         createdAt: now,
         updatedAt: now,
       })
@@ -45,9 +50,21 @@ export async function createAuthorAction(
 
 export async function updateAuthorAction(
   id: number,
-  data: Partial<Omit<NewAuthor, "id" | "createdAt" | "updatedAt">>
+  data: Partial<Omit<NewAuthor, "id" | "createdAt" | "updatedAt">>,
+  userId: string
 ): Promise<{ success: boolean; data?: Author; error?: string }> {
   try {
+    // Verify ownership
+    const existing = await db
+      .select({ userId: authors.userId })
+      .from(authors)
+      .where(eq(authors.id, id))
+      .limit(1);
+
+    if (!existing[0] || existing[0].userId !== userId) {
+      return { success: false, error: "Permission denied" };
+    }
+
     const result = await db
       .update(authors)
       .set({ ...data, updatedAt: new Date() })
@@ -65,9 +82,21 @@ export async function updateAuthorAction(
 }
 
 export async function deleteAuthorAction(
-  id: number
+  id: number,
+  userId: string
 ): Promise<{ success: boolean; error?: string }> {
   try {
+    // Verify ownership
+    const existing = await db
+      .select({ userId: authors.userId })
+      .from(authors)
+      .where(eq(authors.id, id))
+      .limit(1);
+
+    if (!existing[0] || existing[0].userId !== userId) {
+      return { success: false, error: "Permission denied" };
+    }
+
     await db.delete(authors).where(eq(authors.id, id));
     revalidatePath("/authors");
     return { success: true };
@@ -80,24 +109,25 @@ export async function deleteAuthorAction(
 }
 
 export async function createAuthorAndRedirect(
-  data: Omit<NewAuthor, "id" | "createdAt" | "updatedAt">
+  data: Omit<NewAuthor, "id" | "createdAt" | "updatedAt">,
+  userId: string
 ) {
-  const result = await createAuthorAction(data);
+  const result = await createAuthorAction(data, userId);
   if (result.success) {
     redirect("/authors");
   }
   return result;
 }
 
-export async function deleteAuthorAndRedirect(id: number) {
-  const result = await deleteAuthorAction(id);
+export async function deleteAuthorAndRedirect(id: number, userId: string) {
+  const result = await deleteAuthorAction(id, userId);
   if (result.success) {
     redirect("/authors");
   }
   return result;
 }
 
-export async function deleteAuthorFormAction(id: number): Promise<void> {
-  await deleteAuthorAction(id);
+export async function deleteAuthorFormAction(id: number, userId: string): Promise<void> {
+  await deleteAuthorAction(id, userId);
   revalidatePath("/authors");
 }

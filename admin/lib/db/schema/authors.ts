@@ -2,6 +2,7 @@ import { sqliteTable, text, integer } from "drizzle-orm/sqlite-core";
 
 export const authors = sqliteTable("authors", {
   id: integer("id").primaryKey({ autoIncrement: true }),
+  userId: text("user_id").notNull(),
   name: text("name").notNull(),
   bio: text("bio"),
   createdAt: integer("created_at", { mode: "timestamp" })

@@ -6,8 +6,11 @@ import { eq } from "drizzle-orm";
 import { db, locations, type Location, type NewLocation } from "@/lib/db";
 import { ensureSchemaInitialized } from "@/lib/db/client";
 
-export async function getLocations(): Promise<Location[]> {
+export async function getLocations(userId?: string): Promise<Location[]> {
   await ensureSchemaInitialized();
+  if (userId) {
+    return db.select().from(locations).where(eq(locations.userId, userId)).orderBy(locations.title);
+  }
   return db.select().from(locations).orderBy(locations.title);
 }
 
@@ -22,7 +25,8 @@ export async function getLocation(id: number): Promise<Location | undefined> {
 }
 
 export async function createLocationAction(
-  data: Omit<NewLocation, "id" | "createdAt" | "updatedAt">
+  data: Omit<NewLocation, "id" | "createdAt" | "updatedAt">,
+  userId: string
 ): Promise<{ success: boolean; data?: Location; error?: string }> {
   try {
     const now = new Date();
@@ -30,6 +34,7 @@ export async function createLocationAction(
       .insert(locations)
       .values({
         ...data,
+        userId,
         createdAt: now,
         updatedAt: now,
       })
@@ -46,9 +51,21 @@ export async function createLocationAction(
 
 export async function updateLocationAction(
   id: number,
-  data: Partial<Omit<NewLocation, "id" | "createdAt" | "updatedAt">>
+  data: Partial<Omit<NewLocation, "id" | "createdAt" | "updatedAt">>,
+  userId: string
 ): Promise<{ success: boolean; data?: Location; error?: string }> {
   try {
+    // Verify ownership
+    const existing = await db
+      .select({ userId: locations.userId })
+      .from(locations)
+      .where(eq(locations.id, id))
+      .limit(1);
+
+    if (!existing[0] || existing[0].userId !== userId) {
+      return { success: false, error: "Permission denied" };
+    }
+
     const result = await db
       .update(locations)
       .set({ ...data, updatedAt: new Date() })
@@ -66,9 +83,21 @@ export async function updateLocationAction(
 }
 
 export async function deleteLocationAction(
-  id: number
+  id: number,
+  userId: string
 ): Promise<{ success: boolean; error?: string }> {
   try {
+    // Verify ownership
+    const existing = await db
+      .select({ userId: locations.userId })
+      .from(locations)
+      .where(eq(locations.id, id))
+      .limit(1);
+
+    if (!existing[0] || existing[0].userId !== userId) {
+      return { success: false, error: "Permission denied" };
+    }
+
     await db.delete(locations).where(eq(locations.id, id));
     revalidatePath("/locations");
     return { success: true };
@@ -81,24 +110,25 @@ export async function deleteLocationAction(
 }
 
 export async function createLocationAndRedirect(
-  data: Omit<NewLocation, "id" | "createdAt" | "updatedAt">
+  data: Omit<NewLocation, "id" | "createdAt" | "updatedAt">,
+  userId: string
 ) {
-  const result = await createLocationAction(data);
+  const result = await createLocationAction(data, userId);
   if (result.success) {
     redirect("/locations");
   }
   return result;
 }
 
-export async function deleteLocationAndRedirect(id: number) {
-  const result = await deleteLocationAction(id);
+export async function deleteLocationAndRedirect(id: number, userId: string) {
+  const result = await deleteLocationAction(id, userId);
   if (result.success) {
     redirect("/locations");
   }
   return result;
 }
 
-export async function deleteLocationFormAction(id: number): Promise<void> {
-  await deleteLocationAction(id);
+export async function deleteLocationFormAction(id: number, userId: string): Promise<void> {
+  await deleteLocationAction(id, userId);
   revalidatePath("/locations");
 }

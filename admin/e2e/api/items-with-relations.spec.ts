@@ -74,8 +74,8 @@ test.describe.serial('Items API with Relations', () => {
 
     expect(response.status()).toBe(200);
     const body = await response.json();
-    expect(body.data).toBeInstanceOf(Array);
-    expect(body.data.every((item: any) => item.categoryId === categoryId)).toBeTruthy();
+    expect(body).toBeInstanceOf(Array);
+    expect(body.every((item: any) => item.categoryId === categoryId)).toBeTruthy();
   });
 
   test('GET /api/v1/items?locationId={id} - should filter by location', async ({ request }) => {
@@ -83,8 +83,8 @@ test.describe.serial('Items API with Relations', () => {
 
     expect(response.status()).toBe(200);
     const body = await response.json();
-    expect(body.data).toBeInstanceOf(Array);
-    expect(body.data.every((item: any) => item.locationId === locationId)).toBeTruthy();
+    expect(body).toBeInstanceOf(Array);
+    expect(body.every((item: any) => item.locationId === locationId)).toBeTruthy();
   });
 
   test('GET /api/v1/items?authorId={id} - should filter by author', async ({ request }) => {
@@ -92,8 +92,8 @@ test.describe.serial('Items API with Relations', () => {
 
     expect(response.status()).toBe(200);
     const body = await response.json();
-    expect(body.data).toBeInstanceOf(Array);
-    expect(body.data.every((item: any) => item.authorId === authorId)).toBeTruthy();
+    expect(body).toBeInstanceOf(Array);
+    expect(body.every((item: any) => item.authorId === authorId)).toBeTruthy();
   });
 
   test('POST /api/v1/items - should create child item with parent', async ({ request }) => {
@@ -132,8 +132,8 @@ test.describe.serial('Items API with Relations', () => {
 
     expect(response.status()).toBe(200);
     const body = await response.json();
-    expect(body.data).toBeInstanceOf(Array);
-    expect(body.data.every((item: any) => item.visibility === 'public')).toBeTruthy();
+    expect(body).toBeInstanceOf(Array);
+    expect(body.every((item: any) => item.visibility === 'public')).toBeTruthy();
   });
 
   test('Cleanup - delete test data', async ({ request }) => {

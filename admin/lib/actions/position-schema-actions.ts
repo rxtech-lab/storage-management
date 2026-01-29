@@ -6,8 +6,11 @@ import { eq } from "drizzle-orm";
 import { db, positionSchemas, type PositionSchema, type NewPositionSchema } from "@/lib/db";
 import { ensureSchemaInitialized } from "@/lib/db/client";
 
-export async function getPositionSchemas(): Promise<PositionSchema[]> {
+export async function getPositionSchemas(userId?: string): Promise<PositionSchema[]> {
   await ensureSchemaInitialized();
+  if (userId) {
+    return db.select().from(positionSchemas).where(eq(positionSchemas.userId, userId)).orderBy(positionSchemas.name);
+  }
   return db.select().from(positionSchemas).orderBy(positionSchemas.name);
 }
 
@@ -21,7 +24,8 @@ export async function getPositionSchema(id: number): Promise<PositionSchema | un
 }
 
 export async function createPositionSchemaAction(
-  data: Omit<NewPositionSchema, "id" | "createdAt" | "updatedAt">
+  data: Omit<NewPositionSchema, "id" | "createdAt" | "updatedAt">,
+  userId: string
 ): Promise<{ success: boolean; data?: PositionSchema; error?: string }> {
   try {
     const now = new Date();
@@ -29,6 +33,7 @@ export async function createPositionSchemaAction(
       .insert(positionSchemas)
       .values({
         ...data,
+        userId,
         createdAt: now,
         updatedAt: now,
       })
@@ -45,9 +50,21 @@ export async function createPositionSchemaAction(
 
 export async function updatePositionSchemaAction(
   id: number,
-  data: Partial<Omit<NewPositionSchema, "id" | "createdAt" | "updatedAt">>
+  data: Partial<Omit<NewPositionSchema, "id" | "createdAt" | "updatedAt">>,
+  userId: string
 ): Promise<{ success: boolean; data?: PositionSchema; error?: string }> {
   try {
+    // Verify ownership
+    const existing = await db
+      .select({ userId: positionSchemas.userId })
+      .from(positionSchemas)
+      .where(eq(positionSchemas.id, id))
+      .limit(1);
+
+    if (!existing[0] || existing[0].userId !== userId) {
+      return { success: false, error: "Permission denied" };
+    }
+
     const result = await db
       .update(positionSchemas)
       .set({ ...data, updatedAt: new Date() })
@@ -65,9 +82,21 @@ export async function updatePositionSchemaAction(
 }
 
 export async function deletePositionSchemaAction(
-  id: number
+  id: number,
+  userId: string
 ): Promise<{ success: boolean; error?: string }> {
   try {
+    // Verify ownership
+    const existing = await db
+      .select({ userId: positionSchemas.userId })
+      .from(positionSchemas)
+      .where(eq(positionSchemas.id, id))
+      .limit(1);
+
+    if (!existing[0] || existing[0].userId !== userId) {
+      return { success: false, error: "Permission denied" };
+    }
+
     await db.delete(positionSchemas).where(eq(positionSchemas.id, id));
     revalidatePath("/position-schemas");
     return { success: true };
@@ -80,24 +109,25 @@ export async function deletePositionSchemaAction(
 }
 
 export async function createPositionSchemaAndRedirect(
-  data: Omit<NewPositionSchema, "id" | "createdAt" | "updatedAt">
+  data: Omit<NewPositionSchema, "id" | "createdAt" | "updatedAt">,
+  userId: string
 ) {
-  const result = await createPositionSchemaAction(data);
+  const result = await createPositionSchemaAction(data, userId);
   if (result.success) {
     redirect("/position-schemas");
   }
   return result;
 }
 
-export async function deletePositionSchemaAndRedirect(id: number) {
-  const result = await deletePositionSchemaAction(id);
+export async function deletePositionSchemaAndRedirect(id: number, userId: string) {
+  const result = await deletePositionSchemaAction(id, userId);
   if (result.success) {
     redirect("/position-schemas");
   }
   return result;
 }
 
-export async function deletePositionSchemaFormAction(id: number): Promise<void> {
-  await deletePositionSchemaAction(id);
+export async function deletePositionSchemaFormAction(id: number, userId: string): Promise<void> {
+  await deletePositionSchemaAction(id, userId);
   revalidatePath("/position-schemas");
 }
