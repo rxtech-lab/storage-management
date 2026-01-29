@@ -6,6 +6,7 @@ import { authors } from "./authors";
 
 export const items = sqliteTable("items", {
   id: integer("id").primaryKey({ autoIncrement: true }),
+  userId: text("user_id").notNull(),
   title: text("title").notNull(),
   description: text("description"),
   originalQrCode: text("original_qr_code"),

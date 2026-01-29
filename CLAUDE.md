@@ -1,5 +1,7 @@
 # CLAUDE.md
 
+**You don't have access to cd cmd, please write a script in the root and run it when command needs cd**
+
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ## Project Overview
@@ -20,7 +22,8 @@ bun run db:push   # Push schema to database
 bun run db:studio # Open Drizzle Studio
 
 # iOS App
-open RxStorage/RxStorage.xcodeproj
+./build.sh        # Build for iOS Simulator (Debug config)
+open RxStorage/RxStorage.xcodeproj  # Open in Xcode
 ```
 
 ## Web Admin Architecture
@@ -123,15 +126,19 @@ Required in `/admin/.env`:
 ## iOS Mobile App Architecture
 
 ### Tech Stack
-- Swift with SwiftUI
-- SwiftData for local persistence
-- Communicates with Admin REST APIs
+- Swift with SwiftUI (iOS 17+)
+- @Observable macro for state management (no SwiftData)
+- OAuth 2.0 PKCE authentication via auth.rxlab.app
+- Bearer token authentication for API requests
+- RxStorageCore SPM framework (shared between main app and App Clips)
+- NavigationSplitView for adaptive iPad/iPhone layout
 
 ### Two Modes
 
-**Full App Mode** - Requires installation and authentication
+**Full App Mode** - Requires installation and OAuth authentication
 - Full CRUD operations on items
 - Complete access to all features
+- Pull-to-refresh on lists
 
 **App Clips Mode** - Triggered by QR code or NFC chip scan
 - View item details only (no create/update/delete)
@@ -142,10 +149,191 @@ Required in `/admin/.env`:
 ### Directory Structure
 ```
 RxStorage/
-├── RxStorage/               # Main app target (full CRUD)
-├── RxStorageClips/          # App Clips target (view only)
-├── RxStorageTests/          # Unit tests
-└── RxStorageUITests/        # UI tests
+├── RxStorage/                      # Main app target
+│   ├── Config/                     # Build configurations
+│   │   ├── Debug.xcconfig          # Dev environment (localhost)
+│   │   ├── Release.xcconfig        # Prod environment
+│   │   └── Secrets.xcconfig        # OAuth client IDs (gitignored)
+│   ├── Info.plist                  # Uses $(VARIABLE) substitution
+│   ├── ContentView.swift           # Auth state + Login/Main view
+│   └── RxStorageApp.swift          # App entry point
+├── RxStorageCore/                  # SPM framework (shared code)
+│   └── Sources/RxStorageCore/
+│       ├── Models/                 # Codable models (API-only)
+│       ├── Networking/             # APIClient + Services
+│       ├── Authentication/         # OAuthManager + TokenStorage
+│       ├── ViewModels/             # @Observable view models
+│       ├── Views/                  # SwiftUI views
+│       └── Configuration/          # AppConfiguration
+├── RxStorageClips/                 # App Clips target
+├── RxStorageTests/                 # Unit tests
+└── RxStorageUITests/               # UI tests
 ```
 
-See `MOBILE_APP_DOCUMENTATION.md` for detailed implementation guide.
+### Building the iOS App
+
+**Prerequisites:**
+1. Xcode 15+ installed
+2. iOS Simulator or device
+
+**Initial Setup:**
+```bash
+# 1. Create Secrets.xcconfig from example
+cd RxStorage/RxStorage/Config
+cp Secrets.xcconfig.example Secrets.xcconfig
+
+# 2. Edit Secrets.xcconfig with your OAuth client IDs
+# AUTH_CLIENT_ID_DEV = client_XXXXX
+# AUTH_CLIENT_ID_PROD = client_XXXXX
+```
+
+**Build Commands:**
+```bash
+# From repository root
+./build.sh                    # Build for simulator (Debug config)
+
+# Or use Xcode directly
+open RxStorage/RxStorage.xcodeproj
+# Cmd+B to build, Cmd+R to run
+```
+
+**Build Script Details:**
+The `build.sh` script uses xcodebuild with:
+- Scheme: RxStorage
+- Configuration: Debug
+- Destination: iPhone 17, iOS 26.2 Simulator
+- SDK: iphonesimulator
+
+### Configuration System
+
+**xcconfig Files** - Environment-based configuration:
+- `Debug.xcconfig` - Development (localhost API)
+- `Release.xcconfig` - Production (rxlab.app API)
+- `Secrets.xcconfig` - OAuth client IDs (gitignored, must create locally)
+
+**Info.plist Variable Substitution:**
+```xml
+<key>API_BASE_URL</key>
+<string>$(API_BASE_URL)</string>
+<key>AUTH_CLIENT_ID</key>
+<string>$(AUTH_CLIENT_ID)</string>
+```
+
+Values are resolved at build time from xcconfig files.
+
+**Reading Configuration in Swift:**
+```swift
+// AppConfiguration.swift reads from Info.plist
+let config = AppConfiguration.shared
+let apiBaseURL = config.apiBaseURL  // "http://localhost:3000" in Debug
+let clientID = config.authClientID  // From Secrets.xcconfig
+```
+
+### Authentication Flow
+
+**OAuth 2.0 PKCE Flow:**
+1. User taps "Sign in with RxLab" in LoginView
+2. OAuthManager launches ASWebAuthenticationSession
+3. User authenticates at auth.rxlab.app
+4. Callback to `rxstorage://oauth/callback` with auth code
+5. Exchange code for access/refresh tokens (no client secret needed)
+6. Store tokens securely in Keychain via TokenStorage
+7. Inject Bearer token in all API requests via APIClient
+
+**URL Scheme Registration:**
+Registered in `Info.plist`:
+```xml
+<key>CFBundleURLTypes</key>
+<array>
+  <dict>
+    <key>CFBundleURLSchemes</key>
+    <array>
+      <string>rxstorage</string>
+    </array>
+  </dict>
+</array>
+```
+
+**Bearer Token Authentication:**
+The iOS app uses Bearer tokens for API authentication:
+```swift
+// APIClient automatically adds header to all requests
+Authorization: Bearer <access_token>
+```
+
+Backend supports both session-based auth (web) and Bearer tokens (mobile) in `/api/v1` routes.
+
+### Backend Requirements for iOS App
+
+The web admin API must support Bearer token authentication for mobile clients:
+
+**API Route Pattern:**
+```typescript
+// app/api/v1/items/route.ts
+export async function GET(request: NextRequest) {
+  const session = await getSession(request); // Supports Bearer token
+  if (!session) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  const items = await getItems(filters);
+  return NextResponse.json(items); // Direct array
+}
+```
+
+**Middleware Configuration:**
+`proxy.ts` must exclude `/api/v1` routes from session-based auth:
+```typescript
+const publicPaths = ["/login", "/api/auth", "/preview", "/api/v1"];
+```
+
+This allows API routes to handle their own authentication (Bearer token validation).
+
+**Token Verification:**
+The `getSession()` helper in `lib/auth-helper.ts` checks:
+1. Bearer token in Authorization header (for mobile)
+2. Falls back to session cookie (for web)
+
+### Key Features
+
+- **OAuth Login** - ASWebAuthenticationSession with PKCE (no client secret)
+- **Bearer Token Auth** - Secure API authentication via Keychain
+- **Pull to Refresh** - Available on all list views including empty states
+- **NavigationSplitView** - Three-column layout on iPad, stack on iPhone
+- **QR Code Support** - Generate, scan, print QR codes for items
+- **App Clips** - View-only mode triggered by QR/NFC
+- **Hierarchical Items** - Parent-child relationships
+- **Dynamic Forms** - JSON schema-based position forms
+- **Inline Creation** - Create related entities (categories, locations) during item creation
+
+### Testing
+
+**Run Unit Tests:**
+```bash
+# From Xcode: Cmd+U
+# Or via CLI:
+xcodebuild test \
+  -project RxStorage/RxStorage.xcodeproj \
+  -scheme RxStorage \
+  -destination 'platform=iOS Simulator,name=iPhone 17'
+```
+
+**Manual Testing Checklist:**
+1. OAuth login flow (test token storage)
+2. List items (pull-to-refresh, search, filters)
+3. View item detail (hierarchy, contents, QR code)
+4. Create/edit/delete items
+5. Generate and scan QR codes
+6. Test on iPad (NavigationSplitView)
+7. Test App Clips activation via QR code
+
+### Team Setup
+
+**New Developer Onboarding:**
+1. Clone repository
+2. Install dependencies: `cd admin && bun install`
+3. Copy `RxStorage/RxStorage/Config/Secrets.xcconfig.example` to `Secrets.xcconfig`
+4. Contact team for OAuth client IDs and add to `Secrets.xcconfig`
+5. Open `RxStorage/RxStorage.xcodeproj` in Xcode
+6. Build and run (Cmd+R)
+
+See `RxStorage/RxStorage/Config/XCCONFIG_SETUP.md` for detailed configuration guide.

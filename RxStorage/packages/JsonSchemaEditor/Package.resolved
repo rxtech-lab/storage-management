@@ -1,0 +1,24 @@
+{
+  "originHash" : "877b38b5d55aa467ce9cc8a8076fb3fffd70f039cf14044e2c586854f85a4f40",
+  "pins" : [
+    {
+      "identity" : "swift-json-schema",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/sirily11/swift-json-schema.git",
+      "state" : {
+        "revision" : "663afab8c131151950fd7fb114871c02a529a4b4",
+        "version" : "1.0.2"
+      }
+    },
+    {
+      "identity" : "viewinspector",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/nalexn/ViewInspector.git",
+      "state" : {
+        "revision" : "e9a06346499a3a889165647e3f23f8a7b2609a1c",
+        "version" : "0.10.3"
+      }
+    }
+  ],
+  "version" : 3
+}

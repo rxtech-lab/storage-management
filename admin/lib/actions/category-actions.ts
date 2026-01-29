@@ -5,9 +5,13 @@ import { redirect } from "next/navigation";
 import { eq } from "drizzle-orm";
 import { db, categories, type Category, type NewCategory } from "@/lib/db";
 import { ensureSchemaInitialized } from "@/lib/db/client";
+import { getSession } from "@/lib/auth-helper";
 
-export async function getCategories(): Promise<Category[]> {
+export async function getCategories(userId?: string): Promise<Category[]> {
   await ensureSchemaInitialized();
+  if (userId) {
+    return db.select().from(categories).where(eq(categories.userId, userId)).orderBy(categories.name);
+  }
   return db.select().from(categories).orderBy(categories.name);
 }
 
@@ -21,14 +25,26 @@ export async function getCategory(id: number): Promise<Category | undefined> {
 }
 
 export async function createCategoryAction(
-  data: Omit<NewCategory, "id" | "createdAt" | "updatedAt">
+  data: Omit<NewCategory, "id" | "userId" | "createdAt" | "updatedAt">,
+  userId?: string
 ): Promise<{ success: boolean; data?: Category; error?: string }> {
   try {
+    // Get userId from session if not provided
+    let resolvedUserId = userId;
+    if (!resolvedUserId) {
+      const session = await getSession();
+      if (!session?.user?.id) {
+        return { success: false, error: "Unauthorized" };
+      }
+      resolvedUserId = session.user.id;
+    }
+
     const now = new Date();
     const result = await db
       .insert(categories)
       .values({
         ...data,
+        userId: resolvedUserId,
         createdAt: now,
         updatedAt: now,
       })
@@ -45,9 +61,31 @@ export async function createCategoryAction(
 
 export async function updateCategoryAction(
   id: number,
-  data: Partial<Omit<NewCategory, "id" | "createdAt" | "updatedAt">>
+  data: Partial<Omit<NewCategory, "id" | "userId" | "createdAt" | "updatedAt">>,
+  userId?: string
 ): Promise<{ success: boolean; data?: Category; error?: string }> {
   try {
+    // Get userId from session if not provided
+    let resolvedUserId = userId;
+    if (!resolvedUserId) {
+      const session = await getSession();
+      if (!session?.user?.id) {
+        return { success: false, error: "Unauthorized" };
+      }
+      resolvedUserId = session.user.id;
+    }
+
+    // Verify ownership
+    const existing = await db
+      .select({ userId: categories.userId })
+      .from(categories)
+      .where(eq(categories.id, id))
+      .limit(1);
+
+    if (!existing[0] || existing[0].userId !== resolvedUserId) {
+      return { success: false, error: "Permission denied" };
+    }
+
     const result = await db
       .update(categories)
       .set({ ...data, updatedAt: new Date() })
@@ -65,9 +103,31 @@ export async function updateCategoryAction(
 }
 
 export async function deleteCategoryAction(
-  id: number
+  id: number,
+  userId?: string
 ): Promise<{ success: boolean; error?: string }> {
   try {
+    // Get userId from session if not provided
+    let resolvedUserId = userId;
+    if (!resolvedUserId) {
+      const session = await getSession();
+      if (!session?.user?.id) {
+        return { success: false, error: "Unauthorized" };
+      }
+      resolvedUserId = session.user.id;
+    }
+
+    // Verify ownership
+    const existing = await db
+      .select({ userId: categories.userId })
+      .from(categories)
+      .where(eq(categories.id, id))
+      .limit(1);
+
+    if (!existing[0] || existing[0].userId !== resolvedUserId) {
+      return { success: false, error: "Permission denied" };
+    }
+
     await db.delete(categories).where(eq(categories.id, id));
     revalidatePath("/categories");
     return { success: true };
@@ -80,17 +140,18 @@ export async function deleteCategoryAction(
 }
 
 export async function createCategoryAndRedirect(
-  data: Omit<NewCategory, "id" | "createdAt" | "updatedAt">
+  data: Omit<NewCategory, "id" | "userId" | "createdAt" | "updatedAt">,
+  userId?: string
 ) {
-  const result = await createCategoryAction(data);
+  const result = await createCategoryAction(data, userId);
   if (result.success) {
     redirect("/categories");
   }
   return result;
 }
 
-export async function deleteCategoryAndRedirect(id: number) {
-  const result = await deleteCategoryAction(id);
+export async function deleteCategoryAndRedirect(id: number, userId?: string) {
+  const result = await deleteCategoryAction(id, userId);
   if (result.success) {
     redirect("/categories");
   }

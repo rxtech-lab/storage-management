@@ -8,6 +8,13 @@
 
 /* Begin PBXBuildFile section */
 		DF6625B52F29138400333552 /* RxStorageClips.app in Embed App Clips */ = {isa = PBXBuildFile; fileRef = DF6625902F29138300333552 /* RxStorageClips.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		DF6626072F2A54C200333552 /* RxStorageCore in Frameworks */ = {isa = PBXBuildFile; productRef = DF6626062F2A54C200333552 /* RxStorageCore */; };
+		DF6626562F2B803300333552 /* JSONSchemaForm in Frameworks */ = {isa = PBXBuildFile; productRef = DF6626552F2B803300333552 /* JSONSchemaForm */; };
+		DF6626582F2B803300333552 /* JSONSchemaValidator in Frameworks */ = {isa = PBXBuildFile; productRef = DF6626572F2B803300333552 /* JSONSchemaValidator */; };
+		DF66265B2F2B821600333552 /* JsonSchemaEditor in Frameworks */ = {isa = PBXBuildFile; productRef = DF66265A2F2B821600333552 /* JsonSchemaEditor */; };
+		DF66265E2F2B826C00333552 /* JsonSchemaEditor in Frameworks */ = {isa = PBXBuildFile; productRef = DF66265D2F2B826C00333552 /* JsonSchemaEditor */; };
+		DF6626612F2B828600333552 /* RxStorageCore in Frameworks */ = {isa = PBXBuildFile; productRef = DF6626602F2B828600333552 /* RxStorageCore */; };
+		DF6626642F2B892800333552 /* JSONSchema in Frameworks */ = {isa = PBXBuildFile; productRef = DF6626632F2B892800333552 /* JSONSchema */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -132,6 +139,13 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				DF6626072F2A54C200333552 /* RxStorageCore in Frameworks */,
+				DF6626612F2B828600333552 /* RxStorageCore in Frameworks */,
+				DF6626582F2B803300333552 /* JSONSchemaValidator in Frameworks */,
+				DF6626642F2B892800333552 /* JSONSchema in Frameworks */,
+				DF66265B2F2B821600333552 /* JsonSchemaEditor in Frameworks */,
+				DF6626562F2B803300333552 /* JSONSchemaForm in Frameworks */,
+				DF66265E2F2B826C00333552 /* JsonSchemaEditor in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -221,6 +235,13 @@
 			);
 			name = RxStorage;
 			packageProductDependencies = (
+				DF6626062F2A54C200333552 /* RxStorageCore */,
+				DF6626552F2B803300333552 /* JSONSchemaForm */,
+				DF6626572F2B803300333552 /* JSONSchemaValidator */,
+				DF66265A2F2B821600333552 /* JsonSchemaEditor */,
+				DF66265D2F2B826C00333552 /* JsonSchemaEditor */,
+				DF6626602F2B828600333552 /* RxStorageCore */,
+				DF6626632F2B892800333552 /* JSONSchema */,
 			);
 			productName = RxStorage;
 			productReference = DF66255D2F29136F00333552 /* RxStorage.app */;
@@ -383,6 +404,12 @@
 			);
 			mainGroup = DF6625542F29136F00333552;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				DF6626542F2B803300333552 /* XCRemoteSwiftPackageReference "swift-jsonschema-form" */,
+				DF66265C2F2B826C00333552 /* XCLocalSwiftPackageReference "packages/JsonSchemaEditor" */,
+				DF66265F2F2B828600333552 /* XCLocalSwiftPackageReference "packages/RxStorageCore" */,
+				DF6626622F2B892800333552 /* XCRemoteSwiftPackageReference "swift-json-schema" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = DF66255E2F29136F00333552 /* Products */;
 			projectDirPath = "";
@@ -587,6 +614,8 @@
 		};
 		DF6625842F29137000333552 /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReferenceAnchor = DF66255F2F29136F00333552 /* RxStorage */;
+			baseConfigurationReferenceRelativePath = Config/Debug.xcconfig;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
@@ -651,6 +680,8 @@
 		};
 		DF6625852F29137000333552 /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReferenceAnchor = DF66255F2F29136F00333552 /* RxStorage */;
+			baseConfigurationReferenceRelativePath = Config/Release.xcconfig;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
@@ -910,11 +941,17 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = P9KK452K8P;
+				ENABLE_APP_SANDBOX = YES;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_OUTGOING_NETWORK_CONNECTIONS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = rxlab.RxStorage.RxStorageClipsUITests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				REGISTER_APP_GROUPS = YES;
 				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
+				SUPPORTS_MACCATALYST = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
@@ -935,6 +972,8 @@
 				PRODUCT_BUNDLE_IDENTIFIER = rxlab.RxStorage.RxStorageClipsUITests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
+				SUPPORTS_MACCATALYST = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
@@ -1011,6 +1050,70 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		DF66265C2F2B826C00333552 /* XCLocalSwiftPackageReference "packages/JsonSchemaEditor" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = packages/JsonSchemaEditor;
+		};
+		DF66265F2F2B828600333552 /* XCLocalSwiftPackageReference "packages/RxStorageCore" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = packages/RxStorageCore;
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		DF6626542F2B803300333552 /* XCRemoteSwiftPackageReference "swift-jsonschema-form" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/sirily11/swift-jsonschema-form";
+			requirement = {
+				branch = main;
+				kind = branch;
+			};
+		};
+		DF6626622F2B892800333552 /* XCRemoteSwiftPackageReference "swift-json-schema" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/sirily11/swift-json-schema";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.0.2;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		DF6626062F2A54C200333552 /* RxStorageCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = RxStorageCore;
+		};
+		DF6626552F2B803300333552 /* JSONSchemaForm */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = DF6626542F2B803300333552 /* XCRemoteSwiftPackageReference "swift-jsonschema-form" */;
+			productName = JSONSchemaForm;
+		};
+		DF6626572F2B803300333552 /* JSONSchemaValidator */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = DF6626542F2B803300333552 /* XCRemoteSwiftPackageReference "swift-jsonschema-form" */;
+			productName = JSONSchemaValidator;
+		};
+		DF66265A2F2B821600333552 /* JsonSchemaEditor */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = JsonSchemaEditor;
+		};
+		DF66265D2F2B826C00333552 /* JsonSchemaEditor */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = JsonSchemaEditor;
+		};
+		DF6626602F2B828600333552 /* RxStorageCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = RxStorageCore;
+		};
+		DF6626632F2B892800333552 /* JSONSchema */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = DF6626622F2B892800333552 /* XCRemoteSwiftPackageReference "swift-json-schema" */;
+			productName = JSONSchema;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = DF6625552F29136F00333552 /* Project object */;
 }

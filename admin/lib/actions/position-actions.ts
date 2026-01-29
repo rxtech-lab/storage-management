@@ -2,8 +2,9 @@
 
 import { revalidatePath } from "next/cache";
 import { eq } from "drizzle-orm";
-import { db, positions, positionSchemas, type Position, type NewPosition } from "@/lib/db";
+import { db, positions, positionSchemas, items, type Position, type NewPosition } from "@/lib/db";
 import { ensureSchemaInitialized } from "@/lib/db/client";
+import { getSession } from "@/lib/auth-helper";
 
 export interface PositionWithSchema extends Position {
   positionSchema?: { id: number; name: string; schema: object } | null;
@@ -14,6 +15,7 @@ export async function getItemPositions(itemId: number): Promise<PositionWithSche
   const results = await db
     .select({
       id: positions.id,
+      userId: positions.userId,
       itemId: positions.itemId,
       positionSchemaId: positions.positionSchemaId,
       data: positions.data,
@@ -39,6 +41,7 @@ export async function getPosition(id: number): Promise<PositionWithSchema | unde
   const results = await db
     .select({
       id: positions.id,
+      userId: positions.userId,
       itemId: positions.itemId,
       positionSchemaId: positions.positionSchemaId,
       data: positions.data,
@@ -65,10 +68,35 @@ export async function getPosition(id: number): Promise<PositionWithSchema | unde
 }
 
 export async function createPositionAction(
-  data: Omit<NewPosition, "id" | "createdAt" | "updatedAt">
+  data: Omit<NewPosition, "id" | "userId" | "createdAt" | "updatedAt">,
+  userId?: string
 ): Promise<{ success: boolean; data?: Position; error?: string }> {
   try {
-    const result = await db.insert(positions).values(data).returning();
+    // Get userId from session if not provided
+    let resolvedUserId = userId;
+    if (!resolvedUserId) {
+      const session = await getSession();
+      if (!session?.user?.id) {
+        return { success: false, error: "Unauthorized" };
+      }
+      resolvedUserId = session.user.id;
+    }
+
+    // Verify user owns the parent item
+    const parentItem = await db
+      .select({ userId: items.userId })
+      .from(items)
+      .where(eq(items.id, data.itemId))
+      .limit(1);
+
+    if (!parentItem[0] || parentItem[0].userId !== resolvedUserId) {
+      return { success: false, error: "Permission denied" };
+    }
+
+    const result = await db.insert(positions).values({
+      ...data,
+      userId: resolvedUserId,
+    }).returning();
     revalidatePath(`/items/${data.itemId}`);
     return { success: true, data: result[0] };
   } catch (error) {
@@ -81,9 +109,31 @@ export async function createPositionAction(
 
 export async function updatePositionAction(
   id: number,
-  data: Partial<Omit<NewPosition, "id" | "createdAt" | "updatedAt">>
+  data: Partial<Omit<NewPosition, "id" | "userId" | "createdAt" | "updatedAt">>,
+  userId?: string
 ): Promise<{ success: boolean; data?: Position; error?: string }> {
   try {
+    // Get userId from session if not provided
+    let resolvedUserId = userId;
+    if (!resolvedUserId) {
+      const session = await getSession();
+      if (!session?.user?.id) {
+        return { success: false, error: "Unauthorized" };
+      }
+      resolvedUserId = session.user.id;
+    }
+
+    // Verify ownership
+    const existing = await db
+      .select({ userId: positions.userId, itemId: positions.itemId })
+      .from(positions)
+      .where(eq(positions.id, id))
+      .limit(1);
+
+    if (!existing[0] || existing[0].userId !== resolvedUserId) {
+      return { success: false, error: "Permission denied" };
+    }
+
     const result = await db
       .update(positions)
       .set({ ...data, updatedAt: new Date() })
@@ -103,20 +153,34 @@ export async function updatePositionAction(
 }
 
 export async function deletePositionAction(
-  id: number
+  id: number,
+  userId?: string
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    const position = await db
-      .select({ itemId: positions.itemId })
+    // Get userId from session if not provided
+    let resolvedUserId = userId;
+    if (!resolvedUserId) {
+      const session = await getSession();
+      if (!session?.user?.id) {
+        return { success: false, error: "Unauthorized" };
+      }
+      resolvedUserId = session.user.id;
+    }
+
+    // Verify ownership
+    const existing = await db
+      .select({ userId: positions.userId, itemId: positions.itemId })
       .from(positions)
       .where(eq(positions.id, id))
       .limit(1);
 
+    if (!existing[0] || existing[0].userId !== resolvedUserId) {
+      return { success: false, error: "Permission denied" };
+    }
+
     await db.delete(positions).where(eq(positions.id, id));
 
-    if (position[0]) {
-      revalidatePath(`/items/${position[0].itemId}`);
-    }
+    revalidatePath(`/items/${existing[0].itemId}`);
     return { success: true };
   } catch (error) {
     return {

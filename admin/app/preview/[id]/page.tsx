@@ -1,4 +1,6 @@
 import { notFound, redirect } from "next/navigation";
+import { headers } from "next/headers";
+import { Metadata } from "next";
 import { auth } from "@/auth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -15,9 +17,44 @@ interface PreviewPageProps {
   params: Promise<{ id: string }>;
 }
 
+export async function generateMetadata({
+  params,
+}: PreviewPageProps): Promise<Metadata> {
+  const { id } = await params;
+  const item = await getItem(parseInt(id));
+
+  if (!item) {
+    return { title: "Item Not Found" };
+  }
+
+  const appClipBundleId = process.env.APPLE_APP_CLIP_BUNDLE_ID;
+
+  return {
+    title: item.title,
+    description: item.description || `View ${item.title}`,
+    ...(appClipBundleId && {
+      other: {
+        "apple-itunes-app": `app-clip-bundle-id=${appClipBundleId}, app-clip-display=card`,
+      },
+    }),
+    openGraph: {
+      title: item.title,
+      description: item.description || undefined,
+      images: item.images?.[0] ? [item.images[0]] : undefined,
+    },
+  };
+}
+
 export default async function PreviewPage({ params }: PreviewPageProps) {
   const { id } = await params;
   const itemId = parseInt(id);
+
+  // Redirect to API if client requests JSON
+  const headersList = await headers();
+  const accept = headersList.get("accept") || "";
+  if (accept.includes("application/json")) {
+    redirect(`/api/v1/items/${id}`);
+  }
 
   const item = await getItem(itemId);
 

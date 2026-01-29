@@ -5,9 +5,13 @@ import { redirect } from "next/navigation";
 import { eq } from "drizzle-orm";
 import { db, authors, type Author, type NewAuthor } from "@/lib/db";
 import { ensureSchemaInitialized } from "@/lib/db/client";
+import { getSession } from "@/lib/auth-helper";
 
-export async function getAuthors(): Promise<Author[]> {
+export async function getAuthors(userId?: string): Promise<Author[]> {
   await ensureSchemaInitialized();
+  if (userId) {
+    return db.select().from(authors).where(eq(authors.userId, userId)).orderBy(authors.name);
+  }
   return db.select().from(authors).orderBy(authors.name);
 }
 
@@ -21,14 +25,26 @@ export async function getAuthor(id: number): Promise<Author | undefined> {
 }
 
 export async function createAuthorAction(
-  data: Omit<NewAuthor, "id" | "createdAt" | "updatedAt">
+  data: Omit<NewAuthor, "id" | "userId" | "createdAt" | "updatedAt">,
+  userId?: string
 ): Promise<{ success: boolean; data?: Author; error?: string }> {
   try {
+    // Get userId from session if not provided
+    let resolvedUserId = userId;
+    if (!resolvedUserId) {
+      const session = await getSession();
+      if (!session?.user?.id) {
+        return { success: false, error: "Unauthorized" };
+      }
+      resolvedUserId = session.user.id;
+    }
+
     const now = new Date();
     const result = await db
       .insert(authors)
       .values({
         ...data,
+        userId: resolvedUserId,
         createdAt: now,
         updatedAt: now,
       })
@@ -45,9 +61,31 @@ export async function createAuthorAction(
 
 export async function updateAuthorAction(
   id: number,
-  data: Partial<Omit<NewAuthor, "id" | "createdAt" | "updatedAt">>
+  data: Partial<Omit<NewAuthor, "id" | "userId" | "createdAt" | "updatedAt">>,
+  userId?: string
 ): Promise<{ success: boolean; data?: Author; error?: string }> {
   try {
+    // Get userId from session if not provided
+    let resolvedUserId = userId;
+    if (!resolvedUserId) {
+      const session = await getSession();
+      if (!session?.user?.id) {
+        return { success: false, error: "Unauthorized" };
+      }
+      resolvedUserId = session.user.id;
+    }
+
+    // Verify ownership
+    const existing = await db
+      .select({ userId: authors.userId })
+      .from(authors)
+      .where(eq(authors.id, id))
+      .limit(1);
+
+    if (!existing[0] || existing[0].userId !== resolvedUserId) {
+      return { success: false, error: "Permission denied" };
+    }
+
     const result = await db
       .update(authors)
       .set({ ...data, updatedAt: new Date() })
@@ -65,9 +103,31 @@ export async function updateAuthorAction(
 }
 
 export async function deleteAuthorAction(
-  id: number
+  id: number,
+  userId?: string
 ): Promise<{ success: boolean; error?: string }> {
   try {
+    // Get userId from session if not provided
+    let resolvedUserId = userId;
+    if (!resolvedUserId) {
+      const session = await getSession();
+      if (!session?.user?.id) {
+        return { success: false, error: "Unauthorized" };
+      }
+      resolvedUserId = session.user.id;
+    }
+
+    // Verify ownership
+    const existing = await db
+      .select({ userId: authors.userId })
+      .from(authors)
+      .where(eq(authors.id, id))
+      .limit(1);
+
+    if (!existing[0] || existing[0].userId !== resolvedUserId) {
+      return { success: false, error: "Permission denied" };
+    }
+
     await db.delete(authors).where(eq(authors.id, id));
     revalidatePath("/authors");
     return { success: true };
@@ -80,17 +140,18 @@ export async function deleteAuthorAction(
 }
 
 export async function createAuthorAndRedirect(
-  data: Omit<NewAuthor, "id" | "createdAt" | "updatedAt">
+  data: Omit<NewAuthor, "id" | "userId" | "createdAt" | "updatedAt">,
+  userId?: string
 ) {
-  const result = await createAuthorAction(data);
+  const result = await createAuthorAction(data, userId);
   if (result.success) {
     redirect("/authors");
   }
   return result;
 }
 
-export async function deleteAuthorAndRedirect(id: number) {
-  const result = await deleteAuthorAction(id);
+export async function deleteAuthorAndRedirect(id: number, userId?: string) {
+  const result = await deleteAuthorAction(id, userId);
   if (result.success) {
     redirect("/authors");
   }

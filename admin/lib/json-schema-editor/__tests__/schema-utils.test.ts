@@ -12,7 +12,7 @@ import {
   moveArrayItem,
   createEmptySchema,
 } from "../schema-utils";
-import type { JsonSchema, PropertyItem } from "../types";
+import type { JsonSchema, PropertyItem, ObjectJsonSchema } from "../types";
 
 describe("schemaToPropertyItems", () => {
   it("returns empty array for null schema", () => {
@@ -237,7 +237,7 @@ describe("parseSchemaJson", () => {
     const result = parseSchemaJson(json);
     expect(result.schema).toBeDefined();
     expect(result.error).toBeUndefined();
-    expect(result.schema?.properties.name.type).toBe("string");
+    expect((result.schema as ObjectJsonSchema)?.properties.name.type).toBe("string");
   });
 });
 

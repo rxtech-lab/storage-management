@@ -1,0 +1,30 @@
+//
+//  LoadingOverlay.swift
+//  Loading overlay with dialog design
+//
+//  Created by Qiwei Li on 1/29/26.
+//
+import SwiftUI
+
+struct LoadingOverlay: View {
+    /**
+     Title of the loading progress view. If nil, show default Loading
+     */
+    let title: String? = nil
+
+    var body: some View {
+        ZStack {
+            Color.black.opacity(0.1) // Semi-transparent background
+                .edgesIgnoringSafeArea(.all)
+
+            ProgressView(title ?? "Loading") // The spinner and text
+                .padding()
+                .background(Color(.systemBackground))
+                .cornerRadius(12)
+        }
+    }
+}
+
+#Preview {
+    LoadingOverlay()
+}

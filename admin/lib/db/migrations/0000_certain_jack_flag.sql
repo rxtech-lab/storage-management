@@ -1,5 +1,6 @@
 CREATE TABLE `authors` (
 	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
+	`user_id` text NOT NULL,
 	`name` text NOT NULL,
 	`bio` text,
 	`created_at` integer NOT NULL,
@@ -8,6 +9,7 @@ CREATE TABLE `authors` (
 --> statement-breakpoint
 CREATE TABLE `categories` (
 	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
+	`user_id` text NOT NULL,
 	`name` text NOT NULL,
 	`description` text,
 	`created_at` integer NOT NULL,
@@ -34,6 +36,7 @@ CREATE TABLE `item_whitelists` (
 --> statement-breakpoint
 CREATE TABLE `items` (
 	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
+	`user_id` text NOT NULL,
 	`title` text NOT NULL,
 	`description` text,
 	`original_qr_code` text,
@@ -54,6 +57,7 @@ CREATE TABLE `items` (
 --> statement-breakpoint
 CREATE TABLE `locations` (
 	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
+	`user_id` text NOT NULL,
 	`title` text NOT NULL,
 	`latitude` real NOT NULL,
 	`longitude` real NOT NULL,
@@ -63,6 +67,7 @@ CREATE TABLE `locations` (
 --> statement-breakpoint
 CREATE TABLE `position_schemas` (
 	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
+	`user_id` text NOT NULL,
 	`name` text NOT NULL,
 	`schema` text NOT NULL,
 	`created_at` integer NOT NULL,
@@ -71,6 +76,7 @@ CREATE TABLE `position_schemas` (
 --> statement-breakpoint
 CREATE TABLE `positions` (
 	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
+	`user_id` text NOT NULL,
 	`item_id` integer NOT NULL,
 	`position_schema_id` integer NOT NULL,
 	`data` text NOT NULL,

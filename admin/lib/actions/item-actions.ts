@@ -6,6 +6,7 @@ import { eq, like, or, desc, isNull, and, ne } from "drizzle-orm";
 import { z } from "zod";
 import { db, items, categories, locations, authors, type Item, type NewItem } from "@/lib/db";
 import { ensureSchemaInitialized } from "@/lib/db/client";
+import { getSession } from "@/lib/auth-helper";
 
 // Zod schema for item validation
 const itemInsertSchema = z.object({
@@ -34,6 +35,7 @@ export interface ItemWithRelations extends Item {
 }
 
 export interface ItemFilters {
+  userId?: string;
   categoryId?: number;
   locationId?: number;
   authorId?: number;
@@ -47,6 +49,7 @@ export async function getItems(filters?: ItemFilters): Promise<ItemWithRelations
   let query = db
     .select({
       id: items.id,
+      userId: items.userId,
       title: items.title,
       description: items.description,
       originalQrCode: items.originalQrCode,
@@ -81,6 +84,16 @@ export async function getItems(filters?: ItemFilters): Promise<ItemWithRelations
     .$dynamic();
 
   const conditions = [];
+
+  // Filter by userId: show user's own items OR public items
+  if (filters?.userId) {
+    conditions.push(
+      or(
+        eq(items.userId, filters.userId),
+        eq(items.visibility, "public")
+      )
+    );
+  }
 
   if (filters?.categoryId) {
     conditions.push(eq(items.categoryId, filters.categoryId));
@@ -129,6 +142,7 @@ export async function getItem(id: number): Promise<ItemWithRelations | undefined
   const results = await db
     .select({
       id: items.id,
+      userId: items.userId,
       title: items.title,
       description: items.description,
       originalQrCode: items.originalQrCode,
@@ -178,10 +192,21 @@ export async function getItemChildren(parentId: number): Promise<ItemWithRelatio
 }
 
 export async function createItemAction(
-  data: Omit<NewItem, "id" | "createdAt" | "updatedAt">
+  data: Omit<NewItem, "id" | "userId" | "createdAt" | "updatedAt">,
+  userId?: string
 ): Promise<{ success: boolean; data?: Item; error?: string }> {
   try {
     await ensureSchemaInitialized();
+
+    // Get userId from session if not provided
+    let resolvedUserId = userId;
+    if (!resolvedUserId) {
+      const session = await getSession();
+      if (!session?.user?.id) {
+        return { success: false, error: "Unauthorized" };
+      }
+      resolvedUserId = session.user.id;
+    }
 
     // Validate data with Zod schema
     const validationResult = itemInsertSchema.safeParse(data);
@@ -198,6 +223,7 @@ export async function createItemAction(
 
     // Build insert data explicitly, converting empty strings to null
     const insertData = {
+      userId: resolvedUserId,
       title: validatedData.title,
       description: validatedData.description || null,
       originalQrCode: validatedData.originalQrCode || null,
@@ -229,9 +255,31 @@ export async function createItemAction(
 
 export async function updateItemAction(
   id: number,
-  data: Partial<Omit<NewItem, "id" | "createdAt" | "updatedAt">>
+  data: Partial<Omit<NewItem, "id" | "userId" | "createdAt" | "updatedAt">>,
+  userId?: string
 ): Promise<{ success: boolean; data?: Item; error?: string }> {
   try {
+    // Get userId from session if not provided
+    let resolvedUserId = userId;
+    if (!resolvedUserId) {
+      const session = await getSession();
+      if (!session?.user?.id) {
+        return { success: false, error: "Unauthorized" };
+      }
+      resolvedUserId = session.user.id;
+    }
+
+    // Verify ownership
+    const existing = await db
+      .select({ userId: items.userId })
+      .from(items)
+      .where(eq(items.id, id))
+      .limit(1);
+
+    if (!existing[0] || existing[0].userId !== resolvedUserId) {
+      return { success: false, error: "Permission denied" };
+    }
+
     const result = await db
       .update(items)
       .set({ ...data, updatedAt: new Date() })
@@ -249,9 +297,31 @@ export async function updateItemAction(
 }
 
 export async function deleteItemAction(
-  id: number
+  id: number,
+  userId?: string
 ): Promise<{ success: boolean; error?: string }> {
   try {
+    // Get userId from session if not provided
+    let resolvedUserId = userId;
+    if (!resolvedUserId) {
+      const session = await getSession();
+      if (!session?.user?.id) {
+        return { success: false, error: "Unauthorized" };
+      }
+      resolvedUserId = session.user.id;
+    }
+
+    // Verify ownership
+    const existing = await db
+      .select({ userId: items.userId })
+      .from(items)
+      .where(eq(items.id, id))
+      .limit(1);
+
+    if (!existing[0] || existing[0].userId !== resolvedUserId) {
+      return { success: false, error: "Permission denied" };
+    }
+
     await db.delete(items).where(eq(items.id, id));
     revalidatePath("/items");
     return { success: true };
@@ -264,34 +334,56 @@ export async function deleteItemAction(
 }
 
 export async function createItemAndRedirect(
-  data: Omit<NewItem, "id" | "createdAt" | "updatedAt">
+  data: Omit<NewItem, "id" | "userId" | "createdAt" | "updatedAt">,
+  userId?: string
 ) {
-  const result = await createItemAction(data);
+  const result = await createItemAction(data, userId);
   if (result.success && result.data) {
     redirect(`/items/${result.data.id}`);
   }
   return result;
 }
 
-export async function deleteItemAndRedirect(id: number) {
-  const result = await deleteItemAction(id);
+export async function deleteItemAndRedirect(id: number, userId?: string) {
+  const result = await deleteItemAction(id, userId);
   if (result.success) {
     redirect("/items");
   }
   return result;
 }
 
-export async function deleteItemFormAction(id: number): Promise<void> {
-  await deleteItemAction(id);
+export async function deleteItemFormAction(id: number, userId?: string): Promise<void> {
+  await deleteItemAction(id, userId);
   redirect("/items");
 }
 
 export async function searchItems(
   query: string,
+  userId?: string,
   excludeId?: number,
   limit: number = 20
 ): Promise<{ id: number; title: string }[]> {
+  // Get userId from session if not provided
+  let resolvedUserId = userId;
+  if (!resolvedUserId) {
+    const session = await getSession();
+    resolvedUserId = session?.user?.id;
+  }
+
   const conditions = [];
+
+  // Filter by userId: show user's own items OR public items
+  if (resolvedUserId) {
+    conditions.push(
+      or(
+        eq(items.userId, resolvedUserId),
+        eq(items.visibility, "public")
+      )
+    );
+  } else {
+    // No user - only show public items
+    conditions.push(eq(items.visibility, "public"));
+  }
 
   if (query) {
     conditions.push(

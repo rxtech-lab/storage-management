@@ -20,11 +20,11 @@ test.describe.serial('Position Schemas API', () => {
 
     expect(response.status()).toBe(201);
     const body = await response.json();
-    expect(body.data).toHaveProperty('id');
-    expect(body.data.name).toBe('Test Schema');
-    expect(body.data.schema).toHaveProperty('type', 'object');
+    expect(body).toHaveProperty('id');
+    expect(body.name).toBe('Test Schema');
+    expect(body.schema).toHaveProperty('type', 'object');
 
-    createdSchemaId = body.data.id;
+    createdSchemaId = body.id;
   });
 
   test('GET /api/v1/position-schemas - should list all position schemas', async ({ request }) => {
@@ -32,8 +32,8 @@ test.describe.serial('Position Schemas API', () => {
 
     expect(response.status()).toBe(200);
     const body = await response.json();
-    expect(body.data).toBeInstanceOf(Array);
-    expect(body.data.length).toBeGreaterThan(0);
+    expect(body).toBeInstanceOf(Array);
+    expect(body.length).toBeGreaterThan(0);
   });
 
   test('GET /api/v1/position-schemas/{id} - should get position schema by ID', async ({ request }) => {
@@ -41,8 +41,8 @@ test.describe.serial('Position Schemas API', () => {
 
     expect(response.status()).toBe(200);
     const body = await response.json();
-    expect(body.data.id).toBe(createdSchemaId);
-    expect(body.data.name).toBe('Test Schema');
+    expect(body.id).toBe(createdSchemaId);
+    expect(body.name).toBe('Test Schema');
   });
 
   test('PUT /api/v1/position-schemas/{id} - should update position schema', async ({ request }) => {
@@ -63,7 +63,7 @@ test.describe.serial('Position Schemas API', () => {
 
     expect(response.status()).toBe(200);
     const body = await response.json();
-    expect(body.data.name).toBe('Updated Schema');
+    expect(body.name).toBe('Updated Schema');
   });
 
   test('DELETE /api/v1/position-schemas/{id} - should delete position schema', async ({ request }) => {

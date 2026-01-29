@@ -11,7 +11,7 @@ interface RouteParams {
 }
 
 export async function GET(request: NextRequest, { params }: RouteParams) {
-  const session = await getSession();
+  const session = await getSession(request);
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -23,11 +23,16 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     return NextResponse.json({ error: "Position schema not found" }, { status: 404 });
   }
 
-  return NextResponse.json({ data: schema });
+  // Check ownership
+  if (schema.userId !== session.user.id) {
+    return NextResponse.json({ error: "Permission denied" }, { status: 403 });
+  }
+
+  return NextResponse.json(schema);
 }
 
 export async function PUT(request: NextRequest, { params }: RouteParams) {
-  const session = await getSession();
+  const session = await getSession(request);
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -36,10 +41,12 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 
   try {
     const body = await request.json();
-    const result = await updatePositionSchemaAction(parseInt(id), body);
+    const result = await updatePositionSchemaAction(parseInt(id), body, session.user.id);
 
     if (result.success) {
-      return NextResponse.json({ data: result.data });
+      return NextResponse.json(result.data);
+    } else if (result.error === "Permission denied") {
+      return NextResponse.json({ error: result.error }, { status: 403 });
     } else {
       return NextResponse.json({ error: result.error }, { status: 400 });
     }
@@ -52,16 +59,18 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 }
 
 export async function DELETE(request: NextRequest, { params }: RouteParams) {
-  const session = await getSession();
+  const session = await getSession(request);
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   const { id } = await params;
-  const result = await deletePositionSchemaAction(parseInt(id));
+  const result = await deletePositionSchemaAction(parseInt(id), session.user.id);
 
   if (result.success) {
     return NextResponse.json({ success: true });
+  } else if (result.error === "Permission denied") {
+    return NextResponse.json({ error: result.error }, { status: 403 });
   } else {
     return NextResponse.json({ error: result.error }, { status: 400 });
   }
