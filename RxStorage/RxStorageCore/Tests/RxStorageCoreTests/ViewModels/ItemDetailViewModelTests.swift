@@ -13,41 +13,21 @@ struct ItemDetailViewModelTests {
 
     // MARK: - Test Data
 
-    static let testItem = StorageItem(
+    static let testItem = TestHelpers.makeStorageItem(
         id: 1,
         title: "Test Item",
         description: "Test Description",
-        visibility: .public,
-        categoryId: nil,
-        locationId: nil,
-        authorId: nil,
-        parentId: nil,
         price: 99.99,
-        images: ["https://example.com/image.jpg"],
-        category: nil,
-        location: nil,
-        author: nil,
-        createdAt: "2024-01-01T00:00:00Z",
-        updatedAt: "2024-01-01T00:00:00Z"
+        visibility: StorageItem.Visibility.public,
+        images: ["https://example.com/image.jpg"]
     )
 
     static let testChildren = [
-        StorageItem(
+        TestHelpers.makeStorageItem(
             id: 2,
             title: "Child Item",
-            description: nil,
-            visibility: .public,
-            categoryId: nil,
-            locationId: nil,
-            authorId: nil,
             parentId: 1,
-            price: nil,
-            images: [],
-            category: nil,
-            location: nil,
-            author: nil,
-            createdAt: "2024-01-01T00:00:00Z",
-            updatedAt: "2024-01-01T00:00:00Z"
+            visibility: StorageItem.Visibility.public
         )
     ]
 
@@ -105,7 +85,11 @@ struct ItemDetailViewModelTests {
         mockService.fetchItemResult = .success(Self.testItem)
         mockService.fetchChildrenResult = .success([])
         mockService.generateQRCodeResult = .success(
-            QRCodeData(qrCodeUrl: "https://example.com/preview/1", itemId: 1)
+            TestHelpers.makeQRCodeData(
+                itemId: 1,
+                itemTitle: "Test Item",
+                previewUrl: "https://example.com/preview/1"
+            )
         )
         let sut = ItemDetailViewModel(itemService: mockService)
 
@@ -116,7 +100,7 @@ struct ItemDetailViewModelTests {
 
         // Then
         #expect(sut.qrCodeData != nil)
-        #expect(sut.qrCodeData?.qrCodeUrl == "https://example.com/preview/1")
+        #expect(sut.qrCodeData?.previewUrl == "https://example.com/preview/1")
         #expect(sut.qrCodeData?.itemId == 1)
         #expect(sut.isGeneratingQR == false)
         #expect(mockService.generateQRCodeCalled == true)

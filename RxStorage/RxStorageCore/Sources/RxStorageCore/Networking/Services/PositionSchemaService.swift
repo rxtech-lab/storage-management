@@ -8,6 +8,7 @@
 import Foundation
 
 /// Protocol for position schema service operations
+@MainActor
 public protocol PositionSchemaServiceProtocol {
     func fetchPositionSchemas() async throws -> [PositionSchema]
     func fetchPositionSchema(id: Int) async throws -> PositionSchema
@@ -17,6 +18,7 @@ public protocol PositionSchemaServiceProtocol {
 }
 
 /// Position schema service implementation
+@MainActor
 public class PositionSchemaService: PositionSchemaServiceProtocol {
     private let apiClient: APIClient
 

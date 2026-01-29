@@ -9,7 +9,7 @@ import Foundation
 import Logging
 
 /// HTTP client for API requests with automatic authentication
-public class APIClient {
+public actor APIClient {
     /// Shared singleton instance
     public static let shared = APIClient()
 
@@ -17,6 +17,10 @@ public class APIClient {
     private let configuration: AppConfiguration
     private let tokenStorage: TokenStorage
     private let logger = Logger(label: "com.rxlab.rxstorage.APIClient")
+
+    /// Track if a token refresh is in progress
+    private var isRefreshing = false
+    private var pendingRequests: [CheckedContinuation<Void, Error>] = []
 
     public init(
         session: URLSession = .shared,
@@ -31,7 +35,7 @@ public class APIClient {
     // MARK: - Request Methods
 
     /// Perform GET request
-    public func get<T: Codable>(
+    public func get<T: Codable & Sendable>(
         _ endpoint: APIEndpoint,
         responseType: T.Type
     ) async throws -> T {
@@ -39,7 +43,7 @@ public class APIClient {
     }
 
     /// Perform POST request
-    public func post<B: Encodable, T: Codable>(
+    public func post<B: Encodable & Sendable, T: Codable & Sendable>(
         _ endpoint: APIEndpoint,
         body: B,
         responseType: T.Type
@@ -48,7 +52,7 @@ public class APIClient {
     }
 
     /// Perform PUT request
-    public func put<B: Encodable, T: Codable>(
+    public func put<B: Encodable & Sendable, T: Codable & Sendable>(
         _ endpoint: APIEndpoint,
         body: B,
         responseType: T.Type
@@ -57,7 +61,7 @@ public class APIClient {
     }
 
     /// Perform DELETE request
-    public func delete<T: Codable>(
+    public func delete<T: Codable & Sendable>(
         _ endpoint: APIEndpoint,
         responseType: T.Type
     ) async throws -> T {
@@ -72,12 +76,18 @@ public class APIClient {
 
     // MARK: - Core Request Method
 
-    private func request<B: Encodable, T: Codable>(
+    private func request<B: Encodable & Sendable, T: Codable & Sendable>(
         _ endpoint: APIEndpoint,
         method: HTTPMethod,
         body: B?,
-        responseType: T.Type
+        responseType: T.Type,
+        isRetry: Bool = false
     ) async throws -> T {
+        // Check if token needs refresh before making request
+        if await tokenStorage.isTokenExpired() {
+            try await ensureValidToken()
+        }
+
         // Build URL
         guard var urlComponents = URLComponents(string: configuration.apiBaseURL) else {
             throw APIError.invalidURL
@@ -100,7 +110,7 @@ public class APIClient {
         request.setValue("application/json", forHTTPHeaderField: "Accept")
 
         // Add Bearer token
-        if let accessToken = tokenStorage.getAccessToken() {
+        if let accessToken = await tokenStorage.getAccessToken() {
             request.setValue("Bearer \(accessToken)", forHTTPHeaderField: "Authorization")
         }
 
@@ -121,12 +131,32 @@ public class APIClient {
             switch httpResponse.statusCode {
             case 200...299:
                 // Success - decode response
-                return try decodeResponse(data: data, responseType: responseType)
+                return try Self.decodeResponse(data: data, responseType: responseType, logger: logger)
 
             case 401:
-                // Unauthorized - try to refresh token and retry
-                if tokenStorage.isTokenExpired() {
-                    throw APIError.tokenExpired
+                // Unauthorized - try to refresh token and retry (once)
+                if !isRetry {
+                    logger.info("Received 401, attempting token refresh", metadata: [
+                        "endpoint": "\(endpoint.path)"
+                    ])
+                    do {
+                        try await ensureValidToken()
+                        // Retry the request with the new token
+                        return try await self.request(endpoint, method: method, body: body, responseType: responseType, isRetry: true)
+                    } catch {
+                        logger.error("Token refresh failed during 401 retry", metadata: [
+                            "error": "\(error)"
+                        ])
+                        // Post notification for UI to handle logout
+                        await MainActor.run {
+                            NotificationCenter.default.post(name: .authSessionExpired, object: nil)
+                        }
+                        throw APIError.refreshTokenError
+                    }
+                }
+                // Already retried, give up
+                await MainActor.run {
+                    NotificationCenter.default.post(name: .authSessionExpired, object: nil)
                 }
                 throw APIError.unauthorized
 
@@ -170,12 +200,83 @@ public class APIClient {
         }
     }
 
+    // MARK: - Token Validation
+
+    /// Ensure the access token is valid, refreshing if necessary
+    private func ensureValidToken() async throws {
+        // If already refreshing, wait for that refresh to complete
+        if isRefreshing {
+            return try await withCheckedThrowingContinuation { continuation in
+                pendingRequests.append(continuation)
+            }
+        }
+
+        // Double-check if still expired (another request might have refreshed)
+        guard await tokenStorage.isTokenExpired() else { return }
+
+        guard await tokenStorage.getRefreshToken() != nil else {
+            logger.error("No refresh token available")
+            throw APIError.refreshTokenError
+        }
+
+        // Start refreshing
+        isRefreshing = true
+
+        do {
+            logger.info("Refreshing access token")
+            try await refreshAccessToken()
+            logger.info("Access token refreshed successfully")
+
+            // Success - resume all waiting continuations
+            let continuations = pendingRequests
+            pendingRequests = []
+            isRefreshing = false
+
+            for continuation in continuations {
+                continuation.resume()
+            }
+        } catch {
+            // Failure - resume all waiting continuations with the error
+            let continuations = pendingRequests
+            pendingRequests = []
+            isRefreshing = false
+
+            for continuation in continuations {
+                continuation.resume(throwing: error)
+            }
+            throw error
+        }
+    }
+
     // MARK: - Response Decoding
 
-    private func decodeResponse<T: Codable>(data: Data, responseType: T.Type) throws -> T {
+    private static func decodeResponse<T: Codable & Sendable>(data: Data, responseType: T.Type, logger: Logger) throws -> T {
         do {
+            let decoder = JSONDecoder()
+            // Use custom date decoding strategy
+            decoder.dateDecodingStrategy = .custom { decoder in
+                let container = try decoder.singleValueContainer()
+                let dateString = try container.decode(String.self)
+
+                // Try with fractional seconds first
+                let formatterWithFractional = ISO8601DateFormatter()
+                formatterWithFractional.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+                if let date = formatterWithFractional.date(from: dateString) {
+                    return date
+                }
+
+                // Fallback to standard ISO8601 without fractional seconds
+                let fallbackFormatter = ISO8601DateFormatter()
+                fallbackFormatter.formatOptions = [.withInternetDateTime]
+                if let date = fallbackFormatter.date(from: dateString) {
+                    return date
+                }
+
+                throw DecodingError.dataCorruptedError(in: container, debugDescription: "Cannot decode date: \(dateString)")
+            }
+
             // Try to decode as APIResponse wrapper first
-            if let wrappedResponse = try? JSONDecoder().decode(APIResponse<T>.self, from: data) {
+            if let wrappedResponse = try? decoder.decode(APIResponse<T>.self, from: data) {
                 if let data = wrappedResponse.data {
                     return data
                 } else if let error = wrappedResponse.error {
@@ -186,8 +287,6 @@ public class APIClient {
             }
 
             // If not wrapped, try direct decoding
-            let decoder = JSONDecoder()
-            decoder.dateDecodingStrategy = .iso8601
             return try decoder.decode(T.self, from: data)
 
         } catch {
@@ -205,8 +304,9 @@ public class APIClient {
 
     /// Refresh access token using refresh token
     public func refreshAccessToken() async throws {
-        guard let refreshToken = tokenStorage.getRefreshToken() else {
-            throw APIError.tokenExpired
+        guard let refreshToken = await tokenStorage.getRefreshToken() else {
+            logger.error("No refresh token available for refresh")
+            throw APIError.refreshTokenError
         }
 
         // Build token refresh request
@@ -233,30 +333,55 @@ public class APIClient {
             .data(using: .utf8)
 
         // Perform token refresh
-        let (data, response) = try await session.data(for: request)
+        do {
+            let (data, response) = try await session.data(for: request)
 
-        guard let httpResponse = response as? HTTPURLResponse,
-              httpResponse.statusCode == 200 else {
-            throw APIError.tokenExpired
+            guard let httpResponse = response as? HTTPURLResponse else {
+                throw APIError.invalidResponse
+            }
+
+            if httpResponse.statusCode != 200 {
+                // Log the error response for debugging
+                if let errorString = String(data: data, encoding: .utf8) {
+                    logger.error("Token refresh failed", metadata: [
+                        "status": "\(httpResponse.statusCode)",
+                        "response": "\(errorString.prefix(200))"
+                    ])
+                }
+                throw APIError.refreshTokenError
+            }
+
+            // Decode token response
+            struct TokenResponse: Codable {
+                let access_token: String
+                let refresh_token: String?
+                let expires_in: Int
+            }
+
+            let tokenResponse = try JSONDecoder().decode(TokenResponse.self, from: data)
+
+            // Save new tokens
+            try await tokenStorage.saveAccessToken(tokenResponse.access_token)
+
+            if let newRefreshToken = tokenResponse.refresh_token {
+                try await tokenStorage.saveRefreshToken(newRefreshToken)
+            }
+
+            let expiresAt = Date().addingTimeInterval(TimeInterval(tokenResponse.expires_in))
+            try await tokenStorage.saveExpiresAt(expiresAt)
+
+        } catch let error as APIError {
+            throw error
+        } catch {
+            logger.error("Token refresh network error: \(error.localizedDescription)")
+            throw APIError.refreshTokenError
         }
-
-        // Decode token response
-        struct TokenResponse: Codable {
-            let access_token: String
-            let refresh_token: String?
-            let expires_in: Int
-        }
-
-        let tokenResponse = try JSONDecoder().decode(TokenResponse.self, from: data)
-
-        // Save new tokens
-        try tokenStorage.saveAccessToken(tokenResponse.access_token)
-
-        if let newRefreshToken = tokenResponse.refresh_token {
-            try tokenStorage.saveRefreshToken(newRefreshToken)
-        }
-
-        let expiresAt = Date().addingTimeInterval(TimeInterval(tokenResponse.expires_in))
-        try tokenStorage.saveExpiresAt(expiresAt)
     }
+}
+
+// MARK: - Notification Names
+
+public extension Notification.Name {
+    /// Posted when the auth session has expired and user needs to re-authenticate
+    static let authSessionExpired = Notification.Name("com.rxlab.rxstorage.authSessionExpired")
 }

@@ -8,7 +8,7 @@
 import Foundation
 
 /// HTTP methods
-public enum HTTPMethod: String {
+public enum HTTPMethod: String, Sendable {
     case get = "GET"
     case post = "POST"
     case put = "PUT"
@@ -16,7 +16,7 @@ public enum HTTPMethod: String {
 }
 
 /// API endpoints
-public enum APIEndpoint {
+public enum APIEndpoint: Sendable {
     // Items
     case listItems(filters: ItemFilters?)
     case getItem(id: Int)
@@ -158,7 +158,7 @@ public enum APIEndpoint {
 }
 
 /// Item filters for list query
-public struct ItemFilters {
+public struct ItemFilters: Sendable {
     public var categoryId: Int?
     public var locationId: Int?
     public var authorId: Int?

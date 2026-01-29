@@ -14,39 +14,18 @@ struct ItemListViewModelTests {
     // MARK: - Test Data
 
     static let testItems = [
-        StorageItem(
+        TestHelpers.makeStorageItem(
             id: 1,
             title: "Test Item 1",
             description: "Description 1",
-            visibility: .public,
-            categoryId: nil,
-            locationId: nil,
-            authorId: nil,
-            parentId: nil,
-            price: nil,
-            images: [],
-            category: nil,
-            location: nil,
-            author: nil,
-            createdAt: "2024-01-01T00:00:00Z",
-            updatedAt: "2024-01-01T00:00:00Z"
+            visibility: StorageItem.Visibility.public
         ),
-        StorageItem(
+        TestHelpers.makeStorageItem(
             id: 2,
             title: "Test Item 2",
             description: "Description 2",
-            visibility: .private,
-            categoryId: nil,
-            locationId: nil,
-            authorId: nil,
-            parentId: nil,
             price: 99.99,
-            images: [],
-            category: nil,
-            location: nil,
-            author: nil,
-            createdAt: "2024-01-01T00:00:00Z",
-            updatedAt: "2024-01-01T00:00:00Z"
+            visibility: StorageItem.Visibility.private
         )
     ]
 
@@ -155,7 +134,7 @@ struct ItemListViewModelTests {
         let sut = ItemListViewModel(itemService: mockService)
         sut.searchText = "test"
         sut.filters.categoryId = 1
-        sut.filters.visibility = .public
+        sut.filters.visibility = "public"
 
         // When
         sut.clearFilters()

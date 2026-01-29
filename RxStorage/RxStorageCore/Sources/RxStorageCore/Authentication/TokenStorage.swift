@@ -9,7 +9,7 @@ import Foundation
 import Security
 
 /// Secure storage for OAuth tokens using Keychain
-public class TokenStorage {
+public actor TokenStorage {
     /// Shared singleton instance
     public static let shared = TokenStorage()
 
@@ -160,7 +160,7 @@ public class TokenStorage {
 
 // MARK: - Keychain Error
 
-public enum KeychainError: LocalizedError {
+public enum KeychainError: LocalizedError, Sendable {
     case encodingFailed
     case saveFailed(status: OSStatus)
     case deleteFailed(status: OSStatus)

@@ -10,6 +10,8 @@ import RxStorageCore
 
 /// Location list view
 struct LocationListView: View {
+    @Binding var selectedLocation: Location?
+
     @State private var viewModel = LocationListViewModel()
     @State private var showingCreateSheet = false
 
@@ -54,18 +56,20 @@ struct LocationListView: View {
     // MARK: - Locations List
 
     private var locationsList: some View {
-        List {
+        List(selection: $selectedLocation) {
             ForEach(viewModel.filteredLocations) { location in
-                LocationRow(location: location)
-                    .swipeActions(edge: .trailing, allowsFullSwipe: false) {
-                        Button(role: .destructive) {
-                            Task {
-                                try? await viewModel.deleteLocation(location)
-                            }
-                        } label: {
-                            Label("Delete", systemImage: "trash")
+                NavigationLink(value: location) {
+                    LocationRow(location: location)
+                }
+                .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                    Button(role: .destructive) {
+                        Task {
+                            try? await viewModel.deleteLocation(location)
                         }
+                    } label: {
+                        Label("Delete", systemImage: "trash")
                     }
+                }
             }
         }
     }
@@ -91,7 +95,8 @@ struct LocationRow: View {
 }
 
 #Preview {
+    @Previewable @State var selectedLocation: Location?
     NavigationStack {
-        LocationListView()
+        LocationListView(selectedLocation: $selectedLocation)
     }
 }

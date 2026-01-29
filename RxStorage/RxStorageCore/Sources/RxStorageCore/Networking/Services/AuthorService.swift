@@ -8,6 +8,7 @@
 import Foundation
 
 /// Protocol for author service operations
+@MainActor
 public protocol AuthorServiceProtocol {
     func fetchAuthors() async throws -> [Author]
     func fetchAuthor(id: Int) async throws -> Author
@@ -17,6 +18,7 @@ public protocol AuthorServiceProtocol {
 }
 
 /// Author service implementation
+@MainActor
 public class AuthorService: AuthorServiceProtocol {
     private let apiClient: APIClient
 

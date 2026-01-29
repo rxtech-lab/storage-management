@@ -8,7 +8,7 @@
 import Foundation
 
 /// Position schema defining structure for item positions
-public struct PositionSchema: Codable, Identifiable, Hashable {
+public struct PositionSchema: Codable, Identifiable, Hashable, Sendable {
     public let id: Int
     public let name: String
     public let schema: [String: AnyCodable]
@@ -31,7 +31,7 @@ public struct PositionSchema: Codable, Identifiable, Hashable {
 }
 
 /// Request body for creating a new position schema
-public struct NewPositionSchemaRequest: Codable {
+public struct NewPositionSchemaRequest: Codable, Sendable {
     public let name: String
     public let schema: [String: AnyCodable]
 
@@ -45,7 +45,7 @@ public struct NewPositionSchemaRequest: Codable {
 public typealias UpdatePositionSchemaRequest = NewPositionSchemaRequest
 
 /// Type-erased wrapper for JSON values
-public struct AnyCodable: Codable, Hashable {
+public struct AnyCodable: Codable, Hashable, @unchecked Sendable {
     public let value: Any
 
     public init(_ value: Any) {

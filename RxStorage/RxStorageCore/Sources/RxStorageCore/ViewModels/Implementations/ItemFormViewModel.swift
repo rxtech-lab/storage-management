@@ -72,59 +72,34 @@ public final class ItemFormViewModel: ItemFormViewModelProtocol {
     public func loadReferenceData() async {
         isLoading = true
 
-        await withTaskGroup(of: Void.self) { group in
-            group.addTask { [weak self] in
-                guard let self = self else { return }
-                do {
-                    let categories = try await self.categoryService.fetchCategories()
-                    await MainActor.run {
-                        self.categories = categories
-                    }
-                } catch {
-                    print("Failed to load categories: \(error)")
-                }
-            }
+        // Fetch reference data sequentially (all on MainActor)
+        do {
+            categories = try await categoryService.fetchCategories()
+        } catch {
+            print("Failed to load categories: \(error)")
+        }
 
-            group.addTask { [weak self] in
-                guard let self = self else { return }
-                do {
-                    let locations = try await self.locationService.fetchLocations()
-                    await MainActor.run {
-                        self.locations = locations
-                    }
-                } catch {
-                    print("Failed to load locations: \(error)")
-                }
-            }
+        do {
+            locations = try await locationService.fetchLocations()
+        } catch {
+            print("Failed to load locations: \(error)")
+        }
 
-            group.addTask { [weak self] in
-                guard let self = self else { return }
-                do {
-                    let authors = try await self.authorService.fetchAuthors()
-                    await MainActor.run {
-                        self.authors = authors
-                    }
-                } catch {
-                    print("Failed to load authors: \(error)")
-                }
-            }
+        do {
+            authors = try await authorService.fetchAuthors()
+        } catch {
+            print("Failed to load authors: \(error)")
+        }
 
-            group.addTask { [weak self] in
-                guard let self = self else { return }
-                do {
-                    // Fetch potential parent items (exclude current item if editing)
-                    let items = try await self.itemService.fetchItems(filters: nil)
-                    await MainActor.run {
-                        if let currentItemId = self.item?.id {
-                            self.parentItems = items.filter { $0.id != currentItemId }
-                        } else {
-                            self.parentItems = items
-                        }
-                    }
-                } catch {
-                    print("Failed to load parent items: \(error)")
-                }
+        do {
+            let items = try await itemService.fetchItems(filters: nil)
+            if let currentItemId = item?.id {
+                parentItems = items.filter { $0.id != currentItemId }
+            } else {
+                parentItems = items
             }
+        } catch {
+            print("Failed to load parent items: \(error)")
         }
 
         isLoading = false
@@ -236,7 +211,7 @@ public final class ItemFormViewModel: ItemFormViewModelProtocol {
 
 // MARK: - Form Error
 
-public enum FormError: LocalizedError {
+public enum FormError: LocalizedError, Sendable {
     case validationFailed
 
     public var errorDescription: String? {

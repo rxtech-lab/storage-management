@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import RxStorageCore
 
 /// Main navigation sections
 enum NavigationSection: String, CaseIterable, Identifiable {
@@ -29,17 +30,27 @@ enum NavigationSection: String, CaseIterable, Identifiable {
 }
 
 /// Root view with NavigationSplitView for iPad/iPhone adaptive layout
+/// Uses three-column layout: Sidebar (sections) | Content (list) | Detail (selected item)
 struct RootView: View {
     @State private var selectedSection: NavigationSection? = .items
     @State private var columnVisibility: NavigationSplitViewVisibility = .automatic
 
+    // Lifted selection state for each section
+    @State private var selectedItem: StorageItem?
+    @State private var selectedCategory: RxStorageCore.Category?
+    @State private var selectedAuthor: Author?
+    @State private var selectedLocation: Location?
+
     var body: some View {
         NavigationSplitView(columnVisibility: $columnVisibility) {
-            // Sidebar
+            // Column 1: Sidebar (sections)
             sidebarContent
+        } content: {
+            // Column 2: List for selected section
+            contentColumn
         } detail: {
-            // Detail/Content
-            detailContent
+            // Column 3: Detail for selected item
+            detailColumn
         }
         .navigationSplitViewStyle(.balanced)
     }
@@ -56,20 +67,20 @@ struct RootView: View {
         .listStyle(.sidebar)
     }
 
-    // MARK: - Detail Content
+    // MARK: - Content Column (Lists)
 
     @ViewBuilder
-    private var detailContent: some View {
+    private var contentColumn: some View {
         if let section = selectedSection {
             switch section {
             case .items:
-                ItemListView()
+                ItemListView(selectedItem: $selectedItem)
             case .categories:
-                CategoryListView()
+                CategoryListView(selectedCategory: $selectedCategory)
             case .locations:
-                LocationListView()
+                LocationListView(selectedLocation: $selectedLocation)
             case .authors:
-                AuthorListView()
+                AuthorListView(selectedAuthor: $selectedAuthor)
             case .schemas:
                 PositionSchemaListView()
             }
@@ -77,7 +88,67 @@ struct RootView: View {
             ContentUnavailableView(
                 "Select a section",
                 systemImage: "sidebar.left",
-                description: Text("Choose a section from the sidebar to get started")
+                description: Text("Choose a section from the sidebar")
+            )
+        }
+    }
+
+    // MARK: - Detail Column
+
+    @ViewBuilder
+    private var detailColumn: some View {
+        switch selectedSection {
+        case .items:
+            if let item = selectedItem {
+                ItemDetailView(itemId: item.id)
+            } else {
+                ContentUnavailableView(
+                    "Select an item",
+                    systemImage: "shippingbox",
+                    description: Text("Choose an item from the list to view details")
+                )
+            }
+        case .categories:
+            if let category = selectedCategory {
+                CategoryDetailView(categoryId: category.id)
+            } else {
+                ContentUnavailableView(
+                    "Select a category",
+                    systemImage: "folder",
+                    description: Text("Choose a category from the list to view details")
+                )
+            }
+        case .locations:
+            if let location = selectedLocation {
+                LocationDetailView(locationId: location.id)
+            } else {
+                ContentUnavailableView(
+                    "Select a location",
+                    systemImage: "mappin.circle",
+                    description: Text("Choose a location from the list to view details")
+                )
+            }
+        case .authors:
+            if let author = selectedAuthor {
+                AuthorDetailView(authorId: author.id)
+            } else {
+                ContentUnavailableView(
+                    "Select an author",
+                    systemImage: "person.circle",
+                    description: Text("Choose an author from the list to view details")
+                )
+            }
+        case .schemas:
+            ContentUnavailableView(
+                "Schema Details",
+                systemImage: "doc.text",
+                description: Text("Select a schema to view details")
+            )
+        case .none:
+            ContentUnavailableView(
+                "Select a section",
+                systemImage: "sidebar.left",
+                description: Text("Choose a section from the sidebar")
             )
         }
     }

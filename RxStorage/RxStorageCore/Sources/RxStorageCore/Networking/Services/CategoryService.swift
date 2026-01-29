@@ -8,6 +8,7 @@
 import Foundation
 
 /// Protocol for category service operations
+@MainActor
 public protocol CategoryServiceProtocol {
     func fetchCategories() async throws -> [Category]
     func fetchCategory(id: Int) async throws -> Category
@@ -17,6 +18,7 @@ public protocol CategoryServiceProtocol {
 }
 
 /// Category service implementation
+@MainActor
 public class CategoryService: CategoryServiceProtocol {
     private let apiClient: APIClient
 

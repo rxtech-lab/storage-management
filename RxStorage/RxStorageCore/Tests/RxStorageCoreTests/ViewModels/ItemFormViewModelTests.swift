@@ -13,22 +13,16 @@ struct ItemFormViewModelTests {
 
     // MARK: - Test Data
 
-    static let testItem = StorageItem(
+    static let testItem = TestHelpers.makeStorageItem(
         id: 1,
         title: "Existing Item",
         description: "Existing Description",
-        visibility: .public,
         categoryId: 5,
         locationId: 10,
         authorId: 3,
-        parentId: nil,
         price: 49.99,
-        images: ["https://example.com/image.jpg"],
-        category: nil,
-        location: nil,
-        author: nil,
-        createdAt: "2024-01-01T00:00:00Z",
-        updatedAt: "2024-01-01T00:00:00Z"
+        visibility: StorageItem.Visibility.public,
+        images: ["https://example.com/image.jpg"]
     )
 
     // MARK: - Initialization Tests
@@ -46,7 +40,7 @@ struct ItemFormViewModelTests {
         #expect(sut.selectedLocationId == 10)
         #expect(sut.selectedAuthorId == 3)
         #expect(sut.price == "49.99")
-        #expect(sut.visibility == .public)
+        #expect(sut.visibility == StorageItem.Visibility.public)
         #expect(sut.imageURLs == ["https://example.com/image.jpg"])
     }
 
@@ -184,8 +178,8 @@ struct ItemFormViewModelTests {
     func testCreateCategoryInline() async throws {
         // Given
         let mockCategoryService = MockCategoryService()
-        let newCategory = Category(id: 99, name: "New Category", description: nil)
-        mockCategoryService.createCategoryResult = .success(newCategory)
+        let newCategory = RxStorageCore.Category(id: 99, name: "New Category", description: nil)
+        mockCategoryService.createCategoryResult = Result<RxStorageCore.Category, Error>.success(newCategory)
 
         let sut = ItemFormViewModel(
             itemService: MockItemService(),

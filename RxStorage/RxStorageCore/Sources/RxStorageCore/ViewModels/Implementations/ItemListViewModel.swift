@@ -50,6 +50,15 @@ public final class ItemListViewModel: ItemListViewModelProtocol {
         do {
             items = try await itemService.fetchItems(filters: filters.isEmpty ? nil : filters)
             isLoading = false
+        } catch is CancellationError {
+            // Task was cancelled (e.g., view dismissed) - ignore silently
+            isLoading = false
+        } catch let apiError as APIError where apiError.isCancellation {
+            // Wrapped network cancellation - ignore silently
+            isLoading = false
+        } catch let error as NSError where error.domain == NSURLErrorDomain && error.code == NSURLErrorCancelled {
+            // Network request was cancelled - ignore silently
+            isLoading = false
         } catch {
             logger.error("Failed to fetch items: \(error.localizedDescription)", metadata: [
                 "error": "\(error)"

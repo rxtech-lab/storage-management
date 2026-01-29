@@ -49,6 +49,8 @@ struct ItemDetailView: View {
                     systemImage: "exclamationmark.triangle",
                     description: Text(error.localizedDescription)
                 )
+            } else {
+                ProgressView("Loading...")
             }
         }
         .navigationTitle(viewModel.item?.title ?? "Item")
@@ -84,7 +86,7 @@ struct ItemDetailView: View {
                 QRCodeGeneratorView(itemId: itemId)
             }
         }
-        .task {
+        .task(id: itemId) {
             await viewModel.fetchItem(id: itemId)
         }
     }

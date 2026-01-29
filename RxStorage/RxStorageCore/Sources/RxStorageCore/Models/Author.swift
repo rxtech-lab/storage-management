@@ -9,7 +9,7 @@ import Foundation
 
 /// Author (creator/owner) of items
 /// Note: When embedded in Item responses, only id and name are returned
-public struct Author: Codable, Identifiable, Hashable {
+public struct Author: Codable, Identifiable, Hashable, Sendable {
     public let id: Int
     public let name: String
     public let bio: String?
@@ -32,7 +32,7 @@ public struct Author: Codable, Identifiable, Hashable {
 }
 
 /// Request body for creating a new author
-public struct NewAuthorRequest: Codable {
+public struct NewAuthorRequest: Codable, Sendable {
     public let name: String
     public let bio: String?
 

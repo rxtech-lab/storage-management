@@ -8,7 +8,7 @@
 import Foundation
 
 /// Main storage item entity
-public struct StorageItem: Codable, Identifiable, Hashable {
+public struct StorageItem: Codable, Identifiable, Hashable, Sendable {
     public let id: Int
     public let title: String
     public let description: String?
@@ -62,7 +62,7 @@ public struct StorageItem: Codable, Identifiable, Hashable {
     }
 
     /// Item visibility
-    public enum Visibility: String, Codable, CaseIterable {
+    public enum Visibility: String, Codable, CaseIterable, Sendable {
         case `public` = "public"
         case `private` = "private"
 
@@ -86,7 +86,7 @@ public struct StorageItem: Codable, Identifiable, Hashable {
 }
 
 /// Request body for creating a new item
-public struct NewItemRequest: Codable {
+public struct NewItemRequest: Codable, Sendable {
     public let title: String
     public let description: String?
     public let categoryId: Int?
@@ -124,7 +124,7 @@ public struct NewItemRequest: Codable {
 public typealias UpdateItemRequest = NewItemRequest
 
 /// Item preview with additional content data (used by App Clips)
-public struct ItemPreview: Codable, Identifiable {
+public struct ItemPreview: Codable, Identifiable, Sendable {
     public let id: Int
     public let title: String
     public let description: String?
@@ -184,7 +184,7 @@ public struct ItemPreview: Codable, Identifiable {
 }
 
 /// QR code data for an item
-public struct QRCodeData: Codable {
+public struct QRCodeData: Codable, Sendable {
     public let itemId: Int
     public let itemTitle: String
     public let previewUrl: String

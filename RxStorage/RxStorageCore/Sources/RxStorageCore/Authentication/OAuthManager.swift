@@ -14,7 +14,7 @@ import UIKit
 #endif
 
 /// User information from OAuth
-public struct User: Codable, Identifiable {
+public struct User: Codable, Identifiable, Sendable {
     public let id: String
     public let name: String?
     public let email: String?
@@ -29,8 +29,9 @@ public struct User: Codable, Identifiable {
 }
 
 /// OAuth authentication manager
+@MainActor
 @Observable
-public class OAuthManager {
+public final class OAuthManager {
     /// Shared singleton instance
     public static let shared = OAuthManager()
 
@@ -44,11 +45,6 @@ public class OAuthManager {
     /// Current authenticated user
     public private(set) var currentUser: User?
 
-    /// Current access token
-    public var accessToken: String? {
-        tokenStorage.getAccessToken()
-    }
-
     public init(
         configuration: AppConfiguration = .shared,
         tokenStorage: TokenStorage = .shared,
@@ -59,13 +55,40 @@ public class OAuthManager {
         self.apiClient = apiClient
 
         // Check if already authenticated
-        checkAuthenticationStatus()
+        Task {
+            await checkAuthenticationStatus()
+        }
+
+        // Observe auth session expiration notifications
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handleAuthSessionExpired),
+            name: .authSessionExpired,
+            object: nil
+        )
+    }
+
+    deinit {
+        NotificationCenter.default.removeObserver(self)
+    }
+
+    /// Handle auth session expiration notification
+    @objc private func handleAuthSessionExpired() {
+        Task {
+            await handleSessionExpiration()
+        }
+    }
+
+    /// Clear tokens and update auth state when session expires
+    private func handleSessionExpiration() async {
+        try? await tokenStorage.clearAll()
+        isAuthenticated = false
+        currentUser = nil
     }
 
     // MARK: - Authentication
 
     /// Initiate OAuth authentication flow
-    @MainActor
     public func authenticate() async throws {
         // Generate PKCE parameters
         let codeVerifier = generateCodeVerifier()
@@ -96,7 +119,7 @@ public class OAuthManager {
         ) { [weak self] callbackURL, error in
             guard let self = self else { return }
 
-            Task {
+            Task { @MainActor in
                 do {
                     if let error = error {
                         if (error as? ASWebAuthenticationSessionError)?.code == .canceledLogin {
@@ -117,8 +140,10 @@ public class OAuthManager {
         }
 
         // Set presentation context provider
+        #if canImport(UIKit)
         let contextProvider = WebAuthenticationPresentationContextProvider()
         session.presentationContextProvider = contextProvider
+        #endif
         session.prefersEphemeralWebBrowserSession = false
 
         guard session.start() else {
@@ -196,11 +221,11 @@ public class OAuthManager {
         let tokenResponse = try JSONDecoder().decode(TokenResponse.self, from: data)
 
         // Save tokens
-        try tokenStorage.saveAccessToken(tokenResponse.access_token)
-        try tokenStorage.saveRefreshToken(tokenResponse.refresh_token)
+        try await tokenStorage.saveAccessToken(tokenResponse.access_token)
+        try await tokenStorage.saveRefreshToken(tokenResponse.refresh_token)
 
         let expiresAt = Date().addingTimeInterval(TimeInterval(tokenResponse.expires_in))
-        try tokenStorage.saveExpiresAt(expiresAt)
+        try await tokenStorage.saveExpiresAt(expiresAt)
 
         // Fetch user info
         try await fetchUserInfo()
@@ -210,7 +235,7 @@ public class OAuthManager {
 
     /// Fetch user information from userinfo endpoint
     private func fetchUserInfo() async throws {
-        guard let accessToken = tokenStorage.getAccessToken() else {
+        guard let accessToken = await tokenStorage.getAccessToken() else {
             throw OAuthError.noAccessToken
         }
 
@@ -250,35 +275,37 @@ public class OAuthManager {
     }
 
     /// Logout user
-    @MainActor
     public func logout() async {
-        try? tokenStorage.clearAll()
+        try? await tokenStorage.clearAll()
         isAuthenticated = false
         currentUser = nil
     }
 
     /// Refresh access token if expired
     public func refreshTokenIfNeeded() async throws {
-        if tokenStorage.isTokenExpired() {
+        if await tokenStorage.isTokenExpired() {
             try await apiClient.refreshAccessToken()
             try await fetchUserInfo()
         }
     }
 
+    /// Current access token
+    public func getAccessToken() async -> String? {
+        await tokenStorage.getAccessToken()
+    }
+
     // MARK: - Private Helpers
 
-    private func checkAuthenticationStatus() {
-        if let _ = tokenStorage.getAccessToken(), !tokenStorage.isTokenExpired() {
+    private func checkAuthenticationStatus() async {
+        if let _ = await tokenStorage.getAccessToken(), await !tokenStorage.isTokenExpired() {
             isAuthenticated = true
-            Task {
-                try? await fetchUserInfo()
-            }
+            try? await fetchUserInfo()
         }
     }
 
     // MARK: - PKCE Helpers
 
-    private func generateCodeVerifier() -> String {
+    nonisolated private func generateCodeVerifier() -> String {
         var buffer = [UInt8](repeating: 0, count: 32)
         _ = SecRandomCopyBytes(kSecRandomDefault, buffer.count, &buffer)
         return Data(buffer).base64EncodedString()
@@ -287,7 +314,7 @@ public class OAuthManager {
             .replacingOccurrences(of: "=", with: "")
     }
 
-    private func generateCodeChallenge(from verifier: String) -> String {
+    nonisolated private func generateCodeChallenge(from verifier: String) -> String {
         guard let data = verifier.data(using: .utf8) else {
             fatalError("Failed to encode code verifier")
         }
@@ -309,7 +336,7 @@ import CommonCrypto
 
 // MARK: - OAuth Errors
 
-public enum OAuthError: LocalizedError {
+public enum OAuthError: LocalizedError, @unchecked Sendable {
     case invalidURL
     case userCancelled
     case authenticationFailed(Error)

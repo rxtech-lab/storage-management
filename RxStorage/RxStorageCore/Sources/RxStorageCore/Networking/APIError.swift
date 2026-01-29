@@ -8,7 +8,7 @@
 import Foundation
 
 /// Errors that can occur during API operations
-public enum APIError: LocalizedError {
+public enum APIError: LocalizedError, @unchecked Sendable {
     case unauthorized
     case forbidden
     case notFound
@@ -19,6 +19,7 @@ public enum APIError: LocalizedError {
     case invalidURL
     case invalidResponse
     case tokenExpired
+    case refreshTokenError
 
     public var errorDescription: String? {
         switch self {
@@ -42,21 +43,32 @@ public enum APIError: LocalizedError {
             return "Invalid server response"
         case .tokenExpired:
             return "Your session has expired. Please sign in again"
+        case .refreshTokenError:
+            return "Unable to refresh your session. Please sign in again"
         }
     }
 
     public var isAuthenticationError: Bool {
         switch self {
-        case .unauthorized, .tokenExpired:
+        case .unauthorized, .tokenExpired, .refreshTokenError:
             return true
         default:
             return false
         }
     }
+
+    /// Whether this error is a cancelled request (should be ignored silently)
+    public var isCancellation: Bool {
+        guard case .networkError(let underlyingError) = self else {
+            return false
+        }
+        let nsError = underlyingError as NSError
+        return nsError.domain == NSURLErrorDomain && nsError.code == NSURLErrorCancelled
+    }
 }
 
 /// Standard API response wrapper
-public struct APIResponse<T: Codable>: Codable {
+public struct APIResponse<T: Codable & Sendable>: Codable, Sendable {
     public let data: T?
     public let error: String?
 
@@ -67,7 +79,7 @@ public struct APIResponse<T: Codable>: Codable {
 }
 
 /// API error response
-public struct APIErrorResponse: Codable {
+public struct APIErrorResponse: Codable, Sendable {
     public let error: String
 
     public init(error: String) {

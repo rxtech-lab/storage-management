@@ -10,6 +10,8 @@ import RxStorageCore
 
 /// Category list view
 struct CategoryListView: View {
+    @Binding var selectedCategory: RxStorageCore.Category?
+
     @State private var viewModel = CategoryListViewModel()
     @State private var showingCreateSheet = false
 
@@ -54,18 +56,20 @@ struct CategoryListView: View {
     // MARK: - Categories List
 
     private var categoriesList: some View {
-        List {
+        List(selection: $selectedCategory) {
             ForEach(viewModel.filteredCategories) { category in
-                CategoryRow(category: category)
-                    .swipeActions(edge: .trailing, allowsFullSwipe: false) {
-                        Button(role: .destructive) {
-                            Task {
-                                try? await viewModel.deleteCategory(category)
-                            }
-                        } label: {
-                            Label("Delete", systemImage: "trash")
+                NavigationLink(value: category) {
+                    CategoryRow(category: category)
+                }
+                .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                    Button(role: .destructive) {
+                        Task {
+                            try? await viewModel.deleteCategory(category)
                         }
+                    } label: {
+                        Label("Delete", systemImage: "trash")
                     }
+                }
             }
         }
     }
@@ -73,7 +77,7 @@ struct CategoryListView: View {
 
 /// Category row in list
 struct CategoryRow: View {
-    let category: Category
+    let category: RxStorageCore.Category
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
@@ -92,7 +96,8 @@ struct CategoryRow: View {
 }
 
 #Preview {
+    @Previewable @State var selectedCategory: RxStorageCore.Category?
     NavigationStack {
-        CategoryListView()
+        CategoryListView(selectedCategory: $selectedCategory)
     }
 }

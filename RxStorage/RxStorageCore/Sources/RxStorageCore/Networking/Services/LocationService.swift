@@ -8,6 +8,7 @@
 import Foundation
 
 /// Protocol for location service operations
+@MainActor
 public protocol LocationServiceProtocol {
     func fetchLocations() async throws -> [Location]
     func fetchLocation(id: Int) async throws -> Location
@@ -17,6 +18,7 @@ public protocol LocationServiceProtocol {
 }
 
 /// Location service implementation
+@MainActor
 public class LocationService: LocationServiceProtocol {
     private let apiClient: APIClient
 

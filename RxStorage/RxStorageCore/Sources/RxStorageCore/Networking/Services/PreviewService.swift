@@ -8,11 +8,13 @@
 import Foundation
 
 /// Protocol for preview service operations
+@MainActor
 public protocol PreviewServiceProtocol {
     func fetchItemPreview(id: Int) async throws -> ItemPreview
 }
 
 /// Preview service implementation
+@MainActor
 public class PreviewService: PreviewServiceProtocol {
     private let apiClient: APIClient
 

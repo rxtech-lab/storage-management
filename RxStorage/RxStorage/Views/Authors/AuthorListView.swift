@@ -10,6 +10,8 @@ import RxStorageCore
 
 /// Author list view
 struct AuthorListView: View {
+    @Binding var selectedAuthor: Author?
+
     @State private var viewModel = AuthorListViewModel()
     @State private var showingCreateSheet = false
 
@@ -54,18 +56,20 @@ struct AuthorListView: View {
     // MARK: - Authors List
 
     private var authorsList: some View {
-        List {
+        List(selection: $selectedAuthor) {
             ForEach(viewModel.filteredAuthors) { author in
-                AuthorRow(author: author)
-                    .swipeActions(edge: .trailing, allowsFullSwipe: false) {
-                        Button(role: .destructive) {
-                            Task {
-                                try? await viewModel.deleteAuthor(author)
-                            }
-                        } label: {
-                            Label("Delete", systemImage: "trash")
+                NavigationLink(value: author) {
+                    AuthorRow(author: author)
+                }
+                .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                    Button(role: .destructive) {
+                        Task {
+                            try? await viewModel.deleteAuthor(author)
                         }
+                    } label: {
+                        Label("Delete", systemImage: "trash")
                     }
+                }
             }
         }
     }
@@ -92,7 +96,8 @@ struct AuthorRow: View {
 }
 
 #Preview {
+    @Previewable @State var selectedAuthor: Author?
     NavigationStack {
-        AuthorListView()
+        AuthorListView(selectedAuthor: $selectedAuthor)
     }
 }

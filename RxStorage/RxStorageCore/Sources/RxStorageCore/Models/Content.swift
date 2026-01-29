@@ -8,7 +8,7 @@
 import Foundation
 
 /// Content attached to an item (file, image, or video)
-public struct Content: Codable, Identifiable, Hashable {
+public struct Content: Codable, Identifiable, Hashable, Sendable {
     public let id: Int
     public let itemId: Int
     public let type: ContentType
@@ -33,7 +33,7 @@ public struct Content: Codable, Identifiable, Hashable {
     }
 
     /// Content type
-    public enum ContentType: String, Codable, CaseIterable {
+    public enum ContentType: String, Codable, CaseIterable, Sendable {
         case file = "file"
         case image = "image"
         case video = "video"
@@ -57,7 +57,7 @@ public struct Content: Codable, Identifiable, Hashable {
 }
 
 /// Content data with polymorphic structure based on type
-public struct ContentData: Codable, Hashable {
+public struct ContentData: Codable, Hashable, Sendable {
     public let title: String?
     public let description: String?
     public let mimeType: String?
@@ -110,7 +110,7 @@ public struct ContentData: Codable, Hashable {
 }
 
 /// Request body for creating/updating content
-public struct ContentRequest: Codable {
+public struct ContentRequest: Codable, Sendable {
     public let type: Content.ContentType
     public let data: ContentData
 

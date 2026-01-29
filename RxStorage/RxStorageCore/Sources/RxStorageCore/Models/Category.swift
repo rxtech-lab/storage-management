@@ -9,8 +9,9 @@ import Foundation
 
 /// Category for organizing items
 /// Note: When embedded in Item responses, only id and name are returned
-public struct Category: Codable, Identifiable, Hashable {
+public struct Category: Codable, Identifiable, Hashable, Sendable {
     public let id: Int
+    public let userId: String?
     public let name: String
     public let description: String?
     public let createdAt: Date?
@@ -18,12 +19,14 @@ public struct Category: Codable, Identifiable, Hashable {
 
     public init(
         id: Int,
+        userId: String? = nil,
         name: String,
         description: String? = nil,
         createdAt: Date? = nil,
         updatedAt: Date? = nil
     ) {
         self.id = id
+        self.userId = userId
         self.name = name
         self.description = description
         self.createdAt = createdAt
@@ -32,7 +35,7 @@ public struct Category: Codable, Identifiable, Hashable {
 }
 
 /// Request body for creating a new category
-public struct NewCategoryRequest: Codable {
+public struct NewCategoryRequest: Codable, Sendable {
     public let name: String
     public let description: String?
 

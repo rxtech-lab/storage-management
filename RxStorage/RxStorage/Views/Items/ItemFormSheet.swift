@@ -5,8 +5,8 @@
 //  Item create/edit form with inline entity creation
 //
 
-import SwiftUI
 import RxStorageCore
+import SwiftUI
 
 /// Item form sheet for creating or editing items
 struct ItemFormSheet: View {
@@ -33,7 +33,7 @@ struct ItemFormSheet: View {
                     .textInputAutocapitalization(.words)
 
                 TextField("Description", text: $viewModel.description, axis: .vertical)
-                    .lineLimit(3...6)
+                    .lineLimit(3 ... 6)
 
                 TextField("Price", text: $viewModel.price)
                     .keyboardType(.decimalPad)
@@ -169,12 +169,7 @@ struct ItemFormSheet: View {
         }
         .overlay {
             if viewModel.isSubmitting {
-                ProgressView()
-                    .progressViewStyle(.circular)
-                    .padding()
-                    .background(Color(uiColor: .systemBackground))
-                    .cornerRadius(10)
-                    .shadow(radius: 10)
+                LoadingOverlay()
             }
         }
     }

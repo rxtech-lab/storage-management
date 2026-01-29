@@ -10,8 +10,8 @@ import RxStorageCore
 
 /// Item list view
 struct ItemListView: View {
+    @Binding var selectedItem: StorageItem?
     @State private var viewModel = ItemListViewModel()
-    @State private var selectedItem: StorageItem?
     @State private var showingCreateSheet = false
     @State private var showingFilterSheet = false
     @State private var showingError = false
@@ -103,9 +103,6 @@ struct ItemListView: View {
                 }
             }
         }
-        .navigationDestination(for: StorageItem.self) { item in
-            ItemDetailView(itemId: item.id)
-        }
     }
 }
 
@@ -186,7 +183,8 @@ struct ItemFilterSheet: View {
 }
 
 #Preview {
+    @Previewable @State var selectedItem: StorageItem?
     NavigationStack {
-        ItemListView()
+        ItemListView(selectedItem: $selectedItem)
     }
 }

@@ -8,6 +8,7 @@
 import Foundation
 
 /// Protocol for item service operations
+@MainActor
 public protocol ItemServiceProtocol {
     func fetchItems(filters: ItemFilters?) async throws -> [StorageItem]
     func fetchItem(id: Int) async throws -> StorageItem
@@ -19,6 +20,7 @@ public protocol ItemServiceProtocol {
 }
 
 /// Item service implementation
+@MainActor
 public class ItemService: ItemServiceProtocol {
     private let apiClient: APIClient
 

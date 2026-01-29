@@ -11,7 +11,7 @@ import Foundation
 @Observable
 public class AppConfiguration {
     /// Shared singleton instance
-    public static let shared = AppConfiguration()
+    nonisolated(unsafe) public static let shared = AppConfiguration()
 
     /// API base URL (e.g., "https://api.example.com" or "http://localhost:3000")
     public let apiBaseURL: String
@@ -28,8 +28,30 @@ public class AppConfiguration {
     /// OAuth scopes
     public let authScopes: [String]
 
+    /// Whether running in test environment
+    private static var isTestEnvironment: Bool {
+        ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil ||
+        NSClassFromString("XCTestCase") != nil
+    }
+
     private init() {
-        guard let infoPlist = Bundle.main.infoDictionary else {
+        let infoPlist = Bundle.main.infoDictionary
+
+        // In test environment, use placeholder values if Info.plist values are missing
+        if Self.isTestEnvironment {
+            self.apiBaseURL = (infoPlist?["API_BASE_URL"] as? String) ?? "http://localhost:3000"
+            self.authIssuer = (infoPlist?["AUTH_ISSUER"] as? String) ?? "https://auth.test.local"
+            self.authClientID = (infoPlist?["AUTH_CLIENT_ID"] as? String) ?? "test_client_id"
+            self.authRedirectURI = (infoPlist?["AUTH_REDIRECT_URI"] as? String) ?? "rxstorage://oauth-callback"
+            if let scopesString = infoPlist?["AUTH_SCOPES"] as? String {
+                self.authScopes = scopesString.split(separator: " ").map(String.init)
+            } else {
+                self.authScopes = ["openid", "email", "profile", "offline_access"]
+            }
+            return
+        }
+
+        guard let infoPlist = infoPlist else {
             fatalError("Info.plist not found")
         }
 

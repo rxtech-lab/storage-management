@@ -9,6 +9,7 @@ import Foundation
 @testable import RxStorageCore
 
 /// Mock item service for testing
+@MainActor
 public final class MockItemService: ItemServiceProtocol {
     // MARK: - Properties
 
@@ -32,7 +33,7 @@ public final class MockItemService: ItemServiceProtocol {
     public var lastFetchItemId: Int?
     public var lastCreateItemRequest: NewItemRequest?
     public var lastUpdateItemId: Int?
-    public var lastUpdateItemRequest: NewItemRequest?
+    public var lastUpdateItemRequest: UpdateItemRequest?
     public var lastDeleteItemId: Int?
     public var lastGenerateQRCodeItemId: Int?
 
@@ -94,7 +95,7 @@ public final class MockItemService: ItemServiceProtocol {
         throw APIError.serverError("Not configured")
     }
 
-    public func updateItem(id: Int, _ request: NewItemRequest) async throws -> StorageItem {
+    public func updateItem(id: Int, _ request: UpdateItemRequest) async throws -> StorageItem {
         updateItemCalled = true
         lastUpdateItemId = id
         lastUpdateItemRequest = request

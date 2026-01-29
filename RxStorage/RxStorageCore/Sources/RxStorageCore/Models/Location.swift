@@ -10,7 +10,7 @@ import CoreLocation
 
 /// Geographic location with coordinates
 /// Note: When embedded in Item responses, only id and title are returned
-public struct Location: Codable, Identifiable, Hashable {
+public struct Location: Codable, Identifiable, Hashable, Sendable {
     public let id: Int
     public let title: String
     public let latitude: Double?
@@ -43,7 +43,7 @@ public struct Location: Codable, Identifiable, Hashable {
 }
 
 /// Request body for creating a new location
-public struct NewLocationRequest: Codable {
+public struct NewLocationRequest: Codable, Sendable {
     public let title: String
     public let latitude: Double
     public let longitude: Double

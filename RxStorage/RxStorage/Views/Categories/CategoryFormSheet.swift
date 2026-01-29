@@ -5,18 +5,18 @@
 //  Category create/edit form
 //
 
-import SwiftUI
 import RxStorageCore
+import SwiftUI
 
 /// Category form sheet for creating or editing categories
 struct CategoryFormSheet: View {
-    let category: Category?
-    let onCreated: ((Category) -> Void)?
+    let category: RxStorageCore.Category?
+    let onCreated: ((RxStorageCore.Category) -> Void)?
 
     @State private var viewModel: CategoryFormViewModel
     @Environment(\.dismiss) private var dismiss
 
-    init(category: Category? = nil, onCreated: ((Category) -> Void)? = nil) {
+    init(category: RxStorageCore.Category? = nil, onCreated: ((RxStorageCore.Category) -> Void)? = nil) {
         self.category = category
         self.onCreated = onCreated
         _viewModel = State(initialValue: CategoryFormViewModel(category: category))
@@ -29,7 +29,7 @@ struct CategoryFormSheet: View {
                     .textInputAutocapitalization(.words)
 
                 TextField("Description", text: $viewModel.description, axis: .vertical)
-                    .lineLimit(3...6)
+                    .lineLimit(3 ... 6)
             }
 
             // Validation Errors
@@ -65,12 +65,7 @@ struct CategoryFormSheet: View {
         }
         .overlay {
             if viewModel.isSubmitting {
-                ProgressView()
-                    .progressViewStyle(.circular)
-                    .padding()
-                    .background(Color(uiColor: .systemBackground))
-                    .cornerRadius(10)
-                    .shadow(radius: 10)
+                LoadingOverlay()
             }
         }
     }
