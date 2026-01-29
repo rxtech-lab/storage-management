@@ -267,28 +267,12 @@ public actor APIClient {
     // MARK: - Response Decoding
 
     /// Decode API response data into the expected type
-    /// Tries direct decoding first, then falls back to APIResponse wrapper format
     internal static func decodeResponse<T: Codable & Sendable>(
         data: Data, responseType: T.Type, logger: Logger
     ) throws -> T {
+        let decoder = JSONDecoder.apiDecoder()
         do {
-            let decoder = JSONDecoder.apiDecoder()
-
-            // Try direct decoding first (most API responses are direct)
-            if let result = try? decoder.decode(T.self, from: data) {
-                return result
-            }
-
-            // Fall back to APIResponse wrapper format
-            let wrappedResponse = try decoder.decode(APIResponse<T>.self, from: data)
-            if let data = wrappedResponse.data {
-                return data
-            } else if let error = wrappedResponse.error {
-                throw APIError.serverError(error)
-            } else {
-                throw APIError.invalidResponse
-            }
-
+            return try decoder.decode(T.self, from: data)
         } catch {
             let rawResponse = String(data: data, encoding: .utf8) ?? "Unable to decode raw data"
             logger.error(

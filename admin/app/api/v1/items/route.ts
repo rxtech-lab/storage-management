@@ -37,7 +37,12 @@ export async function GET(request: NextRequest) {
     filters.search = searchParams.get("search")!;
   }
 
-  const items = await getItems(filters);
+  let items = await getItems(filters);
+
+  items = items.map((item) => ({
+    ...item,
+    previewUrl: `${process.env.NEXT_PUBLIC_URL}/preview/${item.id}`,
+  }));
   return NextResponse.json(items);
 }
 

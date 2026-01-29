@@ -18,8 +18,6 @@ public final class ItemDetailViewModel: ItemDetailViewModelProtocol {
     public private(set) var children: [StorageItem] = []
     public private(set) var isLoading = false
     public private(set) var error: Error?
-    public private(set) var qrCodeData: QRCodeData?
-    public private(set) var isGeneratingQR = false
 
     // MARK: - Dependencies
 
@@ -59,20 +57,6 @@ public final class ItemDetailViewModel: ItemDetailViewModelProtocol {
         } catch {
             // Don't set main error for children fetch failure
             print("Failed to fetch children: \(error)")
-        }
-    }
-
-    public func generateQRCode() async {
-        guard let itemId = item?.id else { return }
-
-        isGeneratingQR = true
-
-        do {
-            qrCodeData = try await itemService.generateQRCode(itemId: itemId)
-            isGeneratingQR = false
-        } catch {
-            self.error = error
-            isGeneratingQR = false
         }
     }
 

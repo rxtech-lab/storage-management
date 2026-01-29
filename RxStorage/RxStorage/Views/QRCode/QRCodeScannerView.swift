@@ -5,8 +5,8 @@
 //  QR code scanner view using AVFoundation
 //
 
-import SwiftUI
 import AVFoundation
+import SwiftUI
 
 /// QR code scanner view
 struct QRCodeScannerView: View {
@@ -34,19 +34,18 @@ struct QRCodeScannerView: View {
 
                 Text("Position the QR code within the frame")
                     .font(.headline)
-                    .foregroundStyle(.white)
                     .padding()
-                    .background(Color.black.opacity(0.7))
-                    .cornerRadius(10)
-                    .padding()
+                    .glassEffect()
             }
         }
         .navigationTitle("Scan QR Code")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
-            ToolbarItem(placement: .cancellationAction) {
-                Button("Cancel") {
+            ToolbarItem(placement: .confirmationAction) {
+                Button {
                     dismiss()
+                } label: {
+                    Image(systemName: "xmark")
                 }
             }
         }
@@ -132,7 +131,8 @@ struct CameraPreview: UIViewRepresentable {
             guard isScanningEnabled else { return }
 
             if let metadataObject = metadataObjects.first as? AVMetadataMachineReadableCodeObject,
-               let stringValue = metadataObject.stringValue {
+               let stringValue = metadataObject.stringValue
+            {
                 isScanningEnabled = false
                 captureSession?.stopRunning()
                 onScan(stringValue)

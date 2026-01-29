@@ -5,8 +5,8 @@
 //  Item detail view with QR code support
 //
 
-import SwiftUI
 import RxStorageCore
+import SwiftUI
 
 /// Item detail view
 struct ItemDetailView: View {
@@ -15,6 +15,11 @@ struct ItemDetailView: View {
     @State private var viewModel = ItemDetailViewModel()
     @State private var showingEditSheet = false
     @State private var showingQRSheet = false
+    @State private var nfcWriter = NFCWriter()
+    @State private var isWritingNFC = false
+    @State private var showNFCError = false
+    @State private var nfcError: Error?
+    @State private var showNFCSuccess = false
 
     init(itemId: Int) {
         self.itemId = itemId
@@ -43,6 +48,34 @@ struct ItemDetailView: View {
                     }
                     .padding()
                 }
+                .toolbar {
+                    ToolbarItem(placement: .primaryAction) {
+                        Menu {
+                            Button {
+                                showingEditSheet = true
+                            } label: {
+                                Label("Edit", systemImage: "pencil")
+                            }
+
+                            Button {
+                                showingQRSheet = true
+                            } label: {
+                                Label("Show QR Code", systemImage: "qrcode")
+                            }
+
+                            Button {
+                                Task {
+                                    await writeToNFC(previewUrl: item.previewUrl)
+                                }
+                            } label: {
+                                Label(isWritingNFC ? "Writing..." : "Write to NFC Tag", systemImage: "wave.3.right")
+                            }
+                            .disabled(isWritingNFC)
+                        } label: {
+                            Label("More", systemImage: "ellipsis.circle")
+                        }
+                    }
+                }
             } else if let error = viewModel.error {
                 ContentUnavailableView(
                     "Error Loading Item",
@@ -55,25 +88,6 @@ struct ItemDetailView: View {
         }
         .navigationTitle(viewModel.item?.title ?? "Item")
         .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .primaryAction) {
-                Menu {
-                    Button {
-                        showingEditSheet = true
-                    } label: {
-                        Label("Edit", systemImage: "pencil")
-                    }
-
-                    Button {
-                        showingQRSheet = true
-                    } label: {
-                        Label("Show QR Code", systemImage: "qrcode")
-                    }
-                } label: {
-                    Label("More", systemImage: "ellipsis.circle")
-                }
-            }
-        }
         .sheet(isPresented: $showingEditSheet) {
             if let item = viewModel.item {
                 NavigationStack {
@@ -82,12 +96,38 @@ struct ItemDetailView: View {
             }
         }
         .sheet(isPresented: $showingQRSheet) {
-            NavigationStack {
-                QRCodeGeneratorView(itemId: itemId)
+            if let item = viewModel.item {
+                NavigationStack {
+                    QRCodeView(urlString: item.previewUrl)
+                }
             }
         }
         .task(id: itemId) {
             await viewModel.fetchItem(id: itemId)
+        }
+        .alert("NFC Write Successful", isPresented: $showNFCSuccess) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text("The URL has been written to the NFC tag.")
+        }
+        .alert("NFC Write Error", isPresented: $showNFCError) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(nfcError?.localizedDescription ?? "An unknown error occurred.")
+        }
+    }
+
+    // MARK: - NFC Writing
+
+    private func writeToNFC(previewUrl: String) async {
+        isWritingNFC = true
+        defer { isWritingNFC = false }
+        do {
+            try await nfcWriter.writeToNfcChip(url: previewUrl)
+            showNFCSuccess = true
+        } catch {
+            nfcError = error
+            showNFCError = true
         }
     }
 

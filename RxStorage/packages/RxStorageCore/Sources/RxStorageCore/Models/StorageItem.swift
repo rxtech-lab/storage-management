@@ -21,6 +21,7 @@ public struct StorageItem: Codable, Identifiable, Hashable, Sendable {
     public let images: [String]
     public let createdAt: Date
     public let updatedAt: Date
+    public let previewUrl: String
 
     // Relations (optional, populated by API)
     public let category: Category?
@@ -42,7 +43,9 @@ public struct StorageItem: Codable, Identifiable, Hashable, Sendable {
         updatedAt: Date,
         category: Category? = nil,
         location: Location? = nil,
-        author: Author? = nil
+        author: Author? = nil,
+        previewUrl: String,
+
     ) {
         self.id = id
         self.title = title
@@ -59,12 +62,13 @@ public struct StorageItem: Codable, Identifiable, Hashable, Sendable {
         self.category = category
         self.location = location
         self.author = author
+        self.previewUrl = previewUrl
     }
 
     /// Item visibility
     public enum Visibility: String, Codable, CaseIterable, Sendable {
-        case `public` = "public"
-        case `private` = "private"
+        case `public`
+        case `private`
 
         public var displayName: String {
             switch self {

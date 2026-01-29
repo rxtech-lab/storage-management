@@ -1,4 +1,5 @@
 import { notFound, redirect } from "next/navigation";
+import { headers } from "next/headers";
 import { Metadata } from "next";
 import { auth } from "@/auth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -47,6 +48,13 @@ export async function generateMetadata({
 export default async function PreviewPage({ params }: PreviewPageProps) {
   const { id } = await params;
   const itemId = parseInt(id);
+
+  // Redirect to API if client requests JSON
+  const headersList = await headers();
+  const accept = headersList.get("accept") || "";
+  if (accept.includes("application/json")) {
+    redirect(`/api/v1/items/${id}`);
+  }
 
   const item = await getItem(itemId);
 

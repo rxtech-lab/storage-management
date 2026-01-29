@@ -22,20 +22,11 @@ public protocol ItemDetailViewModelProtocol: AnyObject, Observable {
     /// Error state
     var error: Error? { get }
 
-    /// QR code data
-    var qrCodeData: QRCodeData? { get }
-
-    /// Whether QR code is being generated
-    var isGeneratingQR: Bool { get }
-
     /// Fetch item details
     func fetchItem(id: Int) async
 
     /// Fetch child items
     func fetchChildren() async
-
-    /// Generate QR code
-    func generateQRCode() async
 
     /// Refresh all data
     func refresh() async

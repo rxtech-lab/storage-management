@@ -67,17 +67,6 @@ public enum APIError: LocalizedError, @unchecked Sendable {
     }
 }
 
-/// Standard API response wrapper
-public struct APIResponse<T: Codable & Sendable>: Codable, Sendable {
-    public let data: T?
-    public let error: String?
-
-    public init(data: T? = nil, error: String? = nil) {
-        self.data = data
-        self.error = error
-    }
-}
-
 /// API error response
 public struct APIErrorResponse: Codable, Sendable {
     public let error: String

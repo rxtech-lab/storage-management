@@ -30,6 +30,9 @@
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>Save QR codes to your photo library</string>
 
+	<key>NFCReaderUsageDescription</key>
+	<string>NFC access is needed to write item information to NFC tags</string>
+
 	<!-- App Information (Xcode manages these) -->
 	<key>CFBundleDisplayName</key>
 	<string>$(PRODUCT_NAME)</string>

@@ -5,8 +5,8 @@
 //  Item list view with filtering and search
 //
 
-import SwiftUI
 import RxStorageCore
+import SwiftUI
 
 /// Item list view
 struct ItemListView: View {
@@ -15,6 +15,7 @@ struct ItemListView: View {
     @State private var showingCreateSheet = false
     @State private var showingFilterSheet = false
     @State private var showingError = false
+    @State private var showQrCodeScanner = false
 
     var body: some View {
         Group {
@@ -40,6 +41,14 @@ struct ItemListView: View {
                 }
             }
 
+            ToolbarItem(placement: .primaryAction) {
+                Button {
+                    showQrCodeScanner = true
+                } label: {
+                    Label("Scan", systemImage: "qrcode.viewfinder")
+                }
+            }
+
             ToolbarItem(placement: .secondaryAction) {
                 Button {
                     showingFilterSheet = true
@@ -51,6 +60,13 @@ struct ItemListView: View {
         .searchable(text: $viewModel.searchText, prompt: "Search items")
         .refreshable {
             await viewModel.refreshItems()
+        }
+        .sheet(isPresented: $showQrCodeScanner) {
+            NavigationStack {
+                QRCodeScannerView { code in
+                    print(code)
+                }
+            }
         }
         .sheet(isPresented: $showingCreateSheet) {
             NavigationStack {
