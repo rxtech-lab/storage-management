@@ -5,8 +5,9 @@
 //  Position schema create/edit form
 //
 
-import SwiftUI
+import JsonSchemaEditor
 import RxStorageCore
+import SwiftUI
 
 /// Position schema form sheet for creating or editing schemas
 struct PositionSchemaFormSheet: View {

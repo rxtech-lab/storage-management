@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth-helper";
-import { getItem, updateItemAction, deleteItemAction } from "@/lib/actions/item-actions";
+import {
+  getItem,
+  updateItemAction,
+  deleteItemAction,
+} from "@/lib/actions/item-actions";
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -24,7 +28,9 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     return NextResponse.json({ error: "Permission denied" }, { status: 403 });
   }
 
-  return NextResponse.json({ data: item });
+  const previewUrl = `${process.env.NEXT_PUBLIC_URL}/preview/${item.id}`;
+
+  return NextResponse.json({ ...item, previewUrl });
 }
 
 export async function PUT(request: NextRequest, { params }: RouteParams) {
@@ -39,8 +45,9 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     const body = await request.json();
     const result = await updateItemAction(parseInt(id), body, session.user.id);
 
-    if (result.success) {
-      return NextResponse.json({ data: result.data });
+    if (result.success && result.data) {
+      const previewUrl = `${process.env.NEXT_PUBLIC_URL}/preview/${result.data.id}`;
+      return NextResponse.json({ ...result.data, previewUrl });
     } else if (result.error === "Permission denied") {
       return NextResponse.json({ error: result.error }, { status: 403 });
     } else {
@@ -49,7 +56,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
   } catch (error) {
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Invalid request" },
-      { status: 400 }
+      { status: 400 },
     );
   }
 }

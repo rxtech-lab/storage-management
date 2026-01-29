@@ -54,8 +54,9 @@ test.describe.serial("Items API", () => {
 
     expect(response.status()).toBe(200);
     const body = await response.json();
-    expect(body.data.id).toBe(createdItemId);
-    expect(body.data.title).toBe("Test Item from API");
+    expect(body.id).toBe(createdItemId);
+    expect(body.title).toBe("Test Item from API");
+    expect(body.previewUrl).toContain(`/preview/${createdItemId}`);
   });
 
   test("GET /api/v1/items/999999 - should return 404 for non-existent item", async ({
@@ -79,8 +80,9 @@ test.describe.serial("Items API", () => {
 
     expect(response.status()).toBe(200);
     const body = await response.json();
-    expect(body.data.title).toBe("Updated Test Item");
-    expect(body.data.visibility).toBe("public");
+    expect(body.title).toBe("Updated Test Item");
+    expect(body.visibility).toBe("public");
+    expect(body.previewUrl).toContain(`/preview/${createdItemId}`);
   });
 
   test("GET /api/v1/items/{id}/children - should get item children", async ({

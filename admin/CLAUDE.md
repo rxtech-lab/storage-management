@@ -56,7 +56,8 @@ app/
 │   ├── locations/       # Location management
 │   ├── authors/         # Author management
 │   └── position-schemas/# Custom position schemas
-├── preview/[id]/        # Public item preview
+├── preview/[id]/        # Public item preview (with App Clips support)
+├── .well-known/         # Apple App Site Association for App Clips
 └── api/v1/              # REST API for iOS app
 
 components/
@@ -106,6 +107,10 @@ Required in `.env`:
 - `TURSO_AUTH_TOKEN` - Turso auth token
 - `NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN` - Mapbox access token
 
+Optional (for iOS App Clips):
+- `APPLE_APP_CLIP_BUNDLE_ID` - App Clips bundle ID (e.g., `ABCDE12345.com.rxlab.RxStorageClips`)
+- `APPLE_APP_BUNDLE_ID` - Main app bundle ID (e.g., `ABCDE12345.com.rxlab.RxStorage`)
+
 ## Features
 
 - Item CRUD with hierarchical parent/child relationships
@@ -116,6 +121,7 @@ Required in `.env`:
 - Public/private visibility with email whitelist access control
 - REST APIs for iOS mobile app consumption
 - S3-compatible file upload
+- Apple App Clips support via Smart App Banner on preview pages
 
 ## E2E Testing
 

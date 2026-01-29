@@ -593,6 +593,10 @@ components:
         updatedAt:
           type: string
           format: date-time
+        previewUrl:
+          type: string
+          format: uri
+          description: URL to preview the item
         category:
           $ref: '#/components/schemas/Category'
         location:

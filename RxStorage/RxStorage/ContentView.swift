@@ -9,7 +9,7 @@ import SwiftUI
 import RxStorageCore
 
 struct ContentView: View {
-    @State private var authManager = OAuthManager.shared
+    private var authManager = OAuthManager.shared
 
     var body: some View {
         Group {
@@ -24,7 +24,7 @@ struct ContentView: View {
 
 /// Login screen
 struct LoginView: View {
-    @State private var authManager = OAuthManager.shared
+    private var authManager = OAuthManager.shared
     @State private var isAuthenticating = false
     @State private var errorMessage: String?
 
