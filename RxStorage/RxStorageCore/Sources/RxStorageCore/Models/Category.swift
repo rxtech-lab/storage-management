@@ -8,19 +8,20 @@
 import Foundation
 
 /// Category for organizing items
+/// Note: When embedded in Item responses, only id and name are returned
 public struct Category: Codable, Identifiable, Hashable {
     public let id: Int
     public let name: String
     public let description: String?
-    public let createdAt: Date
-    public let updatedAt: Date
+    public let createdAt: Date?
+    public let updatedAt: Date?
 
     public init(
         id: Int,
         name: String,
-        description: String?,
-        createdAt: Date,
-        updatedAt: Date
+        description: String? = nil,
+        createdAt: Date? = nil,
+        updatedAt: Date? = nil
     ) {
         self.id = id
         self.name = name

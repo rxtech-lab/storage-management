@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import Logging
 import Observation
 
 /// Item list view model implementation
@@ -32,6 +33,7 @@ public final class ItemListViewModel: ItemListViewModelProtocol {
     // MARK: - Dependencies
 
     private let itemService: ItemServiceProtocol
+    private let logger = Logger(label: "com.rxlab.rxstorage.ItemListViewModel")
 
     // MARK: - Initialization
 
@@ -49,6 +51,9 @@ public final class ItemListViewModel: ItemListViewModelProtocol {
             items = try await itemService.fetchItems(filters: filters.isEmpty ? nil : filters)
             isLoading = false
         } catch {
+            logger.error("Failed to fetch items: \(error.localizedDescription)", metadata: [
+                "error": "\(error)"
+            ])
             self.error = error
             isLoading = false
         }
@@ -75,6 +80,10 @@ public final class ItemListViewModel: ItemListViewModelProtocol {
         if let search = filters.search {
             searchText = search
         }
+    }
+
+    public func clearError() {
+        error = nil
     }
 }
 

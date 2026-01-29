@@ -228,7 +228,7 @@ public final class ItemFormViewModel: ItemFormViewModelProtocol {
         selectedLocationId = item.locationId
         selectedAuthorId = item.authorId
         selectedParentId = item.parentId
-        price = item.price ?? ""
+        price = item.price.map { String($0) } ?? ""
         visibility = item.visibility
         imageURLs = item.images
     }

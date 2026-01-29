@@ -120,7 +120,7 @@ public final class LocationFormViewModel: LocationFormViewModelProtocol {
 
     private func populateForm(from location: Location) {
         title = location.title
-        latitude = String(location.latitude)
-        longitude = String(location.longitude)
+        latitude = location.latitude.map { String($0) } ?? ""
+        longitude = location.longitude.map { String($0) } ?? ""
     }
 }

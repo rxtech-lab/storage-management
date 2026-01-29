@@ -143,7 +143,7 @@ public struct ItemDetailView: View {
             }
 
             if let price = item.price {
-                DetailRow(label: "Price", value: price, icon: "dollarsign.circle")
+                DetailRow(label: "Price", value: String(format: "%.2f", price), icon: "dollarsign.circle")
             }
 
             if !item.images.isEmpty {

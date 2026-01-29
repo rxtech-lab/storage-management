@@ -22,7 +22,7 @@ struct ItemDetailViewModelTests {
         locationId: nil,
         authorId: nil,
         parentId: nil,
-        price: "99.99",
+        price: 99.99,
         images: ["https://example.com/image.jpg"],
         category: nil,
         location: nil,

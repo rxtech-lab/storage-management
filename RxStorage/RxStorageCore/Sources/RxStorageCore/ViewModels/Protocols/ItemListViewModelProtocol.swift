@@ -39,4 +39,7 @@ public protocol ItemListViewModelProtocol: AnyObject, Observable {
 
     /// Apply filters
     func applyFilters(_ filters: ItemFilters)
+
+    /// Clear error state
+    func clearError()
 }

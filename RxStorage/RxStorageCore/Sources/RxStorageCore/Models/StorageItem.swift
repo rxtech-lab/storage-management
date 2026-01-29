@@ -16,7 +16,7 @@ public struct StorageItem: Codable, Identifiable, Hashable {
     public let locationId: Int?
     public let authorId: Int?
     public let parentId: Int?
-    public let price: String?
+    public let price: Double?
     public let visibility: Visibility
     public let images: [String]
     public let createdAt: Date
@@ -35,7 +35,7 @@ public struct StorageItem: Codable, Identifiable, Hashable {
         locationId: Int?,
         authorId: Int?,
         parentId: Int?,
-        price: String?,
+        price: Double?,
         visibility: Visibility,
         images: [String],
         createdAt: Date,
@@ -132,7 +132,7 @@ public struct ItemPreview: Codable, Identifiable {
     public let locationId: Int?
     public let authorId: Int?
     public let parentId: Int?
-    public let price: String?
+    public let price: Double?
     public let visibility: StorageItem.Visibility
     public let images: [String]
     public let createdAt: Date
@@ -154,7 +154,7 @@ public struct ItemPreview: Codable, Identifiable {
         locationId: Int?,
         authorId: Int?,
         parentId: Int?,
-        price: String?,
+        price: Double?,
         visibility: StorageItem.Visibility,
         images: [String],
         createdAt: Date,

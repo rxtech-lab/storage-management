@@ -40,7 +40,7 @@ struct ItemListViewModelTests {
             locationId: nil,
             authorId: nil,
             parentId: nil,
-            price: "99.99",
+            price: 99.99,
             images: [],
             category: nil,
             location: nil,

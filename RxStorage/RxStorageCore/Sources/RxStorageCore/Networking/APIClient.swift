@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import Logging
 
 /// HTTP client for API requests with automatic authentication
 public class APIClient {
@@ -15,6 +16,7 @@ public class APIClient {
     private let session: URLSession
     private let configuration: AppConfiguration
     private let tokenStorage: TokenStorage
+    private let logger = Logger(label: "com.rxlab.rxstorage.APIClient")
 
     public init(
         session: URLSession = .shared,
@@ -153,8 +155,17 @@ public class APIClient {
             }
 
         } catch let error as APIError {
+            logger.error("API error: \(error.localizedDescription)", metadata: [
+                "endpoint": "\(endpoint.path)",
+                "method": "\(method.rawValue)"
+            ])
             throw error
         } catch {
+            logger.error("Network error: \(error.localizedDescription)", metadata: [
+                "endpoint": "\(endpoint.path)",
+                "method": "\(method.rawValue)",
+                "error": "\(error)"
+            ])
             throw APIError.networkError(error)
         }
     }
@@ -180,6 +191,12 @@ public class APIClient {
             return try decoder.decode(T.self, from: data)
 
         } catch {
+            let rawResponse = String(data: data, encoding: .utf8) ?? "Unable to decode raw data"
+            logger.error("Failed to decode response", metadata: [
+                "type": "\(T.self)",
+                "error": "\(error)",
+                "rawResponse": "\(rawResponse.prefix(500))"
+            ])
             throw APIError.decodingError(error)
         }
     }

@@ -22,7 +22,7 @@ struct ItemFormViewModelTests {
         locationId: 10,
         authorId: 3,
         parentId: nil,
-        price: "49.99",
+        price: 49.99,
         images: ["https://example.com/image.jpg"],
         category: nil,
         location: nil,

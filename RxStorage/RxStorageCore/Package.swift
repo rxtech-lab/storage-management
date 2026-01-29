@@ -16,13 +16,15 @@ let package = Package(
             targets: ["RxStorageCore"])
     ],
     dependencies: [
-        // No external dependencies - using Apple frameworks only
+        .package(url: "https://github.com/apple/swift-log.git", from: "1.5.0"),
     ],
     targets: [
         // Targets are the basic building blocks of a package, defining a module or a test suite.
         .target(
             name: "RxStorageCore",
-            dependencies: [],
+            dependencies: [
+                .product(name: "Logging", package: "swift-log"),
+            ],
             path: "Sources"
         ),
         .testTarget(

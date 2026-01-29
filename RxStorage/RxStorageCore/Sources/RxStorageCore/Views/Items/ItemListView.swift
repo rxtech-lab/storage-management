@@ -13,6 +13,7 @@ public struct ItemListView: View {
     @State private var selectedItem: StorageItem?
     @State private var showingCreateSheet = false
     @State private var showingFilterSheet = false
+    @State private var showingError = false
 
     public init() {}
 
@@ -64,6 +65,23 @@ public struct ItemListView: View {
         }
         .task {
             await viewModel.fetchItems()
+        }
+        .onChange(of: viewModel.error != nil) { _, hasError in
+            showingError = hasError
+        }
+        .alert("Error", isPresented: $showingError) {
+            Button("OK") {
+                viewModel.clearError()
+            }
+            Button("Retry") {
+                Task {
+                    await viewModel.fetchItems()
+                }
+            }
+        } message: {
+            if let error = viewModel.error {
+                Text(error.localizedDescription)
+            }
         }
     }
 

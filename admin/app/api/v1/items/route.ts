@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth-helper";
-import { getItems, createItemAction, type ItemFilters } from "@/lib/actions/item-actions";
+import {
+  getItems,
+  createItemAction,
+  type ItemFilters,
+} from "@/lib/actions/item-actions";
 
 export async function GET(request: NextRequest) {
   const session = await getSession(request);
@@ -32,7 +36,7 @@ export async function GET(request: NextRequest) {
   }
 
   const items = await getItems(filters);
-  return NextResponse.json({ data: items });
+  return NextResponse.json(items);
 }
 
 export async function POST(request: NextRequest) {
@@ -53,7 +57,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Invalid request" },
-      { status: 400 }
+      { status: 400 },
     );
   }
 }

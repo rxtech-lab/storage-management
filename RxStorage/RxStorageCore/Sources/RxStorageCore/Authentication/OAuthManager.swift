@@ -9,6 +9,10 @@ import Foundation
 import AuthenticationServices
 import Observation
 
+#if canImport(UIKit)
+import UIKit
+#endif
+
 /// User information from OAuth
 public struct User: Codable, Identifiable {
     public let id: String
@@ -112,7 +116,9 @@ public class OAuthManager {
             }
         }
 
-        session.presentationContextProvider = nil
+        // Set presentation context provider
+        let contextProvider = WebAuthenticationPresentationContextProvider()
+        session.presentationContextProvider = contextProvider
         session.prefersEphemeralWebBrowserSession = false
 
         guard session.start() else {
@@ -141,6 +147,10 @@ public class OAuthManager {
             throw OAuthError.invalidURL
         }
 
+        print("Token exchange URL: \(url)")
+        print("Client ID: \(configuration.authClientID)")
+        print("Redirect URI: \(configuration.authRedirectURI)")
+
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
@@ -161,8 +171,18 @@ public class OAuthManager {
         // Perform token exchange
         let (data, response) = try await URLSession.shared.data(for: request)
 
-        guard let httpResponse = response as? HTTPURLResponse,
-              httpResponse.statusCode == 200 else {
+        guard let httpResponse = response as? HTTPURLResponse else {
+            print("Token exchange: Invalid response type")
+            throw OAuthError.tokenExchangeFailed
+        }
+
+        print("Token exchange response status: \(httpResponse.statusCode)")
+
+        if httpResponse.statusCode != 200 {
+            // Log the error response
+            if let errorString = String(data: data, encoding: .utf8) {
+                print("Token exchange error response: \(errorString)")
+            }
             throw OAuthError.tokenExchangeFailed
         }
 
@@ -320,3 +340,21 @@ public enum OAuthError: LocalizedError {
         }
     }
 }
+
+// MARK: - Presentation Context Provider
+
+#if canImport(UIKit)
+/// Presentation context provider for ASWebAuthenticationSession
+private class WebAuthenticationPresentationContextProvider: NSObject, ASWebAuthenticationPresentationContextProviding {
+    func presentationAnchor(for session: ASWebAuthenticationSession) -> ASPresentationAnchor {
+        // Return the key window
+        if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+           let window = windowScene.windows.first(where: { $0.isKeyWindow }) {
+            return window
+        }
+
+        // Fallback to any window
+        return UIApplication.shared.windows.first ?? ASPresentationAnchor()
+    }
+}
+#endif

@@ -108,7 +108,7 @@ public struct ItemPreviewView: View {
             }
 
             if let price = preview.price {
-                PreviewDetailRow(label: "Price", value: price, icon: "dollarsign.circle")
+                PreviewDetailRow(label: "Price", value: String(format: "%.2f", price), icon: "dollarsign.circle")
             }
 
             if !preview.images.isEmpty {
