@@ -1,14 +1,15 @@
 //
 //  ItemFormSheet.swift
-//  RxStorageCore
+//  RxStorage
 //
 //  Item create/edit form with inline entity creation
 //
 
 import SwiftUI
+import RxStorageCore
 
 /// Item form sheet for creating or editing items
-public struct ItemFormSheet: View {
+struct ItemFormSheet: View {
     let item: StorageItem?
 
     @State private var viewModel: ItemFormViewModel
@@ -19,12 +20,12 @@ public struct ItemFormSheet: View {
     @State private var showingLocationSheet = false
     @State private var showingAuthorSheet = false
 
-    public init(item: StorageItem? = nil) {
+    init(item: StorageItem? = nil) {
         self.item = item
         _viewModel = State(initialValue: ItemFormViewModel(item: item))
     }
 
-    public var body: some View {
+    var body: some View {
         Form {
             // Basic Info
             Section("Basic Information") {

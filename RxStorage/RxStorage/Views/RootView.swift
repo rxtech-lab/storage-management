@@ -1,6 +1,6 @@
 //
 //  RootView.swift
-//  RxStorageCore
+//  RxStorage
 //
 //  Main navigation structure with NavigationSplitView
 //
@@ -8,16 +8,16 @@
 import SwiftUI
 
 /// Main navigation sections
-public enum NavigationSection: String, CaseIterable, Identifiable {
+enum NavigationSection: String, CaseIterable, Identifiable {
     case items = "Items"
     case categories = "Categories"
     case locations = "Locations"
     case authors = "Authors"
     case schemas = "Position Schemas"
 
-    public var id: String { rawValue }
+    var id: String { rawValue }
 
-    public var systemImage: String {
+    var systemImage: String {
         switch self {
         case .items: return "shippingbox"
         case .categories: return "folder"
@@ -29,13 +29,11 @@ public enum NavigationSection: String, CaseIterable, Identifiable {
 }
 
 /// Root view with NavigationSplitView for iPad/iPhone adaptive layout
-public struct RootView: View {
+struct RootView: View {
     @State private var selectedSection: NavigationSection? = .items
     @State private var columnVisibility: NavigationSplitViewVisibility = .automatic
 
-    public init() {}
-
-    public var body: some View {
+    var body: some View {
         NavigationSplitView(columnVisibility: $columnVisibility) {
             // Sidebar
             sidebarContent

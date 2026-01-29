@@ -1,24 +1,25 @@
 //
 //  ItemPreviewView.swift
-//  RxStorageCore
+//  RxStorage
 //
 //  Read-only item preview view for App Clips
 //
 
 import SwiftUI
+import RxStorageCore
 
 /// Item preview view (read-only) for App Clips
-public struct ItemPreviewView: View {
+struct ItemPreviewView: View {
     let itemId: Int
 
     @State private var viewModel = ItemPreviewViewModel()
     @State private var showingAuthSheet = false
 
-    public init(itemId: Int) {
+    init(itemId: Int) {
         self.itemId = itemId
     }
 
-    public var body: some View {
+    var body: some View {
         Group {
             if viewModel.isLoading {
                 ProgressView("Loading...")

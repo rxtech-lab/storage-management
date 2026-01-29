@@ -1,6 +1,6 @@
 //
 //  QRCodeScannerView.swift
-//  RxStorageCore
+//  RxStorage
 //
 //  QR code scanner view using AVFoundation
 //
@@ -9,17 +9,17 @@ import SwiftUI
 import AVFoundation
 
 /// QR code scanner view
-public struct QRCodeScannerView: View {
+struct QRCodeScannerView: View {
     let onScan: (String) -> Void
 
     @State private var isScanningEnabled = true
     @Environment(\.dismiss) private var dismiss
 
-    public init(onScan: @escaping (String) -> Void) {
+    init(onScan: @escaping (String) -> Void) {
         self.onScan = onScan
     }
 
-    public var body: some View {
+    var body: some View {
         ZStack {
             // Camera preview
             CameraPreview(isScanningEnabled: $isScanningEnabled, onScan: { code in

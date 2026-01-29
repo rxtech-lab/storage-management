@@ -1,51 +1,35 @@
 //
-//  PositionSchemaFormSheet.swift
-//  RxStorageCore
+//  CategoryFormSheet.swift
+//  RxStorage
 //
-//  Position schema create/edit form
+//  Category create/edit form
 //
 
 import SwiftUI
+import RxStorageCore
 
-/// Position schema form sheet for creating or editing schemas
-public struct PositionSchemaFormSheet: View {
-    let schema: PositionSchema?
+/// Category form sheet for creating or editing categories
+struct CategoryFormSheet: View {
+    let category: Category?
+    let onCreated: ((Category) -> Void)?
 
-    @State private var viewModel: PositionSchemaFormViewModel
+    @State private var viewModel: CategoryFormViewModel
     @Environment(\.dismiss) private var dismiss
 
-    public init(schema: PositionSchema? = nil) {
-        self.schema = schema
-        _viewModel = State(initialValue: PositionSchemaFormViewModel(schema: schema))
+    init(category: Category? = nil, onCreated: ((Category) -> Void)? = nil) {
+        self.category = category
+        self.onCreated = onCreated
+        _viewModel = State(initialValue: CategoryFormViewModel(category: category))
     }
 
-    public var body: some View {
+    var body: some View {
         Form {
-            Section {
+            Section("Information") {
                 TextField("Name", text: $viewModel.name)
                     .textInputAutocapitalization(.words)
-            } header: {
-                Text("Information")
-            }
 
-            Section {
-                TextEditor(text: $viewModel.schemaJSON)
-                    .font(.system(.body, design: .monospaced))
-                    .frame(minHeight: 200)
-                    .autocapitalization(.none)
-                    .disableAutocorrection(true)
-
-                Button {
-                    if viewModel.validateJSON() {
-                        // JSON is valid
-                    }
-                } label: {
-                    Label("Validate JSON", systemImage: "checkmark.circle")
-                }
-            } header: {
-                Text("JSON Schema")
-            } footer: {
-                Text("Enter a valid JSON schema defining the position fields.")
+                TextField("Description", text: $viewModel.description, axis: .vertical)
+                    .lineLimit(3...6)
             }
 
             // Validation Errors
@@ -61,7 +45,7 @@ public struct PositionSchemaFormSheet: View {
                 }
             }
         }
-        .navigationTitle(schema == nil ? "New Schema" : "Edit Schema")
+        .navigationTitle(category == nil ? "New Category" : "Edit Category")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .cancellationAction) {
@@ -71,7 +55,7 @@ public struct PositionSchemaFormSheet: View {
             }
 
             ToolbarItem(placement: .confirmationAction) {
-                Button(schema == nil ? "Create" : "Save") {
+                Button(category == nil ? "Create" : "Save") {
                     Task {
                         await submitForm()
                     }
@@ -96,6 +80,11 @@ public struct PositionSchemaFormSheet: View {
     private func submitForm() async {
         do {
             try await viewModel.submit()
+            // If callback provided, fetch the created category
+            if let onCreated = onCreated, category == nil {
+                // Note: In real implementation, submit should return the created category
+                // For now, we'll dismiss and let the parent handle refresh
+            }
             dismiss()
         } catch {
             // Error is already tracked in viewModel.error
@@ -105,6 +94,6 @@ public struct PositionSchemaFormSheet: View {
 
 #Preview {
     NavigationStack {
-        PositionSchemaFormSheet()
+        CategoryFormSheet()
     }
 }

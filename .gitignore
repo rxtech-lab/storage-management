@@ -11,3 +11,4 @@ test.log
 *.xcresult
 test-results.xcresult
 build.sh
+*.xcuserstate

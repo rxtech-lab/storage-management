@@ -1,21 +1,20 @@
 //
 //  AuthenticationView.swift
-//  RxStorageCore
+//  RxStorage
 //
 //  OAuth authentication view
 //
 
 import SwiftUI
+import RxStorageCore
 
 /// Authentication view with OAuth login
-public struct AuthenticationView: View {
+struct AuthenticationView: View {
     @State private var oauthManager = OAuthManager()
     @State private var isAuthenticating = false
     @State private var errorMessage: String?
 
-    public init() {}
-
-    public var body: some View {
+    var body: some View {
         VStack(spacing: 30) {
             // Logo/Title
             VStack(spacing: 12) {

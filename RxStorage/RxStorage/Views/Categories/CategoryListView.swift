@@ -1,20 +1,19 @@
 //
 //  CategoryListView.swift
-//  RxStorageCore
+//  RxStorage
 //
 //  Category list view
 //
 
 import SwiftUI
+import RxStorageCore
 
 /// Category list view
-public struct CategoryListView: View {
+struct CategoryListView: View {
     @State private var viewModel = CategoryListViewModel()
     @State private var showingCreateSheet = false
 
-    public init() {}
-
-    public var body: some View {
+    var body: some View {
         Group {
             if viewModel.isLoading && viewModel.categories.isEmpty {
                 ProgressView("Loading categories...")

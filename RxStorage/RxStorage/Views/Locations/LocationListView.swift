@@ -1,20 +1,19 @@
 //
 //  LocationListView.swift
-//  RxStorageCore
+//  RxStorage
 //
 //  Location list view
 //
 
 import SwiftUI
+import RxStorageCore
 
 /// Location list view
-public struct LocationListView: View {
+struct LocationListView: View {
     @State private var viewModel = LocationListViewModel()
     @State private var showingCreateSheet = false
 
-    public init() {}
-
-    public var body: some View {
+    var body: some View {
         Group {
             if viewModel.isLoading && viewModel.locations.isEmpty {
                 ProgressView("Loading locations...")

@@ -1,23 +1,22 @@
 //
 //  ItemListView.swift
-//  RxStorageCore
+//  RxStorage
 //
 //  Item list view with filtering and search
 //
 
 import SwiftUI
+import RxStorageCore
 
 /// Item list view
-public struct ItemListView: View {
+struct ItemListView: View {
     @State private var viewModel = ItemListViewModel()
     @State private var selectedItem: StorageItem?
     @State private var showingCreateSheet = false
     @State private var showingFilterSheet = false
     @State private var showingError = false
 
-    public init() {}
-
-    public var body: some View {
+    var body: some View {
         Group {
             if viewModel.isLoading && viewModel.items.isEmpty {
                 ProgressView("Loading items...")

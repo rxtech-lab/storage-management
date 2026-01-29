@@ -1,34 +1,52 @@
 //
-//  AuthorFormSheet.swift
-//  RxStorageCore
+//  PositionSchemaFormSheet.swift
+//  RxStorage
 //
-//  Author create/edit form
+//  Position schema create/edit form
 //
 
 import SwiftUI
+import RxStorageCore
 
-/// Author form sheet for creating or editing authors
-public struct AuthorFormSheet: View {
-    let author: Author?
-    let onCreated: ((Author) -> Void)?
+/// Position schema form sheet for creating or editing schemas
+struct PositionSchemaFormSheet: View {
+    let schema: PositionSchema?
 
-    @State private var viewModel: AuthorFormViewModel
+    @State private var viewModel: PositionSchemaFormViewModel
     @Environment(\.dismiss) private var dismiss
 
-    public init(author: Author? = nil, onCreated: ((Author) -> Void)? = nil) {
-        self.author = author
-        self.onCreated = onCreated
-        _viewModel = State(initialValue: AuthorFormViewModel(author: author))
+    init(schema: PositionSchema? = nil) {
+        self.schema = schema
+        _viewModel = State(initialValue: PositionSchemaFormViewModel(schema: schema))
     }
 
-    public var body: some View {
+    var body: some View {
         Form {
-            Section("Information") {
+            Section {
                 TextField("Name", text: $viewModel.name)
                     .textInputAutocapitalization(.words)
+            } header: {
+                Text("Information")
+            }
 
-                TextField("Bio", text: $viewModel.bio, axis: .vertical)
-                    .lineLimit(3...6)
+            Section {
+                TextEditor(text: $viewModel.schemaJSON)
+                    .font(.system(.body, design: .monospaced))
+                    .frame(minHeight: 200)
+                    .autocapitalization(.none)
+                    .disableAutocorrection(true)
+
+                Button {
+                    if viewModel.validateJSON() {
+                        // JSON is valid
+                    }
+                } label: {
+                    Label("Validate JSON", systemImage: "checkmark.circle")
+                }
+            } header: {
+                Text("JSON Schema")
+            } footer: {
+                Text("Enter a valid JSON schema defining the position fields.")
             }
 
             // Validation Errors
@@ -44,7 +62,7 @@ public struct AuthorFormSheet: View {
                 }
             }
         }
-        .navigationTitle(author == nil ? "New Author" : "Edit Author")
+        .navigationTitle(schema == nil ? "New Schema" : "Edit Schema")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .cancellationAction) {
@@ -54,7 +72,7 @@ public struct AuthorFormSheet: View {
             }
 
             ToolbarItem(placement: .confirmationAction) {
-                Button(author == nil ? "Create" : "Save") {
+                Button(schema == nil ? "Create" : "Save") {
                     Task {
                         await submitForm()
                     }
@@ -88,6 +106,6 @@ public struct AuthorFormSheet: View {
 
 #Preview {
     NavigationStack {
-        AuthorFormSheet()
+        PositionSchemaFormSheet()
     }
 }

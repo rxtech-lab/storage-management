@@ -1,20 +1,19 @@
 //
 //  AuthorListView.swift
-//  RxStorageCore
+//  RxStorage
 //
 //  Author list view
 //
 
 import SwiftUI
+import RxStorageCore
 
 /// Author list view
-public struct AuthorListView: View {
+struct AuthorListView: View {
     @State private var viewModel = AuthorListViewModel()
     @State private var showingCreateSheet = false
 
-    public init() {}
-
-    public var body: some View {
+    var body: some View {
         Group {
             if viewModel.isLoading && viewModel.authors.isEmpty {
                 ProgressView("Loading authors...")

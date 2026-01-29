@@ -1,26 +1,27 @@
 //
 //  QRCodeGeneratorView.swift
-//  RxStorageCore
+//  RxStorage
 //
 //  QR code generator view with save/share/print functionality
 //
 
 import SwiftUI
 import CoreImage.CIFilterBuiltins
+import RxStorageCore
 
 /// QR code generator view
-public struct QRCodeGeneratorView: View {
+struct QRCodeGeneratorView: View {
     let itemId: Int
 
     @State private var viewModel = ItemDetailViewModel()
     @State private var qrImage: UIImage?
     @Environment(\.dismiss) private var dismiss
 
-    public init(itemId: Int) {
+    init(itemId: Int) {
         self.itemId = itemId
     }
 
-    public var body: some View {
+    var body: some View {
         VStack(spacing: 20) {
             if viewModel.isGeneratingQR {
                 ProgressView("Generating QR Code...")

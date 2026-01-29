@@ -1,25 +1,26 @@
 //
 //  ItemDetailView.swift
-//  RxStorageCore
+//  RxStorage
 //
 //  Item detail view with QR code support
 //
 
 import SwiftUI
+import RxStorageCore
 
 /// Item detail view
-public struct ItemDetailView: View {
+struct ItemDetailView: View {
     let itemId: Int
 
     @State private var viewModel = ItemDetailViewModel()
     @State private var showingEditSheet = false
     @State private var showingQRSheet = false
 
-    public init(itemId: Int) {
+    init(itemId: Int) {
         self.itemId = itemId
     }
 
-    public var body: some View {
+    var body: some View {
         Group {
             if viewModel.isLoading {
                 ProgressView("Loading...")

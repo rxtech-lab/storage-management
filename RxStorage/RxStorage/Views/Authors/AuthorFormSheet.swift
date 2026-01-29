@@ -1,33 +1,34 @@
 //
-//  CategoryFormSheet.swift
-//  RxStorageCore
+//  AuthorFormSheet.swift
+//  RxStorage
 //
-//  Category create/edit form
+//  Author create/edit form
 //
 
 import SwiftUI
+import RxStorageCore
 
-/// Category form sheet for creating or editing categories
-public struct CategoryFormSheet: View {
-    let category: Category?
-    let onCreated: ((Category) -> Void)?
+/// Author form sheet for creating or editing authors
+struct AuthorFormSheet: View {
+    let author: Author?
+    let onCreated: ((Author) -> Void)?
 
-    @State private var viewModel: CategoryFormViewModel
+    @State private var viewModel: AuthorFormViewModel
     @Environment(\.dismiss) private var dismiss
 
-    public init(category: Category? = nil, onCreated: ((Category) -> Void)? = nil) {
-        self.category = category
+    init(author: Author? = nil, onCreated: ((Author) -> Void)? = nil) {
+        self.author = author
         self.onCreated = onCreated
-        _viewModel = State(initialValue: CategoryFormViewModel(category: category))
+        _viewModel = State(initialValue: AuthorFormViewModel(author: author))
     }
 
-    public var body: some View {
+    var body: some View {
         Form {
             Section("Information") {
                 TextField("Name", text: $viewModel.name)
                     .textInputAutocapitalization(.words)
 
-                TextField("Description", text: $viewModel.description, axis: .vertical)
+                TextField("Bio", text: $viewModel.bio, axis: .vertical)
                     .lineLimit(3...6)
             }
 
@@ -44,7 +45,7 @@ public struct CategoryFormSheet: View {
                 }
             }
         }
-        .navigationTitle(category == nil ? "New Category" : "Edit Category")
+        .navigationTitle(author == nil ? "New Author" : "Edit Author")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .cancellationAction) {
@@ -54,7 +55,7 @@ public struct CategoryFormSheet: View {
             }
 
             ToolbarItem(placement: .confirmationAction) {
-                Button(category == nil ? "Create" : "Save") {
+                Button(author == nil ? "Create" : "Save") {
                     Task {
                         await submitForm()
                     }
@@ -79,11 +80,6 @@ public struct CategoryFormSheet: View {
     private func submitForm() async {
         do {
             try await viewModel.submit()
-            // If callback provided, fetch the created category
-            if let onCreated = onCreated, category == nil {
-                // Note: In real implementation, submit should return the created category
-                // For now, we'll dismiss and let the parent handle refresh
-            }
             dismiss()
         } catch {
             // Error is already tracked in viewModel.error
@@ -93,6 +89,6 @@ public struct CategoryFormSheet: View {
 
 #Preview {
     NavigationStack {
-        CategoryFormSheet()
+        AuthorFormSheet()
     }
 }

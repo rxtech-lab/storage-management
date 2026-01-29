@@ -21,7 +21,7 @@ test.describe.serial("Permission Tests", () => {
       });
       expect(response.status()).toBe(201);
       const body = await response.json();
-      user1CategoryId = body.data.id;
+      user1CategoryId = body.id;
     });
 
     test("should create location", async ({ request }) => {
@@ -79,7 +79,7 @@ test.describe.serial("Permission Tests", () => {
       });
       expect(response.status()).toBe(200);
       const body = await response.json();
-      const user1Categories = body.data.filter((c: any) => c.id === user1CategoryId);
+      const user1Categories = body.filter((c: any) => c.id === user1CategoryId);
       expect(user1Categories.length).toBe(0);
     });
 

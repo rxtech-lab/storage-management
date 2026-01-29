@@ -1,6 +1,6 @@
 //
 //  ClipRootView.swift
-//  RxStorageCore
+//  RxStorage
 //
 //  Root view for App Clips that parses URL and shows preview
 //
@@ -8,13 +8,11 @@
 import SwiftUI
 
 /// Root view for App Clips
-public struct ClipRootView: View {
+struct ClipRootView: View {
     @State private var itemId: Int?
     @State private var error: String?
 
-    public init() {}
-
-    public var body: some View {
+    var body: some View {
         NavigationStack {
             Group {
                 if let itemId = itemId {

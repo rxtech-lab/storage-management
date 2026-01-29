@@ -1,15 +1,16 @@
 //
 //  LocationFormSheet.swift
-//  RxStorageCore
+//  RxStorage
 //
 //  Location create/edit form
 //
 
 import SwiftUI
 import MapKit
+import RxStorageCore
 
 /// Location form sheet for creating or editing locations
-public struct LocationFormSheet: View {
+struct LocationFormSheet: View {
     let location: Location?
     let onCreated: ((Location) -> Void)?
 
@@ -17,13 +18,13 @@ public struct LocationFormSheet: View {
     @State private var showingMapPicker = false
     @Environment(\.dismiss) private var dismiss
 
-    public init(location: Location? = nil, onCreated: ((Location) -> Void)? = nil) {
+    init(location: Location? = nil, onCreated: ((Location) -> Void)? = nil) {
         self.location = location
         self.onCreated = onCreated
         _viewModel = State(initialValue: LocationFormViewModel(location: location))
     }
 
-    public var body: some View {
+    var body: some View {
         Form {
             Section("Information") {
                 TextField("Title", text: $viewModel.title)

@@ -1,20 +1,19 @@
 //
 //  PositionSchemaListView.swift
-//  RxStorageCore
+//  RxStorage
 //
 //  Position schema list view
 //
 
 import SwiftUI
+import RxStorageCore
 
 /// Position schema list view
-public struct PositionSchemaListView: View {
+struct PositionSchemaListView: View {
     @State private var viewModel = PositionSchemaListViewModel()
     @State private var showingCreateSheet = false
 
-    public init() {}
-
-    public var body: some View {
+    var body: some View {
         Group {
             if viewModel.isLoading && viewModel.schemas.isEmpty {
                 ProgressView("Loading schemas...")
