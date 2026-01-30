@@ -20,6 +20,7 @@ struct ItemFormSheet: View {
     @State private var showingCategorySheet = false
     @State private var showingLocationSheet = false
     @State private var showingAuthorSheet = false
+    @State private var showingPositionSheet = false
 
     // Photo picker
     @State private var selectedPhotos: [PhotosPickerItem] = []
@@ -204,6 +205,60 @@ struct ItemFormSheet: View {
                 }
             }
 
+            // Positions
+            Section {
+                // Existing positions (edit mode)
+                ForEach(viewModel.positions) { position in
+                    HStack {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(position.positionSchema?.name ?? "Position")
+                                .font(.headline)
+                            Text(positionDataSummary(position.data))
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                                .lineLimit(2)
+                        }
+                        Spacer()
+                        Button(role: .destructive) {
+                            Task {
+                                try? await viewModel.removePosition(id: position.id)
+                            }
+                        } label: {
+                            Image(systemName: "trash")
+                        }
+                    }
+                }
+
+                // Pending positions (new)
+                ForEach(viewModel.pendingPositions) { pending in
+                    HStack {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(pending.schema.name)
+                                .font(.headline)
+                            Text(positionDataSummary(pending.data))
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                                .lineLimit(2)
+                        }
+                        Spacer()
+                        Button(role: .destructive) {
+                            viewModel.removePendingPosition(id: pending.id)
+                        } label: {
+                            Image(systemName: "xmark.circle")
+                        }
+                    }
+                }
+
+                // Add position button
+                Button {
+                    showingPositionSheet = true
+                } label: {
+                    Label("Add Position", systemImage: "plus.circle")
+                }
+            } header: {
+                Text("Positions")
+            }
+
             // Validation Errors
             if !viewModel.validationErrors.isEmpty {
                 Section {
@@ -256,6 +311,16 @@ struct ItemFormSheet: View {
                 }
             }
         }
+        .sheet(isPresented: $showingPositionSheet) {
+            NavigationStack {
+                PositionFormSheet(
+                    positionSchemas: $viewModel.positionSchemas,
+                    onSubmit: { schema, data in
+                        viewModel.addPendingPosition(schema: schema, data: data)
+                    }
+                )
+            }
+        }
         .task {
             await viewModel.loadReferenceData()
         }
@@ -288,6 +353,28 @@ struct ItemFormSheet: View {
         } catch {
             // Error is already tracked in viewModel.error
         }
+    }
+
+    // MARK: - Position Helpers
+
+    private func positionDataSummary(_ data: [String: AnyCodable]) -> String {
+        let items = data.map { key, value -> String in
+            let valueStr: String
+            switch value.value {
+            case let str as String:
+                valueStr = str
+            case let num as Int:
+                valueStr = String(num)
+            case let num as Double:
+                valueStr = String(format: "%.2f", num)
+            case let bool as Bool:
+                valueStr = bool ? "Yes" : "No"
+            default:
+                valueStr = String(describing: value.value)
+            }
+            return "\(key): \(valueStr)"
+        }
+        return items.joined(separator: ", ")
     }
 
     // MARK: - Image Helpers

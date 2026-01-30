@@ -54,6 +54,11 @@ public enum APIEndpoint: Sendable {
     case updatePositionSchema(id: Int)
     case deletePositionSchema(id: Int)
 
+    // Positions
+    case listItemPositions(itemId: Int)
+    case getPosition(id: Int)
+    case deletePosition(id: Int)
+
     // Preview
     case getItemPreview(id: Int)
 
@@ -68,6 +73,7 @@ public enum APIEndpoint: Sendable {
              .listLocations, .getLocation,
              .listAuthors, .getAuthor,
              .listPositionSchemas, .getPositionSchema,
+             .listItemPositions, .getPosition,
              .getItemPreview:
             return .get
 
@@ -78,7 +84,8 @@ public enum APIEndpoint: Sendable {
         case .updateItem, .updateCategory, .updateLocation, .updateAuthor, .updatePositionSchema:
             return .put
 
-        case .deleteItem, .deleteCategory, .deleteLocation, .deleteAuthor, .deletePositionSchema:
+        case .deleteItem, .deleteCategory, .deleteLocation, .deleteAuthor, .deletePositionSchema,
+             .deletePosition:
             return .delete
         }
     }
@@ -144,6 +151,13 @@ public enum APIEndpoint: Sendable {
             return "/api/v1/position-schemas/\(id)"
         case .deletePositionSchema(let id):
             return "/api/v1/position-schemas/\(id)"
+
+        case .listItemPositions(let itemId):
+            return "/api/v1/items/\(itemId)/positions"
+        case .getPosition(let id):
+            return "/api/v1/positions/\(id)"
+        case .deletePosition(let id):
+            return "/api/v1/positions/\(id)"
 
         case .getItemPreview(let id):
             return "/api/v1/preview/\(id)"

@@ -10,6 +10,7 @@ import {
   categories,
   locations,
   authors,
+  positions,
   type Item,
   type NewItem,
 } from "@/lib/db";
@@ -24,6 +25,12 @@ import {
 } from "./file-actions";
 import { parseFileIds } from "@/lib/utils/file-utils";
 
+// Zod schema for position data
+const positionDataSchema = z.object({
+  positionSchemaId: z.number().int().positive(),
+  data: z.record(z.unknown()),
+});
+
 // Zod schema for item validation
 const itemInsertSchema = z.object({
   title: z.string().min(1, "Title is required"),
@@ -37,6 +44,7 @@ const itemInsertSchema = z.object({
   currency: z.string().optional(),
   visibility: z.enum(["public", "private"]),
   images: z.array(z.string()).optional(),
+  positions: z.array(positionDataSchema).optional(),
 });
 
 const itemUpdateSchema = itemInsertSchema
@@ -299,6 +307,22 @@ export async function createItemAction(
       await associateFilesWithItem(fileIds, result[0].id, resolvedUserId);
     }
 
+    // Create positions if provided
+    const positionsData = validatedData.positions || [];
+    if (positionsData.length > 0) {
+      const now = new Date();
+      for (const pos of positionsData) {
+        await db.insert(positions).values({
+          userId: resolvedUserId,
+          itemId: result[0].id,
+          positionSchemaId: pos.positionSchemaId,
+          data: pos.data as Record<string, unknown>,
+          createdAt: now,
+          updatedAt: now,
+        });
+      }
+    }
+
     revalidatePath("/items");
     return { success: true, data: result[0] };
   } catch (error) {
@@ -380,11 +404,32 @@ export async function updateItemAction(
       }
     }
 
+    // Extract positions from data before updating item
+    const { positions: positionsData, ...itemData } = data as typeof data & {
+      positions?: Array<{ positionSchemaId: number; data: Record<string, unknown> }>;
+    };
+
     const result = await db
       .update(items)
-      .set({ ...data, updatedAt: new Date() })
+      .set({ ...itemData, updatedAt: new Date() })
       .where(eq(items.id, id))
       .returning();
+
+    // Create new positions if provided
+    if (positionsData && positionsData.length > 0) {
+      const now = new Date();
+      for (const pos of positionsData) {
+        await db.insert(positions).values({
+          userId: resolvedUserId,
+          itemId: id,
+          positionSchemaId: pos.positionSchemaId,
+          data: pos.data,
+          createdAt: now,
+          updatedAt: now,
+        });
+      }
+    }
+
     revalidatePath("/items");
     revalidatePath(`/items/${id}`);
     return { success: true, data: result[0] };

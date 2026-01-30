@@ -13,13 +13,15 @@ import SwiftUI
 /// Position schema form sheet for creating or editing schemas
 struct PositionSchemaFormSheet: View {
     let schema: PositionSchema?
+    let onCreated: ((PositionSchema) -> Void)?
 
     @State private var viewModel: PositionSchemaFormViewModel
     @State private var jsonSchema: JSONSchema?
     @Environment(\.dismiss) private var dismiss
 
-    init(schema: PositionSchema? = nil) {
+    init(schema: PositionSchema? = nil, onCreated: ((PositionSchema) -> Void)? = nil) {
         self.schema = schema
+        self.onCreated = onCreated
         _viewModel = State(initialValue: PositionSchemaFormViewModel(schema: schema))
         // Initialize jsonSchema from schema if editing
         if let schema = schema {
@@ -117,7 +119,8 @@ struct PositionSchemaFormSheet: View {
 
     private func submitForm() async {
         do {
-            try await viewModel.submit()
+            let createdSchema = try await viewModel.submit()
+            onCreated?(createdSchema)
             dismiss()
         } catch {
             // Error is already tracked in viewModel.error

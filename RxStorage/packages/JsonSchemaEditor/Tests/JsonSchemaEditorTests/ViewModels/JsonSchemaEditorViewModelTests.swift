@@ -17,9 +17,7 @@ struct JsonSchemaEditorViewModelTests {
 
         #expect(sut.schemaType == .object)
         #expect(sut.items.isEmpty)
-        #expect(sut.rawJson.isEmpty)
-        #expect(sut.activeTab == .visual)
-        #expect(sut.jsonError == nil)
+        #expect(sut.title.isEmpty)
     }
 
     @Test("Load existing object schema")
@@ -200,71 +198,6 @@ struct JsonSchemaEditorViewModelTests {
         // For arrays, title is stored in arraySchema
         #expect(schema?.arraySchema?.title == "Numbers")
         #expect(schema?.arraySchema?.items?.type == .integer)
-    }
-
-    @Test("Raw JSON parsing updates items")
-    @MainActor
-    func testRawJsonParsing() async {
-        let sut = JsonSchemaEditorViewModel(schema: nil)
-
-        sut.handleRawJsonChange("""
-        {
-            "type": "object",
-            "properties": {
-                "email": { "type": "string", "title": "Email Address" }
-            }
-        }
-        """)
-
-        #expect(sut.jsonError == nil)
-        #expect(sut.items.count == 1)
-        #expect(sut.items[0].key == "email")
-    }
-
-    @Test("Invalid JSON sets error")
-    @MainActor
-    func testInvalidJsonSetsError() async {
-        let sut = JsonSchemaEditorViewModel(schema: nil)
-
-        sut.handleRawJsonChange("{invalid json}")
-
-        #expect(sut.jsonError != nil)
-    }
-
-    @Test("Empty JSON clears error")
-    @MainActor
-    func testEmptyJsonClearsError() async {
-        let sut = JsonSchemaEditorViewModel(schema: nil)
-        sut.handleRawJsonChange("{invalid}")
-        #expect(sut.jsonError != nil)
-
-        sut.handleRawJsonChange("")
-        #expect(sut.jsonError == nil)
-    }
-
-    @Test("Tab change from visual to raw updates JSON")
-    @MainActor
-    func testTabChangeVisualToRaw() async {
-        let sut = JsonSchemaEditorViewModel(schema: nil)
-        sut.addProperty()
-        sut.items[0].key = "test"
-
-        sut.handleTabChange(.raw)
-
-        #expect(sut.activeTab == .raw)
-        #expect(sut.rawJson.contains("test"))
-    }
-
-    @Test("Tab change blocked with JSON error")
-    @MainActor
-    func testTabChangeBlockedWithError() async {
-        let sut = JsonSchemaEditorViewModel(schema: nil)
-        sut.activeTab = .raw
-        sut.handleRawJsonChange("{invalid}")
-
-        sut.handleTabChange(.visual)
-
-        #expect(sut.activeTab == .raw) // Tab change blocked
     }
 
     @Test("Update property at index")

@@ -114,17 +114,21 @@ struct PositionSchemaDetailView: View {
 
     @ViewBuilder
     private func schemaDetails(_ schema: PositionSchema) -> some View {
-        DetailRow(
-            label: "Created",
-            value: schema.createdAt.formatted(date: .abbreviated, time: .shortened),
-            icon: "calendar"
-        )
+        if let createdAt = schema.createdAt {
+            DetailRow(
+                label: "Created",
+                value: createdAt.formatted(date: .abbreviated, time: .shortened),
+                icon: "calendar"
+            )
+        }
 
-        DetailRow(
-            label: "Updated",
-            value: schema.updatedAt.formatted(date: .abbreviated, time: .shortened),
-            icon: "clock"
-        )
+        if let updatedAt = schema.updatedAt {
+            DetailRow(
+                label: "Updated",
+                value: updatedAt.formatted(date: .abbreviated, time: .shortened),
+                icon: "clock"
+            )
+        }
     }
 }
 

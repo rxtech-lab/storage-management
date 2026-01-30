@@ -75,7 +75,8 @@ public final class PositionSchemaFormViewModel: PositionSchemaFormViewModelProto
         }
     }
 
-    public func submit() async throws {
+    @discardableResult
+    public func submit() async throws -> PositionSchema {
         guard validate() else {
             throw FormError.validationFailed
         }
@@ -96,19 +97,21 @@ public final class PositionSchemaFormViewModel: PositionSchemaFormViewModelProto
                 schema: anyCodableDict
             )
 
+            let result: PositionSchema
             if let existingSchema = schema {
                 // Update
                 let updateRequest = UpdatePositionSchemaRequest(
                     name: name,
                     schema: anyCodableDict
                 )
-                _ = try await schemaService.updatePositionSchema(id: existingSchema.id, updateRequest)
+                result = try await schemaService.updatePositionSchema(id: existingSchema.id, updateRequest)
             } else {
                 // Create
-                _ = try await schemaService.createPositionSchema(request)
+                result = try await schemaService.createPositionSchema(request)
             }
 
             isSubmitting = false
+            return result
         } catch {
             self.error = error
             isSubmitting = false

@@ -33,6 +33,11 @@ public final class ItemFormViewModel: ItemFormViewModelProtocol {
     public private(set) var authors: [Author] = []
     public private(set) var parentItems: [StorageItem] = []
 
+    // Position data
+    public var positionSchemas: [PositionSchema] = []       // Public for binding (inline creation)
+    public private(set) var positions: [Position] = []      // Edit mode: existing positions
+    public var pendingPositions: [PendingPosition] = []     // Create/edit: new positions to add
+
     // State
     public private(set) var isLoading = false
     public private(set) var isSubmitting = false
@@ -49,6 +54,8 @@ public final class ItemFormViewModel: ItemFormViewModelProtocol {
     private let categoryService: CategoryServiceProtocol
     private let locationService: LocationServiceProtocol
     private let authorService: AuthorServiceProtocol
+    private let positionSchemaService: PositionSchemaServiceProtocol
+    private let positionService: PositionServiceProtocol
     private let uploadManager: UploadManager
 
     // MARK: - Initialization
@@ -59,6 +66,8 @@ public final class ItemFormViewModel: ItemFormViewModelProtocol {
         categoryService: CategoryServiceProtocol = CategoryService(),
         locationService: LocationServiceProtocol = LocationService(),
         authorService: AuthorServiceProtocol = AuthorService(),
+        positionSchemaService: PositionSchemaServiceProtocol = PositionSchemaService(),
+        positionService: PositionServiceProtocol = PositionService(),
         uploadManager: UploadManager = .shared
     ) {
         self.item = item
@@ -66,6 +75,8 @@ public final class ItemFormViewModel: ItemFormViewModelProtocol {
         self.categoryService = categoryService
         self.locationService = locationService
         self.authorService = authorService
+        self.positionSchemaService = positionSchemaService
+        self.positionService = positionService
         self.uploadManager = uploadManager
 
         // Populate form if editing
@@ -109,6 +120,22 @@ public final class ItemFormViewModel: ItemFormViewModelProtocol {
             print("Failed to load parent items: \(error)")
         }
 
+        // Load position schemas
+        do {
+            positionSchemas = try await positionSchemaService.fetchPositionSchemas()
+        } catch {
+            print("Failed to load position schemas: \(error)")
+        }
+
+        // Load existing positions if editing
+        if let itemId = item?.id {
+            do {
+                positions = try await positionService.fetchItemPositions(itemId: itemId)
+            } catch {
+                print("Failed to load positions: \(error)")
+            }
+        }
+
         isLoading = false
     }
 
@@ -141,6 +168,9 @@ public final class ItemFormViewModel: ItemFormViewModelProtocol {
         do {
             let priceValue = price.isEmpty ? nil : Double(price)
 
+            // Convert pending positions to API format
+            let positionsData = pendingPositions.isEmpty ? nil : pendingPositions.map { $0.asNewPositionData }
+
             let request = NewItemRequest(
                 title: title,
                 description: description.isEmpty ? nil : description,
@@ -150,7 +180,8 @@ public final class ItemFormViewModel: ItemFormViewModelProtocol {
                 parentId: selectedParentId,
                 price: priceValue,
                 visibility: visibility,
-                images: allImageReferences
+                images: allImageReferences,
+                positions: positionsData
             )
 
             if let existingItem = item {
@@ -160,6 +191,9 @@ public final class ItemFormViewModel: ItemFormViewModelProtocol {
                 // Create
                 _ = try await itemService.createItem(request)
             }
+
+            // Clear pending positions after successful save
+            pendingPositions.removeAll()
 
             isSubmitting = false
         } catch {
@@ -199,6 +233,29 @@ public final class ItemFormViewModel: ItemFormViewModelProtocol {
         authors.append(created)
 
         return created
+    }
+
+    // MARK: - Position Management
+
+    /// Add a pending position to be created with the item
+    public func addPendingPosition(schema: PositionSchema, data: [String: AnyCodable]) {
+        let pending = PendingPosition(
+            positionSchemaId: schema.id,
+            schema: schema,
+            data: data
+        )
+        pendingPositions.append(pending)
+    }
+
+    /// Remove a pending position
+    public func removePendingPosition(id: UUID) {
+        pendingPositions.removeAll { $0.id == id }
+    }
+
+    /// Delete an existing position (only for edit mode)
+    public func removePosition(id: Int) async throws {
+        try await positionService.deletePosition(id: id)
+        positions.removeAll { $0.id == id }
     }
 
     // MARK: - Image Upload
