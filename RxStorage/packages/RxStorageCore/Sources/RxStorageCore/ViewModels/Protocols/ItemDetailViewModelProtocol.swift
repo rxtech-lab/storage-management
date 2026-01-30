@@ -16,6 +16,9 @@ public protocol ItemDetailViewModelProtocol: AnyObject, Observable {
     /// Child items (if hierarchical)
     var children: [StorageItem] { get }
 
+    /// Contents attached to the item
+    var contents: [Content] { get }
+
     /// Loading state
     var isLoading: Bool { get }
 
@@ -28,6 +31,15 @@ public protocol ItemDetailViewModelProtocol: AnyObject, Observable {
     /// Fetch child items
     func fetchChildren() async
 
+    /// Fetch item contents
+    func fetchContents() async
+
     /// Refresh all data
     func refresh() async
+
+    /// Add a child item by its ID (fetches fresh data to avoid memory issues)
+    func addChildById(_ childId: Int) async throws
+
+    /// Remove a child item by its ID
+    func removeChildById(_ childId: Int) async throws
 }

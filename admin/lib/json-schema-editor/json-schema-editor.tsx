@@ -298,7 +298,7 @@ export function JsonSchemaEditor({
               onValueChange={(v) => handleTypeChange(v as RootSchemaType)}
               disabled={disabled}
             >
-              <SelectTrigger className="w-[180px]">
+              <SelectTrigger className="w-[180px]" data-testid="json-schema-type-select">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -428,10 +428,10 @@ export function JsonSchemaEditor({
     <div className={cn("space-y-2", className)}>
       <Tabs value={activeTab} onValueChange={handleTabChange}>
         <TabsList>
-          <TabsTrigger value="visual" disabled={disabled}>
+          <TabsTrigger value="visual" disabled={disabled} data-testid="json-schema-tab-visual">
             Visual Editor
           </TabsTrigger>
-          <TabsTrigger value="raw" disabled={disabled}>
+          <TabsTrigger value="raw" disabled={disabled} data-testid="json-schema-tab-raw">
             Raw JSON
           </TabsTrigger>
         </TabsList>
@@ -451,9 +451,10 @@ export function JsonSchemaEditor({
                 "font-mono text-sm min-h-[300px] resize-y",
                 jsonError && "border-destructive focus-visible:ring-destructive"
               )}
+              data-testid="json-schema-raw-textarea"
             />
             {jsonError && (
-              <p className="text-sm text-destructive">{jsonError}</p>
+              <p className="text-sm text-destructive" data-testid="json-schema-error">{jsonError}</p>
             )}
             {!rawJson.trim() && !jsonError && (
               <p className="text-sm text-muted-foreground">{placeholder}</p>

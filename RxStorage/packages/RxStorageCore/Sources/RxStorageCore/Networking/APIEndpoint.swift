@@ -24,6 +24,7 @@ public enum APIEndpoint: Sendable {
     case updateItem(id: Int)
     case deleteItem(id: Int)
     case getItemChildren(id: Int)
+    case setItemParent(id: String)
     case getItemQR(id: Int)
 
     // Categories
@@ -59,6 +60,16 @@ public enum APIEndpoint: Sendable {
     case getPosition(id: Int)
     case deletePosition(id: Int)
 
+    // Content Schemas
+    case listContentSchemas
+
+    // Contents
+    case listItemContents(itemId: Int)
+    case createItemContent(itemId: Int)
+    case getContent(id: Int)
+    case updateContent(id: Int)
+    case deleteContent(id: Int)
+
     // Preview
     case getItemPreview(id: Int)
 
@@ -74,18 +85,23 @@ public enum APIEndpoint: Sendable {
              .listAuthors, .getAuthor,
              .listPositionSchemas, .getPositionSchema,
              .listItemPositions, .getPosition,
+             .listContentSchemas,
+             .listItemContents, .getContent,
              .getItemPreview:
             return .get
 
         case .createItem, .createCategory, .createLocation, .createAuthor, .createPositionSchema,
+             .createItemContent,
              .getPresignedURL:
             return .post
 
-        case .updateItem, .updateCategory, .updateLocation, .updateAuthor, .updatePositionSchema:
+        case .updateItem, .updateCategory, .updateLocation, .updateAuthor, .updatePositionSchema,
+             .updateContent,
+             .setItemParent:
             return .put
 
         case .deleteItem, .deleteCategory, .deleteLocation, .deleteAuthor, .deletePositionSchema,
-             .deletePosition:
+             .deletePosition, .deleteContent:
             return .delete
         }
     }
@@ -105,6 +121,8 @@ public enum APIEndpoint: Sendable {
             return "/api/v1/items/\(id)"
         case .getItemChildren(let id):
             return "/api/v1/items/\(id)/children"
+        case .setItemParent(let id):
+            return "/api/v1/items/\(id)/parent"
         case .getItemQR(let id):
             return "/api/v1/items/\(id)/qr"
 
@@ -158,6 +176,20 @@ public enum APIEndpoint: Sendable {
             return "/api/v1/positions/\(id)"
         case .deletePosition(let id):
             return "/api/v1/positions/\(id)"
+
+        case .listContentSchemas:
+            return "/api/v1/content-schemas"
+
+        case .listItemContents(let itemId):
+            return "/api/v1/items/\(itemId)/contents"
+        case .createItemContent(let itemId):
+            return "/api/v1/items/\(itemId)/contents"
+        case .getContent(let id):
+            return "/api/v1/contents/\(id)"
+        case .updateContent(let id):
+            return "/api/v1/contents/\(id)"
+        case .deleteContent(let id):
+            return "/api/v1/contents/\(id)"
 
         case .getItemPreview(let id):
             return "/api/v1/preview/\(id)"

@@ -105,6 +105,8 @@ export interface JsonSchemaEditorProps {
 export interface PropertyEditorProps {
   /** Property item to edit */
   item: PropertyItem;
+  /** Index of the property in the list (for data-testid) */
+  index: number;
   /** Callback when property changes */
   onChange: (item: PropertyItem) => void;
   /** Callback to delete the property */

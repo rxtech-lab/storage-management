@@ -32,9 +32,10 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
   const previewUrl = `${process.env.NEXT_PUBLIC_URL}/preview/${item.id}`;
 
   // Sign images - replace file IDs with signed URLs
-  const images = item.images && item.images.length > 0
-    ? await signImagesArray(item.images)
-    : [];
+  const images =
+    item.images && item.images.length > 0
+      ? await signImagesArray(item.images)
+      : [];
 
   return NextResponse.json({ ...item, images, previewUrl });
 }
@@ -55,9 +56,10 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       const previewUrl = `${process.env.NEXT_PUBLIC_URL}/preview/${result.data.id}`;
 
       // Sign images - replace file IDs with signed URLs
-      const images = result.data.images && result.data.images.length > 0
-        ? await signImagesArray(result.data.images)
-        : [];
+      const images =
+        result.data.images && result.data.images.length > 0
+          ? await signImagesArray(result.data.images)
+          : [];
 
       return NextResponse.json({ ...result.data, images, previewUrl });
     } else if (result.error === "Permission denied") {
