@@ -18,3 +18,26 @@ public typealias JSPropertyItem = PropertyItem
 
 // Views
 public typealias JSSchemaEditorView = JsonSchemaEditorView
+
+// MARK: - Preview
+
+#Preview("Empty Schema") {
+    @Previewable @State var schema: JSONSchema? = nil
+    Form {
+        JsonSchemaEditorView(schema: $schema)
+    }
+}
+
+#Preview("Object Schema") {
+    @Previewable @State var schema: JSONSchema? = JSONSchema.object(
+        title: "Position",
+        properties: [
+            "shelf": JSONSchema.string(),
+            "row": JSONSchema.integer(),
+        ],
+        required: ["shelf"]
+    )
+    Form {
+        JsonSchemaEditorView(schema: $schema)
+    }
+}

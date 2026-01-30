@@ -6,7 +6,7 @@
 import SwiftUI
 import JSONSchema
 
-/// Main JSON Schema Editor view with dual-mode editing
+/// Main JSON Schema Editor view
 public struct JsonSchemaEditorView: View {
     @Binding var schema: JSONSchema?
     @State private var viewModel: JsonSchemaEditorViewModel
@@ -22,31 +22,8 @@ public struct JsonSchemaEditorView: View {
     }
 
     public var body: some View {
-        VStack(spacing: 16) {
-            // Tab picker
-            Picker("Editor Mode", selection: $viewModel.activeTab) {
-                ForEach(EditorTab.allCases, id: \.self) { tab in
-                    Text(tab.rawValue).tag(tab)
-                }
-            }
-            .pickerStyle(.segmented)
-            .disabled(disabled || (viewModel.activeTab == .raw && viewModel.jsonError != nil))
-            .onChange(of: viewModel.activeTab) { oldValue, newValue in
-                viewModel.handleTabChange(newValue)
-            }
-
-            // Tab content
-            ScrollView {
-                Group {
-                    switch viewModel.activeTab {
-                    case .visual:
-                        VisualEditorView(viewModel: viewModel, disabled: disabled)
-                    case .raw:
-                        RawJsonEditorView(viewModel: viewModel, disabled: disabled)
-                    }
-                }
-                .padding(.horizontal, 1) // Prevent clipping
-            }
+        Group {
+            VisualEditorView(viewModel: viewModel, disabled: disabled)
         }
         .onChange(of: viewModel.items) { _, _ in
             syncToBinding()

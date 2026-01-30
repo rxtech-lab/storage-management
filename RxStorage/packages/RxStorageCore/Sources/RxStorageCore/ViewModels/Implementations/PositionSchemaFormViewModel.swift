@@ -121,8 +121,11 @@ public final class PositionSchemaFormViewModel: PositionSchemaFormViewModelProto
     private func populateForm(from schema: PositionSchema) {
         name = schema.name
 
+        // Convert AnyCodable values to their underlying values for JSONSerialization
+        let unwrappedDict = schema.schema.mapValues { $0.value }
+
         // Convert schema dictionary to JSON string
-        if let data = try? JSONSerialization.data(withJSONObject: schema.schema, options: .prettyPrinted),
+        if let data = try? JSONSerialization.data(withJSONObject: unwrappedDict, options: .prettyPrinted),
            let jsonString = String(data: data, encoding: .utf8) {
             schemaJSON = jsonString
         }
