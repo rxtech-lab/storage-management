@@ -37,13 +37,16 @@ export default function ItemsPage() {
           authorId: searchParams.get("authorId")
             ? parseInt(searchParams.get("authorId")!)
             : undefined,
-          visibility: searchParams.get("visibility") as "public" | "private" | undefined,
+          visibility: searchParams.get("visibility") as
+            | "public"
+            | "private"
+            | undefined,
           search: searchParams.get("search") || undefined,
         };
 
         const [itemsData, categoriesData, locationsData, authorsData] =
           await Promise.all([
-            getItems(filters),
+            getItems(undefined, filters),
             getCategories(),
             getLocations(),
             getAuthors(),
@@ -68,9 +71,7 @@ export default function ItemsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">Items</h1>
-          <p className="text-muted-foreground">
-            Manage your storage items
-          </p>
+          <p className="text-muted-foreground">Manage your storage items</p>
         </div>
         <Link href="/items/new">
           <Button data-testid="items-new-button">

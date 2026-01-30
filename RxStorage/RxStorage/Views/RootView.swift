@@ -40,6 +40,7 @@ struct RootView: View {
     @State private var selectedCategory: RxStorageCore.Category?
     @State private var selectedAuthor: Author?
     @State private var selectedLocation: Location?
+    @State private var selectedPositionSchema: PositionSchema?
 
     var body: some View {
         NavigationSplitView(columnVisibility: $columnVisibility) {
@@ -82,7 +83,7 @@ struct RootView: View {
             case .authors:
                 AuthorListView(selectedAuthor: $selectedAuthor)
             case .schemas:
-                PositionSchemaListView()
+                PositionSchemaListView(selectedSchema: $selectedPositionSchema)
             }
         } else {
             ContentUnavailableView(
@@ -139,11 +140,15 @@ struct RootView: View {
                 )
             }
         case .schemas:
-            ContentUnavailableView(
-                "Schema Details",
-                systemImage: "doc.text",
-                description: Text("Select a schema to view details")
-            )
+            if let schema = selectedPositionSchema {
+                PositionSchemaDetailView(schemaId: schema.id)
+            } else {
+                ContentUnavailableView(
+                    "Select a schema",
+                    systemImage: "doc.text",
+                    description: Text("Choose a schema from the list to view details")
+                )
+            }
         case .none:
             ContentUnavailableView(
                 "Select a section",

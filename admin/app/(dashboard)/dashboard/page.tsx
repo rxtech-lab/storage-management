@@ -1,7 +1,15 @@
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Package, FolderTree, MapPin, User, Plus, Eye, EyeOff } from "lucide-react";
+import {
+  Package,
+  FolderTree,
+  MapPin,
+  User,
+  Plus,
+  Eye,
+  EyeOff,
+} from "lucide-react";
 import { getItems } from "@/lib/actions/item-actions";
 import { getCategories } from "@/lib/actions/category-actions";
 import { getLocations } from "@/lib/actions/location-actions";
@@ -59,7 +67,10 @@ export default async function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{categories.length}</div>
-            <Link href="/categories" className="text-xs text-muted-foreground hover:underline">
+            <Link
+              href="/categories"
+              className="text-xs text-muted-foreground hover:underline"
+            >
               Manage categories
             </Link>
           </CardContent>
@@ -72,7 +83,10 @@ export default async function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{locations.length}</div>
-            <Link href="/locations" className="text-xs text-muted-foreground hover:underline">
+            <Link
+              href="/locations"
+              className="text-xs text-muted-foreground hover:underline"
+            >
               Manage locations
             </Link>
           </CardContent>
@@ -85,7 +99,10 @@ export default async function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{authors.length}</div>
-            <Link href="/authors" className="text-xs text-muted-foreground hover:underline">
+            <Link
+              href="/authors"
+              className="text-xs text-muted-foreground hover:underline"
+            >
               Manage authors
             </Link>
           </CardContent>
@@ -97,7 +114,9 @@ export default async function DashboardPage() {
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>Recent Items</CardTitle>
           <Link href="/items">
-            <Button variant="ghost" size="sm">View all</Button>
+            <Button variant="ghost" size="sm">
+              View all
+            </Button>
           </Link>
         </CardHeader>
         <CardContent>
@@ -139,7 +158,9 @@ export default async function DashboardPage() {
                       <EyeOff className="h-4 w-4 text-muted-foreground" />
                     )}
                     <span className="text-xs text-muted-foreground">
-                      {formatDistanceToNow(new Date(item.updatedAt), { addSuffix: true })}
+                      {formatDistanceToNow(new Date(item.updatedAt), {
+                        addSuffix: true,
+                      })}
                     </span>
                   </div>
                 </Link>
@@ -158,7 +179,9 @@ export default async function DashboardPage() {
                 <Package className="h-8 w-8 text-primary" />
                 <div>
                   <p className="font-medium">Add Item</p>
-                  <p className="text-sm text-muted-foreground">Create a new storage item</p>
+                  <p className="text-sm text-muted-foreground">
+                    Create a new storage item
+                  </p>
                 </div>
               </div>
             </CardContent>
@@ -172,7 +195,9 @@ export default async function DashboardPage() {
                 <FolderTree className="h-8 w-8 text-primary" />
                 <div>
                   <p className="font-medium">Add Category</p>
-                  <p className="text-sm text-muted-foreground">Organize your items</p>
+                  <p className="text-sm text-muted-foreground">
+                    Organize your items
+                  </p>
                 </div>
               </div>
             </CardContent>
@@ -186,7 +211,9 @@ export default async function DashboardPage() {
                 <MapPin className="h-8 w-8 text-primary" />
                 <div>
                   <p className="font-medium">Add Location</p>
-                  <p className="text-sm text-muted-foreground">Add a storage location</p>
+                  <p className="text-sm text-muted-foreground">
+                    Add a storage location
+                  </p>
                 </div>
               </div>
             </CardContent>
@@ -200,7 +227,9 @@ export default async function DashboardPage() {
                 <User className="h-8 w-8 text-primary" />
                 <div>
                   <p className="font-medium">Add Author</p>
-                  <p className="text-sm text-muted-foreground">Add item creator</p>
+                  <p className="text-sm text-muted-foreground">
+                    Add item creator
+                  </p>
                 </div>
               </div>
             </CardContent>

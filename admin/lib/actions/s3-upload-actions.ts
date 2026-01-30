@@ -7,11 +7,14 @@ import {
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { s3Client, S3_BUCKET, S3_ENDPOINT, S3_PUBLIC_URL } from "@/lib/s3";
+import { createFileRecordAction, getFiles } from "./file-actions";
+import { parseFileIds, isFileId } from "@/lib/utils/file-utils";
 
 export interface PresignedUploadResult {
   uploadUrl: string;
   publicUrl: string;
   key: string;
+  fileId: number;
   expiresAt: string;
 }
 
@@ -49,7 +52,9 @@ function getBaseUrl(): string {
 export async function getImageUploadUrlAction(
   filename: string,
   contentType: string,
-  folder: string = "items"
+  folder: string = "items",
+  userId?: string,
+  size: number = 0
 ): Promise<UploadActionResult> {
   try {
     if (!contentType.startsWith("image/")) {
@@ -60,6 +65,36 @@ export async function getImageUploadUrlAction(
     }
 
     const key = generateObjectKey(filename, folder);
+    const expiresIn = 600;
+    const expiresAt = new Date(Date.now() + expiresIn * 1000).toISOString();
+
+    // In E2E mode, return mock data without calling S3
+    if (process.env.IS_E2E === "true") {
+      const mockKey = `mock/${Date.now()}-${filename.replace(/[^a-zA-Z0-9.-]/g, "_")}`;
+
+      // Create file record in database
+      const fileRecord = await createFileRecordAction({
+        key: mockKey,
+        filename,
+        contentType,
+        size,
+      }, userId);
+
+      if (!fileRecord.success || !fileRecord.data) {
+        return { success: false, error: fileRecord.error || "Failed to create file record" };
+      }
+
+      return {
+        success: true,
+        data: {
+          uploadUrl: `https://mock-s3.example.com/upload/${mockKey}`,
+          publicUrl: `https://mock-s3.example.com/${mockKey}`,
+          key: mockKey,
+          fileId: fileRecord.data.id,
+          expiresAt,
+        },
+      };
+    }
 
     const command = new PutObjectCommand({
       Bucket: S3_BUCKET,
@@ -67,9 +102,19 @@ export async function getImageUploadUrlAction(
       ContentType: contentType,
     });
 
-    const expiresIn = 600;
     const uploadUrl = await getSignedUrl(s3Client, command, { expiresIn });
-    const expiresAt = new Date(Date.now() + expiresIn * 1000).toISOString();
+
+    // Create file record in database
+    const fileRecord = await createFileRecordAction({
+      key,
+      filename,
+      contentType,
+      size,
+    }, userId);
+
+    if (!fileRecord.success || !fileRecord.data) {
+      return { success: false, error: fileRecord.error || "Failed to create file record" };
+    }
 
     return {
       success: true,
@@ -77,6 +122,7 @@ export async function getImageUploadUrlAction(
         uploadUrl,
         publicUrl: getPublicUrl(key),
         key,
+        fileId: fileRecord.data.id,
         expiresAt,
       },
     };
@@ -227,4 +273,140 @@ export async function signImageUrlsAction(
     failed: failed.length > 0 ? failed : undefined,
     error: failed.length > 0 ? `Failed to sign ${failed.length} URLs` : undefined,
   };
+}
+
+// --- Sign URLs by File IDs ---
+
+export interface SignedFileUrlResult {
+  fileId: number;
+  signedUrl: string;
+  expiresAt: string;
+}
+
+/**
+ * Sign S3 URLs for files by their database IDs
+ * Returns signed URLs mapped to file IDs
+ */
+export async function signFileUrlsAction(
+  fileIds: number[],
+  expiresIn: number = 3600
+): Promise<{
+  success: boolean;
+  data?: SignedFileUrlResult[];
+  failed?: number[];
+  error?: string;
+}> {
+  if (fileIds.length === 0) {
+    return { success: true, data: [] };
+  }
+
+  // In E2E mode, return mock signed URLs
+  if (process.env.IS_E2E === "true") {
+    const files = await getFiles(fileIds);
+    const expiresAt = new Date(Date.now() + expiresIn * 1000).toISOString();
+    return {
+      success: true,
+      data: files.map((f) => ({
+        fileId: f.id,
+        signedUrl: `https://mock-s3.example.com/signed/${f.key}?expires=${expiresAt}`,
+        expiresAt,
+      })),
+    };
+  }
+
+  const files = await getFiles(fileIds);
+  const results: SignedFileUrlResult[] = [];
+  const failed: number[] = [];
+
+  const promises = files.map(async (file) => {
+    try {
+      const command = new GetObjectCommand({
+        Bucket: S3_BUCKET,
+        Key: file.key,
+      });
+
+      const signedUrl = await getSignedUrl(s3Client, command, { expiresIn });
+      const expiresAt = new Date(Date.now() + expiresIn * 1000).toISOString();
+
+      return {
+        success: true as const,
+        data: { fileId: file.id, signedUrl, expiresAt },
+      };
+    } catch (error) {
+      console.error(`Failed to sign URL for file ${file.id}:`, error);
+      return { success: false as const, fileId: file.id };
+    }
+  });
+
+  const resolved = await Promise.all(promises);
+
+  resolved.forEach((result) => {
+    if (result.success) {
+      results.push(result.data);
+    } else {
+      failed.push(result.fileId);
+    }
+  });
+
+  return {
+    success: failed.length === 0,
+    data: results,
+    failed: failed.length > 0 ? failed : undefined,
+    error: failed.length > 0 ? `Failed to sign ${failed.length} file URLs` : undefined,
+  };
+}
+
+/**
+ * Sign images from an images array that may contain both file IDs and legacy URLs
+ * Returns an array of signed URLs in the same order as input
+ */
+export async function signImagesArray(
+  images: string[],
+  expiresIn: number = 3600
+): Promise<string[]> {
+  if (images.length === 0) {
+    return [];
+  }
+
+  const signedUrls: string[] = new Array(images.length);
+  const fileIdIndices: { index: number; fileId: number }[] = [];
+  const urlIndices: { index: number; url: string }[] = [];
+
+  // Separate file IDs and legacy URLs
+  images.forEach((image, index) => {
+    if (isFileId(image)) {
+      const fileId = parseInt(image.substring(5), 10);
+      if (!isNaN(fileId)) {
+        fileIdIndices.push({ index, fileId });
+      }
+    } else {
+      urlIndices.push({ index, url: image });
+    }
+  });
+
+  // Sign file IDs
+  if (fileIdIndices.length > 0) {
+    const fileIds = fileIdIndices.map((f) => f.fileId);
+    const result = await signFileUrlsAction(fileIds, expiresIn);
+    if (result.success && result.data) {
+      const signedMap = new Map(result.data.map((r) => [r.fileId, r.signedUrl]));
+      for (const { index, fileId } of fileIdIndices) {
+        signedUrls[index] = signedMap.get(fileId) || "";
+      }
+    }
+  }
+
+  // Sign legacy URLs
+  if (urlIndices.length > 0) {
+    const urls = urlIndices.map((u) => u.url);
+    const result = await signImageUrlsAction(urls, expiresIn);
+    if (result.success && result.data) {
+      const signedMap = new Map(result.data.map((r) => [r.originalUrl, r.signedUrl]));
+      for (const { index, url } of urlIndices) {
+        signedUrls[index] = signedMap.get(url) || url;
+      }
+    }
+  }
+
+  return signedUrls;
 }

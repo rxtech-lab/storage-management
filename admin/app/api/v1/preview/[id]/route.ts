@@ -4,6 +4,7 @@ import { getItem } from "@/lib/actions/item-actions";
 import { getItemContents } from "@/lib/actions/content-actions";
 import { getLocation } from "@/lib/actions/location-actions";
 import { isEmailWhitelisted } from "@/lib/actions/whitelist-actions";
+import { signImagesArray } from "@/lib/actions/s3-upload-actions";
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -43,14 +44,18 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     }
   }
 
-  // Fetch additional data
-  const [contents, location] = await Promise.all([
+  // Fetch additional data - sign images to replace file IDs with signed URLs
+  const [contents, location, images] = await Promise.all([
     getItemContents(itemId),
     item.locationId ? getLocation(item.locationId) : null,
+    item.images && item.images.length > 0
+      ? signImagesArray(item.images)
+      : Promise.resolve([]),
   ]);
 
   return NextResponse.json({
     ...item,
+    images,
     location: location || item.location,
     contents,
   });

@@ -43,7 +43,7 @@ export function GlobalSearch() {
       if (!query.trim()) return [];
 
       try {
-        const items = await getItems({ search: query });
+        const items = await getItems(undefined, { search: query });
         return items.slice(0, limit).map(
           (item): ItemSearchResult => ({
             id: item.id,
@@ -52,14 +52,14 @@ export function GlobalSearch() {
             category: item.category?.name,
             visibility: item.visibility,
             metadata: item,
-          })
+          }),
         );
       } catch (error) {
         console.error("Search error:", error);
         return [];
       }
     },
-    []
+    [],
   );
 
   // Handle result selection
@@ -68,7 +68,7 @@ export function GlobalSearch() {
       setOpen(false);
       router.push(`/items/${result.id}`);
     },
-    [router]
+    [router],
   );
 
   // Handle tool actions from agent mode
@@ -79,7 +79,7 @@ export function GlobalSearch() {
         router.push(action.payload);
       }
     },
-    [router]
+    [router],
   );
 
   // Custom result renderer
@@ -94,7 +94,9 @@ export function GlobalSearch() {
         <div className="flex-1 text-left min-w-0">
           <div className="font-medium truncate">{result.title}</div>
           {result.category && (
-            <div className="text-xs text-muted-foreground">{result.category}</div>
+            <div className="text-xs text-muted-foreground">
+              {result.category}
+            </div>
           )}
         </div>
         {result.visibility === "public" ? (
@@ -104,7 +106,7 @@ export function GlobalSearch() {
         )}
       </button>
     ),
-    []
+    [],
   );
 
   // Custom empty state renderer
@@ -127,7 +129,7 @@ export function GlobalSearch() {
         <p>Searching items...</p>
       </div>
     ),
-    []
+    [],
   );
 
   return (
