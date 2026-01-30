@@ -39,12 +39,17 @@ public final class ItemFormViewModel: ItemFormViewModelProtocol {
     public private(set) var error: Error?
     public private(set) var validationErrors: [String: String] = [:]
 
+    // Upload state
+    public private(set) var pendingUploads: [PendingUpload] = []
+    public private(set) var isUploading = false
+
     // MARK: - Dependencies
 
     private let itemService: ItemServiceProtocol
     private let categoryService: CategoryServiceProtocol
     private let locationService: LocationServiceProtocol
     private let authorService: AuthorServiceProtocol
+    private let uploadManager: UploadManager
 
     // MARK: - Initialization
 
@@ -53,13 +58,15 @@ public final class ItemFormViewModel: ItemFormViewModelProtocol {
         itemService: ItemServiceProtocol = ItemService(),
         categoryService: CategoryServiceProtocol = CategoryService(),
         locationService: LocationServiceProtocol = LocationService(),
-        authorService: AuthorServiceProtocol = AuthorService()
+        authorService: AuthorServiceProtocol = AuthorService(),
+        uploadManager: UploadManager = .shared
     ) {
         self.item = item
         self.itemService = itemService
         self.categoryService = categoryService
         self.locationService = locationService
         self.authorService = authorService
+        self.uploadManager = uploadManager
 
         // Populate form if editing
         if let item = item {
@@ -143,7 +150,7 @@ public final class ItemFormViewModel: ItemFormViewModelProtocol {
                 parentId: selectedParentId,
                 price: priceValue,
                 visibility: visibility,
-                images: imageURLs
+                images: allImageReferences
             )
 
             if let existingItem = item {
@@ -192,6 +199,100 @@ public final class ItemFormViewModel: ItemFormViewModelProtocol {
         authors.append(created)
 
         return created
+    }
+
+    // MARK: - Image Upload
+
+    /// Add an image from local file URL to pending uploads
+    public func addImage(from localURL: URL) {
+        let filename = localURL.lastPathComponent
+        let contentType = MIMEType.from(url: localURL)
+
+        // Get file size
+        let fileSize: Int64
+        if let attributes = try? FileManager.default.attributesOfItem(atPath: localURL.path),
+           let size = attributes[.size] as? Int64
+        {
+            fileSize = size
+        } else {
+            fileSize = 0
+        }
+
+        let pending = PendingUpload(
+            localURL: localURL,
+            filename: filename,
+            contentType: contentType,
+            fileSize: fileSize
+        )
+        pendingUploads.append(pending)
+    }
+
+    /// Upload all pending images
+    public func uploadPendingImages() async {
+        isUploading = true
+
+        for index in pendingUploads.indices {
+            guard pendingUploads[index].status == .pending else { continue }
+
+            pendingUploads[index].status = .gettingPresignedURL
+
+            do {
+                pendingUploads[index].status = .uploading
+
+                let result = try await uploadManager.upload(
+                    file: pendingUploads[index].localURL,
+                    onProgress: { [weak self] uploaded, total in
+                        Task { @MainActor in
+                            guard let self = self, index < self.pendingUploads.count else { return }
+                            self.pendingUploads[index].progress = Double(uploaded) / Double(max(total, 1))
+                        }
+                    }
+                )
+
+                pendingUploads[index].fileId = result.fileId
+                pendingUploads[index].publicUrl = result.publicUrl
+                pendingUploads[index].progress = 1.0
+                pendingUploads[index].status = .completed
+
+            } catch {
+                let errorMessage = error.localizedDescription
+                pendingUploads[index].status = .failed(errorMessage)
+            }
+        }
+
+        isUploading = false
+    }
+
+    /// Cancel an in-progress upload
+    public func cancelUpload(id: UUID) async {
+        if let index = pendingUploads.firstIndex(where: { $0.id == id }) {
+            await uploadManager.cancel(uploadId: id)
+            pendingUploads[index].status = .cancelled
+        }
+    }
+
+    /// Remove a pending upload (before item is saved)
+    public func removePendingUpload(id: UUID) {
+        pendingUploads.removeAll { $0.id == id }
+    }
+
+    /// Remove a saved image from the imageURLs array
+    public func removeSavedImage(at index: Int) {
+        guard index >= 0 && index < imageURLs.count else { return }
+        imageURLs.remove(at: index)
+    }
+
+    /// Get all image references for item submission
+    /// Returns file references for completed pending uploads + existing saved images
+    public var allImageReferences: [String] {
+        // Start with existing saved images (they might be "file:N" or signed URLs)
+        var references = imageURLs
+
+        // Add completed pending uploads as "file:N" references
+        let completedReferences = pendingUploads.compactMap { $0.fileReference }
+        references.append(contentsOf: completedReferences)
+
+        return references
     }
 
     // MARK: - Private Methods

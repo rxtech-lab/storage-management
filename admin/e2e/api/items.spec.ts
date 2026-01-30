@@ -18,6 +18,9 @@ test.describe.serial("Items API", () => {
     expect(body.title).toBe("Test Item from API");
     expect(body.description).toBe("Created via API test");
     expect(body.visibility).toBe("private");
+    // Should include images (empty for items without images)
+    expect(body).toHaveProperty("images");
+    expect(body.images).toBeInstanceOf(Array);
 
     createdItemId = body.id;
   });

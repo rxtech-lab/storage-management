@@ -31,3 +31,9 @@ export {
   type ItemWhitelist,
   type NewItemWhitelist,
 } from "./item-whitelists";
+export {
+  uploadFiles,
+  uploadFilesRelations,
+  type UploadFile,
+  type NewUploadFile,
+} from "./upload-files";

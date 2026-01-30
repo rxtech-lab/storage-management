@@ -57,6 +57,9 @@ public enum APIEndpoint: Sendable {
     // Preview
     case getItemPreview(id: Int)
 
+    // Upload
+    case getPresignedURL
+
     /// HTTP method for this endpoint
     public var method: HTTPMethod {
         switch self {
@@ -68,7 +71,8 @@ public enum APIEndpoint: Sendable {
              .getItemPreview:
             return .get
 
-        case .createItem, .createCategory, .createLocation, .createAuthor, .createPositionSchema:
+        case .createItem, .createCategory, .createLocation, .createAuthor, .createPositionSchema,
+             .getPresignedURL:
             return .post
 
         case .updateItem, .updateCategory, .updateLocation, .updateAuthor, .updatePositionSchema:
@@ -143,6 +147,9 @@ public enum APIEndpoint: Sendable {
 
         case .getItemPreview(let id):
             return "/api/v1/preview/\(id)"
+
+        case .getPresignedURL:
+            return "/api/v1/upload/presigned"
         }
     }
 

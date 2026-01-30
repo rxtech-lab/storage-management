@@ -34,14 +34,16 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     },
   ],
   callbacks: {
-    async jwt({ token, account }) {
-      // Initial login - store all tokens
+    async jwt({ token, account, profile }) {
+      // Initial login - store all tokens and real user ID from OIDC provider
       if (account) {
         return {
           ...token,
           accessToken: account.access_token,
           refreshToken: account.refresh_token,
           expiresAt: account.expires_at,
+          // Store the real user ID from OIDC provider (not NextAuth's internal sub)
+          userId: profile?.sub,
         };
       }
 
@@ -87,6 +89,21 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       }
     },
     async session({ session, token }) {
+      // Populate user data from token
+      // Use userId (real OIDC sub) instead of token.sub (NextAuth's internal ID)
+      if (token.userId) {
+        session.user.id = token.userId as string;
+      }
+      if (token.name) {
+        session.user.name = token.name as string;
+      }
+      if (token.email) {
+        session.user.email = token.email as string;
+      }
+      if (token.picture) {
+        session.user.image = token.picture as string;
+      }
+
       // Make access token available to the client
       session.accessToken = token.accessToken as string | undefined;
       session.error = token.error as string | undefined;
