@@ -9,6 +9,8 @@ import {
   getImageUploadUrlAction,
   deleteImageAction,
 } from "@/lib/actions/s3-upload-actions";
+import { deleteFileAction } from "@/lib/actions/file-actions";
+import { isFileId } from "@/lib/utils/file-utils";
 import { useSignedImages, getSignedUrl } from "@/lib/hooks/use-signed-images";
 
 interface ImageUploadProps {
@@ -58,14 +60,16 @@ export function ImageUpload({
         const result = await getImageUploadUrlAction(
           file.name,
           file.type,
-          "items"
+          "items",
+          undefined,
+          file.size
         );
 
         if (!result.success || !result.data) {
           throw new Error(result.error || "Failed to get upload URL");
         }
 
-        const { uploadUrl, publicUrl } = result.data;
+        const { uploadUrl, fileId } = result.data;
 
         await new Promise<void>((resolve, reject) => {
           const xhr = new XMLHttpRequest();
@@ -99,7 +103,8 @@ export function ImageUpload({
         setUploading((prev) => prev.filter((u) => u.id !== uploadId));
         URL.revokeObjectURL(preview);
 
-        return publicUrl;
+        // Return file ID format instead of public URL
+        return `file:${fileId}`;
       } catch (error) {
         setUploading((prev) =>
           prev.map((u) =>
@@ -154,18 +159,27 @@ export function ImageUpload({
   );
 
   const handleRemove = useCallback(
-    async (url: string) => {
-      setDeletingUrls((prev) => new Set(prev).add(url));
-      onChange(value.filter((u) => u !== url));
+    async (imageRef: string) => {
+      setDeletingUrls((prev) => new Set(prev).add(imageRef));
+      onChange(value.filter((u) => u !== imageRef));
 
-      const result = await deleteImageAction(url);
-      if (!result.success) {
-        console.warn("Failed to delete image from R2:", result.error);
+      // Handle both file IDs and legacy URLs
+      if (isFileId(imageRef)) {
+        const fileId = parseInt(imageRef.substring(5), 10);
+        const result = await deleteFileAction(fileId);
+        if (!result.success) {
+          console.warn("Failed to delete file:", result.error);
+        }
+      } else {
+        const result = await deleteImageAction(imageRef);
+        if (!result.success) {
+          console.warn("Failed to delete image from R2:", result.error);
+        }
       }
 
       setDeletingUrls((prev) => {
         const next = new Set(prev);
-        next.delete(url);
+        next.delete(imageRef);
         return next;
       });
     },

@@ -12,15 +12,15 @@ public struct PositionSchema: Codable, Identifiable, Hashable, Sendable {
     public let id: Int
     public let name: String
     public let schema: [String: AnyCodable]
-    public let createdAt: Date
-    public let updatedAt: Date
+    public let createdAt: Date?  // Optional: not included when nested in Position
+    public let updatedAt: Date?  // Optional: not included when nested in Position
 
     public init(
         id: Int,
         name: String,
         schema: [String: AnyCodable],
-        createdAt: Date,
-        updatedAt: Date
+        createdAt: Date? = nil,
+        updatedAt: Date? = nil
     ) {
         self.id = id
         self.name = name

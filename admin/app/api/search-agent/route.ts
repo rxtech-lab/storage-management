@@ -89,7 +89,7 @@ export async function POST(request: Request) {
             if (params.locationId) filters.locationId = params.locationId;
             if (params.authorId) filters.authorId = params.authorId;
 
-            const items = await getItems(filters);
+            const items = await getItems(undefined, filters);
             const limitedItems = items.slice(0, params.limit || 10);
             console.log("Search results:", limitedItems, filters);
 

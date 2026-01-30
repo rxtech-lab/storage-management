@@ -10,6 +10,8 @@ import RxStorageCore
 
 /// Position schema list view
 struct PositionSchemaListView: View {
+    @Binding var selectedSchema: PositionSchema?
+
     @State private var viewModel = PositionSchemaListViewModel()
     @State private var showingCreateSheet = false
 
@@ -54,18 +56,20 @@ struct PositionSchemaListView: View {
     // MARK: - Schemas List
 
     private var schemasList: some View {
-        List {
+        List(selection: $selectedSchema) {
             ForEach(viewModel.filteredSchemas) { schema in
-                PositionSchemaRow(schema: schema)
-                    .swipeActions(edge: .trailing, allowsFullSwipe: false) {
-                        Button(role: .destructive) {
-                            Task {
-                                try? await viewModel.deleteSchema(schema)
-                            }
-                        } label: {
-                            Label("Delete", systemImage: "trash")
+                NavigationLink(value: schema) {
+                    PositionSchemaRow(schema: schema)
+                }
+                .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                    Button(role: .destructive) {
+                        Task {
+                            try? await viewModel.deleteSchema(schema)
                         }
+                    } label: {
+                        Label("Delete", systemImage: "trash")
                     }
+                }
             }
         }
     }
@@ -89,7 +93,8 @@ struct PositionSchemaRow: View {
 }
 
 #Preview {
+    @Previewable @State var selectedSchema: PositionSchema?
     NavigationStack {
-        PositionSchemaListView()
+        PositionSchemaListView(selectedSchema: $selectedSchema)
     }
 }

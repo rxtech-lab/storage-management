@@ -7,71 +7,6 @@ import Foundation
 import SwiftUI
 import JSONSchema
 
-/// Editor tab modes
-public enum EditorTab: String, CaseIterable, Sendable {
-    case visual = "Visual Editor"
-    case raw = "Raw JSON"
-}
-
-/// Actor-based state container for thread-safe state management
-public actor SchemaEditorState {
-    public var schemaType: RootSchemaType = .object
-    public var items: [PropertyItem] = []
-    public var rawJson: String = ""
-    public var activeTab: EditorTab = .visual
-    public var jsonError: String?
-    public var title: String = ""
-    public var schemaDescription: String = ""
-    public var arrayItemsType: PropertyType = .string
-
-    public init() {}
-
-    public func update(
-        schemaType: RootSchemaType? = nil,
-        items: [PropertyItem]? = nil,
-        rawJson: String? = nil,
-        activeTab: EditorTab? = nil,
-        jsonError: String?? = nil,
-        title: String? = nil,
-        schemaDescription: String? = nil,
-        arrayItemsType: PropertyType? = nil
-    ) {
-        if let schemaType { self.schemaType = schemaType }
-        if let items { self.items = items }
-        if let rawJson { self.rawJson = rawJson }
-        if let activeTab { self.activeTab = activeTab }
-        if let jsonError { self.jsonError = jsonError }
-        if let title { self.title = title }
-        if let schemaDescription { self.schemaDescription = schemaDescription }
-        if let arrayItemsType { self.arrayItemsType = arrayItemsType }
-    }
-
-    public func getSnapshot() -> StateSnapshot {
-        StateSnapshot(
-            schemaType: schemaType,
-            items: items,
-            rawJson: rawJson,
-            activeTab: activeTab,
-            jsonError: jsonError,
-            title: title,
-            schemaDescription: schemaDescription,
-            arrayItemsType: arrayItemsType
-        )
-    }
-}
-
-/// Immutable snapshot of state for use in SwiftUI views
-public struct StateSnapshot: Sendable {
-    public let schemaType: RootSchemaType
-    public let items: [PropertyItem]
-    public let rawJson: String
-    public let activeTab: EditorTab
-    public let jsonError: String?
-    public let title: String
-    public let schemaDescription: String
-    public let arrayItemsType: PropertyType
-}
-
 /// Main view model for the JSON Schema Editor
 /// Uses @Observable for SwiftUI integration with @MainActor for thread safety
 @Observable
@@ -81,16 +16,9 @@ public final class JsonSchemaEditorViewModel {
 
     public var schemaType: RootSchemaType = .object
     public var items: [PropertyItem] = []
-    public var rawJson: String = ""
-    public var activeTab: EditorTab = .visual
-    public var jsonError: String?
     public var title: String = ""
     public var schemaDescription: String = ""
     public var arrayItemsType: PropertyType = .string
-
-    // MARK: - Private
-
-    private var isSyncingFromValue = false
 
     // MARK: - Initialization
 
@@ -114,11 +42,9 @@ public final class JsonSchemaEditorViewModel {
 
         switch schema.type {
         case .object:
-            // Object schemas store title at top level
             title = schema.title ?? ""
             items = SchemaConversion.schemaToPropertyItems(schema)
         case .array:
-            // Array schemas store title inside arraySchema
             if let arraySchema = schema.arraySchema {
                 title = arraySchema.title ?? ""
                 if let itemsSchema = arraySchema.items {
@@ -135,8 +61,6 @@ public final class JsonSchemaEditorViewModel {
             title = schema.title ?? ""
             items = []
         }
-
-        rawJson = SchemaJSON.stringify(schema)
     }
 
     /// Build the current state into a JSONSchema
@@ -173,46 +97,6 @@ public final class JsonSchemaEditorViewModel {
 
         schemaType = newType
         loadSchema(newSchema)
-    }
-
-    /// Handle raw JSON text change
-    public func handleRawJsonChange(_ newJson: String) {
-        rawJson = newJson
-
-        guard !newJson.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-            jsonError = nil
-            return
-        }
-
-        switch SchemaJSON.parse(newJson) {
-        case .success(let schema):
-            jsonError = nil
-            isSyncingFromValue = true
-            loadSchema(schema)
-            isSyncingFromValue = false
-        case .failure(let error):
-            jsonError = error.localizedDescription
-        }
-    }
-
-    /// Handle tab change
-    public func handleTabChange(_ newTab: EditorTab) {
-        guard newTab != activeTab else { return }
-
-        // If switching from raw to visual with an error, prevent switch
-        if activeTab == .raw && newTab == .visual && jsonError != nil {
-            return
-        }
-
-        // Sync data before switching
-        if activeTab == .visual && newTab == .raw {
-            // Visual -> Raw: update raw JSON
-            if let schema = buildSchema() {
-                rawJson = SchemaJSON.stringify(schema)
-            }
-        }
-
-        activeTab = newTab
     }
 
     // MARK: - Property Management
@@ -253,8 +137,6 @@ public final class JsonSchemaEditorViewModel {
     private func reset() {
         schemaType = .object
         items = []
-        rawJson = ""
-        jsonError = nil
         title = ""
         schemaDescription = ""
         arrayItemsType = .string

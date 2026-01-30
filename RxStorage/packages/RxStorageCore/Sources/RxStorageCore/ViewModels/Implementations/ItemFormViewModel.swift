@@ -33,11 +33,20 @@ public final class ItemFormViewModel: ItemFormViewModelProtocol {
     public private(set) var authors: [Author] = []
     public private(set) var parentItems: [StorageItem] = []
 
+    // Position data
+    public var positionSchemas: [PositionSchema] = []       // Public for binding (inline creation)
+    public private(set) var positions: [Position] = []      // Edit mode: existing positions
+    public var pendingPositions: [PendingPosition] = []     // Create/edit: new positions to add
+
     // State
     public private(set) var isLoading = false
     public private(set) var isSubmitting = false
     public private(set) var error: Error?
     public private(set) var validationErrors: [String: String] = [:]
+
+    // Upload state
+    public private(set) var pendingUploads: [PendingUpload] = []
+    public private(set) var isUploading = false
 
     // MARK: - Dependencies
 
@@ -45,6 +54,9 @@ public final class ItemFormViewModel: ItemFormViewModelProtocol {
     private let categoryService: CategoryServiceProtocol
     private let locationService: LocationServiceProtocol
     private let authorService: AuthorServiceProtocol
+    private let positionSchemaService: PositionSchemaServiceProtocol
+    private let positionService: PositionServiceProtocol
+    private let uploadManager: UploadManager
 
     // MARK: - Initialization
 
@@ -53,13 +65,19 @@ public final class ItemFormViewModel: ItemFormViewModelProtocol {
         itemService: ItemServiceProtocol = ItemService(),
         categoryService: CategoryServiceProtocol = CategoryService(),
         locationService: LocationServiceProtocol = LocationService(),
-        authorService: AuthorServiceProtocol = AuthorService()
+        authorService: AuthorServiceProtocol = AuthorService(),
+        positionSchemaService: PositionSchemaServiceProtocol = PositionSchemaService(),
+        positionService: PositionServiceProtocol = PositionService(),
+        uploadManager: UploadManager = .shared
     ) {
         self.item = item
         self.itemService = itemService
         self.categoryService = categoryService
         self.locationService = locationService
         self.authorService = authorService
+        self.positionSchemaService = positionSchemaService
+        self.positionService = positionService
+        self.uploadManager = uploadManager
 
         // Populate form if editing
         if let item = item {
@@ -102,6 +120,22 @@ public final class ItemFormViewModel: ItemFormViewModelProtocol {
             print("Failed to load parent items: \(error)")
         }
 
+        // Load position schemas
+        do {
+            positionSchemas = try await positionSchemaService.fetchPositionSchemas()
+        } catch {
+            print("Failed to load position schemas: \(error)")
+        }
+
+        // Load existing positions if editing
+        if let itemId = item?.id {
+            do {
+                positions = try await positionService.fetchItemPositions(itemId: itemId)
+            } catch {
+                print("Failed to load positions: \(error)")
+            }
+        }
+
         isLoading = false
     }
 
@@ -134,6 +168,9 @@ public final class ItemFormViewModel: ItemFormViewModelProtocol {
         do {
             let priceValue = price.isEmpty ? nil : Double(price)
 
+            // Convert pending positions to API format
+            let positionsData = pendingPositions.isEmpty ? nil : pendingPositions.map { $0.asNewPositionData }
+
             let request = NewItemRequest(
                 title: title,
                 description: description.isEmpty ? nil : description,
@@ -143,7 +180,8 @@ public final class ItemFormViewModel: ItemFormViewModelProtocol {
                 parentId: selectedParentId,
                 price: priceValue,
                 visibility: visibility,
-                images: imageURLs
+                images: allImageReferences,
+                positions: positionsData
             )
 
             if let existingItem = item {
@@ -153,6 +191,9 @@ public final class ItemFormViewModel: ItemFormViewModelProtocol {
                 // Create
                 _ = try await itemService.createItem(request)
             }
+
+            // Clear pending positions after successful save
+            pendingPositions.removeAll()
 
             isSubmitting = false
         } catch {
@@ -192,6 +233,123 @@ public final class ItemFormViewModel: ItemFormViewModelProtocol {
         authors.append(created)
 
         return created
+    }
+
+    // MARK: - Position Management
+
+    /// Add a pending position to be created with the item
+    public func addPendingPosition(schema: PositionSchema, data: [String: AnyCodable]) {
+        let pending = PendingPosition(
+            positionSchemaId: schema.id,
+            schema: schema,
+            data: data
+        )
+        pendingPositions.append(pending)
+    }
+
+    /// Remove a pending position
+    public func removePendingPosition(id: UUID) {
+        pendingPositions.removeAll { $0.id == id }
+    }
+
+    /// Delete an existing position (only for edit mode)
+    public func removePosition(id: Int) async throws {
+        try await positionService.deletePosition(id: id)
+        positions.removeAll { $0.id == id }
+    }
+
+    // MARK: - Image Upload
+
+    /// Add an image from local file URL to pending uploads
+    public func addImage(from localURL: URL) {
+        let filename = localURL.lastPathComponent
+        let contentType = MIMEType.from(url: localURL)
+
+        // Get file size
+        let fileSize: Int64
+        if let attributes = try? FileManager.default.attributesOfItem(atPath: localURL.path),
+           let size = attributes[.size] as? Int64
+        {
+            fileSize = size
+        } else {
+            fileSize = 0
+        }
+
+        let pending = PendingUpload(
+            localURL: localURL,
+            filename: filename,
+            contentType: contentType,
+            fileSize: fileSize
+        )
+        pendingUploads.append(pending)
+    }
+
+    /// Upload all pending images
+    public func uploadPendingImages() async {
+        isUploading = true
+
+        for index in pendingUploads.indices {
+            guard pendingUploads[index].status == .pending else { continue }
+
+            pendingUploads[index].status = .gettingPresignedURL
+
+            do {
+                pendingUploads[index].status = .uploading
+
+                let result = try await uploadManager.upload(
+                    file: pendingUploads[index].localURL,
+                    onProgress: { [weak self] uploaded, total in
+                        Task { @MainActor in
+                            guard let self = self, index < self.pendingUploads.count else { return }
+                            self.pendingUploads[index].progress = Double(uploaded) / Double(max(total, 1))
+                        }
+                    }
+                )
+
+                pendingUploads[index].fileId = result.fileId
+                pendingUploads[index].publicUrl = result.publicUrl
+                pendingUploads[index].progress = 1.0
+                pendingUploads[index].status = .completed
+
+            } catch {
+                let errorMessage = error.localizedDescription
+                pendingUploads[index].status = .failed(errorMessage)
+            }
+        }
+
+        isUploading = false
+    }
+
+    /// Cancel an in-progress upload
+    public func cancelUpload(id: UUID) async {
+        if let index = pendingUploads.firstIndex(where: { $0.id == id }) {
+            await uploadManager.cancel(uploadId: id)
+            pendingUploads[index].status = .cancelled
+        }
+    }
+
+    /// Remove a pending upload (before item is saved)
+    public func removePendingUpload(id: UUID) {
+        pendingUploads.removeAll { $0.id == id }
+    }
+
+    /// Remove a saved image from the imageURLs array
+    public func removeSavedImage(at index: Int) {
+        guard index >= 0 && index < imageURLs.count else { return }
+        imageURLs.remove(at: index)
+    }
+
+    /// Get all image references for item submission
+    /// Returns file references for completed pending uploads + existing saved images
+    public var allImageReferences: [String] {
+        // Start with existing saved images (they might be "file:N" or signed URLs)
+        var references = imageURLs
+
+        // Add completed pending uploads as "file:N" references
+        let completedReferences = pendingUploads.compactMap { $0.fileReference }
+        references.append(contentsOf: completedReferences)
+
+        return references
     }
 
     // MARK: - Private Methods

@@ -5,6 +5,7 @@ import {
   createItemAction,
   type ItemFilters,
 } from "@/lib/actions/item-actions";
+import { signImagesArray } from "@/lib/actions/s3-upload-actions";
 
 export async function GET(request: NextRequest) {
   const session = await getSession(request);
@@ -37,13 +38,24 @@ export async function GET(request: NextRequest) {
     filters.search = searchParams.get("search")!;
   }
 
-  let items = await getItems(filters);
+  const items = await getItems(session.user.id, filters);
 
-  items = items.map((item) => ({
-    ...item,
-    previewUrl: `${process.env.NEXT_PUBLIC_URL}/preview/${item.id}`,
-  }));
-  return NextResponse.json(items);
+  // Sign images for each item - replace file IDs with signed URLs
+  const itemsWithSignedImages = await Promise.all(
+    items.map(async (item) => {
+      const images =
+        item.images && item.images.length > 0
+          ? await signImagesArray(item.images)
+          : [];
+      return {
+        ...item,
+        images,
+        previewUrl: `${process.env.NEXT_PUBLIC_URL}/preview/${item.id}`,
+      };
+    }),
+  );
+
+  return NextResponse.json(itemsWithSignedImages);
 }
 
 export async function POST(request: NextRequest) {
@@ -56,8 +68,18 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const result = await createItemAction(body, session.user.id);
 
-    if (result.success) {
-      return NextResponse.json(result.data, { status: 201 });
+    if (result.success && result.data) {
+      // Sign images - replace file IDs with signed URLs
+      const images =
+        result.data.images && result.data.images.length > 0
+          ? await signImagesArray(result.data.images)
+          : [];
+
+      const previewUrl = `${process.env.NEXT_PUBLIC_URL}/preview/${result.data.id}`;
+      return NextResponse.json(
+        { ...result.data, images, previewUrl },
+        { status: 201 },
+      );
     } else {
       return NextResponse.json({ error: result.error }, { status: 400 });
     }

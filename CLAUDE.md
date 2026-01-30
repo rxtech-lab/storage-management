@@ -337,3 +337,8 @@ xcodebuild test \
 6. Build and run (Cmd+R)
 
 See `RxStorage/RxStorage/Config/XCCONFIG_SETUP.md` for detailed configuration guide.
+
+
+## Build and test
+
+Since you don't have access to cd, run `scripts/ios-test.sh` and `scripts/ios-build.sh` script to build and test the ios mobile app which includes testing the app and its packages.

@@ -1,10 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useMemo } from "react";
-import {
-  signImageUrlsAction,
-  type SignedUrlResult,
-} from "@/lib/actions/s3-upload-actions";
+import { signImagesArray } from "@/lib/actions/s3-upload-actions";
 
 interface UseSignedImagesOptions {
   expiresIn?: number; // seconds
@@ -42,22 +39,19 @@ export function useSignedImages(
     setError(null);
 
     try {
-      const result = await signImageUrlsAction(publicUrls, expiresIn);
+      // signImagesArray handles both file IDs (file:123) and legacy URLs
+      const signedUrlsArray = await signImagesArray(publicUrls, expiresIn);
 
-      if (result.success && result.data) {
-        const urlMap = new Map<string, string>();
-        result.data.forEach((item) => {
-          urlMap.set(item.originalUrl, item.signedUrl);
-        });
-        setSignedUrls(urlMap);
-
-        // Track expiry from first result
-        if (result.data.length > 0) {
-          setExpiresAt(new Date(result.data[0].expiresAt));
+      const urlMap = new Map<string, string>();
+      publicUrls.forEach((originalRef, index) => {
+        if (signedUrlsArray[index]) {
+          urlMap.set(originalRef, signedUrlsArray[index]);
         }
-      } else {
-        setError(result.error || "Failed to sign URLs");
-      }
+      });
+      setSignedUrls(urlMap);
+
+      // Set expiry time
+      setExpiresAt(new Date(Date.now() + expiresIn * 1000));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unknown error");
     } finally {

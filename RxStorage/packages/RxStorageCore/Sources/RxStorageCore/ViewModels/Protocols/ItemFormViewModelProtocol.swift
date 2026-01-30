@@ -36,6 +36,10 @@ public protocol ItemFormViewModelProtocol: AnyObject, Observable {
     var error: Error? { get }
     var validationErrors: [String: String] { get }
 
+    /// Upload state
+    var pendingUploads: [PendingUpload] { get }
+    var isUploading: Bool { get }
+
     /// Load reference data
     func loadReferenceData() async
 
@@ -49,4 +53,25 @@ public protocol ItemFormViewModelProtocol: AnyObject, Observable {
     func createCategory(name: String, description: String?) async throws -> Category
     func createLocation(title: String, latitude: Double, longitude: Double) async throws -> Location
     func createAuthor(name: String, bio: String?) async throws -> Author
+
+    // MARK: - Image Upload
+
+    /// Add an image from local file URL to pending uploads
+    func addImage(from localURL: URL)
+
+    /// Upload all pending images
+    func uploadPendingImages() async
+
+    /// Cancel an in-progress upload
+    func cancelUpload(id: UUID) async
+
+    /// Remove a pending upload (before item is saved)
+    func removePendingUpload(id: UUID)
+
+    /// Remove a saved image from the imageURLs array
+    func removeSavedImage(at index: Int)
+
+    /// Get all image references for item submission
+    /// Returns file references for pending uploads + existing saved images
+    var allImageReferences: [String] { get }
 }

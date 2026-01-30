@@ -100,6 +100,7 @@ public struct NewItemRequest: Codable, Sendable {
     public let price: Double?
     public let visibility: StorageItem.Visibility
     public let images: [String]
+    public let positions: [NewPositionData]?
 
     public init(
         title: String,
@@ -110,7 +111,8 @@ public struct NewItemRequest: Codable, Sendable {
         parentId: Int? = nil,
         price: Double? = nil,
         visibility: StorageItem.Visibility = .public,
-        images: [String] = []
+        images: [String] = [],
+        positions: [NewPositionData]? = nil
     ) {
         self.title = title
         self.description = description
@@ -121,6 +123,7 @@ public struct NewItemRequest: Codable, Sendable {
         self.price = price
         self.visibility = visibility
         self.images = images
+        self.positions = positions
     }
 }
 

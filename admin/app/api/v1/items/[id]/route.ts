@@ -5,6 +5,7 @@ import {
   updateItemAction,
   deleteItemAction,
 } from "@/lib/actions/item-actions";
+import { signImagesArray } from "@/lib/actions/s3-upload-actions";
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -30,7 +31,12 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
   const previewUrl = `${process.env.NEXT_PUBLIC_URL}/preview/${item.id}`;
 
-  return NextResponse.json({ ...item, previewUrl });
+  // Sign images - replace file IDs with signed URLs
+  const images = item.images && item.images.length > 0
+    ? await signImagesArray(item.images)
+    : [];
+
+  return NextResponse.json({ ...item, images, previewUrl });
 }
 
 export async function PUT(request: NextRequest, { params }: RouteParams) {
@@ -47,7 +53,13 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 
     if (result.success && result.data) {
       const previewUrl = `${process.env.NEXT_PUBLIC_URL}/preview/${result.data.id}`;
-      return NextResponse.json({ ...result.data, previewUrl });
+
+      // Sign images - replace file IDs with signed URLs
+      const images = result.data.images && result.data.images.length > 0
+        ? await signImagesArray(result.data.images)
+        : [];
+
+      return NextResponse.json({ ...result.data, images, previewUrl });
     } else if (result.error === "Permission denied") {
       return NextResponse.json({ error: result.error }, { status: 403 });
     } else {

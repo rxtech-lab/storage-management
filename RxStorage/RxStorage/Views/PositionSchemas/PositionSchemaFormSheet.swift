@@ -5,6 +5,7 @@
 //  Position schema create/edit form
 //
 
+import JSONSchema
 import JsonSchemaEditor
 import RxStorageCore
 import SwiftUI
@@ -12,13 +13,52 @@ import SwiftUI
 /// Position schema form sheet for creating or editing schemas
 struct PositionSchemaFormSheet: View {
     let schema: PositionSchema?
+    let onCreated: ((PositionSchema) -> Void)?
 
     @State private var viewModel: PositionSchemaFormViewModel
+    @State private var jsonSchema: JSONSchema?
     @Environment(\.dismiss) private var dismiss
 
-    init(schema: PositionSchema? = nil) {
+    init(schema: PositionSchema? = nil, onCreated: ((PositionSchema) -> Void)? = nil) {
         self.schema = schema
+        self.onCreated = onCreated
         _viewModel = State(initialValue: PositionSchemaFormViewModel(schema: schema))
+        // Initialize jsonSchema from schema if editing
+        if let schema = schema {
+            _jsonSchema = State(initialValue: Self.parseSchema(from: schema.schema))
+        } else {
+            _jsonSchema = State(initialValue: nil)
+        }
+    }
+
+    /// Parse schema dictionary to JSONSchema
+    private static func parseSchema(from dict: [String: RxStorageCore.AnyCodable]) -> JSONSchema? {
+        // Convert AnyCodable values to their underlying values for JSONSerialization
+        let unwrappedDict = dict.mapValues { $0.value }
+        guard let data = try? JSONSerialization.data(withJSONObject: unwrappedDict, options: []) else {
+            return nil
+        }
+        return try? JSONDecoder().decode(JSONSchema.self, from: data)
+    }
+
+    /// Convert JSONSchema to JSON string
+    private static func stringifySchema(_ schema: JSONSchema?) -> String {
+        guard let schema = schema else { return "" }
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
+        guard let data = try? encoder.encode(schema) else { return "" }
+        return String(data: data, encoding: .utf8) ?? ""
+    }
+
+    /// Binding that syncs schema changes back to view model
+    private var schemaBinding: Binding<JSONSchema?> {
+        Binding(
+            get: { jsonSchema },
+            set: { newSchema in
+                jsonSchema = newSchema
+                viewModel.schemaJSON = Self.stringifySchema(newSchema)
+            }
+        )
     }
 
     var body: some View {
@@ -30,25 +70,7 @@ struct PositionSchemaFormSheet: View {
                 Text("Information")
             }
 
-            Section {
-                TextEditor(text: $viewModel.schemaJSON)
-                    .font(.system(.body, design: .monospaced))
-                    .frame(minHeight: 200)
-                    .autocapitalization(.none)
-                    .disableAutocorrection(true)
-
-                Button {
-                    if viewModel.validateJSON() {
-                        // JSON is valid
-                    }
-                } label: {
-                    Label("Validate JSON", systemImage: "checkmark.circle")
-                }
-            } header: {
-                Text("JSON Schema")
-            } footer: {
-                Text("Enter a valid JSON schema defining the position fields.")
-            }
+            JsonSchemaEditorView(schema: schemaBinding)
 
             // Validation Errors
             if !viewModel.validationErrors.isEmpty {
@@ -97,7 +119,8 @@ struct PositionSchemaFormSheet: View {
 
     private func submitForm() async {
         do {
-            try await viewModel.submit()
+            let createdSchema = try await viewModel.submit()
+            onCreated?(createdSchema)
             dismiss()
         } catch {
             // Error is already tracked in viewModel.error

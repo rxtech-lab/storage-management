@@ -11,20 +11,34 @@ echo "RxStorage iOS Build Script"
 echo "======================================"
 echo ""
 
-# Configuration
-PROJECT_PATH="RxStorage/RxStorage.xcodeproj"
-SCHEME="${SCHEME:-RxStorage}"
-CONFIGURATION="${CONFIGURATION:-Debug}"
-SDK="${SDK:-iphonesimulator}"
-DESTINATION="${DESTINATION:-platform=iOS Simulator,name=iPhone 15,OS=latest}"
-BUILD_DIR="${BUILD_DIR:-.build}"
-
 # Colors for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
+
+# Configuration
+PROJECT_PATH="RxStorage/RxStorage.xcodeproj"
+SCHEME="${SCHEME:-RxStorage}"
+CONFIGURATION="${CONFIGURATION:-Debug}"
+SDK="${SDK:-iphonesimulator}"
+BUILD_DIR="${BUILD_DIR:-.build}"
+
+# Find an available iOS simulator if DESTINATION is not set
+if [ -z "$DESTINATION" ]; then
+    echo "🔍 Finding available iOS simulator..."
+    SIMULATOR_NAME=$(xcrun simctl list devices available --json | jq -r '.devices | to_entries | .[] | select(.key | contains("iOS")) | .value[] | select(.isAvailable == true) | .name' | head -1)
+
+    if [ -z "$SIMULATOR_NAME" ]; then
+        echo -e "${RED}❌ Error: No available iOS simulator found${NC}"
+        echo "Please install an iOS simulator via Xcode > Settings > Platforms"
+        exit 1
+    fi
+
+    DESTINATION="platform=iOS Simulator,name=$SIMULATOR_NAME,OS=latest"
+    echo "📱 Auto-detected simulator: $SIMULATOR_NAME"
+fi
 
 # Check if project exists
 if [ ! -d "$PROJECT_PATH" ]; then
@@ -62,6 +76,8 @@ echo ""
 echo "🔨 Building project..."
 echo ""
 
+# Run xcodebuild and capture exit code properly
+set +e  # Temporarily disable exit on error to capture the exit code
 xcodebuild build \
     -project "$PROJECT_PATH" \
     -scheme "$SCHEME" \
@@ -72,11 +88,14 @@ xcodebuild build \
     CODE_SIGN_IDENTITY="" \
     CODE_SIGNING_REQUIRED=NO \
     CODE_SIGNING_ALLOWED=NO \
-    | tee build.log \
-    | xcbeautify || cat build.log
-
-# Check build result
+    2>&1 | tee build.log
 BUILD_EXIT_CODE=${PIPESTATUS[0]}
+set -e  # Re-enable exit on error
+
+# Pretty print if xcbeautify is available, otherwise show raw output
+if command -v xcbeautify &> /dev/null && [ -f build.log ]; then
+    cat build.log | xcbeautify || true
+fi
 
 echo ""
 echo "======================================"

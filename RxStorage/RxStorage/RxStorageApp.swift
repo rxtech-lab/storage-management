@@ -14,6 +14,7 @@ struct RxStorageApp: App {
     @State private var categoryDetailViewModel = CategoryDetailViewModel()
     @State private var authorDetailViewModel = AuthorDetailViewModel()
     @State private var locationDetailViewModel = LocationDetailViewModel()
+    @State private var positionSchemaDetailViewModel = PositionSchemaDetailViewModel()
     @State private var eventViewModel = EventViewModel()
 
     var body: some Scene {
@@ -22,6 +23,7 @@ struct RxStorageApp: App {
                 .environment(categoryDetailViewModel)
                 .environment(authorDetailViewModel)
                 .environment(locationDetailViewModel)
+                .environment(positionSchemaDetailViewModel)
                 .environment(eventViewModel)
         }
     }
