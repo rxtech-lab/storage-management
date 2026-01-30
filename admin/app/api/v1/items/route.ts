@@ -74,7 +74,12 @@ export async function POST(request: NextRequest) {
         result.data.images && result.data.images.length > 0
           ? await signImagesArray(result.data.images)
           : [];
-      return NextResponse.json({ ...result.data, images }, { status: 201 });
+
+      const previewUrl = `${process.env.NEXT_PUBLIC_URL}/preview/${result.data.id}`;
+      return NextResponse.json(
+        { ...result.data, images, previewUrl },
+        { status: 201 },
+      );
     } else {
       return NextResponse.json({ error: result.error }, { status: 400 });
     }

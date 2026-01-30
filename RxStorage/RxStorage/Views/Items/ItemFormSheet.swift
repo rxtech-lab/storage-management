@@ -5,6 +5,7 @@
 //  Item create/edit form with inline entity creation
 //
 
+import PhotosUI
 import RxStorageCore
 import SwiftUI
 
@@ -19,6 +20,9 @@ struct ItemFormSheet: View {
     @State private var showingCategorySheet = false
     @State private var showingLocationSheet = false
     @State private var showingAuthorSheet = false
+
+    // Photo picker
+    @State private var selectedPhotos: [PhotosPickerItem] = []
 
     init(item: StorageItem? = nil) {
         self.item = item
@@ -112,6 +116,94 @@ struct ItemFormSheet: View {
                 .pickerStyle(.segmented)
             }
 
+            // Images
+            Section("Images") {
+                // Saved images (from imageURLs)
+                ForEach(Array(viewModel.imageURLs.enumerated()), id: \.offset) { index, url in
+                    HStack {
+                        AsyncImage(url: URL(string: url)) { image in
+                            image
+                                .resizable()
+                                .scaledToFill()
+                        } placeholder: {
+                            ProgressView()
+                        }
+                        .frame(width: 60, height: 60)
+                        .clipShape(RoundedRectangle(cornerRadius: 8))
+
+                        Text("Image \(index + 1)")
+                        Spacer()
+                        Button(role: .destructive) {
+                            viewModel.removeSavedImage(at: index)
+                        } label: {
+                            Image(systemName: "trash")
+                        }
+                    }
+                }
+
+                // Pending uploads with progress
+                ForEach(viewModel.pendingUploads) { pending in
+                    HStack {
+                        // Local preview from file URL
+                        if let image = loadImage(from: pending.localURL) {
+                            Image(uiImage: image)
+                                .resizable()
+                                .scaledToFill()
+                                .frame(width: 60, height: 60)
+                                .clipShape(RoundedRectangle(cornerRadius: 8))
+                        } else {
+                            RoundedRectangle(cornerRadius: 8)
+                                .fill(Color.gray.opacity(0.3))
+                                .frame(width: 60, height: 60)
+                        }
+
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(pending.filename)
+                                .lineLimit(1)
+                                .font(.subheadline)
+
+                            if pending.status.isInProgress {
+                                ProgressView(value: pending.progress)
+                                    .progressViewStyle(.linear)
+                            } else if case .failed(let error) = pending.status {
+                                Text(error)
+                                    .foregroundStyle(.red)
+                                    .font(.caption)
+                            } else if pending.status.isCompleted {
+                                Text("Uploaded")
+                                    .foregroundStyle(.green)
+                                    .font(.caption)
+                            }
+                        }
+
+                        Spacer()
+
+                        if !pending.status.isCompleted {
+                            Button(role: .destructive) {
+                                viewModel.removePendingUpload(id: pending.id)
+                            } label: {
+                                Image(systemName: "xmark.circle")
+                            }
+                        }
+                    }
+                }
+
+                // PhotosPicker button
+                PhotosPicker(
+                    selection: $selectedPhotos,
+                    maxSelectionCount: 10,
+                    matching: .images
+                ) {
+                    Label("Add Images", systemImage: "photo.badge.plus")
+                }
+                .disabled(viewModel.isUploading)
+            }
+            .onChange(of: selectedPhotos) { _, newValue in
+                Task {
+                    await handleSelectedPhotos(newValue)
+                }
+            }
+
             // Validation Errors
             if !viewModel.validationErrors.isEmpty {
                 Section {
@@ -168,7 +260,7 @@ struct ItemFormSheet: View {
             await viewModel.loadReferenceData()
         }
         .overlay {
-            if viewModel.isSubmitting {
+            if viewModel.isSubmitting || viewModel.isUploading {
                 LoadingOverlay()
             }
         }
@@ -177,12 +269,55 @@ struct ItemFormSheet: View {
     // MARK: - Actions
 
     private func submitForm() async {
+        // Upload any remaining pending images first
+        let pendingToUpload = viewModel.pendingUploads.filter { $0.status == .pending }
+        if !pendingToUpload.isEmpty {
+            await viewModel.uploadPendingImages()
+        }
+
+        // Check for failed uploads
+        let failedUploads = viewModel.pendingUploads.filter { $0.status.isFailed }
+        if !failedUploads.isEmpty {
+            // Don't submit with failed uploads
+            return
+        }
+
         do {
             try await viewModel.submit()
             dismiss()
         } catch {
             // Error is already tracked in viewModel.error
         }
+    }
+
+    // MARK: - Image Helpers
+
+    private func loadImage(from url: URL) -> UIImage? {
+        guard let data = try? Data(contentsOf: url) else { return nil }
+        return UIImage(data: data)
+    }
+
+    private func handleSelectedPhotos(_ items: [PhotosPickerItem]) async {
+        for item in items {
+            if let data = try? await item.loadTransferable(type: Data.self) {
+                // Save to temp file
+                let tempURL = FileManager.default.temporaryDirectory
+                    .appendingPathComponent(UUID().uuidString)
+                    .appendingPathExtension("jpg")
+                do {
+                    try data.write(to: tempURL)
+                    viewModel.addImage(from: tempURL)
+                } catch {
+                    print("Failed to save temp image: \(error)")
+                }
+            }
+        }
+
+        // Clear selection
+        selectedPhotos = []
+
+        // Auto-upload
+        await viewModel.uploadPendingImages()
     }
 }
 
