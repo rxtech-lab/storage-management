@@ -64,16 +64,20 @@ export interface ItemFilters {
 }
 
 export async function getItems(
+  userId?: string,
   filters?: ItemFilters,
 ): Promise<ItemWithRelations[]> {
   await ensureSchemaInitialized();
 
   // Get userId from session
   const session = await getSession();
-  if (!session?.user?.id) {
+  if (!session?.user?.id && !userId) {
     return [];
   }
-  const userId = session.user.id;
+  const sessionUserId = session?.user.id ?? userId;
+  if (!sessionUserId) {
+    return [];
+  }
 
   let query = db
     .select({
@@ -113,7 +117,7 @@ export async function getItems(
     .$dynamic();
 
   // Always filter by the authenticated user's ID
-  const conditions = [eq(items.userId, userId)];
+  const conditions = [eq(items.userId, sessionUserId)];
 
   if (filters?.categoryId) {
     conditions.push(eq(items.categoryId, filters.categoryId));
@@ -213,7 +217,7 @@ export async function getItem(
 export async function getItemChildren(
   parentId: number,
 ): Promise<ItemWithRelations[]> {
-  return getItems({ parentId });
+  return getItems(undefined, { parentId });
 }
 
 export async function createItemAction(

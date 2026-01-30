@@ -8,7 +8,6 @@
 import Foundation
 
 /// Protocol for upload service operations
-@MainActor
 public protocol UploadServiceProtocol: Sendable {
     /// Get a presigned URL for uploading a file
     /// - Parameters:
@@ -24,8 +23,7 @@ public protocol UploadServiceProtocol: Sendable {
 }
 
 /// Upload service implementation
-@MainActor
-public final class UploadService: UploadServiceProtocol {
+public final class UploadService: UploadServiceProtocol, Sendable {
     private let apiClient: APIClient
 
     public init(apiClient: APIClient = .shared) {
