@@ -40,7 +40,7 @@ public actor APIClient {
         responseType: T.Type
     ) async throws -> T {
         return try await request(
-            endpoint, method: .get, body: nil as String?, responseType: responseType)
+            endpoint, method: .get, bodyData: nil, responseType: responseType)
     }
 
     /// Perform POST request
@@ -49,7 +49,16 @@ public actor APIClient {
         body: B,
         responseType: T.Type
     ) async throws -> T {
-        return try await request(endpoint, method: .post, body: body, responseType: responseType)
+        // Encode body data before entering actor-isolated code
+        let encoder = JSONEncoder()
+        let bodyData: Data
+        do {
+            bodyData = try encoder.encode(body)
+        } catch {
+            print("🔴 [APIClient] Failed to encode body: \(error)")
+            throw APIError.badRequest("Failed to encode request body: \(error.localizedDescription)")
+        }
+        return try await request(endpoint, method: .post, bodyData: bodyData, responseType: responseType)
     }
 
     /// Perform PUT request
@@ -58,7 +67,16 @@ public actor APIClient {
         body: B,
         responseType: T.Type
     ) async throws -> T {
-        return try await request(endpoint, method: .put, body: body, responseType: responseType)
+        // Encode body data before entering actor-isolated code
+        let encoder = JSONEncoder()
+        let bodyData: Data
+        do {
+            bodyData = try encoder.encode(body)
+        } catch {
+            print("🔴 [APIClient] Failed to encode body: \(error)")
+            throw APIError.badRequest("Failed to encode request body: \(error.localizedDescription)")
+        }
+        return try await request(endpoint, method: .put, bodyData: bodyData, responseType: responseType)
     }
 
     /// Perform DELETE request
@@ -67,22 +85,22 @@ public actor APIClient {
         responseType: T.Type
     ) async throws -> T {
         return try await request(
-            endpoint, method: .delete, body: nil as String?, responseType: responseType)
+            endpoint, method: .delete, bodyData: nil, responseType: responseType)
     }
 
     /// Perform DELETE request with no response body expected
     public func delete(_ endpoint: APIEndpoint) async throws {
         struct EmptyResponse: Codable {}
         let _: EmptyResponse = try await request(
-            endpoint, method: .delete, body: nil as String?, responseType: EmptyResponse.self)
+            endpoint, method: .delete, bodyData: nil, responseType: EmptyResponse.self)
     }
 
     // MARK: - Core Request Method
 
-    private func request<B: Encodable & Sendable, T: Codable & Sendable>(
+    private func request<T: Codable & Sendable>(
         _ endpoint: APIEndpoint,
         method: HTTPMethod,
-        body: B?,
+        bodyData: Data?,
         responseType: T.Type,
         isRetry: Bool = false
     ) async throws -> T {
@@ -118,8 +136,14 @@ public actor APIClient {
         }
 
         // Add body if present
-        if let body = body {
-            request.httpBody = try JSONEncoder().encode(body)
+        if let bodyData = bodyData {
+            request.httpBody = bodyData
+            // Debug: log the JSON body being sent
+            if let jsonString = String(data: bodyData, encoding: .utf8) {
+                print("🔵 [APIClient] Request URL: \(url)")
+                print("🔵 [APIClient] Request method: \(method.rawValue)")
+                print("🔵 [APIClient] Request body (\(bodyData.count) bytes): \(jsonString)")
+            }
         }
 
         // Perform request
@@ -149,7 +173,7 @@ public actor APIClient {
                         try await ensureValidToken()
                         // Retry the request with the new token
                         return try await self.request(
-                            endpoint, method: method, body: body, responseType: responseType,
+                            endpoint, method: method, bodyData: bodyData, responseType: responseType,
                             isRetry: true)
                     } catch {
                         logger.error(

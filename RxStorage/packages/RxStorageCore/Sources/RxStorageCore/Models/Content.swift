@@ -119,3 +119,31 @@ public struct ContentRequest: Codable, Sendable {
         self.data = data
     }
 }
+
+/// Local pending content for UI state during item creation/editing
+public struct PendingContent: Identifiable, Sendable {
+    public let id: UUID
+    public let type: Content.ContentType
+    public let formData: [String: AnyCodable]
+
+    public init(type: Content.ContentType, formData: [String: AnyCodable]) {
+        self.id = UUID()
+        self.type = type
+        self.formData = formData
+    }
+
+    /// Convert to API request format
+    public var asContentRequest: ContentRequest {
+        let contentData = ContentData(
+            title: formData["title"]?.value as? String,
+            description: formData["description"]?.value as? String,
+            mimeType: formData["mime_type"]?.value as? String,
+            size: formData["size"]?.value as? Int,
+            filePath: formData["file_path"]?.value as? String,
+            previewImageUrl: formData["preview_image_url"]?.value as? String,
+            videoLength: formData["video_length"]?.value as? Int,
+            previewVideoUrl: formData["preview_video_url"]?.value as? String
+        )
+        return ContentRequest(type: type, data: contentData)
+    }
+}
