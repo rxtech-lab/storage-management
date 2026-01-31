@@ -15,6 +15,11 @@ struct CategoryListView: View {
     @State private var viewModel = CategoryListViewModel()
     @State private var showingCreateSheet = false
 
+    /// Initialize with an optional binding (defaults to constant nil for standalone use)
+    init(selectedCategory: Binding<RxStorageCore.Category?> = .constant(nil)) {
+        _selectedCategory = selectedCategory
+    }
+
     var body: some View {
         Group {
             if viewModel.isLoading && viewModel.categories.isEmpty {

@@ -115,6 +115,7 @@ struct AppClipRootView: View {
                         .progressViewStyle(.circular)
                         .tint(.white)
                 } else {
+                    
                     Text("Sign In with RxLab")
                 }
             }

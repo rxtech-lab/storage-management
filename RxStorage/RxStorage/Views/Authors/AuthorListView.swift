@@ -15,6 +15,11 @@ struct AuthorListView: View {
     @State private var viewModel = AuthorListViewModel()
     @State private var showingCreateSheet = false
 
+    /// Initialize with an optional binding (defaults to constant nil for standalone use)
+    init(selectedAuthor: Binding<Author?> = .constant(nil)) {
+        _selectedAuthor = selectedAuthor
+    }
+
     var body: some View {
         Group {
             if viewModel.isLoading && viewModel.authors.isEmpty {

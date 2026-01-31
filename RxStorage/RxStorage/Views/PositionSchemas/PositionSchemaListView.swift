@@ -15,6 +15,11 @@ struct PositionSchemaListView: View {
     @State private var viewModel = PositionSchemaListViewModel()
     @State private var showingCreateSheet = false
 
+    /// Initialize with an optional binding (defaults to constant nil for standalone use)
+    init(selectedSchema: Binding<PositionSchema?> = .constant(nil)) {
+        _selectedSchema = selectedSchema
+    }
+
     var body: some View {
         Group {
             if viewModel.isLoading && viewModel.schemas.isEmpty {

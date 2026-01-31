@@ -1,0 +1,255 @@
+//
+//  SidebarNavigationView.swift
+//  RxStorage
+//
+//  NavigationSplitView implementation for iPad (regular size class)
+//
+
+import RxStorageCore
+import SwiftUI
+
+/// NavigationSplitView with three columns for iPad
+struct SidebarNavigationView: View {
+    @Environment(NavigationManager.self) private var navigationManager
+
+    var body: some View {
+        @Bindable var nav = navigationManager
+
+        NavigationSplitView(columnVisibility: $nav.columnVisibility) {
+            // Column 1: Sidebar
+            SidebarContent()
+        } content: {
+            // Column 2: List
+            ContentColumn()
+        } detail: {
+            // Column 3: Detail
+            DetailColumn()
+        }
+        .navigationSplitViewStyle(.balanced)
+    }
+}
+
+// MARK: - Sidebar Content
+
+/// Sidebar with navigation sections
+struct SidebarContent: View {
+    @Environment(NavigationManager.self) private var navigationManager
+
+    var body: some View {
+        List {
+            mainSection
+            managementSection
+            settingsSection
+        }
+        .navigationTitle("RxStorage")
+        .listStyle(.sidebar)
+    }
+
+    private var mainSection: some View {
+        Section {
+            SidebarButton(tab: .dashboard)
+            SidebarButton(tab: .items)
+        }
+    }
+
+    private var managementSection: some View {
+        Section("Manage") {
+            ForEach(ManagementSection.allCases) { section in
+                ManagementSectionButton(section: section)
+            }
+        }
+    }
+
+    private var settingsSection: some View {
+        Section {
+            SidebarButton(tab: .settings)
+        }
+    }
+}
+
+/// Sidebar button for main tabs
+struct SidebarButton: View {
+    let tab: AppTab
+    @Environment(NavigationManager.self) private var navigationManager
+
+    var body: some View {
+        Button {
+            navigationManager.selectedTab = tab
+        } label: {
+            Label(tab.rawValue, systemImage: tab.systemImage)
+        }
+        .listRowBackground(isSelected ? Color.accentColor.opacity(0.2) : nil)
+        .foregroundStyle(isSelected ? .primary : .secondary)
+    }
+
+    private var isSelected: Bool {
+        navigationManager.selectedTab == tab
+    }
+}
+
+/// Individual management section button
+struct ManagementSectionButton: View {
+    let section: ManagementSection
+    @Environment(NavigationManager.self) private var navigationManager
+
+    var body: some View {
+        Button {
+            navigationManager.selectedTab = .management
+            navigationManager.selectedManagementSection = section
+        } label: {
+            Label(section.rawValue, systemImage: section.systemImage)
+        }
+        .listRowBackground(isSelected ? Color.accentColor.opacity(0.2) : nil)
+        .foregroundStyle(isSelected ? .primary : .secondary)
+    }
+
+    private var isSelected: Bool {
+        navigationManager.selectedTab == .management && navigationManager.selectedManagementSection == section
+    }
+}
+
+// MARK: - Content Column
+
+/// Content column showing list for selected section
+struct ContentColumn: View {
+    @Environment(NavigationManager.self) private var navigationManager
+
+    var body: some View {
+        @Bindable var nav = navigationManager
+
+        switch navigationManager.selectedTab {
+        case .dashboard:
+            DashboardView()
+        case .items:
+            ItemListView(selectedItem: $nav.selectedItem)
+        case .management:
+            ManagementListView(
+                section: navigationManager.selectedManagementSection,
+                selectedCategory: $nav.selectedCategory,
+                selectedLocation: $nav.selectedLocation,
+                selectedAuthor: $nav.selectedAuthor,
+                selectedPositionSchema: $nav.selectedPositionSchema
+            )
+        case .settings:
+            SettingsView()
+        }
+    }
+}
+
+// MARK: - Detail Column
+
+/// Detail column showing detail view for selected entity
+struct DetailColumn: View {
+    @Environment(NavigationManager.self) private var navigationManager
+
+    var body: some View {
+        switch navigationManager.selectedTab {
+        case .dashboard:
+            // Dashboard doesn't have a detail view
+            ContentUnavailableView(
+                "Dashboard",
+                systemImage: "chart.bar",
+                description: Text("View your storage overview")
+            )
+        case .items:
+            if let item = navigationManager.selectedItem {
+                NavigationStack {
+                    ItemDetailView(itemId: item.id)
+                        .navigationDestination(for: StorageItem.self) { child in
+                            ItemDetailView(itemId: child.id)
+                        }
+                }
+            } else {
+                ContentUnavailableView(
+                    "Select an item",
+                    systemImage: "shippingbox",
+                    description: Text("Choose an item from the list to view details")
+                )
+            }
+        case .management:
+            managementDetailView
+        case .settings:
+            // Settings doesn't need a detail view
+            ContentUnavailableView(
+                "Settings",
+                systemImage: "gearshape",
+                description: Text("Configure your app settings")
+            )
+        }
+    }
+
+    @ViewBuilder
+    private var managementDetailView: some View {
+        switch navigationManager.selectedManagementSection {
+        case .categories:
+            if let category = navigationManager.selectedCategory {
+                CategoryDetailView(categoryId: category.id)
+            } else {
+                ContentUnavailableView(
+                    "Select a category",
+                    systemImage: "folder",
+                    description: Text("Choose a category from the list")
+                )
+            }
+        case .locations:
+            if let location = navigationManager.selectedLocation {
+                LocationDetailView(locationId: location.id)
+            } else {
+                ContentUnavailableView(
+                    "Select a location",
+                    systemImage: "mappin.circle",
+                    description: Text("Choose a location from the list")
+                )
+            }
+        case .authors:
+            if let author = navigationManager.selectedAuthor {
+                AuthorDetailView(authorId: author.id)
+            } else {
+                ContentUnavailableView(
+                    "Select an author",
+                    systemImage: "person.circle",
+                    description: Text("Choose an author from the list")
+                )
+            }
+        case .positionSchemas:
+            if let schema = navigationManager.selectedPositionSchema {
+                PositionSchemaDetailView(schemaId: schema.id)
+            } else {
+                ContentUnavailableView(
+                    "Select a schema",
+                    systemImage: "doc.text",
+                    description: Text("Choose a schema from the list")
+                )
+            }
+        }
+    }
+}
+
+// MARK: - Management List View
+
+/// List view for management sections (used in sidebar content column)
+struct ManagementListView: View {
+    let section: ManagementSection
+    @Binding var selectedCategory: RxStorageCore.Category?
+    @Binding var selectedLocation: Location?
+    @Binding var selectedAuthor: Author?
+    @Binding var selectedPositionSchema: PositionSchema?
+
+    var body: some View {
+        switch section {
+        case .categories:
+            CategoryListView(selectedCategory: $selectedCategory)
+        case .locations:
+            LocationListView(selectedLocation: $selectedLocation)
+        case .authors:
+            AuthorListView(selectedAuthor: $selectedAuthor)
+        case .positionSchemas:
+            PositionSchemaListView(selectedSchema: $selectedPositionSchema)
+        }
+    }
+}
+
+#Preview {
+    SidebarNavigationView()
+        .environment(NavigationManager())
+}

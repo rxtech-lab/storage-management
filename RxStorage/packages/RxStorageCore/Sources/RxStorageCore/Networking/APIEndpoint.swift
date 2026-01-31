@@ -73,6 +73,9 @@ public enum APIEndpoint: Sendable {
     // Upload
     case getPresignedURL
 
+    // Dashboard
+    case getDashboardStats
+
     /// HTTP method for this endpoint
     public var method: HTTPMethod {
         switch self {
@@ -83,7 +86,8 @@ public enum APIEndpoint: Sendable {
              .listPositionSchemas, .getPositionSchema,
              .listItemPositions, .getPosition,
              .listContentSchemas,
-             .listItemContents, .getContent:
+             .listItemContents, .getContent,
+             .getDashboardStats:
             return .get
 
         case .createItem, .createCategory, .createLocation, .createAuthor, .createPositionSchema,
@@ -189,6 +193,9 @@ public enum APIEndpoint: Sendable {
 
         case .getPresignedURL:
             return "/api/v1/upload/presigned"
+
+        case .getDashboardStats:
+            return "/api/v1/dashboard/stats"
         }
     }
 
