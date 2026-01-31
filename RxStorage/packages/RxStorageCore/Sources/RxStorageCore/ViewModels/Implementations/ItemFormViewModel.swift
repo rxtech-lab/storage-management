@@ -103,19 +103,19 @@ public final class ItemFormViewModel: ItemFormViewModelProtocol {
 
         // Fetch reference data sequentially (all on MainActor)
         do {
-            categories = try await categoryService.fetchCategories()
+            categories = try await categoryService.fetchCategories(filters: nil)
         } catch {
             print("Failed to load categories: \(error)")
         }
 
         do {
-            locations = try await locationService.fetchLocations()
+            locations = try await locationService.fetchLocations(filters: nil)
         } catch {
             print("Failed to load locations: \(error)")
         }
 
         do {
-            authors = try await authorService.fetchAuthors()
+            authors = try await authorService.fetchAuthors(filters: nil)
         } catch {
             print("Failed to load authors: \(error)")
         }
@@ -133,7 +133,7 @@ public final class ItemFormViewModel: ItemFormViewModelProtocol {
 
         // Load position schemas
         do {
-            positionSchemas = try await positionSchemaService.fetchPositionSchemas()
+            positionSchemas = try await positionSchemaService.fetchPositionSchemas(filters: nil)
         } catch {
             print("Failed to load position schemas: \(error)")
         }

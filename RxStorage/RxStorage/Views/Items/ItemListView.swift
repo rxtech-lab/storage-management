@@ -21,6 +21,8 @@ struct ItemListView: View {
         Group {
             if viewModel.isLoading && viewModel.items.isEmpty {
                 ProgressView("Loading items...")
+            } else if viewModel.isSearching {
+                ProgressView("Searching...")
             } else if viewModel.items.isEmpty {
                 ContentUnavailableView(
                     "No Items",
@@ -58,6 +60,9 @@ struct ItemListView: View {
             }
         }
         .searchable(text: $viewModel.searchText, prompt: "Search items")
+        .onChange(of: viewModel.searchText) { _, newValue in
+            viewModel.search(newValue)
+        }
         .refreshable {
             await viewModel.refreshItems()
         }
@@ -75,7 +80,11 @@ struct ItemListView: View {
         }
         .sheet(isPresented: $showingFilterSheet) {
             NavigationStack {
-                ItemFilterSheet(filters: $viewModel.filters)
+                ItemFilterSheet(filters: $viewModel.filters) {
+                    Task {
+                        await viewModel.fetchItems()
+                    }
+                }
             }
         }
         .task {
@@ -126,33 +135,96 @@ struct ItemListView: View {
 /// Item filter sheet
 struct ItemFilterSheet: View {
     @Binding var filters: ItemFilters
+    let onApply: () -> Void
+
+    @State private var viewModel: ItemFilterViewModel
     @Environment(\.dismiss) private var dismiss
+
+    init(filters: Binding<ItemFilters>, onApply: @escaping () -> Void) {
+        self._filters = filters
+        self.onApply = onApply
+        self._viewModel = State(initialValue: ItemFilterViewModel(initialFilters: filters.wrappedValue))
+    }
 
     var body: some View {
         Form {
-            Section("Visibility") {
-                Picker("Visibility", selection: $filters.visibility) {
-                    Text("All").tag(nil as StorageItem.Visibility?)
-                    Text("Public").tag(StorageItem.Visibility.public as StorageItem.Visibility?)
-                    Text("Private").tag(StorageItem.Visibility.private as StorageItem.Visibility?)
+            if viewModel.isLoading {
+                Section {
+                    HStack {
+                        Spacer()
+                        ProgressView("Loading filters...")
+                        Spacer()
+                    }
                 }
-            }
+            } else {
+                // Visibility Section
+                Section("Visibility") {
+                    Picker("Visibility", selection: $viewModel.selectedVisibility) {
+                        Text("All").tag(nil as StorageItem.Visibility?)
+                        Text("Public").tag(StorageItem.Visibility.public as StorageItem.Visibility?)
+                        Text("Private").tag(StorageItem.Visibility.private as StorageItem.Visibility?)
+                    }
+                }
 
-            Section {
-                Button("Clear Filters") {
-                    filters = ItemFilters()
+                // Category Section
+                Section("Category") {
+                    Picker("Category", selection: $viewModel.selectedCategoryId) {
+                        Text("All Categories").tag(nil as Int?)
+                        ForEach(viewModel.categories) { category in
+                            Text(category.name).tag(category.id as Int?)
+                        }
+                    }
                 }
-                .disabled(filters.visibility == nil)
+
+                // Location Section
+                Section("Location") {
+                    Picker("Location", selection: $viewModel.selectedLocationId) {
+                        Text("All Locations").tag(nil as Int?)
+                        ForEach(viewModel.locations) { location in
+                            Text(location.title).tag(location.id as Int?)
+                        }
+                    }
+                }
+
+                // Author Section
+                Section("Author") {
+                    Picker("Author", selection: $viewModel.selectedAuthorId) {
+                        Text("All Authors").tag(nil as Int?)
+                        ForEach(viewModel.authors) { author in
+                            Text(author.name).tag(author.id as Int?)
+                        }
+                    }
+                }
+
+                // Clear Filters Button
+                Section {
+                    Button("Clear All Filters", role: .destructive) {
+                        viewModel.clearFilters()
+                    }
+                    .disabled(!viewModel.hasActiveFilters)
+                }
             }
         }
         .navigationTitle("Filters")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
-            ToolbarItem(placement: .confirmationAction) {
-                Button("Done") {
+            ToolbarItem(placement: .cancellationAction) {
+                Button("Cancel") {
                     dismiss()
                 }
             }
+
+            ToolbarItem(placement: .confirmationAction) {
+                Button("Apply") {
+                    filters = viewModel.buildFilters()
+                    onApply()
+                    dismiss()
+                }
+                .disabled(viewModel.isLoading)
+            }
+        }
+        .task {
+            await viewModel.loadFilterOptions()
         }
     }
 }

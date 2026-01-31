@@ -38,7 +38,7 @@ public final class MockAuthorService: AuthorServiceProtocol {
 
     // MARK: - AuthorServiceProtocol
 
-    public func fetchAuthors() async throws -> [Author] {
+    public func fetchAuthors(filters: AuthorFilters?) async throws -> [Author] {
         fetchAuthorsCalled = true
         switch fetchAuthorsResult {
         case .success(let authors):

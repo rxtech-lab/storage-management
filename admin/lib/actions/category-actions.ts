@@ -2,17 +2,46 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { eq } from "drizzle-orm";
+import { eq, like, or, and } from "drizzle-orm";
 import { db, categories, type Category, type NewCategory } from "@/lib/db";
 import { ensureSchemaInitialized } from "@/lib/db/client";
 import { getSession } from "@/lib/auth-helper";
 
-export async function getCategories(userId?: string): Promise<Category[]> {
+export interface CategoryFilters {
+  search?: string;
+  limit?: number;
+}
+
+export async function getCategories(userId?: string, filters?: CategoryFilters): Promise<Category[]> {
   await ensureSchemaInitialized();
+
+  const conditions = [];
+
   if (userId) {
-    return db.select().from(categories).where(eq(categories.userId, userId)).orderBy(categories.name);
+    conditions.push(eq(categories.userId, userId));
   }
-  return db.select().from(categories).orderBy(categories.name);
+
+  if (filters?.search) {
+    const searchCondition = or(
+      like(categories.name, `%${filters.search}%`),
+      like(categories.description, `%${filters.search}%`),
+    );
+    if (searchCondition) {
+      conditions.push(searchCondition);
+    }
+  }
+
+  let query = db.select().from(categories).orderBy(categories.name).$dynamic();
+
+  if (conditions.length > 0) {
+    query = query.where(and(...conditions));
+  }
+
+  if (filters?.limit) {
+    query = query.limit(filters.limit);
+  }
+
+  return query;
 }
 
 export async function getCategory(id: number): Promise<Category | undefined> {

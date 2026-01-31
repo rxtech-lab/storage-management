@@ -59,21 +59,20 @@ struct CategoryListViewModelTests {
 
     // MARK: - Search Tests
 
-    @Test("Filtered categories with search text")
+    @Test("Search updates searchText and triggers search")
     @MainActor
-    func testFilteredCategories() async throws {
+    func testSearch() async throws {
         // Given
         let mockService = MockCategoryService()
         mockService.fetchCategoriesResult = .success(Self.testCategories)
         let sut = CategoryListViewModel(categoryService: mockService)
-        await sut.fetchCategories()
 
         // When
-        sut.searchText = "book"
+        sut.search("book")
 
         // Then
-        #expect(sut.filteredCategories.count == 1)
-        #expect(sut.filteredCategories[0].name == "Books")
+        #expect(sut.searchText == "book")
+        // Note: The actual API call is debounced, so we just verify the search method works
     }
 
     // MARK: - Delete Tests

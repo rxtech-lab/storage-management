@@ -19,7 +19,9 @@ struct CategoryListView: View {
         Group {
             if viewModel.isLoading && viewModel.categories.isEmpty {
                 ProgressView("Loading categories...")
-            } else if viewModel.filteredCategories.isEmpty {
+            } else if viewModel.isSearching {
+                ProgressView("Searching...")
+            } else if viewModel.categories.isEmpty {
                 ContentUnavailableView(
                     "No Categories",
                     systemImage: "folder",
@@ -40,6 +42,9 @@ struct CategoryListView: View {
             }
         }
         .searchable(text: $viewModel.searchText, prompt: "Search categories")
+        .onChange(of: viewModel.searchText) { _, newValue in
+            viewModel.search(newValue)
+        }
         .refreshable {
             await viewModel.refreshCategories()
         }
@@ -57,7 +62,7 @@ struct CategoryListView: View {
 
     private var categoriesList: some View {
         List(selection: $selectedCategory) {
-            ForEach(viewModel.filteredCategories) { category in
+            ForEach(viewModel.categories) { category in
                 NavigationLink(value: category) {
                     CategoryRow(category: category)
                 }

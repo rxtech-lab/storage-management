@@ -19,7 +19,9 @@ struct LocationListView: View {
         Group {
             if viewModel.isLoading && viewModel.locations.isEmpty {
                 ProgressView("Loading locations...")
-            } else if viewModel.filteredLocations.isEmpty {
+            } else if viewModel.isSearching {
+                ProgressView("Searching...")
+            } else if viewModel.locations.isEmpty {
                 ContentUnavailableView(
                     "No Locations",
                     systemImage: "mappin.circle",
@@ -40,6 +42,9 @@ struct LocationListView: View {
             }
         }
         .searchable(text: $viewModel.searchText, prompt: "Search locations")
+        .onChange(of: viewModel.searchText) { _, newValue in
+            viewModel.search(newValue)
+        }
         .refreshable {
             await viewModel.refreshLocations()
         }
@@ -57,7 +62,7 @@ struct LocationListView: View {
 
     private var locationsList: some View {
         List(selection: $selectedLocation) {
-            ForEach(viewModel.filteredLocations) { location in
+            ForEach(viewModel.locations) { location in
                 NavigationLink(value: location) {
                     LocationRow(location: location)
                 }
