@@ -12,12 +12,12 @@ import RxStorageCore
 /// Category detail view model
 @Observable
 @MainActor
-final class CategoryDetailViewModel {
+public final class CategoryDetailViewModel {
     // MARK: - Properties
 
-    private(set) var category: RxStorageCore.Category?
-    private(set) var isLoading = false
-    private(set) var error: Error?
+    public private(set) var category: RxStorageCore.Category?
+    public private(set) var isLoading = false
+    public private(set) var error: Error?
 
     // MARK: - Dependencies
 
@@ -25,13 +25,13 @@ final class CategoryDetailViewModel {
 
     // MARK: - Initialization
 
-    init(categoryService: CategoryServiceProtocol? = nil) {
+    public init(categoryService: CategoryServiceProtocol? = nil) {
         self.categoryService = categoryService ?? CategoryService()
     }
 
     // MARK: - Public Methods
 
-    func fetchCategory(id: Int) async {
+    public func fetchCategory(id: Int) async {
         isLoading = true
         error = nil
 
@@ -44,12 +44,12 @@ final class CategoryDetailViewModel {
         }
     }
 
-    func refresh() async {
+    public func refresh() async {
         guard let categoryId = category?.id else { return }
         await fetchCategory(id: categoryId)
     }
 
-    func clearError() {
+    public func clearError() {
         error = nil
     }
 }

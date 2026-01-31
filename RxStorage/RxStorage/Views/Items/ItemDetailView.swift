@@ -11,6 +11,7 @@ import SwiftUI
 /// Item detail view
 struct ItemDetailView: View {
     let itemId: Int
+    let isViewOnly: Bool
 
     @State private var viewModel = ItemDetailViewModel()
     @State private var showingEditSheet = false
@@ -30,8 +31,9 @@ struct ItemDetailView: View {
     @State private var contentError: Error?
     @State private var showContentError = false
 
-    init(itemId: Int) {
+    init(itemId: Int, isViewOnly: Bool = false) {
         self.itemId = itemId
+        self.isViewOnly = isViewOnly
     }
 
     var body: some View {
@@ -60,30 +62,32 @@ struct ItemDetailView: View {
                     .padding()
                 }
                 .toolbar {
-                    ToolbarItem(placement: .primaryAction) {
-                        Menu {
-                            Button {
-                                showingEditSheet = true
-                            } label: {
-                                Label("Edit", systemImage: "pencil")
-                            }
-
-                            Button {
-                                showingQRSheet = true
-                            } label: {
-                                Label("Show QR Code", systemImage: "qrcode")
-                            }
-
-                            Button {
-                                Task {
-                                    await writeToNFC(previewUrl: item.previewUrl)
+                    if !isViewOnly {
+                        ToolbarItem(placement: .primaryAction) {
+                            Menu {
+                                Button {
+                                    showingEditSheet = true
+                                } label: {
+                                    Label("Edit", systemImage: "pencil")
                                 }
+
+                                Button {
+                                    showingQRSheet = true
+                                } label: {
+                                    Label("Show QR Code", systemImage: "qrcode")
+                                }
+
+                                Button {
+                                    Task {
+                                        await writeToNFC(previewUrl: item.previewUrl)
+                                    }
+                                } label: {
+                                    Label(isWritingNFC ? "Writing..." : "Write to NFC Tag", systemImage: "wave.3.right")
+                                }
+                                .disabled(isWritingNFC)
                             } label: {
-                                Label(isWritingNFC ? "Writing..." : "Write to NFC Tag", systemImage: "wave.3.right")
+                                Label("More", systemImage: "ellipsis.circle")
                             }
-                            .disabled(isWritingNFC)
-                        } label: {
-                            Label("More", systemImage: "ellipsis.circle")
                         }
                     }
                 }
@@ -281,11 +285,13 @@ struct ItemDetailView: View {
 
                 Spacer()
 
-                Button {
-                    showingAddChildSheet = true
-                } label: {
-                    Label("Add Child", systemImage: "plus.circle")
-                        .font(.subheadline)
+                if !isViewOnly {
+                    Button {
+                        showingAddChildSheet = true
+                    } label: {
+                        Label("Add Child", systemImage: "plus.circle")
+                            .font(.subheadline)
+                    }
                 }
             }
 
@@ -303,17 +309,19 @@ struct ItemDetailView: View {
 
                         Spacer()
 
-                        Button(role: .destructive) {
-                            // Capture child ID synchronously before entering async context
-                            let childId = child.id
-                            Task {
-                                await removeChild(childId)
+                        if !isViewOnly {
+                            Button(role: .destructive) {
+                                // Capture child ID synchronously before entering async context
+                                let childId = child.id
+                                Task {
+                                    await removeChild(childId)
+                                }
+                            } label: {
+                                Image(systemName: "minus.circle")
+                                    .foregroundStyle(.red)
                             }
-                        } label: {
-                            Image(systemName: "minus.circle")
-                                .foregroundStyle(.red)
+                            .buttonStyle(.plain)
                         }
-                        .buttonStyle(.plain)
                     }
                 }
             }
@@ -352,11 +360,13 @@ struct ItemDetailView: View {
 
                 Spacer()
 
-                Button {
-                    showingContentSheet = true
-                } label: {
-                    Label("Add Content", systemImage: "plus.circle")
-                        .font(.subheadline)
+                if !isViewOnly {
+                    Button {
+                        showingContentSheet = true
+                    } label: {
+                        Label("Add Content", systemImage: "plus.circle")
+                            .font(.subheadline)
+                    }
                 }
             }
 
@@ -408,15 +418,17 @@ struct ItemDetailView: View {
 
                         Spacer()
 
-                        Button(role: .destructive) {
-                            Task {
-                                await deleteContent(content.id)
+                        if !isViewOnly {
+                            Button(role: .destructive) {
+                                Task {
+                                    await deleteContent(content.id)
+                                }
+                            } label: {
+                                Image(systemName: "trash")
+                                    .foregroundStyle(.red)
                             }
-                        } label: {
-                            Image(systemName: "trash")
-                                .foregroundStyle(.red)
+                            .buttonStyle(.plain)
                         }
-                        .buttonStyle(.plain)
                     }
                     .padding(.vertical, 4)
                 }
@@ -476,8 +488,14 @@ struct DetailRow: View {
     }
 }
 
-#Preview {
+#Preview("Full Mode") {
     NavigationStack {
         ItemDetailView(itemId: 1)
+    }
+}
+
+#Preview("View Only Mode") {
+    NavigationStack {
+        ItemDetailView(itemId: 1, isViewOnly: true)
     }
 }

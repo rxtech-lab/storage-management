@@ -10,7 +10,11 @@ struct LoadingOverlay: View {
     /**
      Title of the loading progress view. If nil, show default Loading
      */
-    let title: String? = nil
+    let title: String?
+
+    init(title: String? = nil) {
+        self.title = title
+    }
 
     var body: some View {
         ZStack {

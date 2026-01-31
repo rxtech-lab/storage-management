@@ -139,66 +139,6 @@ public struct NewItemRequest: Codable, Sendable {
 /// Request body for updating an item
 public typealias UpdateItemRequest = NewItemRequest
 
-/// Item preview with additional content data (used by App Clips)
-public struct ItemPreview: Codable, Identifiable, Sendable {
-    public let id: Int
-    public let title: String
-    public let description: String?
-    public let categoryId: Int?
-    public let locationId: Int?
-    public let authorId: Int?
-    public let parentId: Int?
-    public let price: Double?
-    public let visibility: StorageItem.Visibility
-    public let images: [String]
-    public let createdAt: Date
-    public let updatedAt: Date
-
-    // Relations
-    public let category: Category?
-    public let location: Location?
-    public let author: Author?
-
-    // Additional preview data
-    public let contents: [Content]
-
-    public init(
-        id: Int,
-        title: String,
-        description: String?,
-        categoryId: Int?,
-        locationId: Int?,
-        authorId: Int?,
-        parentId: Int?,
-        price: Double?,
-        visibility: StorageItem.Visibility,
-        images: [String],
-        createdAt: Date,
-        updatedAt: Date,
-        category: Category?,
-        location: Location?,
-        author: Author?,
-        contents: [Content]
-    ) {
-        self.id = id
-        self.title = title
-        self.description = description
-        self.categoryId = categoryId
-        self.locationId = locationId
-        self.authorId = authorId
-        self.parentId = parentId
-        self.price = price
-        self.visibility = visibility
-        self.images = images
-        self.createdAt = createdAt
-        self.updatedAt = updatedAt
-        self.category = category
-        self.location = location
-        self.author = author
-        self.contents = contents
-    }
-}
-
 /// QR code data for an item
 public struct QRCodeData: Codable, Sendable {
     public let itemId: Int

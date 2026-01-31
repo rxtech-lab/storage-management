@@ -20,6 +20,7 @@ public enum APIError: LocalizedError, @unchecked Sendable {
     case invalidResponse
     case tokenExpired
     case refreshTokenError
+    case unsupportedQRCode(String)
 
     public var errorDescription: String? {
         switch self {
@@ -45,6 +46,8 @@ public enum APIError: LocalizedError, @unchecked Sendable {
             return "Your session has expired. Please sign in again"
         case .refreshTokenError:
             return "Unable to refresh your session. Please sign in again"
+        case .unsupportedQRCode(let url):
+            return "This QR code is not supported: \(url)"
         }
     }
 

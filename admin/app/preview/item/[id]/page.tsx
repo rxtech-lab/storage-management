@@ -69,7 +69,7 @@ export default async function PreviewPage({ params }: PreviewPageProps) {
     if (!session?.user) {
       // Redirect to login with return URL
       console.log("User not signed in, redirecting to login");
-      redirect(`/login?callbackUrl=/preview/${itemId}`);
+      redirect(`/login?callbackUrl=/preview/item/${itemId}`);
     }
 
     // Check whitelist if user has email. Otherwise, just allow access

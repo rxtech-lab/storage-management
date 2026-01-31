@@ -20,6 +20,7 @@ public enum APIEndpoint: Sendable {
     // Items
     case listItems(filters: ItemFilters?)
     case getItem(id: Int)
+    case previewItem(id: Int)  // Public preview endpoint for App Clips
     case createItem
     case updateItem(id: Int)
     case deleteItem(id: Int)
@@ -69,24 +70,20 @@ public enum APIEndpoint: Sendable {
     case updateContent(id: Int)
     case deleteContent(id: Int)
 
-    // Preview
-    case getItemPreview(id: Int)
-
     // Upload
     case getPresignedURL
 
     /// HTTP method for this endpoint
     public var method: HTTPMethod {
         switch self {
-        case .listItems, .getItem, .getItemQR,
+        case .listItems, .getItem, .previewItem, .getItemQR,
              .listCategories, .getCategory,
              .listLocations, .getLocation,
              .listAuthors, .getAuthor,
              .listPositionSchemas, .getPositionSchema,
              .listItemPositions, .getPosition,
              .listContentSchemas,
-             .listItemContents, .getContent,
-             .getItemPreview:
+             .listItemContents, .getContent:
             return .get
 
         case .createItem, .createCategory, .createLocation, .createAuthor, .createPositionSchema,
@@ -111,6 +108,8 @@ public enum APIEndpoint: Sendable {
         case .listItems:
             return "/api/v1/items"
         case .getItem(let id):
+            return "/api/v1/items/\(id)"
+        case .previewItem(let id):
             return "/api/v1/items/\(id)"
         case .createItem:
             return "/api/v1/items"
@@ -187,9 +186,6 @@ public enum APIEndpoint: Sendable {
             return "/api/v1/contents/\(id)"
         case .deleteContent(let id):
             return "/api/v1/contents/\(id)"
-
-        case .getItemPreview(let id):
-            return "/api/v1/preview/\(id)"
 
         case .getPresignedURL:
             return "/api/v1/upload/presigned"

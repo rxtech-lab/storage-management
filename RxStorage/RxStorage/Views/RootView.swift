@@ -42,6 +42,12 @@ struct RootView: View {
     @State private var selectedLocation: Location?
     @State private var selectedPositionSchema: PositionSchema?
 
+    // Deep link state
+    @State private var isLoadingDeepLink = false
+    @State private var deepLinkError: Error?
+    @State private var showDeepLinkError = false
+    private let itemService = ItemService()
+
     var body: some View {
         NavigationSplitView(columnVisibility: $columnVisibility) {
             // Column 1: Sidebar (sections)
@@ -54,6 +60,39 @@ struct RootView: View {
             detailColumn
         }
         .navigationSplitViewStyle(.balanced)
+        // Handle universal links (https://...)
+        .onContinueUserActivity(NSUserActivityTypeBrowsingWeb) { userActivity in
+            if let url = userActivity.webpageURL {
+                Task {
+                    await handleDeepLink(url)
+                }
+            }
+        }
+        // Handle custom URL scheme (rxstorage://...)
+        .onOpenURL { url in
+            Task {
+                await handleDeepLink(url)
+            }
+        }
+        .alert("Deep Link Error", isPresented: $showDeepLinkError) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            if let error = deepLinkError {
+                Text(error.localizedDescription)
+            }
+        }
+        .overlay {
+            if isLoadingDeepLink {
+                ZStack {
+                    Color.black.opacity(0.3)
+                    ProgressView("Loading item...")
+                        .padding()
+                        .background(.regularMaterial)
+                        .cornerRadius(10)
+                }
+                .ignoresSafeArea()
+            }
+        }
     }
 
     // MARK: - Sidebar
@@ -162,6 +201,24 @@ struct RootView: View {
                 systemImage: "sidebar.left",
                 description: Text("Choose a section from the sidebar")
             )
+        }
+    }
+
+    // MARK: - Deep Link Handling
+
+    private func handleDeepLink(_ url: URL) async {
+        // Ensure we're on the items section
+        selectedSection = .items
+
+        isLoadingDeepLink = true
+        defer { isLoadingDeepLink = false }
+
+        do {
+            let item = try await itemService.fetchItemFromURL(url)
+            selectedItem = item
+        } catch {
+            deepLinkError = error
+            showDeepLinkError = true
         }
     }
 }

@@ -60,6 +60,30 @@ public final class ItemDetailViewModel: ItemDetailViewModelProtocol {
         }
     }
 
+    /// Fetch item for preview (public access, no auth required for public items).
+    /// This method is used by App Clips to load items without requiring authentication.
+    /// - For public items: loads successfully without auth
+    /// - For private items without auth: throws APIError.unauthorized
+    /// - For private items with auth but not whitelisted: throws APIError.forbidden
+    public func fetchPreviewItem(id: Int) async {
+        isLoading = true
+        error = nil
+
+        do {
+            item = try await itemService.fetchPreviewItem(id: id)
+            isLoading = false
+
+            // Use children from item response
+            children = item?.children ?? []
+
+            // Use contents from item response
+            contents = item?.contents ?? []
+        } catch {
+            self.error = error
+            isLoading = false
+        }
+    }
+
     public func fetchContents() async {
         guard let itemId = item?.id else { return }
 

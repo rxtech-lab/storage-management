@@ -64,13 +64,15 @@ export async function getSession(
 ): Promise<Session | null> {
   // Return mock session for e2e tests
   // Support custom test user ID via X-Test-User-Id header for multi-user testing
+  // Support custom test user email via X-Test-User-Email header for whitelist testing
   if (process.env.IS_E2E === "true") {
     const testUserId = request?.headers.get("X-Test-User-Id") || "test-user-id";
+    const testUserEmail = request?.headers.get("X-Test-User-Email") || "test@example.com";
     return {
       user: {
         id: testUserId,
         name: "Test User",
-        email: "test@example.com",
+        email: testUserEmail,
         image: null,
       },
       expires: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
