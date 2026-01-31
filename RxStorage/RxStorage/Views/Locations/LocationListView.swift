@@ -15,6 +15,11 @@ struct LocationListView: View {
     @State private var viewModel = LocationListViewModel()
     @State private var showingCreateSheet = false
 
+    /// Initialize with an optional binding (defaults to constant nil for standalone use)
+    init(selectedLocation: Binding<Location?> = .constant(nil)) {
+        _selectedLocation = selectedLocation
+    }
+
     var body: some View {
         Group {
             if viewModel.isLoading && viewModel.locations.isEmpty {

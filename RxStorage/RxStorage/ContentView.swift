@@ -17,7 +17,7 @@ struct ContentView: View {
             case .unknown:
                 AuthLoadingView()
             case .authenticated:
-                RootView()
+                AdaptiveRootView()
             case .unauthenticated:
                 LoginView()
             }
