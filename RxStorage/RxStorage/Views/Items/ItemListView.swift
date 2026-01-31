@@ -12,6 +12,12 @@ import SwiftUI
 struct ItemListView: View {
     @Binding var selectedItem: StorageItem?
     @State private var viewModel = ItemListViewModel()
+
+    /// Initialize with an optional binding (defaults to constant nil for standalone use)
+    init(selectedItem: Binding<StorageItem?> = .constant(nil)) {
+        _selectedItem = selectedItem
+    }
+
     @State private var showingCreateSheet = false
     @State private var showingFilterSheet = false
     @State private var showingError = false
@@ -149,7 +155,7 @@ struct ItemListView: View {
                 }
             }
         }
-        .listStyle(.inset)
+        .listStyle(.automatic)
     }
 
     // MARK: - QR Code Handling
