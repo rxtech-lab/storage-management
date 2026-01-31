@@ -19,7 +19,9 @@ struct PositionSchemaListView: View {
         Group {
             if viewModel.isLoading && viewModel.schemas.isEmpty {
                 ProgressView("Loading schemas...")
-            } else if viewModel.filteredSchemas.isEmpty {
+            } else if viewModel.isSearching {
+                ProgressView("Searching...")
+            } else if viewModel.schemas.isEmpty {
                 ContentUnavailableView(
                     "No Position Schemas",
                     systemImage: "doc.text",
@@ -40,6 +42,9 @@ struct PositionSchemaListView: View {
             }
         }
         .searchable(text: $viewModel.searchText, prompt: "Search schemas")
+        .onChange(of: viewModel.searchText) { _, newValue in
+            viewModel.search(newValue)
+        }
         .refreshable {
             await viewModel.refreshSchemas()
         }
@@ -57,7 +62,7 @@ struct PositionSchemaListView: View {
 
     private var schemasList: some View {
         List(selection: $selectedSchema) {
-            ForEach(viewModel.filteredSchemas) { schema in
+            ForEach(viewModel.schemas) { schema in
                 NavigationLink(value: schema) {
                     PositionSchemaRow(schema: schema)
                 }

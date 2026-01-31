@@ -10,7 +10,7 @@ import Foundation
 /// Protocol for author service operations
 @MainActor
 public protocol AuthorServiceProtocol {
-    func fetchAuthors() async throws -> [Author]
+    func fetchAuthors(filters: AuthorFilters?) async throws -> [Author]
     func fetchAuthor(id: Int) async throws -> Author
     func createAuthor(_ request: NewAuthorRequest) async throws -> Author
     func updateAuthor(id: Int, _ request: UpdateAuthorRequest) async throws -> Author
@@ -26,9 +26,9 @@ public class AuthorService: AuthorServiceProtocol {
         self.apiClient = apiClient
     }
 
-    public func fetchAuthors() async throws -> [Author] {
+    public func fetchAuthors(filters: AuthorFilters? = nil) async throws -> [Author] {
         return try await apiClient.get(
-            .listAuthors,
+            .listAuthors(filters: filters),
             responseType: [Author].self
         )
     }

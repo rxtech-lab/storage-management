@@ -10,7 +10,7 @@ import Foundation
 /// Protocol for position schema service operations
 @MainActor
 public protocol PositionSchemaServiceProtocol {
-    func fetchPositionSchemas() async throws -> [PositionSchema]
+    func fetchPositionSchemas(filters: PositionSchemaFilters?) async throws -> [PositionSchema]
     func fetchPositionSchema(id: Int) async throws -> PositionSchema
     func createPositionSchema(_ request: NewPositionSchemaRequest) async throws -> PositionSchema
     func updatePositionSchema(id: Int, _ request: UpdatePositionSchemaRequest) async throws -> PositionSchema
@@ -26,9 +26,9 @@ public class PositionSchemaService: PositionSchemaServiceProtocol {
         self.apiClient = apiClient
     }
 
-    public func fetchPositionSchemas() async throws -> [PositionSchema] {
+    public func fetchPositionSchemas(filters: PositionSchemaFilters? = nil) async throws -> [PositionSchema] {
         return try await apiClient.get(
-            .listPositionSchemas,
+            .listPositionSchemas(filters: filters),
             responseType: [PositionSchema].self
         )
     }

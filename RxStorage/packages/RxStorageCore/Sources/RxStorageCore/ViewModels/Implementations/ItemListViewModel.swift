@@ -5,6 +5,7 @@
 //  Item list view model implementation
 //
 
+@preconcurrency import Combine
 import Foundation
 import Logging
 import Observation
@@ -17,18 +18,15 @@ public final class ItemListViewModel: ItemListViewModelProtocol {
 
     public private(set) var items: [StorageItem] = []
     public private(set) var isLoading = false
+    public private(set) var isSearching = false
     public private(set) var error: Error?
     public var filters = ItemFilters()
-    public var searchText = "" {
-        didSet {
-            // Update search filter when text changes
-            if searchText.isEmpty {
-                filters.search = nil
-            } else {
-                filters.search = searchText
-            }
-        }
-    }
+    public var searchText = ""
+
+    // MARK: - Combine
+
+    private let searchSubject = PassthroughSubject<String, Never>()
+    private var cancellables = Set<AnyCancellable>()
 
     // MARK: - Dependencies
 
@@ -39,9 +37,62 @@ public final class ItemListViewModel: ItemListViewModelProtocol {
 
     public init(itemService: ItemServiceProtocol = ItemService()) {
         self.itemService = itemService
+        setupSearchPipeline()
+    }
+
+    // MARK: - Private Methods
+
+    private func setupSearchPipeline() {
+        searchSubject
+            .debounce(for: .milliseconds(300), scheduler: DispatchQueue.main)
+            .removeDuplicates()
+            .sink { [weak self] query in
+                guard let self else { return }
+                Task { @MainActor in
+                    await self.performSearch(query: query)
+                }
+            }
+            .store(in: &cancellables)
+    }
+
+    private func performSearch(query: String) async {
+        let trimmedQuery = query.trimmingCharacters(in: .whitespaces)
+
+        // Update filters with search query
+        if trimmedQuery.isEmpty {
+            filters.search = nil
+        } else {
+            filters.search = trimmedQuery
+        }
+
+        isSearching = true
+        error = nil
+
+        do {
+            items = try await itemService.fetchItems(filters: filters.isEmpty ? nil : filters)
+            isSearching = false
+        } catch is CancellationError {
+            isSearching = false
+        } catch let apiError as APIError where apiError.isCancellation {
+            isSearching = false
+        } catch let error as NSError where error.domain == NSURLErrorDomain && error.code == NSURLErrorCancelled {
+            isSearching = false
+        } catch {
+            logger.error("Failed to search items: \(error.localizedDescription)", metadata: [
+                "error": "\(error)"
+            ])
+            self.error = error
+            isSearching = false
+        }
     }
 
     // MARK: - Public Methods
+
+    /// Trigger a search with the given query (debounced)
+    public func search(_ query: String) {
+        searchText = query
+        searchSubject.send(query)
+    }
 
     public func fetchItems() async {
         isLoading = true
@@ -69,7 +120,11 @@ public final class ItemListViewModel: ItemListViewModelProtocol {
     }
 
     public func refreshItems() async {
-        await fetchItems()
+        if searchText.isEmpty {
+            await fetchItems()
+        } else {
+            await performSearch(query: searchText)
+        }
     }
 
     public func deleteItem(_ item: StorageItem) async throws {

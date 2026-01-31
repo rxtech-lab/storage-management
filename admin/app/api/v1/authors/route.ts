@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth-helper";
-import { getAuthors, createAuthorAction } from "@/lib/actions/author-actions";
+import { getAuthors, createAuthorAction, type AuthorFilters } from "@/lib/actions/author-actions";
 
 export async function GET(request: NextRequest) {
   const session = await getSession(request);
@@ -8,7 +8,17 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const authors = await getAuthors(session.user.id);
+  const searchParams = request.nextUrl.searchParams;
+  const filters: AuthorFilters = {};
+
+  if (searchParams.has("search")) {
+    filters.search = searchParams.get("search")!;
+  }
+  if (searchParams.has("limit")) {
+    filters.limit = parseInt(searchParams.get("limit")!);
+  }
+
+  const authors = await getAuthors(session.user.id, Object.keys(filters).length > 0 ? filters : undefined);
   return NextResponse.json(authors);
 }
 

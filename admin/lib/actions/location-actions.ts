@@ -2,17 +2,40 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { eq } from "drizzle-orm";
+import { eq, like, and } from "drizzle-orm";
 import { db, locations, type Location, type NewLocation } from "@/lib/db";
 import { ensureSchemaInitialized } from "@/lib/db/client";
 import { getSession } from "@/lib/auth-helper";
 
-export async function getLocations(userId?: string): Promise<Location[]> {
+export interface LocationFilters {
+  search?: string;
+  limit?: number;
+}
+
+export async function getLocations(userId?: string, filters?: LocationFilters): Promise<Location[]> {
   await ensureSchemaInitialized();
+
+  const conditions = [];
+
   if (userId) {
-    return db.select().from(locations).where(eq(locations.userId, userId)).orderBy(locations.title);
+    conditions.push(eq(locations.userId, userId));
   }
-  return db.select().from(locations).orderBy(locations.title);
+
+  if (filters?.search) {
+    conditions.push(like(locations.title, `%${filters.search}%`));
+  }
+
+  let query = db.select().from(locations).orderBy(locations.title).$dynamic();
+
+  if (conditions.length > 0) {
+    query = query.where(and(...conditions));
+  }
+
+  if (filters?.limit) {
+    query = query.limit(filters.limit);
+  }
+
+  return query;
 }
 
 export async function getLocation(id: number): Promise<Location | undefined> {

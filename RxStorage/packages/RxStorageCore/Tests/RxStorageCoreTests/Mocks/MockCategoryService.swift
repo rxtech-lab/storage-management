@@ -38,7 +38,7 @@ public final class MockCategoryService: CategoryServiceProtocol {
 
     // MARK: - CategoryServiceProtocol
 
-    public func fetchCategories() async throws -> [RxStorageCore.Category] {
+    public func fetchCategories(filters: CategoryFilters?) async throws -> [RxStorageCore.Category] {
         fetchCategoriesCalled = true
         switch fetchCategoriesResult {
         case .success(let categories):

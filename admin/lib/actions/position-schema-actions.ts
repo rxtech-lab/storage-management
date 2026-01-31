@@ -2,17 +2,40 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { eq } from "drizzle-orm";
+import { eq, like, and } from "drizzle-orm";
 import { db, positionSchemas, type PositionSchema, type NewPositionSchema } from "@/lib/db";
 import { ensureSchemaInitialized } from "@/lib/db/client";
 import { getSession } from "@/lib/auth-helper";
 
-export async function getPositionSchemas(userId?: string): Promise<PositionSchema[]> {
+export interface PositionSchemaFilters {
+  search?: string;
+  limit?: number;
+}
+
+export async function getPositionSchemas(userId?: string, filters?: PositionSchemaFilters): Promise<PositionSchema[]> {
   await ensureSchemaInitialized();
+
+  const conditions = [];
+
   if (userId) {
-    return db.select().from(positionSchemas).where(eq(positionSchemas.userId, userId)).orderBy(positionSchemas.name);
+    conditions.push(eq(positionSchemas.userId, userId));
   }
-  return db.select().from(positionSchemas).orderBy(positionSchemas.name);
+
+  if (filters?.search) {
+    conditions.push(like(positionSchemas.name, `%${filters.search}%`));
+  }
+
+  let query = db.select().from(positionSchemas).orderBy(positionSchemas.name).$dynamic();
+
+  if (conditions.length > 0) {
+    query = query.where(and(...conditions));
+  }
+
+  if (filters?.limit) {
+    query = query.limit(filters.limit);
+  }
+
+  return query;
 }
 
 export async function getPositionSchema(id: number): Promise<PositionSchema | undefined> {
