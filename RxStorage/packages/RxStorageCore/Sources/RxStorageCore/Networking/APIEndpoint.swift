@@ -221,7 +221,7 @@ public struct ItemFilters: Sendable {
     public var locationId: Int?
     public var authorId: Int?
     public var parentId: Int??  // Optional<Optional<Int>> to distinguish null vs not set
-    public var visibility: String?  // "public" or "private"
+    public var visibility: StorageItem.Visibility?
     public var search: String?
 
     public init(
@@ -229,7 +229,7 @@ public struct ItemFilters: Sendable {
         locationId: Int? = nil,
         authorId: Int? = nil,
         parentId: Int?? = nil,
-        visibility: String? = nil,
+        visibility: StorageItem.Visibility? = nil,
         search: String? = nil
     ) {
         self.categoryId = categoryId
@@ -260,7 +260,7 @@ public struct ItemFilters: Sendable {
             }
         }
         if let visibility = visibility {
-            items.append(URLQueryItem(name: "visibility", value: visibility))
+            items.append(URLQueryItem(name: "visibility", value: visibility.rawValue))
         }
         if let search = search {
             items.append(URLQueryItem(name: "search", value: search))

@@ -135,7 +135,7 @@ struct ItemListViewModelTests {
         let sut = ItemListViewModel(itemService: mockService)
         sut.searchText = "test"
         sut.filters.categoryId = 1
-        sut.filters.visibility = "public"
+        sut.filters.visibility = .public
 
         // When
         sut.clearFilters()
