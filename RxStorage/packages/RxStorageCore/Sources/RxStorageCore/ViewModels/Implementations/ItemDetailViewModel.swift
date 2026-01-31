@@ -49,25 +49,14 @@ public final class ItemDetailViewModel: ItemDetailViewModelProtocol {
             item = try await itemService.fetchItem(id: id)
             isLoading = false
 
-            // Fetch children and contents if item exists
-            if item != nil {
-                await fetchChildren()
-                await fetchContents()
-            }
+            // Use children from item response
+            children = item?.children ?? []
+
+            // Use contents from item response
+            contents = item?.contents ?? []
         } catch {
             self.error = error
             isLoading = false
-        }
-    }
-
-    public func fetchChildren() async {
-        guard let itemId = item?.id else { return }
-
-        do {
-            children = try await itemService.fetchChildren(parentId: itemId)
-        } catch {
-            // Don't set main error for children fetch failure
-            print("Failed to fetch children: \(error)")
         }
     }
 

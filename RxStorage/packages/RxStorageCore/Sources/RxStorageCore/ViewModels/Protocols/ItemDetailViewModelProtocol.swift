@@ -25,11 +25,8 @@ public protocol ItemDetailViewModelProtocol: AnyObject, Observable {
     /// Error state
     var error: Error? { get }
 
-    /// Fetch item details
+    /// Fetch item details (includes children)
     func fetchItem(id: Int) async
-
-    /// Fetch child items
-    func fetchChildren() async
 
     /// Fetch item contents
     func fetchContents() async

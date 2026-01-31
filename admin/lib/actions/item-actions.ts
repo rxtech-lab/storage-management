@@ -124,8 +124,10 @@ export async function getItems(
     .orderBy(desc(items.updatedAt))
     .$dynamic();
 
-  // Always filter by the authenticated user's ID
-  const conditions = [eq(items.userId, sessionUserId)];
+  // Show user's own items OR public items from other users
+  const conditions = [
+    or(eq(items.userId, sessionUserId), eq(items.visibility, "public")),
+  ];
 
   if (filters?.categoryId) {
     conditions.push(eq(items.categoryId, filters.categoryId));

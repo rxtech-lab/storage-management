@@ -23,7 +23,6 @@ public enum APIEndpoint: Sendable {
     case createItem
     case updateItem(id: Int)
     case deleteItem(id: Int)
-    case getItemChildren(id: Int)
     case setItemParent(id: String)
     case getItemQR(id: Int)
 
@@ -79,7 +78,7 @@ public enum APIEndpoint: Sendable {
     /// HTTP method for this endpoint
     public var method: HTTPMethod {
         switch self {
-        case .listItems, .getItem, .getItemChildren, .getItemQR,
+        case .listItems, .getItem, .getItemQR,
              .listCategories, .getCategory,
              .listLocations, .getLocation,
              .listAuthors, .getAuthor,
@@ -119,8 +118,6 @@ public enum APIEndpoint: Sendable {
             return "/api/v1/items/\(id)"
         case .deleteItem(let id):
             return "/api/v1/items/\(id)"
-        case .getItemChildren(let id):
-            return "/api/v1/items/\(id)/children"
         case .setItemParent(let id):
             return "/api/v1/items/\(id)/parent"
         case .getItemQR(let id):

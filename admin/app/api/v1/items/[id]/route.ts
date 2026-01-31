@@ -2,9 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth-helper";
 import {
   getItem,
+  getItemChildren,
   updateItemAction,
   deleteItemAction,
 } from "@/lib/actions/item-actions";
+import { getItemContents } from "@/lib/actions/content-actions";
 import { signImagesArray } from "@/lib/actions/s3-upload-actions";
 
 interface RouteParams {
@@ -31,13 +33,37 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
   const previewUrl = `${process.env.NEXT_PUBLIC_URL}/preview/${item.id}`;
 
-  // Sign images - replace file IDs with signed URLs
-  const images =
+  // Fetch item images, children, and contents in parallel
+  const [images, children, contents] = await Promise.all([
     item.images && item.images.length > 0
-      ? await signImagesArray(item.images)
-      : [];
+      ? signImagesArray(item.images)
+      : Promise.resolve([]),
+    getItemChildren(parseInt(id), session.user.id),
+    getItemContents(parseInt(id)),
+  ]);
 
-  return NextResponse.json({ ...item, images, previewUrl });
+  // Sign images for each child
+  const childrenWithSignedImages = await Promise.all(
+    children.map(async (child) => {
+      const childImages =
+        child.images && child.images.length > 0
+          ? await signImagesArray(child.images)
+          : [];
+      return {
+        ...child,
+        images: childImages,
+        previewUrl: `${process.env.NEXT_PUBLIC_URL}/preview/${child.id}`,
+      };
+    }),
+  );
+
+  return NextResponse.json({
+    ...item,
+    images,
+    previewUrl,
+    children: childrenWithSignedImages,
+    contents,
+  });
 }
 
 export async function PUT(request: NextRequest, { params }: RouteParams) {

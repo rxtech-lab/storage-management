@@ -12,7 +12,6 @@ import Foundation
 public protocol ItemServiceProtocol {
     func fetchItems(filters: ItemFilters?) async throws -> [StorageItem]
     func fetchItem(id: Int) async throws -> StorageItem
-    func fetchChildren(parentId: Int) async throws -> [StorageItem]
     func createItem(_ request: NewItemRequest) async throws -> StorageItem
     func updateItem(id: Int, _ request: UpdateItemRequest) async throws -> StorageItem
     func setItemParent(childId: String, parentId: Int?) async throws -> StorageItem
@@ -40,13 +39,6 @@ public class ItemService: ItemServiceProtocol {
         return try await apiClient.get(
             .getItem(id: id),
             responseType: StorageItem.self
-        )
-    }
-
-    public func fetchChildren(parentId: Int) async throws -> [StorageItem] {
-        return try await apiClient.get(
-            .getItemChildren(id: parentId),
-            responseType: [StorageItem].self
         )
     }
 

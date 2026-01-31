@@ -33,7 +33,9 @@ enum TestHelpers {
         category: RxStorageCore.Category? = nil,
         location: Location? = nil,
         author: Author? = nil,
-        previewUrl: String = "https://example.com/preview/1"
+        previewUrl: String = "https://example.com/preview/1",
+        children: [StorageItem]? = nil,
+        contents: [Content]? = nil
     ) -> StorageItem {
         StorageItem(
             id: id,
@@ -51,7 +53,9 @@ enum TestHelpers {
             category: category,
             location: location,
             author: author,
-            previewUrl: previewUrl
+            previewUrl: previewUrl,
+            children: children,
+            contents: contents
         )
     }
 

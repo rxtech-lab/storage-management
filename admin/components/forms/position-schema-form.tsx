@@ -152,7 +152,7 @@ export function PositionSchemaForm({ positionSchema }: PositionSchemaFormProps) 
             <Button
               type="button"
               variant="outline"
-              onClick={() => router.back()}
+              onClick={() => router.push("/position-schemas")}
               data-testid="position-schema-cancel-button"
             >
               Cancel
