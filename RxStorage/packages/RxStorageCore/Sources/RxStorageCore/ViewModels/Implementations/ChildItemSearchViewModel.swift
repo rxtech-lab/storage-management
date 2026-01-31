@@ -19,6 +19,10 @@ public final class ChildItemSearchViewModel {
     public private(set) var isSearching = false
     public private(set) var error: Error?
 
+    /// Default items shown when search text is empty (limited to 10)
+    public private(set) var defaultItems: [StorageItem] = []
+    public private(set) var isLoadingDefaults = false
+
     /// Search text - triggers debounced API call
     public var searchText = ""
 
@@ -87,6 +91,24 @@ public final class ChildItemSearchViewModel {
 
     // MARK: - Public Methods
 
+    /// Load default items to display when search text is empty (limited to 10)
+    public func loadDefaultItems() async {
+        isLoadingDefaults = true
+        error = nil
+
+        do {
+            let results = try await itemService.fetchItems(filters: nil)
+            // Filter excluded items and limit to 10
+            defaultItems = Array(
+                results.filter { !excludedItemIds.contains($0.id) }.prefix(10)
+            )
+            isLoadingDefaults = false
+        } catch {
+            self.error = error
+            isLoadingDefaults = false
+        }
+    }
+
     /// Trigger a search with the given query (debounced)
     public func search(_ query: String) {
         searchText = query
@@ -96,8 +118,9 @@ public final class ChildItemSearchViewModel {
     /// Update the set of excluded item IDs
     public func updateExcludedIds(_ ids: Set<Int>) {
         excludedItemIds = ids
-        // Re-filter current results
+        // Re-filter current results and default items
         searchResults = searchResults.filter { !excludedItemIds.contains($0.id) }
+        defaultItems = defaultItems.filter { !excludedItemIds.contains($0.id) }
     }
 
     /// Clear search results and text

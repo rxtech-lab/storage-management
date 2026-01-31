@@ -52,25 +52,33 @@ struct AddChildSheet: View {
         VStack(spacing: 0) {
             searchBar
 
-            if viewModel.isSearching {
+            if viewModel.isSearching || viewModel.isLoadingDefaults {
                 Spacer()
-                ProgressView("Searching...")
+                ProgressView(viewModel.isSearching ? "Searching..." : "Loading...")
                 Spacer()
-            } else if viewModel.searchResults.isEmpty && !viewModel.searchText.isEmpty {
+            } else if viewModel.searchText.isEmpty {
+                // Show default items when not searching
+                if viewModel.defaultItems.isEmpty {
+                    ContentUnavailableView(
+                        "No Items",
+                        systemImage: "tray",
+                        description: Text("No items available to add as children")
+                    )
+                } else {
+                    itemsList(items: viewModel.defaultItems)
+                }
+            } else if viewModel.searchResults.isEmpty {
                 ContentUnavailableView(
                     "No Results",
                     systemImage: "magnifyingglass",
                     description: Text("No items found matching '\(viewModel.searchText)'")
                 )
-            } else if viewModel.searchResults.isEmpty {
-                ContentUnavailableView(
-                    "Search for Items",
-                    systemImage: "magnifyingglass",
-                    description: Text("Type to search for items to add as children")
-                )
             } else {
-                resultsList
+                itemsList(items: viewModel.searchResults)
             }
+        }
+        .task {
+            await viewModel.loadDefaultItems()
         }
         .navigationTitle("Add Child Item")
         .navigationBarTitleDisplayMode(.inline)
@@ -117,10 +125,10 @@ struct AddChildSheet: View {
         .padding()
     }
 
-    // MARK: - Results List
+    // MARK: - Items List
 
-    private var resultsList: some View {
-        List(viewModel.searchResults) { item in
+    private func itemsList(items: [StorageItem]) -> some View {
+        List(items) { item in
             let isAdded = addedChildIds.contains(item.id)
             Button {
                 let childData = AddChildData(

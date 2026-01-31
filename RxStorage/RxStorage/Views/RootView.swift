@@ -100,14 +100,21 @@ struct RootView: View {
     private var detailColumn: some View {
         switch selectedSection {
         case .items:
-            if let item = selectedItem {
-                ItemDetailView(itemId: item.id)
-            } else {
-                ContentUnavailableView(
-                    "Select an item",
-                    systemImage: "shippingbox",
-                    description: Text("Choose an item from the list to view details")
-                )
+            NavigationStack {
+                Group {
+                    if let item = selectedItem {
+                        ItemDetailView(itemId: item.id)
+                    } else {
+                        ContentUnavailableView(
+                            "Select an item",
+                            systemImage: "shippingbox",
+                            description: Text("Choose an item from the list to view details")
+                        )
+                    }
+                }
+                .navigationDestination(for: StorageItem.self) { child in
+                    ItemDetailView(itemId: child.id)
+                }
             }
         case .categories:
             if let category = selectedCategory {
