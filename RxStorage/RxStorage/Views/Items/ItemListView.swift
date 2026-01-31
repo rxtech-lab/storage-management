@@ -17,6 +17,12 @@ struct ItemListView: View {
     @State private var showingError = false
     @State private var showQrCodeScanner = false
 
+    // QR scan state
+    @State private var isLoadingFromQR = false
+    @State private var qrScanError: Error?
+    @State private var showQrScanError = false
+    private let itemService = ItemService()
+
     var body: some View {
         Group {
             if viewModel.isLoading && viewModel.items.isEmpty {
@@ -69,7 +75,10 @@ struct ItemListView: View {
         .sheet(isPresented: $showQrCodeScanner) {
             NavigationStack {
                 QRCodeScannerView { code in
-                    print(code)
+                    showQrCodeScanner = false
+                    Task {
+                        await handleScannedQRCode(code)
+                    }
                 }
             }
         }
@@ -107,6 +116,18 @@ struct ItemListView: View {
                 Text(error.localizedDescription)
             }
         }
+        .overlay {
+            if isLoadingFromQR {
+                LoadingOverlay(title: "Loading item from QR code..")
+            }
+        }
+        .alert("QR Code Error", isPresented: $showQrScanError) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            if let error = qrScanError {
+                Text(error.localizedDescription)
+            }
+        }
     }
 
     // MARK: - Items List
@@ -129,6 +150,27 @@ struct ItemListView: View {
             }
         }
         .listStyle(.inset)
+    }
+
+    // MARK: - QR Code Handling
+
+    private func handleScannedQRCode(_ code: String) async {
+        guard let url = URL(string: code) else {
+            qrScanError = APIError.unsupportedQRCode(code)
+            showQrScanError = true
+            return
+        }
+
+        isLoadingFromQR = true
+        defer { isLoadingFromQR = false }
+
+        do {
+            let item = try await itemService.fetchItemFromURL(url)
+            selectedItem = item
+        } catch {
+            qrScanError = error
+            showQrScanError = true
+        }
     }
 }
 

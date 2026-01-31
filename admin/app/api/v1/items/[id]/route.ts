@@ -8,38 +8,63 @@ import {
 } from "@/lib/actions/item-actions";
 import { getItemContents } from "@/lib/actions/content-actions";
 import { signImagesArray } from "@/lib/actions/s3-upload-actions";
+import { isEmailWhitelisted } from "@/lib/actions/whitelist-actions";
 
 interface RouteParams {
   params: Promise<{ id: string }>;
 }
 
 export async function GET(request: NextRequest, { params }: RouteParams) {
-  const session = await getSession(request);
-  if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
   const { id } = await params;
-  const item = await getItem(parseInt(id));
+  const itemId = parseInt(id);
+  const item = await getItem(itemId);
 
   if (!item) {
     return NextResponse.json({ error: "Item not found" }, { status: 404 });
   }
 
-  // Check permission: owner can see all, others can only see public items
-  if (item.visibility === "private" && item.userId !== session.user.id) {
-    return NextResponse.json({ error: "Permission denied" }, { status: 403 });
+  // Public items can be accessed without authentication
+  if (item.visibility === "public") {
+    return buildItemResponse(item, itemId, null);
   }
 
-  const previewUrl = `${process.env.NEXT_PUBLIC_URL}/preview/${item.id}`;
+  // Private items require authentication
+  const session = await getSession(request);
+  if (!session) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  // Check permission: owner can always see their items
+  if (item.userId !== session.user.id) {
+    // Check if user's email is whitelisted for this item
+    if (session.user.email) {
+      const whitelisted = await isEmailWhitelisted(itemId, session.user.email);
+      if (!whitelisted) {
+        return NextResponse.json({ error: "Permission denied" }, { status: 403 });
+      }
+    } else {
+      // No email means no whitelist access possible
+      return NextResponse.json({ error: "Permission denied" }, { status: 403 });
+    }
+  }
+
+  return buildItemResponse(item, itemId, session.user.id);
+}
+
+async function buildItemResponse(
+  item: NonNullable<Awaited<ReturnType<typeof getItem>>>,
+  itemId: number,
+  userId: string | null
+) {
+  const previewUrl = `${process.env.NEXT_PUBLIC_URL}/preview/item/${item.id}`;
 
   // Fetch item images, children, and contents in parallel
   const [images, children, contents] = await Promise.all([
     item.images && item.images.length > 0
       ? signImagesArray(item.images)
       : Promise.resolve([]),
-    getItemChildren(parseInt(id), session.user.id),
-    getItemContents(parseInt(id)),
+    getItemChildren(itemId, userId ?? undefined),
+    getItemContents(itemId),
   ]);
 
   // Sign images for each child
@@ -52,7 +77,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       return {
         ...child,
         images: childImages,
-        previewUrl: `${process.env.NEXT_PUBLIC_URL}/preview/${child.id}`,
+        previewUrl: `${process.env.NEXT_PUBLIC_URL}/preview/item/${child.id}`,
       };
     }),
   );
@@ -79,7 +104,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     const result = await updateItemAction(parseInt(id), body, session.user.id);
 
     if (result.success && result.data) {
-      const previewUrl = `${process.env.NEXT_PUBLIC_URL}/preview/${result.data.id}`;
+      const previewUrl = `${process.env.NEXT_PUBLIC_URL}/preview/item/${result.data.id}`;
 
       // Sign images - replace file IDs with signed URLs
       const images =

@@ -12,12 +12,12 @@ import RxStorageCore
 /// Author detail view model
 @Observable
 @MainActor
-final class AuthorDetailViewModel {
+public final class AuthorDetailViewModel {
     // MARK: - Properties
 
-    private(set) var author: Author?
-    private(set) var isLoading = false
-    private(set) var error: Error?
+    public private(set) var author: Author?
+    public private(set) var isLoading = false
+    public private(set) var error: Error?
 
     // MARK: - Dependencies
 
@@ -25,13 +25,13 @@ final class AuthorDetailViewModel {
 
     // MARK: - Initialization
 
-    init(authorService: AuthorServiceProtocol? = nil) {
+    public init(authorService: AuthorServiceProtocol? = nil) {
         self.authorService = authorService ?? AuthorService()
     }
 
     // MARK: - Public Methods
 
-    func fetchAuthor(id: Int) async {
+    public func fetchAuthor(id: Int) async {
         isLoading = true
         error = nil
 

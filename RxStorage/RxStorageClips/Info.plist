@@ -13,5 +13,15 @@
 	<array>
 		<string>remote-notification</string>
 	</array>
+	<key>API_BASE_URL</key>
+	<string>$(API_BASE_URL)</string>
+	<key>AUTH_ISSUER</key>
+	<string>$(AUTH_ISSUER)</string>
+	<key>AUTH_CLIENT_ID</key>
+	<string>$(AUTH_CLIENT_ID)</string>
+	<key>AUTH_REDIRECT_URI</key>
+	<string>$(AUTH_REDIRECT_URI)</string>
+	<key>AUTH_SCOPES</key>
+	<string>$(AUTH_SCOPES)</string>
 </dict>
 </plist>

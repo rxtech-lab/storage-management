@@ -12,12 +12,12 @@ import RxStorageCore
 /// Location detail view model
 @Observable
 @MainActor
-final class LocationDetailViewModel {
+public final class LocationDetailViewModel {
     // MARK: - Properties
 
-    private(set) var location: Location?
-    private(set) var isLoading = false
-    private(set) var error: Error?
+    public private(set) var location: Location?
+    public private(set) var isLoading = false
+    public private(set) var error: Error?
 
     // MARK: - Dependencies
 
@@ -25,13 +25,13 @@ final class LocationDetailViewModel {
 
     // MARK: - Initialization
 
-    init(locationService: LocationServiceProtocol? = nil) {
+    public init(locationService: LocationServiceProtocol? = nil) {
         self.locationService = locationService ?? LocationService()
     }
 
     // MARK: - Public Methods
 
-    func fetchLocation(id: Int) async {
+    public func fetchLocation(id: Int) async {
         isLoading = true
         error = nil
 
@@ -44,12 +44,12 @@ final class LocationDetailViewModel {
         }
     }
 
-    func refresh() async {
+    public func refresh() async {
         guard let locationId = location?.id else { return }
         await fetchLocation(id: locationId)
     }
 
-    func clearError() {
+    public func clearError() {
         error = nil
     }
 }
