@@ -19,7 +19,9 @@ struct AuthorListView: View {
         Group {
             if viewModel.isLoading && viewModel.authors.isEmpty {
                 ProgressView("Loading authors...")
-            } else if viewModel.filteredAuthors.isEmpty {
+            } else if viewModel.isSearching {
+                ProgressView("Searching...")
+            } else if viewModel.authors.isEmpty {
                 ContentUnavailableView(
                     "No Authors",
                     systemImage: "person.circle",
@@ -40,6 +42,9 @@ struct AuthorListView: View {
             }
         }
         .searchable(text: $viewModel.searchText, prompt: "Search authors")
+        .onChange(of: viewModel.searchText) { _, newValue in
+            viewModel.search(newValue)
+        }
         .refreshable {
             await viewModel.refreshAuthors()
         }
@@ -57,7 +62,7 @@ struct AuthorListView: View {
 
     private var authorsList: some View {
         List(selection: $selectedAuthor) {
-            ForEach(viewModel.filteredAuthors) { author in
+            ForEach(viewModel.authors) { author in
                 NavigationLink(value: author) {
                     AuthorRow(author: author)
                 }

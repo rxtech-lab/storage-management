@@ -10,7 +10,7 @@ import Foundation
 /// Protocol for category service operations
 @MainActor
 public protocol CategoryServiceProtocol {
-    func fetchCategories() async throws -> [Category]
+    func fetchCategories(filters: CategoryFilters?) async throws -> [Category]
     func fetchCategory(id: Int) async throws -> Category
     func createCategory(_ request: NewCategoryRequest) async throws -> Category
     func updateCategory(id: Int, _ request: UpdateCategoryRequest) async throws -> Category
@@ -26,9 +26,9 @@ public class CategoryService: CategoryServiceProtocol {
         self.apiClient = apiClient
     }
 
-    public func fetchCategories() async throws -> [Category] {
+    public func fetchCategories(filters: CategoryFilters? = nil) async throws -> [Category] {
         return try await apiClient.get(
-            .listCategories,
+            .listCategories(filters: filters),
             responseType: [Category].self
         )
     }

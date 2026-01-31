@@ -10,7 +10,7 @@ import Foundation
 /// Protocol for location service operations
 @MainActor
 public protocol LocationServiceProtocol {
-    func fetchLocations() async throws -> [Location]
+    func fetchLocations(filters: LocationFilters?) async throws -> [Location]
     func fetchLocation(id: Int) async throws -> Location
     func createLocation(_ request: NewLocationRequest) async throws -> Location
     func updateLocation(id: Int, _ request: UpdateLocationRequest) async throws -> Location
@@ -26,9 +26,9 @@ public class LocationService: LocationServiceProtocol {
         self.apiClient = apiClient
     }
 
-    public func fetchLocations() async throws -> [Location] {
+    public func fetchLocations(filters: LocationFilters? = nil) async throws -> [Location] {
         return try await apiClient.get(
-            .listLocations,
+            .listLocations(filters: filters),
             responseType: [Location].self
         )
     }

@@ -27,28 +27,28 @@ public enum APIEndpoint: Sendable {
     case getItemQR(id: Int)
 
     // Categories
-    case listCategories
+    case listCategories(filters: CategoryFilters?)
     case getCategory(id: Int)
     case createCategory
     case updateCategory(id: Int)
     case deleteCategory(id: Int)
 
     // Locations
-    case listLocations
+    case listLocations(filters: LocationFilters?)
     case getLocation(id: Int)
     case createLocation
     case updateLocation(id: Int)
     case deleteLocation(id: Int)
 
     // Authors
-    case listAuthors
+    case listAuthors(filters: AuthorFilters?)
     case getAuthor(id: Int)
     case createAuthor
     case updateAuthor(id: Int)
     case deleteAuthor(id: Int)
 
     // Position Schemas
-    case listPositionSchemas
+    case listPositionSchemas(filters: PositionSchemaFilters?)
     case getPositionSchema(id: Int)
     case createPositionSchema
     case updatePositionSchema(id: Int)
@@ -201,6 +201,14 @@ public enum APIEndpoint: Sendable {
         switch self {
         case .listItems(let filters):
             return filters?.toQueryItems()
+        case .listCategories(let filters):
+            return filters?.toQueryItems()
+        case .listLocations(let filters):
+            return filters?.toQueryItems()
+        case .listAuthors(let filters):
+            return filters?.toQueryItems()
+        case .listPositionSchemas(let filters):
+            return filters?.toQueryItems()
         default:
             return nil
         }
@@ -256,6 +264,114 @@ public struct ItemFilters: Sendable {
         }
         if let search = search {
             items.append(URLQueryItem(name: "search", value: search))
+        }
+
+        return items.isEmpty ? nil : items
+    }
+}
+
+/// Author filters for list query
+public struct AuthorFilters: Sendable {
+    public var search: String?
+    public var limit: Int?
+
+    public init(
+        search: String? = nil,
+        limit: Int? = nil
+    ) {
+        self.search = search
+        self.limit = limit
+    }
+
+    func toQueryItems() -> [URLQueryItem]? {
+        var items: [URLQueryItem] = []
+
+        if let search = search {
+            items.append(URLQueryItem(name: "search", value: search))
+        }
+        if let limit = limit {
+            items.append(URLQueryItem(name: "limit", value: String(limit)))
+        }
+
+        return items.isEmpty ? nil : items
+    }
+}
+
+/// Category filters for list query
+public struct CategoryFilters: Sendable {
+    public var search: String?
+    public var limit: Int?
+
+    public init(
+        search: String? = nil,
+        limit: Int? = nil
+    ) {
+        self.search = search
+        self.limit = limit
+    }
+
+    func toQueryItems() -> [URLQueryItem]? {
+        var items: [URLQueryItem] = []
+
+        if let search = search {
+            items.append(URLQueryItem(name: "search", value: search))
+        }
+        if let limit = limit {
+            items.append(URLQueryItem(name: "limit", value: String(limit)))
+        }
+
+        return items.isEmpty ? nil : items
+    }
+}
+
+/// Location filters for list query
+public struct LocationFilters: Sendable {
+    public var search: String?
+    public var limit: Int?
+
+    public init(
+        search: String? = nil,
+        limit: Int? = nil
+    ) {
+        self.search = search
+        self.limit = limit
+    }
+
+    func toQueryItems() -> [URLQueryItem]? {
+        var items: [URLQueryItem] = []
+
+        if let search = search {
+            items.append(URLQueryItem(name: "search", value: search))
+        }
+        if let limit = limit {
+            items.append(URLQueryItem(name: "limit", value: String(limit)))
+        }
+
+        return items.isEmpty ? nil : items
+    }
+}
+
+/// Position schema filters for list query
+public struct PositionSchemaFilters: Sendable {
+    public var search: String?
+    public var limit: Int?
+
+    public init(
+        search: String? = nil,
+        limit: Int? = nil
+    ) {
+        self.search = search
+        self.limit = limit
+    }
+
+    func toQueryItems() -> [URLQueryItem]? {
+        var items: [URLQueryItem] = []
+
+        if let search = search {
+            items.append(URLQueryItem(name: "search", value: search))
+        }
+        if let limit = limit {
+            items.append(URLQueryItem(name: "limit", value: String(limit)))
         }
 
         return items.isEmpty ? nil : items

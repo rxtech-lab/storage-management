@@ -38,7 +38,7 @@ public final class MockLocationService: LocationServiceProtocol {
 
     // MARK: - LocationServiceProtocol
 
-    public func fetchLocations() async throws -> [Location] {
+    public func fetchLocations(filters: LocationFilters?) async throws -> [Location] {
         fetchLocationsCalled = true
         switch fetchLocationsResult {
         case .success(let locations):

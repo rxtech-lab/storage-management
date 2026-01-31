@@ -21,6 +21,8 @@ struct ItemListView: View {
         Group {
             if viewModel.isLoading && viewModel.items.isEmpty {
                 ProgressView("Loading items...")
+            } else if viewModel.isSearching {
+                ProgressView("Searching...")
             } else if viewModel.items.isEmpty {
                 ContentUnavailableView(
                     "No Items",
@@ -58,6 +60,9 @@ struct ItemListView: View {
             }
         }
         .searchable(text: $viewModel.searchText, prompt: "Search items")
+        .onChange(of: viewModel.searchText) { _, newValue in
+            viewModel.search(newValue)
+        }
         .refreshable {
             await viewModel.refreshItems()
         }
