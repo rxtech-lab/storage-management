@@ -104,6 +104,7 @@ public final class OAuthManager {
     // MARK: - Authentication
 
     /// Initiate OAuth authentication flow
+    /// This method waits for the entire authentication flow to complete before returning
     public func authenticate() async throws {
         // Generate PKCE parameters
         let codeVerifier = generateCodeVerifier()
@@ -128,41 +129,51 @@ public final class OAuthManager {
         // Present authentication session
         let callbackURLScheme = configuration.authRedirectURI.components(separatedBy: "://").first
 
-        let session = ASWebAuthenticationSession(
-            url: authURL,
-            callbackURLScheme: callbackURLScheme
-        ) { [weak self] callbackURL, error in
-            guard let self = self else { return }
+        // Use withCheckedThrowingContinuation to wait for the callback
+        try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
+            let session = ASWebAuthenticationSession(
+                url: authURL,
+                callbackURLScheme: callbackURLScheme
+            ) { [weak self] callbackURL, error in
+                guard let self = self else {
+                    continuation.resume(throwing: OAuthError.authenticationFailed(NSError(domain: "OAuthManager", code: -1, userInfo: [NSLocalizedDescriptionKey: "Self was deallocated"])))
+                    return
+                }
 
-            Task { @MainActor in
-                do {
-                    if let error = error {
-                        if (error as? ASWebAuthenticationSessionError)?.code == .canceledLogin {
-                            throw OAuthError.userCancelled
+                Task { @MainActor in
+                    do {
+                        if let error = error {
+                            if (error as? ASWebAuthenticationSessionError)?.code == .canceledLogin {
+                                continuation.resume(throwing: OAuthError.userCancelled)
+                                return
+                            }
+                            continuation.resume(throwing: OAuthError.authenticationFailed(error))
+                            return
                         }
-                        throw OAuthError.authenticationFailed(error)
-                    }
 
-                    guard let callbackURL = callbackURL else {
-                        throw OAuthError.invalidCallback
-                    }
+                        guard let callbackURL = callbackURL else {
+                            continuation.resume(throwing: OAuthError.invalidCallback)
+                            return
+                        }
 
-                    try await self.handleCallback(url: callbackURL, codeVerifier: codeVerifier)
-                } catch {
-                    print("Authentication error: \(error)")
+                        try await self.handleCallback(url: callbackURL, codeVerifier: codeVerifier)
+                        continuation.resume()
+                    } catch {
+                        continuation.resume(throwing: error)
+                    }
                 }
             }
-        }
 
-        // Set presentation context provider
-        #if canImport(UIKit)
-        let contextProvider = WebAuthenticationPresentationContextProvider()
-        session.presentationContextProvider = contextProvider
-        #endif
-        session.prefersEphemeralWebBrowserSession = false
+            // Set presentation context provider
+            #if canImport(UIKit)
+            let contextProvider = WebAuthenticationPresentationContextProvider()
+            session.presentationContextProvider = contextProvider
+            #endif
+            session.prefersEphemeralWebBrowserSession = false
 
-        guard session.start() else {
-            throw OAuthError.sessionStartFailed
+            if !session.start() {
+                continuation.resume(throwing: OAuthError.sessionStartFailed)
+            }
         }
     }
 

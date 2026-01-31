@@ -15,6 +15,8 @@ public final class MockItemService: ItemServiceProtocol {
 
     public var fetchItemsResult: Result<[StorageItem], Error> = .success([])
     public var fetchItemResult: Result<StorageItem, Error>?
+    public var fetchPreviewItemResult: Result<StorageItem, Error>?
+    public var fetchItemFromURLResult: Result<StorageItem, Error>?
     public var createItemResult: Result<StorageItem, Error>?
     public var updateItemResult: Result<StorageItem, Error>?
     public var setItemParentResult: Result<StorageItem, Error>?
@@ -24,6 +26,8 @@ public final class MockItemService: ItemServiceProtocol {
     // Call tracking
     public var fetchItemsCalled = false
     public var fetchItemCalled = false
+    public var fetchPreviewItemCalled = false
+    public var fetchItemFromURLCalled = false
     public var createItemCalled = false
     public var updateItemCalled = false
     public var setItemParentCalled = false
@@ -31,6 +35,8 @@ public final class MockItemService: ItemServiceProtocol {
     public var generateQRCodeCalled = false
 
     public var lastFetchItemId: Int?
+    public var lastFetchPreviewItemId: Int?
+    public var lastFetchItemFromURL: URL?
     public var lastCreateItemRequest: NewItemRequest?
     public var lastUpdateItemId: Int?
     public var lastUpdateItemRequest: UpdateItemRequest?
@@ -58,6 +64,38 @@ public final class MockItemService: ItemServiceProtocol {
         lastFetchItemId = id
 
         if let result = fetchItemResult {
+            switch result {
+            case .success(let item):
+                return item
+            case .failure(let error):
+                throw error
+            }
+        }
+
+        throw APIError.notFound
+    }
+
+    public func fetchPreviewItem(id: Int) async throws -> StorageItem {
+        fetchPreviewItemCalled = true
+        lastFetchPreviewItemId = id
+
+        if let result = fetchPreviewItemResult {
+            switch result {
+            case .success(let item):
+                return item
+            case .failure(let error):
+                throw error
+            }
+        }
+
+        throw APIError.notFound
+    }
+
+    public func fetchItemFromURL(_ url: URL) async throws -> StorageItem {
+        fetchItemFromURLCalled = true
+        lastFetchItemFromURL = url
+
+        if let result = fetchItemFromURLResult {
             switch result {
             case .success(let item):
                 return item

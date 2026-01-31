@@ -12,6 +12,8 @@ import Foundation
 public protocol ItemServiceProtocol {
     func fetchItems(filters: ItemFilters?) async throws -> [StorageItem]
     func fetchItem(id: Int) async throws -> StorageItem
+    func fetchPreviewItem(id: Int) async throws -> StorageItem
+    func fetchItemFromURL(_ url: URL) async throws -> StorageItem
     func createItem(_ request: NewItemRequest) async throws -> StorageItem
     func updateItem(id: Int, _ request: UpdateItemRequest) async throws -> StorageItem
     func setItemParent(childId: String, parentId: Int?) async throws -> StorageItem
@@ -40,6 +42,22 @@ public class ItemService: ItemServiceProtocol {
             .getItem(id: id),
             responseType: StorageItem.self
         )
+    }
+
+    /// Fetch item for preview (supports public access without authentication).
+    /// This uses the public preview endpoint which:
+    /// - Returns public items without requiring authentication
+    /// - Returns 401 for private items when not authenticated
+    /// - Returns 403 for private items when authenticated but not whitelisted
+    public func fetchPreviewItem(id: Int) async throws -> StorageItem {
+        return try await apiClient.getPublic(
+            .previewItem(id: id),
+            responseType: StorageItem.self
+        )
+    }
+
+    public func fetchItemFromURL(_ url: URL) async throws -> StorageItem {
+        return try await apiClient.getFromURL(url, responseType: StorageItem.self)
     }
 
     public func createItem(_ request: NewItemRequest) async throws -> StorageItem {

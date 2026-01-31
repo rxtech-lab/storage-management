@@ -17,6 +17,10 @@
 		DF6626642F2B892800333552 /* JSONSchema in Frameworks */ = {isa = PBXBuildFile; productRef = DF6626632F2B892800333552 /* JSONSchema */; };
 		DF6626D92F2CF37000333552 /* icon.icon in Resources */ = {isa = PBXBuildFile; fileRef = DF6626D82F2CF37000333552 /* icon.icon */; };
 		DF6626DA2F2CF4EB00333552 /* icon.icon in Resources */ = {isa = PBXBuildFile; fileRef = DF6626D82F2CF37000333552 /* icon.icon */; };
+		DF6628322F2E327300333552 /* JSONSchemaForm in Frameworks */ = {isa = PBXBuildFile; productRef = DF6628312F2E327300333552 /* JSONSchemaForm */; };
+		DF6628342F2E327300333552 /* JsonSchemaEditor in Frameworks */ = {isa = PBXBuildFile; productRef = DF6628332F2E327300333552 /* JsonSchemaEditor */; };
+		DF6628362F2E327300333552 /* RxStorageCore in Frameworks */ = {isa = PBXBuildFile; productRef = DF6628352F2E327300333552 /* RxStorageCore */; };
+		DF6628382F2E327300333552 /* JSONSchema in Frameworks */ = {isa = PBXBuildFile; productRef = DF6628372F2E327300333552 /* JSONSchema */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -86,6 +90,7 @@
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
+				Views/AppClip/AppClipRootView.swift,
 			);
 			target = DF66255C2F29136F00333552 /* RxStorage */;
 		};
@@ -96,6 +101,34 @@
 			);
 			target = DF66258F2F29138300333552 /* RxStorageClips */;
 		};
+		DF66282F2F2E325B00333552 /* Exceptions for "RxStorage" folder in "RxStorageClips" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Views/AppClip/AppClipRootView.swift,
+				Views/Authors/AuthorDetailView.swift,
+				Views/Authors/AuthorFormSheet.swift,
+				Views/Authors/AuthorListView.swift,
+				Views/Categories/CategoryDetailView.swift,
+				Views/Categories/CategoryFormSheet.swift,
+				Views/Categories/CategoryListView.swift,
+				Views/Items/AddChildSheet.swift,
+				Views/Items/ContentFormSheet.swift,
+				Views/Items/ContentSectionView.swift,
+				Views/Items/ItemDetailView.swift,
+				Views/Items/ItemFormSheet.swift,
+				Views/Items/ItemListView.swift,
+				Views/Items/ItemRow.swift,
+				Views/Items/PositionFormSheet.swift,
+				Views/Loading/LoadingOverlay.swift,
+				Views/Locations/LocationDetailView.swift,
+				Views/Locations/LocationFormSheet.swift,
+				Views/Locations/LocationListView.swift,
+				Views/PositionSchemas/PositionSchemaFormSheet.swift,
+				Views/QRCode/QRCodeScannerView.swift,
+				Views/QRCode/QRCodeView.swift,
+			);
+			target = DF66258F2F29138300333552 /* RxStorageClips */;
+		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -103,6 +136,7 @@
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
 				DF6625802F29137000333552 /* Exceptions for "RxStorage" folder in "RxStorage" target */,
+				DF66282F2F2E325B00333552 /* Exceptions for "RxStorage" folder in "RxStorageClips" target */,
 			);
 			path = RxStorage;
 			sourceTree = "<group>";
@@ -170,6 +204,10 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				DF6628342F2E327300333552 /* JsonSchemaEditor in Frameworks */,
+				DF6628382F2E327300333552 /* JSONSchema in Frameworks */,
+				DF6628362F2E327300333552 /* RxStorageCore in Frameworks */,
+				DF6628322F2E327300333552 /* JSONSchemaForm in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -201,6 +239,7 @@
 				DF6625AE2F29138400333552 /* RxStorageClipsUITests */,
 				DF66255E2F29136F00333552 /* Products */,
 				DF6626D82F2CF37000333552 /* icon.icon */,
+				DF6628302F2E327300333552 /* Frameworks */,
 			);
 			sourceTree = "<group>";
 		};
@@ -215,6 +254,13 @@
 				DF6625AB2F29138400333552 /* RxStorageClipsUITests.xctest */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		DF6628302F2E327300333552 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -314,6 +360,10 @@
 			);
 			name = RxStorageClips;
 			packageProductDependencies = (
+				DF6628312F2E327300333552 /* JSONSchemaForm */,
+				DF6628332F2E327300333552 /* JsonSchemaEditor */,
+				DF6628352F2E327300333552 /* RxStorageCore */,
+				DF6628372F2E327300333552 /* JSONSchema */,
 			);
 			productName = RxStorageClips;
 			productReference = DF6625902F29138300333552 /* RxStorageClips.app */;
@@ -829,6 +879,8 @@
 		};
 		DF6625B72F29138400333552 /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReferenceAnchor = DF66255F2F29136F00333552 /* RxStorage */;
+			baseConfigurationReferenceRelativePath = Config/Debug.xcconfig;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = icon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
@@ -865,6 +917,8 @@
 		};
 		DF6625B82F29138400333552 /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReferenceAnchor = DF66255F2F29136F00333552 /* RxStorage */;
+			baseConfigurationReferenceRelativePath = Config/Release.xcconfig;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = icon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
@@ -1117,6 +1171,26 @@
 			productName = RxStorageCore;
 		};
 		DF6626632F2B892800333552 /* JSONSchema */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = DF6626622F2B892800333552 /* XCRemoteSwiftPackageReference "swift-json-schema" */;
+			productName = JSONSchema;
+		};
+		DF6628312F2E327300333552 /* JSONSchemaForm */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = DF6626542F2B803300333552 /* XCRemoteSwiftPackageReference "swift-jsonschema-form" */;
+			productName = JSONSchemaForm;
+		};
+		DF6628332F2E327300333552 /* JsonSchemaEditor */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = DF66265C2F2B826C00333552 /* XCLocalSwiftPackageReference "packages/JsonSchemaEditor" */;
+			productName = JsonSchemaEditor;
+		};
+		DF6628352F2E327300333552 /* RxStorageCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = DF66265F2F2B828600333552 /* XCLocalSwiftPackageReference "packages/RxStorageCore" */;
+			productName = RxStorageCore;
+		};
+		DF6628372F2E327300333552 /* JSONSchema */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = DF6626622F2B892800333552 /* XCRemoteSwiftPackageReference "swift-json-schema" */;
 			productName = JSONSchema;
