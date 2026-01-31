@@ -224,8 +224,9 @@ export async function getItem(
 
 export async function getItemChildren(
   parentId: number,
+  userId?: string,
 ): Promise<ItemWithRelations[]> {
-  return getItems(undefined, { parentId });
+  return getItems(userId, { parentId });
 }
 
 export async function createItemAction(
