@@ -44,7 +44,7 @@ export function PropertyList({
   return (
     <div className="space-y-3">
       {items.length === 0 ? (
-        <div className="text-center py-8 text-muted-foreground text-sm border border-dashed rounded-lg">
+        <div className="text-center py-8 text-muted-foreground text-sm border border-dashed rounded-lg" data-testid="property-list-empty">
           No properties defined. Add a property to get started.
         </div>
       ) : (
@@ -53,6 +53,7 @@ export function PropertyList({
             <PropertyEditor
               key={`${item.key}-${index}`}
               item={item}
+              index={index}
               onChange={(updated) => handleUpdateProperty(index, updated)}
               onDelete={() => handleDeleteProperty(index)}
               onMoveUp={() => handleMoveUp(index)}
@@ -72,6 +73,7 @@ export function PropertyList({
         onClick={handleAddProperty}
         disabled={disabled}
         className="w-full"
+        data-testid="property-list-add-button"
       >
         <Plus className="h-4 w-4 mr-2" />
         Add Property

@@ -88,16 +88,35 @@ test.describe.serial("Items API", () => {
     expect(body.previewUrl).toContain(`/preview/${createdItemId}`);
   });
 
-  test("GET /api/v1/items/{id}/children - should get item children", async ({
+  test("GET /api/v1/items/{id} - should include children in response", async ({
     request,
   }) => {
-    const response = await request.get(
-      `/api/v1/items/${createdItemId}/children`,
-    );
+    // Create a child item for the parent
+    const childResponse = await request.post("/api/v1/items", {
+      data: {
+        title: "Child Item",
+        description: "Child of test item",
+        parentId: createdItemId,
+        visibility: "public",
+      },
+    });
+    expect(childResponse.status()).toBe(201);
+    const childItem = await childResponse.json();
 
+    // Fetch the parent item and verify children are included
+    const response = await request.get(`/api/v1/items/${createdItemId}`);
     expect(response.status()).toBe(200);
     const body = await response.json();
-    expect(body).toBeInstanceOf(Array);
+
+    expect(body).toHaveProperty("children");
+    expect(body.children).toBeInstanceOf(Array);
+    expect(body.children.length).toBe(1);
+    expect(body.children[0].id).toBe(childItem.id);
+    expect(body.children[0].title).toBe("Child Item");
+    expect(body.children[0]).toHaveProperty("previewUrl");
+
+    // Clean up child item
+    await request.delete(`/api/v1/items/${childItem.id}`);
   });
 
   test("DELETE /api/v1/items/{id} - should delete item", async ({

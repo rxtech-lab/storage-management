@@ -108,13 +108,14 @@ export function PositionSchemaForm({ positionSchema }: PositionSchemaFormProps) 
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6" data-testid="position-schema-form">
           <div className="space-y-2">
             <Label htmlFor="name">Schema Name *</Label>
             <Input
               id="name"
               {...register("name")}
               placeholder="e.g., Bookshelf Position, Drawer Location"
+              data-testid="position-schema-name-input"
             />
             {errors.name && (
               <p className="text-sm text-destructive">{errors.name.message}</p>
@@ -144,14 +145,15 @@ export function PositionSchemaForm({ positionSchema }: PositionSchemaFormProps) 
           </div>
 
           <div className="flex gap-4">
-            <Button type="submit" disabled={isSubmitting}>
+            <Button type="submit" disabled={isSubmitting} data-testid="position-schema-submit-button">
               {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               {isEditing ? "Update Schema" : "Create Schema"}
             </Button>
             <Button
               type="button"
               variant="outline"
-              onClick={() => router.back()}
+              onClick={() => router.push("/position-schemas")}
+              data-testid="position-schema-cancel-button"
             >
               Cancel
             </Button>

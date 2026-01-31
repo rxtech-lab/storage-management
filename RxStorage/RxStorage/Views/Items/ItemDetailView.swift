@@ -20,6 +20,15 @@ struct ItemDetailView: View {
     @State private var showNFCError = false
     @State private var nfcError: Error?
     @State private var showNFCSuccess = false
+    @State private var showingAddChildSheet = false
+    @State private var isAddingChild = false
+    @State private var addChildError: Error?
+    @State private var showAddChildError = false
+    @State private var removeChildError: Error?
+    @State private var showRemoveChildError = false
+    @State private var showingContentSheet = false
+    @State private var contentError: Error?
+    @State private var showContentError = false
 
     init(itemId: Int) {
         self.itemId = itemId
@@ -40,11 +49,13 @@ struct ItemDetailView: View {
                         // Details
                         itemDetails(item)
 
+                        // Contents
+                        Divider()
+                        contentsSection
+
                         // Children
-                        if !viewModel.children.isEmpty {
-                            Divider()
-                            childrenSection
-                        }
+                        Divider()
+                        childrenSection
                     }
                     .padding()
                 }
@@ -104,6 +115,7 @@ struct ItemDetailView: View {
         }
         .task(id: itemId) {
             await viewModel.fetchItem(id: itemId)
+            await viewModel.fetchContentSchemas()
         }
         .alert("NFC Write Successful", isPresented: $showNFCSuccess) {
             Button("OK", role: .cancel) {}
@@ -114,6 +126,51 @@ struct ItemDetailView: View {
             Button("OK", role: .cancel) {}
         } message: {
             Text(nfcError?.localizedDescription ?? "An unknown error occurred.")
+        }
+        .sheet(isPresented: $showingAddChildSheet) {
+            if let item = viewModel.item {
+                NavigationStack {
+                    AddChildSheet(
+                        parentItemId: item.id,
+                        existingChildIds: Set(viewModel.children.map { $0.id }),
+                        isAdding: $isAddingChild,
+                        onChildSelected: { childData in
+                            if let childId = Int(childData.itemId) {
+                                Task {
+                                    await addChild(childId)
+                                }
+                            }
+                        }
+                    )
+                }
+            }
+        }
+        .alert("Error Adding Child", isPresented: $showAddChildError) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(addChildError?.localizedDescription ?? "An error occurred while adding the child item.")
+        }
+        .alert("Error Removing Child", isPresented: $showRemoveChildError) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(removeChildError?.localizedDescription ?? "An error occurred while removing the child item.")
+        }
+        .sheet(isPresented: $showingContentSheet) {
+            NavigationStack {
+                ContentFormSheet(
+                    contentSchemas: $viewModel.contentSchemas,
+                    onSubmit: { type, data in
+                        Task {
+                            await createContent(type: type, data: data)
+                        }
+                    }
+                )
+            }
+        }
+        .alert("Content Error", isPresented: $showContentError) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(contentError?.localizedDescription ?? "An error occurred.")
         }
     }
 
@@ -218,14 +275,183 @@ struct ItemDetailView: View {
 
     private var childrenSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Label("Child Items", systemImage: "list.bullet.indent")
-                .font(.headline)
+            HStack {
+                Label("Child Items", systemImage: "list.bullet.indent")
+                    .font(.headline)
 
-            ForEach(viewModel.children) { child in
-                NavigationLink(value: child) {
-                    ItemRow(item: child)
+                Spacer()
+
+                Button {
+                    showingAddChildSheet = true
+                } label: {
+                    Label("Add Child", systemImage: "plus.circle")
+                        .font(.subheadline)
                 }
             }
+
+            if viewModel.children.isEmpty {
+                Text("No child items")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .padding(.vertical, 8)
+            } else {
+                ForEach(viewModel.children) { child in
+                    HStack {
+                        NavigationLink(value: child) {
+                            ItemRow(item: child)
+                        }
+
+                        Spacer()
+
+                        Button(role: .destructive) {
+                            // Capture child ID synchronously before entering async context
+                            let childId = child.id
+                            Task {
+                                await removeChild(childId)
+                            }
+                        } label: {
+                            Image(systemName: "minus.circle")
+                                .foregroundStyle(.red)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+            }
+        }
+    }
+
+    // MARK: - Child Management
+
+    private func addChild(_ childId: Int) async {
+        isAddingChild = true
+        defer { isAddingChild = false }
+        do {
+            try await viewModel.addChildById(childId)
+        } catch {
+            addChildError = error
+            showAddChildError = true
+        }
+    }
+
+    private func removeChild(_ childId: Int) async {
+        do {
+            try await viewModel.removeChildById(childId)
+        } catch {
+            removeChildError = error
+            showRemoveChildError = true
+        }
+    }
+
+    // MARK: - Contents Section
+
+    private var contentsSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Label("Contents", systemImage: "doc.on.doc")
+                    .font(.headline)
+
+                Spacer()
+
+                Button {
+                    showingContentSheet = true
+                } label: {
+                    Label("Add Content", systemImage: "plus.circle")
+                        .font(.subheadline)
+                }
+            }
+
+            if viewModel.contents.isEmpty {
+                Text("No contents")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .padding(.vertical, 8)
+            } else {
+                ForEach(viewModel.contents) { content in
+                    HStack(alignment: .top, spacing: 12) {
+                        Image(systemName: content.type.icon)
+                            .font(.title2)
+                            .foregroundStyle(contentIconColor(for: content.type))
+                            .frame(width: 32, height: 32)
+
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(content.data.title ?? "Untitled")
+                                .font(.subheadline)
+                                .fontWeight(.medium)
+
+                            if let description = content.data.description, !description.isEmpty {
+                                Text(description)
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                                    .lineLimit(2)
+                            }
+
+                            HStack(spacing: 8) {
+                                if let mimeType = content.data.mimeType {
+                                    Text(mimeType)
+                                        .font(.caption2)
+                                        .foregroundStyle(.tertiary)
+                                }
+
+                                if let size = content.data.formattedSize {
+                                    Text(size)
+                                        .font(.caption2)
+                                        .foregroundStyle(.tertiary)
+                                }
+
+                                if let duration = content.data.formattedVideoLength {
+                                    Label(duration, systemImage: "clock")
+                                        .font(.caption2)
+                                        .foregroundStyle(.tertiary)
+                                }
+                            }
+                        }
+
+                        Spacer()
+
+                        Button(role: .destructive) {
+                            Task {
+                                await deleteContent(content.id)
+                            }
+                        } label: {
+                            Image(systemName: "trash")
+                                .foregroundStyle(.red)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                    .padding(.vertical, 4)
+                }
+            }
+        }
+    }
+
+    // MARK: - Content Management
+
+    private func contentIconColor(for type: Content.ContentType) -> Color {
+        switch type {
+        case .file:
+            return .blue
+        case .image:
+            return .green
+        case .video:
+            return .purple
+        }
+    }
+
+    private func createContent(type: Content.ContentType, data: [String: AnyCodable]) async {
+        do {
+            try await viewModel.createContent(type: type, formData: data)
+        } catch {
+            contentError = error
+            showContentError = true
+        }
+    }
+
+    private func deleteContent(_ id: Int) async {
+        do {
+            try await viewModel.deleteContent(id: id)
+        } catch {
+            contentError = error
+            showContentError = true
         }
     }
 }

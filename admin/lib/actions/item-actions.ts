@@ -124,8 +124,10 @@ export async function getItems(
     .orderBy(desc(items.updatedAt))
     .$dynamic();
 
-  // Always filter by the authenticated user's ID
-  const conditions = [eq(items.userId, sessionUserId)];
+  // Show user's own items OR public items from other users
+  const conditions = [
+    or(eq(items.userId, sessionUserId), eq(items.visibility, "public")),
+  ];
 
   if (filters?.categoryId) {
     conditions.push(eq(items.categoryId, filters.categoryId));
@@ -224,8 +226,9 @@ export async function getItem(
 
 export async function getItemChildren(
   parentId: number,
+  userId?: string,
 ): Promise<ItemWithRelations[]> {
-  return getItems(undefined, { parentId });
+  return getItems(userId, { parentId });
 }
 
 export async function createItemAction(
@@ -510,6 +513,70 @@ export async function deleteItemFormAction(
 ): Promise<void> {
   await deleteItemAction(id, userId);
   redirect("/items");
+}
+
+export async function setItemParent(
+  childId: number,
+  parentId: number | null,
+  userId?: string
+): Promise<{ success: boolean; data?: Item; error?: string }> {
+  try {
+    await ensureSchemaInitialized();
+
+    // Get userId from session if not provided
+    let resolvedUserId = userId;
+    if (!resolvedUserId) {
+      const session = await getSession();
+      if (!session?.user?.id) {
+        return { success: false, error: "Unauthorized" };
+      }
+      resolvedUserId = session.user.id;
+    }
+
+    // Verify ownership of the child item
+    const existing = await db
+      .select({ userId: items.userId })
+      .from(items)
+      .where(eq(items.id, childId))
+      .limit(1);
+
+    if (!existing[0] || existing[0].userId !== resolvedUserId) {
+      return { success: false, error: "Permission denied" };
+    }
+
+    // If parentId is provided, verify the parent exists and belongs to the user
+    if (parentId !== null) {
+      const parent = await db
+        .select({ userId: items.userId })
+        .from(items)
+        .where(eq(items.id, parentId))
+        .limit(1);
+
+      if (!parent[0] || parent[0].userId !== resolvedUserId) {
+        return { success: false, error: "Parent item not found or permission denied" };
+      }
+    }
+
+    // Update only the parentId
+    const result = await db
+      .update(items)
+      .set({ parentId, updatedAt: new Date() })
+      .where(eq(items.id, childId))
+      .returning();
+
+    revalidatePath("/items");
+    revalidatePath(`/items/${childId}`);
+    if (parentId) {
+      revalidatePath(`/items/${parentId}`);
+    }
+
+    return { success: true, data: result[0] };
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Failed to update parent",
+    };
+  }
 }
 
 export async function searchItems(

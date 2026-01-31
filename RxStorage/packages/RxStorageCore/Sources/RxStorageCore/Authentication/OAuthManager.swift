@@ -312,10 +312,33 @@ public final class OAuthManager {
     // MARK: - Private Helpers
 
     private func checkAuthenticationStatus() async {
-        if let _ = await tokenStorage.getAccessToken(), await !tokenStorage.isTokenExpired() {
+        // Check if we have an access token
+        guard let _ = await tokenStorage.getAccessToken() else {
+            authState = .unauthenticated
+            return
+        }
+
+        // If token is not expired, we're good
+        if await !tokenStorage.isTokenExpired() {
             authState = .authenticated
             try? await fetchUserInfo()
-        } else {
+            return
+        }
+
+        // Token is expired - try to refresh if we have a refresh token
+        guard await tokenStorage.getRefreshToken() != nil else {
+            authState = .unauthenticated
+            return
+        }
+
+        // Attempt to refresh the token
+        do {
+            try await apiClient.refreshAccessToken()
+            try await fetchUserInfo()
+            authState = .authenticated
+        } catch {
+            // Refresh failed - clear tokens and require re-login
+            try? await tokenStorage.clearAll()
             authState = .unauthenticated
         }
     }

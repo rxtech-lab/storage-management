@@ -28,6 +28,12 @@ public struct StorageItem: Codable, Identifiable, Hashable, Sendable {
     public let location: Location?
     public let author: Author?
 
+    // Children (optional, populated by detail endpoint)
+    public let children: [StorageItem]?
+
+    // Contents (optional, populated by detail endpoint)
+    public let contents: [Content]?
+
     public init(
         id: Int,
         title: String,
@@ -45,7 +51,8 @@ public struct StorageItem: Codable, Identifiable, Hashable, Sendable {
         location: Location? = nil,
         author: Author? = nil,
         previewUrl: String,
-
+        children: [StorageItem]? = nil,
+        contents: [Content]? = nil
     ) {
         self.id = id
         self.title = title
@@ -63,6 +70,8 @@ public struct StorageItem: Codable, Identifiable, Hashable, Sendable {
         self.location = location
         self.author = author
         self.previewUrl = previewUrl
+        self.children = children
+        self.contents = contents
     }
 
     /// Item visibility

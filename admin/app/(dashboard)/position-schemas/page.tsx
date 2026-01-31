@@ -18,7 +18,7 @@ export default async function PositionSchemasPage() {
           </p>
         </div>
         <Link href="/position-schemas/new">
-          <Button>
+          <Button data-testid="position-schemas-new-button">
             <Plus className="h-4 w-4 mr-2" />
             New Schema
           </Button>
@@ -26,7 +26,7 @@ export default async function PositionSchemasPage() {
       </div>
 
       {schemas.length === 0 ? (
-        <Card>
+        <Card data-testid="position-schemas-empty-state">
           <CardContent className="py-12 text-center">
             <p className="text-muted-foreground mb-4">No position schemas yet</p>
             <Link href="/position-schemas/new">
@@ -38,7 +38,7 @@ export default async function PositionSchemasPage() {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" data-testid="position-schemas-grid">
           {schemas.map((schema) => {
             const schemaObj = schema.schema as { properties?: Record<string, unknown> };
             const fieldCount = schemaObj.properties
@@ -46,7 +46,7 @@ export default async function PositionSchemasPage() {
               : 0;
 
             return (
-              <Card key={schema.id}>
+              <Card key={schema.id} data-testid={`position-schema-card-${schema.id}`}>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-lg flex items-center gap-2">
                     <FileJson className="h-4 w-4 text-muted-foreground" />
@@ -54,12 +54,12 @@ export default async function PositionSchemasPage() {
                   </CardTitle>
                   <div className="flex gap-1">
                     <Link href={`/position-schemas/${schema.id}`}>
-                      <Button variant="ghost" size="icon">
+                      <Button variant="ghost" size="icon" data-testid={`position-schema-edit-button-${schema.id}`}>
                         <Edit className="h-4 w-4" />
                       </Button>
                     </Link>
                     <form action={deletePositionSchemaFormAction.bind(null, schema.id)}>
-                      <Button variant="ghost" size="icon" type="submit">
+                      <Button variant="ghost" size="icon" type="submit" data-testid={`position-schema-delete-button-${schema.id}`}>
                         <Trash className="h-4 w-4 text-destructive" />
                       </Button>
                     </form>

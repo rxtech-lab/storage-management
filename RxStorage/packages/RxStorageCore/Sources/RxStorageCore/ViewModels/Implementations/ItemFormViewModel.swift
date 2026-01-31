@@ -38,6 +38,11 @@ public final class ItemFormViewModel: ItemFormViewModelProtocol {
     public private(set) var positions: [Position] = []      // Edit mode: existing positions
     public var pendingPositions: [PendingPosition] = []     // Create/edit: new positions to add
 
+    // Content data
+    public var contentSchemas: [ContentSchema] = []         // Predefined schemas (file/image/video)
+    public private(set) var contents: [Content] = []        // Edit mode: existing contents
+    public var pendingContents: [PendingContent] = []       // Create/edit: new contents to add
+
     // State
     public private(set) var isLoading = false
     public private(set) var isSubmitting = false
@@ -56,6 +61,8 @@ public final class ItemFormViewModel: ItemFormViewModelProtocol {
     private let authorService: AuthorServiceProtocol
     private let positionSchemaService: PositionSchemaServiceProtocol
     private let positionService: PositionServiceProtocol
+    private let contentSchemaService: ContentSchemaServiceProtocol
+    private let contentService: ContentServiceProtocol
     private let uploadManager: UploadManager
 
     // MARK: - Initialization
@@ -68,6 +75,8 @@ public final class ItemFormViewModel: ItemFormViewModelProtocol {
         authorService: AuthorServiceProtocol = AuthorService(),
         positionSchemaService: PositionSchemaServiceProtocol = PositionSchemaService(),
         positionService: PositionServiceProtocol = PositionService(),
+        contentSchemaService: ContentSchemaServiceProtocol = ContentSchemaService(),
+        contentService: ContentServiceProtocol = ContentService(),
         uploadManager: UploadManager = .shared
     ) {
         self.item = item
@@ -77,6 +86,8 @@ public final class ItemFormViewModel: ItemFormViewModelProtocol {
         self.authorService = authorService
         self.positionSchemaService = positionSchemaService
         self.positionService = positionService
+        self.contentSchemaService = contentSchemaService
+        self.contentService = contentService
         self.uploadManager = uploadManager
 
         // Populate form if editing
@@ -133,6 +144,22 @@ public final class ItemFormViewModel: ItemFormViewModelProtocol {
                 positions = try await positionService.fetchItemPositions(itemId: itemId)
             } catch {
                 print("Failed to load positions: \(error)")
+            }
+        }
+
+        // Load content schemas
+        do {
+            contentSchemas = try await contentSchemaService.fetchContentSchemas()
+        } catch {
+            print("Failed to load content schemas: \(error)")
+        }
+
+        // Load existing contents if editing
+        if let itemId = item?.id {
+            do {
+                contents = try await contentService.fetchItemContents(itemId: itemId)
+            } catch {
+                print("Failed to load contents: \(error)")
             }
         }
 
@@ -256,6 +283,34 @@ public final class ItemFormViewModel: ItemFormViewModelProtocol {
     public func removePosition(id: Int) async throws {
         try await positionService.deletePosition(id: id)
         positions.removeAll { $0.id == id }
+    }
+
+    // MARK: - Content Management
+
+    /// Add a pending content to be created with the item
+    public func addPendingContent(type: Content.ContentType, formData: [String: AnyCodable]) {
+        let pending = PendingContent(type: type, formData: formData)
+        pendingContents.append(pending)
+    }
+
+    /// Remove a pending content
+    public func removePendingContent(id: UUID) {
+        pendingContents.removeAll { $0.id == id }
+    }
+
+    /// Create content for existing item (edit mode only)
+    public func createContent(type: Content.ContentType, formData: [String: AnyCodable]) async throws {
+        guard let itemId = item?.id else { return }
+
+        let pending = PendingContent(type: type, formData: formData)
+        let created = try await contentService.createContent(itemId: itemId, pending.asContentRequest)
+        contents.append(created)
+    }
+
+    /// Delete an existing content (only for edit mode)
+    public func removeContent(id: Int) async throws {
+        try await contentService.deleteContent(id: id)
+        contents.removeAll { $0.id == id }
     }
 
     // MARK: - Image Upload

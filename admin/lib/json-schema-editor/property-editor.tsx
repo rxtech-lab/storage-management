@@ -27,6 +27,7 @@ import { validatePropertyKey } from "./schema-utils";
 
 export function PropertyEditor({
   item,
+  index,
   onChange,
   onDelete,
   onMoveUp,
@@ -159,6 +160,7 @@ export function PropertyEditor({
             onClick={onDelete}
             disabled={disabled}
             className="h-7 w-7 p-0 text-destructive hover:text-destructive"
+            data-testid={`property-delete-button-${index}`}
           >
             <Trash2 className="h-3.5 w-3.5" />
           </Button>
@@ -181,6 +183,7 @@ export function PropertyEditor({
                 placeholder="property_name"
                 disabled={disabled}
                 className={cn("h-8", keyError && "border-destructive")}
+                data-testid={`property-name-input-${index}`}
               />
               {keyError && (
                 <p className="text-xs text-destructive">{keyError}</p>
@@ -196,7 +199,7 @@ export function PropertyEditor({
                 onValueChange={(v) => handleTypeChange(v as PropertyType)}
                 disabled={disabled}
               >
-                <SelectTrigger id={`type-${item.key}`} className="h-8 w-full">
+                <SelectTrigger id={`type-${item.key}`} className="h-8 w-full" data-testid={`property-type-select-${index}`}>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -223,6 +226,7 @@ export function PropertyEditor({
                 placeholder="Display title"
                 disabled={disabled}
                 className="h-8"
+                data-testid={`property-title-input-${index}`}
               />
             </div>
 
@@ -234,6 +238,7 @@ export function PropertyEditor({
                     handleRequiredChange(checked === true)
                   }
                   disabled={disabled}
+                  data-testid={`property-required-checkbox-${index}`}
                 />
                 <span className="text-xs">Required</span>
               </label>

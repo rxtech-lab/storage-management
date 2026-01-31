@@ -134,6 +134,11 @@ struct ItemPreviewView: View {
                     }
                 }
             }
+
+            // Contents (read-only)
+            if !preview.contents.isEmpty {
+                ContentSectionView(contents: preview.contents)
+            }
         }
     }
 
