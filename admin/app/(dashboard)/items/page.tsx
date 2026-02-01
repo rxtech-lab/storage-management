@@ -8,11 +8,18 @@ import { Plus } from "lucide-react";
 import { ItemFilters } from "@/components/items/item-filters";
 import { ItemPreview } from "@/components/items/item-preview";
 import { ItemTreeView } from "@/components/items/item-tree-view";
-import { getItems, type ItemWithRelations } from "@/lib/actions/item-actions";
+import { PaginationNav } from "@/components/ui/pagination-nav";
+import {
+  getItemsPaginated,
+  type ItemWithRelations,
+} from "@/lib/actions/item-actions";
 import { getCategories } from "@/lib/actions/category-actions";
 import { getLocations } from "@/lib/actions/location-actions";
 import { getAuthors } from "@/lib/actions/author-actions";
 import type { Category, Location, Author } from "@/lib/db";
+import type { PaginationInfo } from "@/lib/utils/pagination";
+
+const PAGE_SIZE = 20;
 
 export default function ItemsPage() {
   const searchParams = useSearchParams();
@@ -22,6 +29,7 @@ export default function ItemsPage() {
   const [locations, setLocations] = useState<Location[]>([]);
   const [authors, setAuthors] = useState<Author[]>([]);
   const [loading, setLoading] = useState(true);
+  const [pagination, setPagination] = useState<PaginationInfo | null>(null);
 
   useEffect(() => {
     async function loadData() {
@@ -42,17 +50,21 @@ export default function ItemsPage() {
             | "private"
             | undefined,
           search: searchParams.get("search") || undefined,
+          cursor: searchParams.get("cursor") || undefined,
+          direction: (searchParams.get("direction") as "next" | "prev") || "next",
+          limit: PAGE_SIZE,
         };
 
-        const [itemsData, categoriesData, locationsData, authorsData] =
+        const [itemsResult, categoriesData, locationsData, authorsData] =
           await Promise.all([
-            getItems(undefined, filters),
+            getItemsPaginated(undefined, filters),
             getCategories(),
             getLocations(),
             getAuthors(),
           ]);
 
-        setItems(itemsData);
+        setItems(itemsResult.data);
+        setPagination(itemsResult.pagination);
         setCategories(categoriesData);
         setLocations(locationsData);
         setAuthors(authorsData);
@@ -117,6 +129,15 @@ export default function ItemsPage() {
             <ItemPreview key={item.id} item={item} view="list" />
           ))}
         </div>
+      )}
+
+      {pagination && (
+        <PaginationNav
+          nextCursor={pagination.nextCursor}
+          prevCursor={pagination.prevCursor}
+          hasNextPage={pagination.hasNextPage}
+          hasPrevPage={pagination.hasPrevPage}
+        />
       )}
     </div>
   );

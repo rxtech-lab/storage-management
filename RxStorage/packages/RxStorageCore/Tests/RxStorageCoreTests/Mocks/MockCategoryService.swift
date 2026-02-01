@@ -14,6 +14,7 @@ public final class MockCategoryService: CategoryServiceProtocol {
     // MARK: - Properties
 
     public var fetchCategoriesResult: Result<[RxStorageCore.Category], Error> = .success([])
+    public var fetchCategoriesPaginatedResult: Result<PaginatedResponse<RxStorageCore.Category>, Error>?
     public var fetchCategoryResult: Result<RxStorageCore.Category, Error>?
     public var createCategoryResult: Result<RxStorageCore.Category, Error>?
     public var updateCategoryResult: Result<RxStorageCore.Category, Error>?
@@ -21,6 +22,7 @@ public final class MockCategoryService: CategoryServiceProtocol {
 
     // Call tracking
     public var fetchCategoriesCalled = false
+    public var fetchCategoriesPaginatedCalled = false
     public var fetchCategoryCalled = false
     public var lastFetchCategoryId: Int?
     public var createCategoryCalled = false
@@ -46,6 +48,24 @@ public final class MockCategoryService: CategoryServiceProtocol {
         case .failure(let error):
             throw error
         }
+    }
+
+    public func fetchCategoriesPaginated(filters: CategoryFilters?) async throws -> PaginatedResponse<RxStorageCore.Category> {
+        fetchCategoriesPaginatedCalled = true
+        if let result = fetchCategoriesPaginatedResult {
+            switch result {
+            case .success(let response):
+                return response
+            case .failure(let error):
+                throw error
+            }
+        }
+        // Default: wrap fetchCategoriesResult in paginated response
+        let categories = try await fetchCategories(filters: filters)
+        return PaginatedResponse(
+            data: categories,
+            pagination: PaginationInfo(nextCursor: nil, prevCursor: nil, hasNextPage: false, hasPrevPage: false)
+        )
     }
 
     public func fetchCategory(id: Int) async throws -> RxStorageCore.Category {

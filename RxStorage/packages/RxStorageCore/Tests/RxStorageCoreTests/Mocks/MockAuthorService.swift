@@ -14,6 +14,7 @@ public final class MockAuthorService: AuthorServiceProtocol {
     // MARK: - Properties
 
     public var fetchAuthorsResult: Result<[Author], Error> = .success([])
+    public var fetchAuthorsPaginatedResult: Result<PaginatedResponse<Author>, Error>?
     public var fetchAuthorResult: Result<Author, Error>?
     public var createAuthorResult: Result<Author, Error>?
     public var updateAuthorResult: Result<Author, Error>?
@@ -21,6 +22,7 @@ public final class MockAuthorService: AuthorServiceProtocol {
 
     // Call tracking
     public var fetchAuthorsCalled = false
+    public var fetchAuthorsPaginatedCalled = false
     public var fetchAuthorCalled = false
     public var lastFetchAuthorId: Int?
     public var createAuthorCalled = false
@@ -46,6 +48,24 @@ public final class MockAuthorService: AuthorServiceProtocol {
         case .failure(let error):
             throw error
         }
+    }
+
+    public func fetchAuthorsPaginated(filters: AuthorFilters?) async throws -> PaginatedResponse<Author> {
+        fetchAuthorsPaginatedCalled = true
+        if let result = fetchAuthorsPaginatedResult {
+            switch result {
+            case .success(let response):
+                return response
+            case .failure(let error):
+                throw error
+            }
+        }
+        // Default: wrap fetchAuthorsResult in paginated response
+        let authors = try await fetchAuthors(filters: filters)
+        return PaginatedResponse(
+            data: authors,
+            pagination: PaginationInfo(nextCursor: nil, prevCursor: nil, hasNextPage: false, hasPrevPage: false)
+        )
     }
 
     public func fetchAuthor(id: Int) async throws -> Author {

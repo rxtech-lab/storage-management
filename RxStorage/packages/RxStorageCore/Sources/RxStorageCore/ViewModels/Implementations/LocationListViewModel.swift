@@ -2,7 +2,7 @@
 //  LocationListViewModel.swift
 //  RxStorageCore
 //
-//  Location list view model implementation
+//  Location list view model implementation with pagination support
 //
 
 @preconcurrency import Combine
@@ -20,6 +20,12 @@ public final class LocationListViewModel: LocationListViewModelProtocol {
     public private(set) var isSearching = false
     public private(set) var error: Error?
     public var searchText = ""
+
+    // MARK: - Pagination State
+
+    public private(set) var isLoadingMore = false
+    public private(set) var hasNextPage = true
+    private var nextCursor: String?
 
     // MARK: - Combine
 
@@ -55,6 +61,10 @@ public final class LocationListViewModel: LocationListViewModelProtocol {
     private func performSearch(query: String) async {
         let trimmedQuery = query.trimmingCharacters(in: .whitespaces)
 
+        // Reset pagination state for new search
+        nextCursor = nil
+        hasNextPage = true
+
         // If empty, fetch all locations
         if trimmedQuery.isEmpty {
             await fetchLocations()
@@ -65,8 +75,11 @@ public final class LocationListViewModel: LocationListViewModelProtocol {
         error = nil
 
         do {
-            let filters = LocationFilters(search: trimmedQuery, limit: 10)
-            locations = try await locationService.fetchLocations(filters: filters)
+            let filters = LocationFilters(search: trimmedQuery, limit: PaginationDefaults.pageSize)
+            let response = try await locationService.fetchLocationsPaginated(filters: filters)
+            locations = response.data
+            nextCursor = response.pagination.nextCursor
+            hasNextPage = response.pagination.hasNextPage
             isSearching = false
         } catch {
             self.error = error
@@ -86,12 +99,52 @@ public final class LocationListViewModel: LocationListViewModelProtocol {
         isLoading = true
         error = nil
 
+        // Reset pagination state
+        nextCursor = nil
+        hasNextPage = true
+
         do {
-            locations = try await locationService.fetchLocations(filters: nil)
+            let filters = LocationFilters(limit: PaginationDefaults.pageSize)
+            let response = try await locationService.fetchLocationsPaginated(filters: filters)
+            locations = response.data
+            nextCursor = response.pagination.nextCursor
+            hasNextPage = response.pagination.hasNextPage
             isLoading = false
         } catch {
             self.error = error
             isLoading = false
+        }
+    }
+
+    public func loadMoreLocations() async {
+        guard !isLoadingMore, !isLoading, !isSearching, hasNextPage, let cursor = nextCursor else {
+            return
+        }
+
+        isLoadingMore = true
+
+        do {
+            var filters = LocationFilters()
+            if !searchText.isEmpty {
+                filters.search = searchText
+            }
+            filters.cursor = cursor
+            filters.direction = .next
+            filters.limit = PaginationDefaults.pageSize
+
+            let response = try await locationService.fetchLocationsPaginated(filters: filters)
+
+            // Append new locations (avoid duplicates)
+            let existingIds = Set(locations.map { $0.id })
+            let newLocations = response.data.filter { !existingIds.contains($0.id) }
+            locations.append(contentsOf: newLocations)
+
+            nextCursor = response.pagination.nextCursor
+            hasNextPage = response.pagination.hasNextPage
+            isLoadingMore = false
+        } catch {
+            self.error = error
+            isLoadingMore = false
         }
     }
 

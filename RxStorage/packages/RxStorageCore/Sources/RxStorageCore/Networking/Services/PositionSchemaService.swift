@@ -11,6 +11,7 @@ import Foundation
 @MainActor
 public protocol PositionSchemaServiceProtocol {
     func fetchPositionSchemas(filters: PositionSchemaFilters?) async throws -> [PositionSchema]
+    func fetchPositionSchemasPaginated(filters: PositionSchemaFilters?) async throws -> PaginatedResponse<PositionSchema>
     func fetchPositionSchema(id: Int) async throws -> PositionSchema
     func createPositionSchema(_ request: NewPositionSchemaRequest) async throws -> PositionSchema
     func updatePositionSchema(id: Int, _ request: UpdatePositionSchemaRequest) async throws -> PositionSchema
@@ -30,6 +31,18 @@ public class PositionSchemaService: PositionSchemaServiceProtocol {
         return try await apiClient.get(
             .listPositionSchemas(filters: filters),
             responseType: [PositionSchema].self
+        )
+    }
+
+    public func fetchPositionSchemasPaginated(filters: PositionSchemaFilters? = nil) async throws -> PaginatedResponse<PositionSchema> {
+        var paginatedFilters = filters ?? PositionSchemaFilters()
+        if paginatedFilters.limit == nil {
+            paginatedFilters.limit = PaginationDefaults.pageSize
+        }
+
+        return try await apiClient.get(
+            .listPositionSchemas(filters: paginatedFilters),
+            responseType: PaginatedResponse<PositionSchema>.self
         )
     }
 

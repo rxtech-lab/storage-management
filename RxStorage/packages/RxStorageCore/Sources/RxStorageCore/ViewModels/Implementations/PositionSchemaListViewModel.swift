@@ -2,7 +2,7 @@
 //  PositionSchemaListViewModel.swift
 //  RxStorageCore
 //
-//  Position schema list view model implementation
+//  Position schema list view model implementation with pagination support
 //
 
 @preconcurrency import Combine
@@ -20,6 +20,12 @@ public final class PositionSchemaListViewModel: PositionSchemaListViewModelProto
     public private(set) var isSearching = false
     public private(set) var error: Error?
     public var searchText = ""
+
+    // MARK: - Pagination State
+
+    public private(set) var isLoadingMore = false
+    public private(set) var hasNextPage = true
+    private var nextCursor: String?
 
     // MARK: - Combine
 
@@ -55,6 +61,10 @@ public final class PositionSchemaListViewModel: PositionSchemaListViewModelProto
     private func performSearch(query: String) async {
         let trimmedQuery = query.trimmingCharacters(in: .whitespaces)
 
+        // Reset pagination state for new search
+        nextCursor = nil
+        hasNextPage = true
+
         // If empty, fetch all schemas
         if trimmedQuery.isEmpty {
             await fetchSchemas()
@@ -65,8 +75,11 @@ public final class PositionSchemaListViewModel: PositionSchemaListViewModelProto
         error = nil
 
         do {
-            let filters = PositionSchemaFilters(search: trimmedQuery, limit: 10)
-            schemas = try await schemaService.fetchPositionSchemas(filters: filters)
+            let filters = PositionSchemaFilters(search: trimmedQuery, limit: PaginationDefaults.pageSize)
+            let response = try await schemaService.fetchPositionSchemasPaginated(filters: filters)
+            schemas = response.data
+            nextCursor = response.pagination.nextCursor
+            hasNextPage = response.pagination.hasNextPage
             isSearching = false
         } catch {
             self.error = error
@@ -86,12 +99,52 @@ public final class PositionSchemaListViewModel: PositionSchemaListViewModelProto
         isLoading = true
         error = nil
 
+        // Reset pagination state
+        nextCursor = nil
+        hasNextPage = true
+
         do {
-            schemas = try await schemaService.fetchPositionSchemas(filters: nil)
+            let filters = PositionSchemaFilters(limit: PaginationDefaults.pageSize)
+            let response = try await schemaService.fetchPositionSchemasPaginated(filters: filters)
+            schemas = response.data
+            nextCursor = response.pagination.nextCursor
+            hasNextPage = response.pagination.hasNextPage
             isLoading = false
         } catch {
             self.error = error
             isLoading = false
+        }
+    }
+
+    public func loadMoreSchemas() async {
+        guard !isLoadingMore, !isLoading, !isSearching, hasNextPage, let cursor = nextCursor else {
+            return
+        }
+
+        isLoadingMore = true
+
+        do {
+            var filters = PositionSchemaFilters()
+            if !searchText.isEmpty {
+                filters.search = searchText
+            }
+            filters.cursor = cursor
+            filters.direction = .next
+            filters.limit = PaginationDefaults.pageSize
+
+            let response = try await schemaService.fetchPositionSchemasPaginated(filters: filters)
+
+            // Append new schemas (avoid duplicates)
+            let existingIds = Set(schemas.map { $0.id })
+            let newSchemas = response.data.filter { !existingIds.contains($0.id) }
+            schemas.append(contentsOf: newSchemas)
+
+            nextCursor = response.pagination.nextCursor
+            hasNextPage = response.pagination.hasNextPage
+            isLoadingMore = false
+        } catch {
+            self.error = error
+            isLoadingMore = false
         }
     }
 

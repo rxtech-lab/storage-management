@@ -227,13 +227,21 @@ public struct ItemFilters: Sendable {
     public var visibility: StorageItem.Visibility?
     public var search: String?
 
+    // Pagination parameters
+    public var cursor: String?
+    public var direction: PaginationDirection?
+    public var limit: Int?
+
     public init(
         categoryId: Int? = nil,
         locationId: Int? = nil,
         authorId: Int? = nil,
         parentId: Int?? = nil,
         visibility: StorageItem.Visibility? = nil,
-        search: String? = nil
+        search: String? = nil,
+        cursor: String? = nil,
+        direction: PaginationDirection? = nil,
+        limit: Int? = nil
     ) {
         self.categoryId = categoryId
         self.locationId = locationId
@@ -241,6 +249,9 @@ public struct ItemFilters: Sendable {
         self.parentId = parentId
         self.visibility = visibility
         self.search = search
+        self.cursor = cursor
+        self.direction = direction
+        self.limit = limit
     }
 
     func toQueryItems() -> [URLQueryItem]? {
@@ -268,6 +279,15 @@ public struct ItemFilters: Sendable {
         if let search = search {
             items.append(URLQueryItem(name: "search", value: search))
         }
+        if let cursor = cursor {
+            items.append(URLQueryItem(name: "cursor", value: cursor))
+        }
+        if let direction = direction {
+            items.append(URLQueryItem(name: "direction", value: direction.rawValue))
+        }
+        if let limit = limit {
+            items.append(URLQueryItem(name: "limit", value: String(limit)))
+        }
 
         return items.isEmpty ? nil : items
     }
@@ -276,13 +296,21 @@ public struct ItemFilters: Sendable {
 /// Author filters for list query
 public struct AuthorFilters: Sendable {
     public var search: String?
+
+    // Pagination parameters
+    public var cursor: String?
+    public var direction: PaginationDirection?
     public var limit: Int?
 
     public init(
         search: String? = nil,
+        cursor: String? = nil,
+        direction: PaginationDirection? = nil,
         limit: Int? = nil
     ) {
         self.search = search
+        self.cursor = cursor
+        self.direction = direction
         self.limit = limit
     }
 
@@ -291,6 +319,12 @@ public struct AuthorFilters: Sendable {
 
         if let search = search {
             items.append(URLQueryItem(name: "search", value: search))
+        }
+        if let cursor = cursor {
+            items.append(URLQueryItem(name: "cursor", value: cursor))
+        }
+        if let direction = direction {
+            items.append(URLQueryItem(name: "direction", value: direction.rawValue))
         }
         if let limit = limit {
             items.append(URLQueryItem(name: "limit", value: String(limit)))
@@ -303,13 +337,21 @@ public struct AuthorFilters: Sendable {
 /// Category filters for list query
 public struct CategoryFilters: Sendable {
     public var search: String?
+
+    // Pagination parameters
+    public var cursor: String?
+    public var direction: PaginationDirection?
     public var limit: Int?
 
     public init(
         search: String? = nil,
+        cursor: String? = nil,
+        direction: PaginationDirection? = nil,
         limit: Int? = nil
     ) {
         self.search = search
+        self.cursor = cursor
+        self.direction = direction
         self.limit = limit
     }
 
@@ -318,6 +360,12 @@ public struct CategoryFilters: Sendable {
 
         if let search = search {
             items.append(URLQueryItem(name: "search", value: search))
+        }
+        if let cursor = cursor {
+            items.append(URLQueryItem(name: "cursor", value: cursor))
+        }
+        if let direction = direction {
+            items.append(URLQueryItem(name: "direction", value: direction.rawValue))
         }
         if let limit = limit {
             items.append(URLQueryItem(name: "limit", value: String(limit)))
@@ -330,13 +378,21 @@ public struct CategoryFilters: Sendable {
 /// Location filters for list query
 public struct LocationFilters: Sendable {
     public var search: String?
+
+    // Pagination parameters
+    public var cursor: String?
+    public var direction: PaginationDirection?
     public var limit: Int?
 
     public init(
         search: String? = nil,
+        cursor: String? = nil,
+        direction: PaginationDirection? = nil,
         limit: Int? = nil
     ) {
         self.search = search
+        self.cursor = cursor
+        self.direction = direction
         self.limit = limit
     }
 
@@ -345,6 +401,12 @@ public struct LocationFilters: Sendable {
 
         if let search = search {
             items.append(URLQueryItem(name: "search", value: search))
+        }
+        if let cursor = cursor {
+            items.append(URLQueryItem(name: "cursor", value: cursor))
+        }
+        if let direction = direction {
+            items.append(URLQueryItem(name: "direction", value: direction.rawValue))
         }
         if let limit = limit {
             items.append(URLQueryItem(name: "limit", value: String(limit)))
@@ -357,13 +419,21 @@ public struct LocationFilters: Sendable {
 /// Position schema filters for list query
 public struct PositionSchemaFilters: Sendable {
     public var search: String?
+
+    // Pagination parameters
+    public var cursor: String?
+    public var direction: PaginationDirection?
     public var limit: Int?
 
     public init(
         search: String? = nil,
+        cursor: String? = nil,
+        direction: PaginationDirection? = nil,
         limit: Int? = nil
     ) {
         self.search = search
+        self.cursor = cursor
+        self.direction = direction
         self.limit = limit
     }
 
@@ -372,6 +442,12 @@ public struct PositionSchemaFilters: Sendable {
 
         if let search = search {
             items.append(URLQueryItem(name: "search", value: search))
+        }
+        if let cursor = cursor {
+            items.append(URLQueryItem(name: "cursor", value: cursor))
+        }
+        if let direction = direction {
+            items.append(URLQueryItem(name: "direction", value: direction.rawValue))
         }
         if let limit = limit {
             items.append(URLQueryItem(name: "limit", value: String(limit)))
