@@ -7,6 +7,7 @@ import {
   deleteItemAction,
 } from "@/lib/actions/item-actions";
 import { getItemContents } from "@/lib/actions/content-actions";
+import { getItemPositions } from "@/lib/actions/position-actions";
 import { signImagesArray } from "@/lib/actions/s3-upload-actions";
 import { isEmailWhitelisted } from "@/lib/actions/whitelist-actions";
 
@@ -58,13 +59,14 @@ async function buildItemResponse(
 ) {
   const previewUrl = `${process.env.NEXT_PUBLIC_URL}/preview/item/${item.id}`;
 
-  // Fetch item images, children, and contents in parallel
-  const [images, children, contents] = await Promise.all([
+  // Fetch item images, children, contents, and positions in parallel
+  const [images, children, contents, positions] = await Promise.all([
     item.images && item.images.length > 0
       ? signImagesArray(item.images)
       : Promise.resolve([]),
     getItemChildren(itemId, userId ?? undefined),
     getItemContents(itemId),
+    getItemPositions(itemId),
   ]);
 
   // Sign images for each child
@@ -88,6 +90,7 @@ async function buildItemResponse(
     previewUrl,
     children: childrenWithSignedImages,
     contents,
+    positions,
   });
 }
 

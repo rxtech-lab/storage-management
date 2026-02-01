@@ -2,7 +2,7 @@
 //  AuthorListViewModel.swift
 //  RxStorageCore
 //
-//  Author list view model implementation
+//  Author list view model implementation with pagination support
 //
 
 @preconcurrency import Combine
@@ -20,6 +20,12 @@ public final class AuthorListViewModel: AuthorListViewModelProtocol {
     public private(set) var isSearching = false
     public private(set) var error: Error?
     public var searchText = ""
+
+    // MARK: - Pagination State
+
+    public private(set) var isLoadingMore = false
+    public private(set) var hasNextPage = true
+    private var nextCursor: String?
 
     // MARK: - Combine
 
@@ -55,6 +61,10 @@ public final class AuthorListViewModel: AuthorListViewModelProtocol {
     private func performSearch(query: String) async {
         let trimmedQuery = query.trimmingCharacters(in: .whitespaces)
 
+        // Reset pagination state for new search
+        nextCursor = nil
+        hasNextPage = true
+
         // If empty, fetch all authors
         if trimmedQuery.isEmpty {
             await fetchAuthors()
@@ -65,8 +75,11 @@ public final class AuthorListViewModel: AuthorListViewModelProtocol {
         error = nil
 
         do {
-            let filters = AuthorFilters(search: trimmedQuery, limit: 10)
-            authors = try await authorService.fetchAuthors(filters: filters)
+            let filters = AuthorFilters(search: trimmedQuery, limit: PaginationDefaults.pageSize)
+            let response = try await authorService.fetchAuthorsPaginated(filters: filters)
+            authors = response.data
+            nextCursor = response.pagination.nextCursor
+            hasNextPage = response.pagination.hasNextPage
             isSearching = false
         } catch {
             self.error = error
@@ -86,12 +99,52 @@ public final class AuthorListViewModel: AuthorListViewModelProtocol {
         isLoading = true
         error = nil
 
+        // Reset pagination state
+        nextCursor = nil
+        hasNextPage = true
+
         do {
-            authors = try await authorService.fetchAuthors(filters: nil)
+            let filters = AuthorFilters(limit: PaginationDefaults.pageSize)
+            let response = try await authorService.fetchAuthorsPaginated(filters: filters)
+            authors = response.data
+            nextCursor = response.pagination.nextCursor
+            hasNextPage = response.pagination.hasNextPage
             isLoading = false
         } catch {
             self.error = error
             isLoading = false
+        }
+    }
+
+    public func loadMoreAuthors() async {
+        guard !isLoadingMore, !isLoading, !isSearching, hasNextPage, let cursor = nextCursor else {
+            return
+        }
+
+        isLoadingMore = true
+
+        do {
+            var filters = AuthorFilters()
+            if !searchText.isEmpty {
+                filters.search = searchText
+            }
+            filters.cursor = cursor
+            filters.direction = .next
+            filters.limit = PaginationDefaults.pageSize
+
+            let response = try await authorService.fetchAuthorsPaginated(filters: filters)
+
+            // Append new authors (avoid duplicates)
+            let existingIds = Set(authors.map { $0.id })
+            let newAuthors = response.data.filter { !existingIds.contains($0.id) }
+            authors.append(contentsOf: newAuthors)
+
+            nextCursor = response.pagination.nextCursor
+            hasNextPage = response.pagination.hasNextPage
+            isLoadingMore = false
+        } catch {
+            self.error = error
+            isLoadingMore = false
         }
     }
 

@@ -2,11 +2,31 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Plus, Edit, Trash, User } from "lucide-react";
-import { getAuthors, deleteAuthorFormAction } from "@/lib/actions/author-actions";
+import {
+  getAuthorsPaginated,
+  deleteAuthorFormAction,
+} from "@/lib/actions/author-actions";
 import { formatDistanceToNow } from "date-fns";
+import { PaginationNav } from "@/components/ui/pagination-nav";
 
-export default async function AuthorsPage() {
-  const authors = await getAuthors();
+const PAGE_SIZE = 20;
+
+export default async function AuthorsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ cursor?: string; direction?: string }>;
+}) {
+  const params = await searchParams;
+  const cursor = params.cursor;
+  const direction = (params.direction ?? "next") as "next" | "prev";
+
+  const result = await getAuthorsPaginated(undefined, {
+    cursor,
+    direction,
+    limit: PAGE_SIZE,
+  });
+
+  const authors = result.data;
 
   return (
     <div className="flex flex-col gap-6">
@@ -66,13 +86,23 @@ export default async function AuthorsPage() {
                   </p>
                 )}
                 <p className="text-xs text-muted-foreground">
-                  Updated {formatDistanceToNow(new Date(author.updatedAt), { addSuffix: true })}
+                  Updated{" "}
+                  {formatDistanceToNow(new Date(author.updatedAt), {
+                    addSuffix: true,
+                  })}
                 </p>
               </CardContent>
             </Card>
           ))}
         </div>
       )}
+
+      <PaginationNav
+        nextCursor={result.pagination.nextCursor}
+        prevCursor={result.pagination.prevCursor}
+        hasNextPage={result.pagination.hasNextPage}
+        hasPrevPage={result.pagination.hasPrevPage}
+      />
     </div>
   );
 }

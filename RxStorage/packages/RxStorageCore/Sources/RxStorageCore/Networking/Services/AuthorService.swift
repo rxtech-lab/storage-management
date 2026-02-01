@@ -11,6 +11,7 @@ import Foundation
 @MainActor
 public protocol AuthorServiceProtocol {
     func fetchAuthors(filters: AuthorFilters?) async throws -> [Author]
+    func fetchAuthorsPaginated(filters: AuthorFilters?) async throws -> PaginatedResponse<Author>
     func fetchAuthor(id: Int) async throws -> Author
     func createAuthor(_ request: NewAuthorRequest) async throws -> Author
     func updateAuthor(id: Int, _ request: UpdateAuthorRequest) async throws -> Author
@@ -30,6 +31,18 @@ public class AuthorService: AuthorServiceProtocol {
         return try await apiClient.get(
             .listAuthors(filters: filters),
             responseType: [Author].self
+        )
+    }
+
+    public func fetchAuthorsPaginated(filters: AuthorFilters? = nil) async throws -> PaginatedResponse<Author> {
+        var paginatedFilters = filters ?? AuthorFilters()
+        if paginatedFilters.limit == nil {
+            paginatedFilters.limit = PaginationDefaults.pageSize
+        }
+
+        return try await apiClient.get(
+            .listAuthors(filters: paginatedFilters),
+            responseType: PaginatedResponse<Author>.self
         )
     }
 

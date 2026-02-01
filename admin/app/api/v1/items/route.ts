@@ -2,10 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth-helper";
 import {
   getItems,
+  getItemsPaginated,
   createItemAction,
   type ItemFilters,
+  type PaginatedItemFilters,
 } from "@/lib/actions/item-actions";
 import { signImagesArray } from "@/lib/actions/s3-upload-actions";
+import { parsePaginationParams } from "@/lib/utils/pagination";
 
 export async function GET(request: NextRequest) {
   const session = await getSession(request);
@@ -38,6 +41,46 @@ export async function GET(request: NextRequest) {
     filters.search = searchParams.get("search")!;
   }
 
+  // Check if pagination is requested
+  const hasPaginationParams =
+    searchParams.has("cursor") || searchParams.has("limit");
+
+  if (hasPaginationParams) {
+    const paginationParams = parsePaginationParams({
+      cursor: searchParams.get("cursor"),
+      direction: searchParams.get("direction"),
+      limit: searchParams.get("limit"),
+    });
+
+    const paginatedFilters: PaginatedItemFilters = {
+      ...filters,
+      ...paginationParams,
+    };
+
+    const result = await getItemsPaginated(session.user.id, paginatedFilters);
+
+    // Sign images for each item
+    const dataWithSignedImages = await Promise.all(
+      result.data.map(async (item) => {
+        const images =
+          item.images && item.images.length > 0
+            ? await signImagesArray(item.images)
+            : [];
+        return {
+          ...item,
+          images,
+          previewUrl: `${process.env.NEXT_PUBLIC_URL}/preview/item/${item.id}`,
+        };
+      })
+    );
+
+    return NextResponse.json({
+      data: dataWithSignedImages,
+      pagination: result.pagination,
+    });
+  }
+
+  // Legacy: return full array for backward compatibility
   const items = await getItems(session.user.id, filters);
 
   // Sign images for each item - replace file IDs with signed URLs
@@ -52,7 +95,7 @@ export async function GET(request: NextRequest) {
         images,
         previewUrl: `${process.env.NEXT_PUBLIC_URL}/preview/item/${item.id}`,
       };
-    }),
+    })
   );
 
   return NextResponse.json(itemsWithSignedImages);
@@ -78,7 +121,7 @@ export async function POST(request: NextRequest) {
       const previewUrl = `${process.env.NEXT_PUBLIC_URL}/preview/item/${result.data.id}`;
       return NextResponse.json(
         { ...result.data, images, previewUrl },
-        { status: 201 },
+        { status: 201 }
       );
     } else {
       return NextResponse.json({ error: result.error }, { status: 400 });
@@ -86,7 +129,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Invalid request" },
-      { status: 400 },
+      { status: 400 }
     );
   }
 }

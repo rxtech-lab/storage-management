@@ -16,7 +16,12 @@ public protocol PositionSchemaListViewModelProtocol: AnyObject, Observable {
     var error: Error? { get }
     var searchText: String { get set }
 
+    // Pagination properties
+    var isLoadingMore: Bool { get }
+    var hasNextPage: Bool { get }
+
     func fetchSchemas() async
+    func loadMoreSchemas() async
     func refreshSchemas() async
     func deleteSchema(_ schema: PositionSchema) async throws
 }

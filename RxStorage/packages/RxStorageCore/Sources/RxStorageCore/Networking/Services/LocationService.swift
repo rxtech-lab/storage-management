@@ -11,6 +11,7 @@ import Foundation
 @MainActor
 public protocol LocationServiceProtocol {
     func fetchLocations(filters: LocationFilters?) async throws -> [Location]
+    func fetchLocationsPaginated(filters: LocationFilters?) async throws -> PaginatedResponse<Location>
     func fetchLocation(id: Int) async throws -> Location
     func createLocation(_ request: NewLocationRequest) async throws -> Location
     func updateLocation(id: Int, _ request: UpdateLocationRequest) async throws -> Location
@@ -30,6 +31,18 @@ public class LocationService: LocationServiceProtocol {
         return try await apiClient.get(
             .listLocations(filters: filters),
             responseType: [Location].self
+        )
+    }
+
+    public func fetchLocationsPaginated(filters: LocationFilters? = nil) async throws -> PaginatedResponse<Location> {
+        var paginatedFilters = filters ?? LocationFilters()
+        if paginatedFilters.limit == nil {
+            paginatedFilters.limit = PaginationDefaults.pageSize
+        }
+
+        return try await apiClient.get(
+            .listLocations(filters: paginatedFilters),
+            responseType: PaginatedResponse<Location>.self
         )
     }
 

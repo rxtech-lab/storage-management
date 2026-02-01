@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -19,14 +19,15 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { Loader2, X, Check } from "lucide-react";
 import { toast } from "sonner";
-import { EntitySheet } from "@/components/forms/entity-sheet";
 import { ImageUpload } from "@/components/forms/image-upload";
 import { ParentItemCombobox } from "@/components/forms/parent-item-combobox";
+import { CategoryCombobox } from "@/components/forms/category-combobox";
+import { AuthorCombobox } from "@/components/forms/author-combobox";
+import { LocationCombobox } from "@/components/forms/location-combobox";
 import {
   updateItemAction,
   type ItemWithRelations,
 } from "@/lib/actions/item-actions";
-import type { Category, Location, Author } from "@/lib/db";
 
 const CURRENCIES = [
   "USD",
@@ -60,26 +61,17 @@ type ItemFormData = z.infer<typeof itemSchema>;
 
 interface ItemDetailEditProps {
   item: ItemWithRelations;
-  categories: Category[];
-  locations: Location[];
-  authors: Author[];
   onSave: () => void;
   onCancel: () => void;
 }
 
 export function ItemDetailEdit({
   item,
-  categories: initialCategories,
-  locations: initialLocations,
-  authors: initialAuthors,
   onSave,
   onCancel,
 }: ItemDetailEditProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
-  const [categories, setCategories] = useState(initialCategories);
-  const [locations, setLocations] = useState(initialLocations);
-  const [authors, setAuthors] = useState(initialAuthors);
 
   const {
     register,
@@ -222,98 +214,20 @@ export function ItemDetailEdit({
       <div className="border-t pt-6 space-y-4">
         <h3 className="font-semibold">Relations</h3>
         <div className="grid grid-cols-1 gap-4">
-          <div className="space-y-2">
-            <div className="flex items-center justify-between h-9">
-              <Label>Category</Label>
-              <EntitySheet
-                type="category"
-                onCreated={(entity) => {
-                  setCategories([...categories, entity as Category]);
-                  setValue("categoryId", entity.id);
-                }}
-              />
-            </div>
-            <Select
-              value={categoryId?.toString() ?? "__none__"}
-              onValueChange={(v) =>
-                setValue("categoryId", v === "__none__" ? null : parseInt(v))
-              }
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Select category" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="__none__">None</SelectItem>
-                {categories.map((cat) => (
-                  <SelectItem key={cat.id} value={cat.id.toString()}>
-                    {cat.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          <CategoryCombobox
+            value={categoryId ?? null}
+            onChange={(val) => setValue("categoryId", val)}
+          />
 
-          <div className="space-y-2">
-            <div className="flex items-center justify-between h-9">
-              <Label>Location</Label>
-              <EntitySheet
-                type="location"
-                onCreated={(entity) => {
-                  setLocations([...locations, entity as Location]);
-                  setValue("locationId", entity.id);
-                }}
-              />
-            </div>
-            <Select
-              value={locationId?.toString() ?? "__none__"}
-              onValueChange={(v) =>
-                setValue("locationId", v === "__none__" ? null : parseInt(v))
-              }
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Select location" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="__none__">None</SelectItem>
-                {locations.map((loc) => (
-                  <SelectItem key={loc.id} value={loc.id.toString()}>
-                    {loc.title}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          <LocationCombobox
+            value={locationId ?? null}
+            onChange={(val) => setValue("locationId", val)}
+          />
 
-          <div className="space-y-2">
-            <div className="flex items-center justify-between h-9">
-              <Label>Author</Label>
-              <EntitySheet
-                type="author"
-                onCreated={(entity) => {
-                  setAuthors([...authors, entity as Author]);
-                  setValue("authorId", entity.id);
-                }}
-              />
-            </div>
-            <Select
-              value={authorId?.toString() ?? "__none__"}
-              onValueChange={(v) =>
-                setValue("authorId", v === "__none__" ? null : parseInt(v))
-              }
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Select author" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="__none__">None</SelectItem>
-                {authors.map((author) => (
-                  <SelectItem key={author.id} value={author.id.toString()}>
-                    {author.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          <AuthorCombobox
+            value={authorId ?? null}
+            onChange={(val) => setValue("authorId", val)}
+          />
 
           <ParentItemCombobox
             value={parentId ?? null}

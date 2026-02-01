@@ -41,6 +41,9 @@ export function ItemFilters({
       } else {
         params.delete(name);
       }
+      // Reset pagination when filters change
+      params.delete("cursor");
+      params.delete("direction");
       return params.toString();
     },
     [searchParams]

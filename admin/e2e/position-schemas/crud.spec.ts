@@ -167,7 +167,7 @@ test.describe.serial('Position Schema UI CRUD', () => {
     await page.goto('/position-schemas/new');
     await page.waitForLoadState('networkidle');
 
-    await page.getByTestId('position-schema-nam e-input').fill('Invalid JSON Test');
+    await page.getByTestId('position-schema-name-input').fill('Invalid JSON Test');
 
     // Switch to Raw JSON tab
     await page.getByTestId('json-schema-tab-raw').click();

@@ -25,8 +25,19 @@ public protocol ItemListViewModelProtocol: AnyObject, Observable {
     /// Search text
     var searchText: String { get set }
 
+    // MARK: - Pagination Properties
+
+    /// Whether more items are being loaded
+    var isLoadingMore: Bool { get }
+
+    /// Whether there are more items to load
+    var hasNextPage: Bool { get }
+
     /// Fetch items with current filters
     func fetchItems() async
+
+    /// Load more items (pagination)
+    func loadMoreItems() async
 
     /// Refresh items
     func refreshItems() async

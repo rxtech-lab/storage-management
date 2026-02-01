@@ -2,7 +2,7 @@
 //  CategoryListViewModel.swift
 //  RxStorageCore
 //
-//  Category list view model implementation
+//  Category list view model implementation with pagination support
 //
 
 @preconcurrency import Combine
@@ -20,6 +20,12 @@ public final class CategoryListViewModel: CategoryListViewModelProtocol {
     public private(set) var isSearching = false
     public private(set) var error: Error?
     public var searchText = ""
+
+    // MARK: - Pagination State
+
+    public private(set) var isLoadingMore = false
+    public private(set) var hasNextPage = true
+    private var nextCursor: String?
 
     // MARK: - Combine
 
@@ -55,6 +61,10 @@ public final class CategoryListViewModel: CategoryListViewModelProtocol {
     private func performSearch(query: String) async {
         let trimmedQuery = query.trimmingCharacters(in: .whitespaces)
 
+        // Reset pagination state for new search
+        nextCursor = nil
+        hasNextPage = true
+
         // If empty, fetch all categories
         if trimmedQuery.isEmpty {
             await fetchCategories()
@@ -65,8 +75,11 @@ public final class CategoryListViewModel: CategoryListViewModelProtocol {
         error = nil
 
         do {
-            let filters = CategoryFilters(search: trimmedQuery, limit: 10)
-            categories = try await categoryService.fetchCategories(filters: filters)
+            let filters = CategoryFilters(search: trimmedQuery, limit: PaginationDefaults.pageSize)
+            let response = try await categoryService.fetchCategoriesPaginated(filters: filters)
+            categories = response.data
+            nextCursor = response.pagination.nextCursor
+            hasNextPage = response.pagination.hasNextPage
             isSearching = false
         } catch {
             self.error = error
@@ -86,12 +99,52 @@ public final class CategoryListViewModel: CategoryListViewModelProtocol {
         isLoading = true
         error = nil
 
+        // Reset pagination state
+        nextCursor = nil
+        hasNextPage = true
+
         do {
-            categories = try await categoryService.fetchCategories(filters: nil)
+            let filters = CategoryFilters(limit: PaginationDefaults.pageSize)
+            let response = try await categoryService.fetchCategoriesPaginated(filters: filters)
+            categories = response.data
+            nextCursor = response.pagination.nextCursor
+            hasNextPage = response.pagination.hasNextPage
             isLoading = false
         } catch {
             self.error = error
             isLoading = false
+        }
+    }
+
+    public func loadMoreCategories() async {
+        guard !isLoadingMore, !isLoading, !isSearching, hasNextPage, let cursor = nextCursor else {
+            return
+        }
+
+        isLoadingMore = true
+
+        do {
+            var filters = CategoryFilters()
+            if !searchText.isEmpty {
+                filters.search = searchText
+            }
+            filters.cursor = cursor
+            filters.direction = .next
+            filters.limit = PaginationDefaults.pageSize
+
+            let response = try await categoryService.fetchCategoriesPaginated(filters: filters)
+
+            // Append new categories (avoid duplicates)
+            let existingIds = Set(categories.map { $0.id })
+            let newCategories = response.data.filter { !existingIds.contains($0.id) }
+            categories.append(contentsOf: newCategories)
+
+            nextCursor = response.pagination.nextCursor
+            hasNextPage = response.pagination.hasNextPage
+            isLoadingMore = false
+        } catch {
+            self.error = error
+            isLoadingMore = false
         }
     }
 

@@ -14,6 +14,7 @@ public final class MockItemService: ItemServiceProtocol {
     // MARK: - Properties
 
     public var fetchItemsResult: Result<[StorageItem], Error> = .success([])
+    public var fetchItemsPaginatedResult: Result<PaginatedResponse<StorageItem>, Error>?
     public var fetchItemResult: Result<StorageItem, Error>?
     public var fetchPreviewItemResult: Result<StorageItem, Error>?
     public var fetchItemFromURLResult: Result<StorageItem, Error>?
@@ -25,6 +26,7 @@ public final class MockItemService: ItemServiceProtocol {
 
     // Call tracking
     public var fetchItemsCalled = false
+    public var fetchItemsPaginatedCalled = false
     public var fetchItemCalled = false
     public var fetchPreviewItemCalled = false
     public var fetchItemFromURLCalled = false
@@ -57,6 +59,24 @@ public final class MockItemService: ItemServiceProtocol {
         case .failure(let error):
             throw error
         }
+    }
+
+    public func fetchItemsPaginated(filters: ItemFilters?) async throws -> PaginatedResponse<StorageItem> {
+        fetchItemsPaginatedCalled = true
+        if let result = fetchItemsPaginatedResult {
+            switch result {
+            case .success(let response):
+                return response
+            case .failure(let error):
+                throw error
+            }
+        }
+        // Default: wrap fetchItemsResult in paginated response
+        let items = try await fetchItems(filters: filters)
+        return PaginatedResponse(
+            data: items,
+            pagination: PaginationInfo(nextCursor: nil, prevCursor: nil, hasNextPage: false, hasPrevPage: false)
+        )
     }
 
     public func fetchItem(id: Int) async throws -> StorageItem {

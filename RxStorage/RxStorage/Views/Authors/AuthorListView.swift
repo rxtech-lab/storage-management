@@ -65,23 +65,81 @@ struct AuthorListView: View {
 
     // MARK: - Authors List
 
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+
     private var authorsList: some View {
-        List(selection: $selectedAuthor) {
+        List {
             ForEach(viewModel.authors) { author in
-                NavigationLink(value: author) {
-                    AuthorRow(author: author)
-                }
-                .swipeActions(edge: .trailing, allowsFullSwipe: false) {
-                    Button(role: .destructive) {
-                        Task {
-                            try? await viewModel.deleteAuthor(author)
+                if horizontalSizeClass == .compact {
+                    NavigationLink(value: author) {
+                        AuthorRow(author: author)
+                    }
+                    .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                        Button(role: .destructive) {
+                            Task {
+                                try? await viewModel.deleteAuthor(author)
+                            }
+                        } label: {
+                            Label("Delete", systemImage: "trash")
                         }
+                    }
+                    .onAppear {
+                        if shouldLoadMore(for: author) {
+                            Task {
+                                await viewModel.loadMoreAuthors()
+                            }
+                        }
+                    }
+                } else {
+                    Button {
+                        selectedAuthor = author
                     } label: {
-                        Label("Delete", systemImage: "trash")
+                        AuthorRow(author: author)
+                    }
+                    .listRowBackground(selectedAuthor?.id == author.id ? Color.accentColor.opacity(0.2) : nil)
+                    .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                        Button(role: .destructive) {
+                            Task {
+                                try? await viewModel.deleteAuthor(author)
+                            }
+                        } label: {
+                            Label("Delete", systemImage: "trash")
+                        }
+                    }
+                    .onAppear {
+                        if shouldLoadMore(for: author) {
+                            Task {
+                                await viewModel.loadMoreAuthors()
+                            }
+                        }
                     }
                 }
             }
+
+            // Loading more indicator
+            if viewModel.isLoadingMore {
+                HStack {
+                    Spacer()
+                    ProgressView()
+                        .padding()
+                    Spacer()
+                }
+                .listRowSeparator(.hidden)
+            }
         }
+    }
+
+    // MARK: - Pagination Helper
+
+    private func shouldLoadMore(for author: Author) -> Bool {
+        guard let index = viewModel.authors.firstIndex(where: { $0.id == author.id }) else {
+            return false
+        }
+        let threshold = 3
+        return index >= viewModel.authors.count - threshold &&
+               viewModel.hasNextPage &&
+               !viewModel.isLoadingMore &&
+               !viewModel.isLoading
     }
 }
 

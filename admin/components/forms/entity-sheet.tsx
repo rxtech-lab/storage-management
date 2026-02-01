@@ -21,7 +21,7 @@ import { createLocationAction } from "@/lib/actions/location-actions";
 import { createAuthorAction } from "@/lib/actions/author-actions";
 import { LocationPicker } from "@/components/maps/location-picker";
 
-type EntityType = "category" | "location" | "author";
+export type EntityType = "category" | "location" | "author";
 
 interface EntitySheetProps {
   type: EntityType;

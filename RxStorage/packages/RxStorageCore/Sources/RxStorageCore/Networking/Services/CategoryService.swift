@@ -11,6 +11,7 @@ import Foundation
 @MainActor
 public protocol CategoryServiceProtocol {
     func fetchCategories(filters: CategoryFilters?) async throws -> [Category]
+    func fetchCategoriesPaginated(filters: CategoryFilters?) async throws -> PaginatedResponse<Category>
     func fetchCategory(id: Int) async throws -> Category
     func createCategory(_ request: NewCategoryRequest) async throws -> Category
     func updateCategory(id: Int, _ request: UpdateCategoryRequest) async throws -> Category
@@ -30,6 +31,18 @@ public class CategoryService: CategoryServiceProtocol {
         return try await apiClient.get(
             .listCategories(filters: filters),
             responseType: [Category].self
+        )
+    }
+
+    public func fetchCategoriesPaginated(filters: CategoryFilters? = nil) async throws -> PaginatedResponse<Category> {
+        var paginatedFilters = filters ?? CategoryFilters()
+        if paginatedFilters.limit == nil {
+            paginatedFilters.limit = PaginationDefaults.pageSize
+        }
+
+        return try await apiClient.get(
+            .listCategories(filters: paginatedFilters),
+            responseType: PaginatedResponse<Category>.self
         )
     }
 

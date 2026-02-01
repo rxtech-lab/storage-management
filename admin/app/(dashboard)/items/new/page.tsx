@@ -1,8 +1,5 @@
 import { Suspense } from "react";
 import { ItemForm } from "@/components/forms/item-form";
-import { getCategories } from "@/lib/actions/category-actions";
-import { getLocations } from "@/lib/actions/location-actions";
-import { getAuthors } from "@/lib/actions/author-actions";
 import { getPositionSchemas } from "@/lib/actions/position-schema-actions";
 
 interface NewItemPageProps {
@@ -11,12 +8,7 @@ interface NewItemPageProps {
 
 export default async function NewItemPage({ searchParams }: NewItemPageProps) {
   const params = await searchParams;
-  const [categories, locations, authors, positionSchemas] = await Promise.all([
-    getCategories(),
-    getLocations(),
-    getAuthors(),
-    getPositionSchemas(),
-  ]);
+  const positionSchemas = await getPositionSchemas();
 
   const defaultParentId = params.parentId ? parseInt(params.parentId) : undefined;
 
@@ -31,9 +23,6 @@ export default async function NewItemPage({ searchParams }: NewItemPageProps) {
 
       <Suspense fallback={<div>Loading...</div>}>
         <ItemForm
-          categories={categories}
-          locations={locations}
-          authors={authors}
           positionSchemas={positionSchemas}
           defaultParentId={defaultParentId}
         />

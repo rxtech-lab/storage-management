@@ -83,8 +83,8 @@ public actor TokenStorage {
         guard let expiresAt = getExpiresAt() else {
             return true
         }
-        // Consider expired if within 60 seconds of expiration
-        return Date().addingTimeInterval(60) >= expiresAt
+        // Consider expired if within 10 minutes of expiration (for proactive refresh)
+        return Date().addingTimeInterval(600) >= expiresAt
     }
 
     // MARK: - Clear All

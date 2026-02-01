@@ -65,23 +65,81 @@ struct CategoryListView: View {
 
     // MARK: - Categories List
 
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+
     private var categoriesList: some View {
-        List(selection: $selectedCategory) {
+        List {
             ForEach(viewModel.categories) { category in
-                NavigationLink(value: category) {
-                    CategoryRow(category: category)
-                }
-                .swipeActions(edge: .trailing, allowsFullSwipe: false) {
-                    Button(role: .destructive) {
-                        Task {
-                            try? await viewModel.deleteCategory(category)
+                if horizontalSizeClass == .compact {
+                    NavigationLink(value: category) {
+                        CategoryRow(category: category)
+                    }
+                    .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                        Button(role: .destructive) {
+                            Task {
+                                try? await viewModel.deleteCategory(category)
+                            }
+                        } label: {
+                            Label("Delete", systemImage: "trash")
                         }
+                    }
+                    .onAppear {
+                        if shouldLoadMore(for: category) {
+                            Task {
+                                await viewModel.loadMoreCategories()
+                            }
+                        }
+                    }
+                } else {
+                    Button {
+                        selectedCategory = category
                     } label: {
-                        Label("Delete", systemImage: "trash")
+                        CategoryRow(category: category)
+                    }
+                    .listRowBackground(selectedCategory?.id == category.id ? Color.accentColor.opacity(0.2) : nil)
+                    .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                        Button(role: .destructive) {
+                            Task {
+                                try? await viewModel.deleteCategory(category)
+                            }
+                        } label: {
+                            Label("Delete", systemImage: "trash")
+                        }
+                    }
+                    .onAppear {
+                        if shouldLoadMore(for: category) {
+                            Task {
+                                await viewModel.loadMoreCategories()
+                            }
+                        }
                     }
                 }
             }
+
+            // Loading more indicator
+            if viewModel.isLoadingMore {
+                HStack {
+                    Spacer()
+                    ProgressView()
+                        .padding()
+                    Spacer()
+                }
+                .listRowSeparator(.hidden)
+            }
         }
+    }
+
+    // MARK: - Pagination Helper
+
+    private func shouldLoadMore(for category: RxStorageCore.Category) -> Bool {
+        guard let index = viewModel.categories.firstIndex(where: { $0.id == category.id }) else {
+            return false
+        }
+        let threshold = 3
+        return index >= viewModel.categories.count - threshold &&
+               viewModel.hasNextPage &&
+               !viewModel.isLoadingMore &&
+               !viewModel.isLoading
     }
 }
 

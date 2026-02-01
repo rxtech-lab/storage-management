@@ -11,6 +11,7 @@ import Foundation
 @MainActor
 public protocol ItemServiceProtocol {
     func fetchItems(filters: ItemFilters?) async throws -> [StorageItem]
+    func fetchItemsPaginated(filters: ItemFilters?) async throws -> PaginatedResponse<StorageItem>
     func fetchItem(id: Int) async throws -> StorageItem
     func fetchPreviewItem(id: Int) async throws -> StorageItem
     func fetchItemFromURL(_ url: URL) async throws -> StorageItem
@@ -34,6 +35,19 @@ public class ItemService: ItemServiceProtocol {
         return try await apiClient.get(
             .listItems(filters: filters),
             responseType: [StorageItem].self
+        )
+    }
+
+    public func fetchItemsPaginated(filters: ItemFilters? = nil) async throws -> PaginatedResponse<StorageItem> {
+        // Ensure pagination params are set to trigger paginated response
+        var paginatedFilters = filters ?? ItemFilters()
+        if paginatedFilters.limit == nil {
+            paginatedFilters.limit = PaginationDefaults.pageSize
+        }
+
+        return try await apiClient.get(
+            .listItems(filters: paginatedFilters),
+            responseType: PaginatedResponse<StorageItem>.self
         )
     }
 

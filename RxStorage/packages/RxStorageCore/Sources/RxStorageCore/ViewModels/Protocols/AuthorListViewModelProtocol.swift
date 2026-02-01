@@ -16,7 +16,12 @@ public protocol AuthorListViewModelProtocol: AnyObject, Observable {
     var error: Error? { get }
     var searchText: String { get set }
 
+    // Pagination properties
+    var isLoadingMore: Bool { get }
+    var hasNextPage: Bool { get }
+
     func fetchAuthors() async
+    func loadMoreAuthors() async
     func refreshAuthors() async
     func deleteAuthor(_ author: Author) async throws
 }

@@ -22,6 +22,12 @@ struct ItemFormSheet: View {
     @State private var showingAuthorSheet = false
     @State private var showingPositionSheet = false
 
+    // Picker sheets
+    @State private var showingCategoryPicker = false
+    @State private var showingLocationPicker = false
+    @State private var showingAuthorPicker = false
+    @State private var showingParentItemPicker = false
+
     // Photo picker
     @State private var selectedPhotos: [PhotosPickerItem] = []
 
@@ -46,10 +52,18 @@ struct ItemFormSheet: View {
 
             // Category
             Section {
-                Picker("Category", selection: $viewModel.selectedCategoryId) {
-                    Text("None").tag(nil as Int?)
-                    ForEach(viewModel.categories) { category in
-                        Text(category.name).tag(category.id as Int?)
+                Button {
+                    showingCategoryPicker = true
+                } label: {
+                    HStack {
+                        Text("Category")
+                            .foregroundStyle(.primary)
+                        Spacer()
+                        Text(selectedCategoryName)
+                            .foregroundStyle(.secondary)
+                        Image(systemName: "chevron.right")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
                     }
                 }
 
@@ -64,10 +78,18 @@ struct ItemFormSheet: View {
 
             // Location
             Section {
-                Picker("Location", selection: $viewModel.selectedLocationId) {
-                    Text("None").tag(nil as Int?)
-                    ForEach(viewModel.locations) { location in
-                        Text(location.title).tag(location.id as Int?)
+                Button {
+                    showingLocationPicker = true
+                } label: {
+                    HStack {
+                        Text("Location")
+                            .foregroundStyle(.primary)
+                        Spacer()
+                        Text(selectedLocationName)
+                            .foregroundStyle(.secondary)
+                        Image(systemName: "chevron.right")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
                     }
                 }
 
@@ -82,10 +104,18 @@ struct ItemFormSheet: View {
 
             // Author
             Section {
-                Picker("Author", selection: $viewModel.selectedAuthorId) {
-                    Text("None").tag(nil as Int?)
-                    ForEach(viewModel.authors) { author in
-                        Text(author.name).tag(author.id as Int?)
+                Button {
+                    showingAuthorPicker = true
+                } label: {
+                    HStack {
+                        Text("Author")
+                            .foregroundStyle(.primary)
+                        Spacer()
+                        Text(selectedAuthorName)
+                            .foregroundStyle(.secondary)
+                        Image(systemName: "chevron.right")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
                     }
                 }
 
@@ -100,10 +130,18 @@ struct ItemFormSheet: View {
 
             // Parent Item
             Section("Hierarchy") {
-                Picker("Parent Item", selection: $viewModel.selectedParentId) {
-                    Text("None").tag(nil as Int?)
-                    ForEach(viewModel.parentItems) { parentItem in
-                        Text(parentItem.title).tag(parentItem.id as Int?)
+                Button {
+                    showingParentItemPicker = true
+                } label: {
+                    HStack {
+                        Text("Parent Item")
+                            .foregroundStyle(.primary)
+                        Spacer()
+                        Text(selectedParentItemName)
+                            .foregroundStyle(.secondary)
+                        Image(systemName: "chevron.right")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
                     }
                 }
             }
@@ -114,7 +152,7 @@ struct ItemFormSheet: View {
                     Text("Public").tag(StorageItem.Visibility.public)
                     Text("Private").tag(StorageItem.Visibility.private)
                 }
-                .pickerStyle(.segmented)
+                .pickerStyle(.menu)
             }
 
             // Images
@@ -321,6 +359,37 @@ struct ItemFormSheet: View {
                 )
             }
         }
+        .sheet(isPresented: $showingCategoryPicker) {
+            NavigationStack {
+                CategoryPickerSheet(selectedId: viewModel.selectedCategoryId) { category in
+                    viewModel.selectedCategoryId = category?.id
+                }
+            }
+        }
+        .sheet(isPresented: $showingLocationPicker) {
+            NavigationStack {
+                LocationPickerSheet(selectedId: viewModel.selectedLocationId) { location in
+                    viewModel.selectedLocationId = location?.id
+                }
+            }
+        }
+        .sheet(isPresented: $showingAuthorPicker) {
+            NavigationStack {
+                AuthorPickerSheet(selectedId: viewModel.selectedAuthorId) { author in
+                    viewModel.selectedAuthorId = author?.id
+                }
+            }
+        }
+        .sheet(isPresented: $showingParentItemPicker) {
+            NavigationStack {
+                ParentItemPickerSheet(
+                    selectedId: viewModel.selectedParentId,
+                    excludeItemId: item?.id
+                ) { parentItem in
+                    viewModel.selectedParentId = parentItem?.id
+                }
+            }
+        }
         .task {
             await viewModel.loadReferenceData()
         }
@@ -329,6 +398,44 @@ struct ItemFormSheet: View {
                 LoadingOverlay()
             }
         }
+    }
+
+    // MARK: - Computed Properties
+
+    private var selectedCategoryName: String {
+        guard let id = viewModel.selectedCategoryId,
+              let category = viewModel.categories.first(where: { $0.id == id })
+        else {
+            return "None"
+        }
+        return category.name
+    }
+
+    private var selectedLocationName: String {
+        guard let id = viewModel.selectedLocationId,
+              let location = viewModel.locations.first(where: { $0.id == id })
+        else {
+            return "None"
+        }
+        return location.title
+    }
+
+    private var selectedAuthorName: String {
+        guard let id = viewModel.selectedAuthorId,
+              let author = viewModel.authors.first(where: { $0.id == id })
+        else {
+            return "None"
+        }
+        return author.name
+    }
+
+    private var selectedParentItemName: String {
+        guard let id = viewModel.selectedParentId,
+              let parentItem = viewModel.parentItems.first(where: { $0.id == id })
+        else {
+            return "None"
+        }
+        return parentItem.title
     }
 
     // MARK: - Actions
