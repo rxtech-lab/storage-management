@@ -17,39 +17,27 @@ import {
 import type { ItemWithRelations } from "@/lib/actions/item-actions";
 import type { PositionWithSchema } from "@/lib/actions/position-actions";
 import type {
-  Category,
-  Location,
-  Author,
   PositionSchema,
   Content,
   ItemWhitelist,
-  Location as LocationType,
 } from "@/lib/db";
 
 interface ItemPageClientProps {
   item: ItemWithRelations;
-  categories: Category[];
-  locations: Location[];
-  authors: Author[];
   positionSchemas: PositionSchema[];
   positions: PositionWithSchema[];
   contents: Content[];
   whitelist: ItemWhitelist[];
   childItems: ItemWithRelations[];
-  location: LocationType | null;
 }
 
 export function ItemPageClient({
   item,
-  categories,
-  locations,
-  authors,
   positionSchemas,
   positions,
   contents,
   whitelist,
   childItems,
-  location,
 }: ItemPageClientProps) {
   const router = useRouter();
   const [isEditOpen, setIsEditOpen] = useState(false);
@@ -77,9 +65,9 @@ export function ItemPageClient({
       {/* Hero Map */}
       <div className="-mt-14">
         <HeroMap
-          latitude={location?.latitude}
-          longitude={location?.longitude}
-          title={location?.title}
+          latitude={item.location?.latitude ?? undefined}
+          longitude={item.location?.longitude ?? undefined}
+          title={item.location?.title ?? undefined}
         />
       </div>
 
@@ -107,9 +95,6 @@ export function ItemPageClient({
           </SheetHeader>
           <ItemDetailEdit
             item={item}
-            categories={categories}
-            locations={locations}
-            authors={authors}
             onSave={handleSave}
             onCancel={() => setIsEditOpen(false)}
           />

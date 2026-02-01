@@ -14,6 +14,7 @@ public final class MockLocationService: LocationServiceProtocol {
     // MARK: - Properties
 
     public var fetchLocationsResult: Result<[Location], Error> = .success([])
+    public var fetchLocationsPaginatedResult: Result<PaginatedResponse<Location>, Error>?
     public var fetchLocationResult: Result<Location, Error>?
     public var createLocationResult: Result<Location, Error>?
     public var updateLocationResult: Result<Location, Error>?
@@ -21,6 +22,7 @@ public final class MockLocationService: LocationServiceProtocol {
 
     // Call tracking
     public var fetchLocationsCalled = false
+    public var fetchLocationsPaginatedCalled = false
     public var fetchLocationCalled = false
     public var createLocationCalled = false
     public var updateLocationCalled = false
@@ -46,6 +48,24 @@ public final class MockLocationService: LocationServiceProtocol {
         case .failure(let error):
             throw error
         }
+    }
+
+    public func fetchLocationsPaginated(filters: LocationFilters?) async throws -> PaginatedResponse<Location> {
+        fetchLocationsPaginatedCalled = true
+        if let result = fetchLocationsPaginatedResult {
+            switch result {
+            case .success(let response):
+                return response
+            case .failure(let error):
+                throw error
+            }
+        }
+        // Default: wrap fetchLocationsResult in paginated response
+        let locations = try await fetchLocations(filters: filters)
+        return PaginatedResponse(
+            data: locations,
+            pagination: PaginationInfo(nextCursor: nil, prevCursor: nil, hasNextPage: false, hasPrevPage: false)
+        )
     }
 
     public func fetchLocation(id: Int) async throws -> Location {

@@ -65,23 +65,81 @@ struct LocationListView: View {
 
     // MARK: - Locations List
 
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+
     private var locationsList: some View {
-        List(selection: $selectedLocation) {
+        List {
             ForEach(viewModel.locations) { location in
-                NavigationLink(value: location) {
-                    LocationRow(location: location)
-                }
-                .swipeActions(edge: .trailing, allowsFullSwipe: false) {
-                    Button(role: .destructive) {
-                        Task {
-                            try? await viewModel.deleteLocation(location)
+                if horizontalSizeClass == .compact {
+                    NavigationLink(value: location) {
+                        LocationRow(location: location)
+                    }
+                    .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                        Button(role: .destructive) {
+                            Task {
+                                try? await viewModel.deleteLocation(location)
+                            }
+                        } label: {
+                            Label("Delete", systemImage: "trash")
                         }
+                    }
+                    .onAppear {
+                        if shouldLoadMore(for: location) {
+                            Task {
+                                await viewModel.loadMoreLocations()
+                            }
+                        }
+                    }
+                } else {
+                    Button {
+                        selectedLocation = location
                     } label: {
-                        Label("Delete", systemImage: "trash")
+                        LocationRow(location: location)
+                    }
+                    .listRowBackground(selectedLocation?.id == location.id ? Color.accentColor.opacity(0.2) : nil)
+                    .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                        Button(role: .destructive) {
+                            Task {
+                                try? await viewModel.deleteLocation(location)
+                            }
+                        } label: {
+                            Label("Delete", systemImage: "trash")
+                        }
+                    }
+                    .onAppear {
+                        if shouldLoadMore(for: location) {
+                            Task {
+                                await viewModel.loadMoreLocations()
+                            }
+                        }
                     }
                 }
             }
+
+            // Loading more indicator
+            if viewModel.isLoadingMore {
+                HStack {
+                    Spacer()
+                    ProgressView()
+                        .padding()
+                    Spacer()
+                }
+                .listRowSeparator(.hidden)
+            }
         }
+    }
+
+    // MARK: - Pagination Helper
+
+    private func shouldLoadMore(for location: Location) -> Bool {
+        guard let index = viewModel.locations.firstIndex(where: { $0.id == location.id }) else {
+            return false
+        }
+        let threshold = 3
+        return index >= viewModel.locations.count - threshold &&
+               viewModel.hasNextPage &&
+               !viewModel.isLoadingMore &&
+               !viewModel.isLoading
     }
 }
 

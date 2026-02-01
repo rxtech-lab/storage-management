@@ -419,6 +419,26 @@ public final class ItemFormViewModel: ItemFormViewModelProtocol {
         price = item.price.map { String($0) } ?? ""
         visibility = item.visibility
         imageURLs = item.images
+
+        // Pre-populate reference data with embedded objects for immediate display
+        // This prevents the "None" -> "Selected" visual flash when editing
+        if let category = item.category {
+            categories = [category]
+        }
+        if let location = item.location {
+            locations = [location]
+        }
+        if let author = item.author {
+            authors = [author]
+        }
+        // Pre-populate positions from embedded data
+        if let itemPositions = item.positions {
+            positions = itemPositions
+        }
+        // Pre-populate contents from embedded data
+        if let itemContents = item.contents {
+            contents = itemContents
+        }
     }
 }
 

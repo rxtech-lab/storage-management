@@ -138,24 +138,85 @@ struct ItemListView: View {
 
     // MARK: - Items List
 
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+
     private var itemsList: some View {
-        List(selection: $selectedItem) {
+        List {
             ForEach(viewModel.items) { item in
-                NavigationLink(value: item) {
-                    ItemRow(item: item)
-                }
-                .swipeActions(edge: .trailing, allowsFullSwipe: false) {
-                    Button(role: .destructive) {
-                        Task {
-                            try? await viewModel.deleteItem(item)
+                // On iPhone (compact), use NavigationLink for push navigation
+                // On iPad (regular), use Button to set selection for split view
+                if horizontalSizeClass == .compact {
+                    NavigationLink(value: item) {
+                        ItemRow(item: item)
+                    }
+                    .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                        Button(role: .destructive) {
+                            Task {
+                                try? await viewModel.deleteItem(item)
+                            }
+                        } label: {
+                            Label("Delete", systemImage: "trash")
                         }
+                    }
+                    .onAppear {
+                        if shouldLoadMore(for: item) {
+                            Task {
+                                await viewModel.loadMoreItems()
+                            }
+                        }
+                    }
+                } else {
+                    Button {
+                        selectedItem = item
                     } label: {
-                        Label("Delete", systemImage: "trash")
+                        ItemRow(item: item)
+                    }
+                    .listRowBackground(selectedItem?.id == item.id ? Color.accentColor.opacity(0.2) : nil)
+                    .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                        Button(role: .destructive) {
+                            Task {
+                                try? await viewModel.deleteItem(item)
+                            }
+                        } label: {
+                            Label("Delete", systemImage: "trash")
+                        }
+                    }
+                    .onAppear {
+                        if shouldLoadMore(for: item) {
+                            Task {
+                                await viewModel.loadMoreItems()
+                            }
+                        }
                     }
                 }
             }
+
+            // Loading more indicator
+            if viewModel.isLoadingMore {
+                HStack {
+                    Spacer()
+                    ProgressView()
+                        .padding()
+                    Spacer()
+                }
+                .listRowSeparator(.hidden)
+            }
         }
         .listStyle(.automatic)
+    }
+
+    // MARK: - Pagination Helper
+
+    private func shouldLoadMore(for item: StorageItem) -> Bool {
+        guard let index = viewModel.items.firstIndex(where: { $0.id == item.id }) else {
+            return false
+        }
+        // Load more when within 3 items of the end
+        let threshold = 3
+        return index >= viewModel.items.count - threshold &&
+               viewModel.hasNextPage &&
+               !viewModel.isLoadingMore &&
+               !viewModel.isLoading
     }
 
     // MARK: - QR Code Handling
