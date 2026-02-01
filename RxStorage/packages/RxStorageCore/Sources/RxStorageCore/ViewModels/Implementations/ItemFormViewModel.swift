@@ -24,7 +24,7 @@ public final class ItemFormViewModel: ItemFormViewModelProtocol {
     public var selectedAuthorId: Int?
     public var selectedParentId: Int?
     public var price = ""
-    public var visibility: StorageItem.Visibility = .public
+    public var visibility: Visibility = .publicAccess
     public var existingImages: [ImageReference] = []
 
     // Reference data
@@ -202,27 +202,40 @@ public final class ItemFormViewModel: ItemFormViewModelProtocol {
             // Convert pending positions to API format
             let positionsData = pendingPositions.isEmpty ? nil : pendingPositions.map { $0.asNewPositionData }
 
-            let request = NewItemRequest(
-                title: title,
-                description: description.isEmpty ? nil : description,
-                categoryId: selectedCategoryId,
-                locationId: selectedLocationId,
-                authorId: selectedAuthorId,
-                parentId: selectedParentId,
-                price: priceValue,
-                visibility: visibility,
-                images: allImageReferences,
-                positions: positionsData
-            )
-
             let result: StorageItem
             if let existingItem = item {
-                // Update
-                result = try await itemService.updateItem(id: existingItem.id, request)
+                // Update - use UpdateItemRequest with update visibility type
+                let updateVisibility = UpdateVisibility(rawValue: visibility.rawValue)
+                let updateRequest = UpdateItemRequest(
+                    title: title,
+                    description: description.isEmpty ? nil : description,
+                    categoryId: selectedCategoryId,
+                    locationId: selectedLocationId,
+                    authorId: selectedAuthorId,
+                    parentId: selectedParentId,
+                    price: priceValue,
+                    visibility: updateVisibility,
+                    images: allImageReferences,
+                    positions: positionsData
+                )
+                result = try await itemService.updateItem(id: existingItem.id, updateRequest)
                 eventViewModel?.emit(.itemUpdated(id: result.id))
             } else {
-                // Create
-                result = try await itemService.createItem(request)
+                // Create - use NewItemRequest with insert visibility type
+                let insertVisibility = InsertVisibility(rawValue: visibility.rawValue) ?? .privateAccess
+                let createRequest = NewItemRequest(
+                    title: title,
+                    description: description.isEmpty ? nil : description,
+                    categoryId: selectedCategoryId,
+                    locationId: selectedLocationId,
+                    authorId: selectedAuthorId,
+                    parentId: selectedParentId,
+                    price: priceValue,
+                    visibility: insertVisibility,
+                    images: allImageReferences,
+                    positions: positionsData
+                )
+                result = try await itemService.createItem(createRequest)
                 eventViewModel?.emit(.itemCreated(id: result.id))
             }
 
@@ -305,7 +318,7 @@ public final class ItemFormViewModel: ItemFormViewModelProtocol {
     // MARK: - Content Management
 
     /// Add a pending content to be created with the item
-    public func addPendingContent(type: Content.ContentType, formData: [String: AnyCodable]) {
+    public func addPendingContent(type: ContentType, formData: [String: AnyCodable]) {
         let pending = PendingContent(type: type, formData: formData)
         pendingContents.append(pending)
     }
@@ -316,7 +329,7 @@ public final class ItemFormViewModel: ItemFormViewModelProtocol {
     }
 
     /// Create content for existing item (edit mode only)
-    public func createContent(type: Content.ContentType, formData: [String: AnyCodable]) async throws {
+    public func createContent(type: ContentType, formData: [String: AnyCodable]) async throws {
         guard let itemId = item?.id else { return }
 
         let pending = PendingContent(type: type, formData: formData)
@@ -435,27 +448,12 @@ public final class ItemFormViewModel: ItemFormViewModelProtocol {
         selectedParentId = item.parentId
         price = item.price.map { String($0) } ?? ""
         visibility = item.visibility
-        existingImages = item.images
+        // Convert image URLs to ImageReference objects
+        existingImages = item.images.map { ImageReference(url: $0, fileId: nil) }
 
-        // Pre-populate reference data with embedded objects for immediate display
-        // This prevents the "None" -> "Selected" visual flash when editing
-        if let category = item.category {
-            categories = [category]
-        }
-        if let location = item.location {
-            locations = [location]
-        }
-        if let author = item.author {
-            authors = [author]
-        }
-        // Pre-populate positions from embedded data
-        if let itemPositions = item.positions {
-            positions = itemPositions
-        }
-        // Pre-populate contents from embedded data
-        if let itemContents = item.contents {
-            contents = itemContents
-        }
+        // Note: Reference data (categories, locations, authors) and embedded data
+        // (positions, contents) are loaded via loadReferenceData() which fetches
+        // the full response schemas needed for form display.
     }
 }
 

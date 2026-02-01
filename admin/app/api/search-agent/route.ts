@@ -131,10 +131,10 @@ export async function POST(request: Request) {
               ]);
 
             const publicItems = allItems.filter(
-              (i) => i.visibility === "public",
+              (i) => i.visibility === "publicAccess",
             ).length;
             const privateItems = allItems.filter(
-              (i) => i.visibility === "private",
+              (i) => i.visibility === "privateAccess",
             ).length;
 
             // Count items per category

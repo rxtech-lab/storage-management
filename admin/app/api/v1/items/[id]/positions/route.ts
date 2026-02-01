@@ -3,6 +3,17 @@ import { getSession } from "@/lib/auth-helper";
 import { getItemPositions } from "@/lib/actions/position-actions";
 import { getItem } from "@/lib/actions/item-actions";
 
+/**
+ * List item positions
+ * @operationId getItemPositions
+ * @description Returns all position data entries for an item
+ * @pathParams IdPathParams
+ * @response PositionsListResponse
+ * @auth bearer
+ * @tag Positions
+ * @responseSet auth
+ * @openapi
+ */
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }

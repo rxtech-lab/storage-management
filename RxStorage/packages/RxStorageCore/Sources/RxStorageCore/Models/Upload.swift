@@ -7,49 +7,6 @@
 
 import Foundation
 
-// MARK: - API Request/Response Models
-
-/// Request for presigned upload URL
-public struct PresignedURLRequest: Codable, Sendable {
-    public let filename: String
-    public let contentType: String
-    public let size: Int?
-
-    public init(filename: String, contentType: String, size: Int? = nil) {
-        self.filename = filename
-        self.contentType = contentType
-        self.size = size
-    }
-}
-
-/// Response from presigned URL endpoint
-public struct PresignedURLResponse: Codable, Sendable {
-    public let uploadUrl: String
-    public let publicUrl: String
-    public let key: String
-    public let fileId: Int
-    public let expiresAt: String
-
-    public init(
-        uploadUrl: String,
-        publicUrl: String,
-        key: String,
-        fileId: Int,
-        expiresAt: String
-    ) {
-        self.uploadUrl = uploadUrl
-        self.publicUrl = publicUrl
-        self.key = key
-        self.fileId = fileId
-        self.expiresAt = expiresAt
-    }
-
-    /// Returns the file reference format used in item images array
-    public var fileReference: String {
-        "file:\(fileId)"
-    }
-}
-
 // MARK: - Upload Error
 
 /// Errors that can occur during file upload
@@ -90,11 +47,11 @@ public enum UploadError: LocalizedError, Sendable {
 
 /// Result of a successful upload
 public struct UploadResult: Sendable {
-    public let fileId: Int
+    public let fileId: String
     public let publicUrl: String
     public let key: String
 
-    public init(fileId: Int, publicUrl: String, key: String) {
+    public init(fileId: String, publicUrl: String, key: String) {
         self.fileId = fileId
         self.publicUrl = publicUrl
         self.key = key
@@ -115,7 +72,7 @@ public struct PendingUpload: Identifiable, Sendable {
     public let filename: String
     public let contentType: String
     public let fileSize: Int64
-    public var fileId: Int?
+    public var fileId: String?
     public var publicUrl: String?
     public var progress: Double
     public var status: UploadStatus
@@ -126,7 +83,7 @@ public struct PendingUpload: Identifiable, Sendable {
         filename: String,
         contentType: String,
         fileSize: Int64,
-        fileId: Int? = nil,
+        fileId: String? = nil,
         publicUrl: String? = nil,
         progress: Double = 0,
         status: UploadStatus = .pending

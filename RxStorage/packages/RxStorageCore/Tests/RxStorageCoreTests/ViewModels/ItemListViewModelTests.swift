@@ -18,14 +18,14 @@ struct ItemListViewModelTests {
             id: 1,
             title: "Test Item 1",
             description: "Description 1",
-            visibility: StorageItem.Visibility.public
+            visibility: .publicAccess
         ),
         TestHelpers.makeStorageItem(
             id: 2,
             title: "Test Item 2",
             description: "Description 2",
             price: 99.99,
-            visibility: StorageItem.Visibility.private
+            visibility: .privateAccess
         )
     ]
 
@@ -135,7 +135,7 @@ struct ItemListViewModelTests {
         let sut = ItemListViewModel(itemService: mockService)
         sut.searchText = "test"
         sut.filters.categoryId = 1
-        sut.filters.visibility = .public
+        sut.filters.visibility = .publicAccess
 
         // When
         sut.clearFilters()

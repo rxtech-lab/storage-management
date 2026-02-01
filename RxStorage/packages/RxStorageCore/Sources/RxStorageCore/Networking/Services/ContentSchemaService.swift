@@ -2,30 +2,43 @@
 //  ContentSchemaService.swift
 //  RxStorageCore
 //
-//  API service for content schema operations
+//  Content schema service protocol and implementation using generated client
 //
 
 import Foundation
 
+// MARK: - Protocol
+
 /// Protocol for content schema service operations
-@MainActor
-public protocol ContentSchemaServiceProtocol {
+public protocol ContentSchemaServiceProtocol: Sendable {
     func fetchContentSchemas() async throws -> [ContentSchema]
 }
 
-/// Content schema service implementation
-@MainActor
-public class ContentSchemaService: ContentSchemaServiceProtocol {
-    private let apiClient: APIClient
+// MARK: - Implementation
 
-    public init(apiClient: APIClient = .shared) {
-        self.apiClient = apiClient
-    }
+/// Content schema service implementation using generated OpenAPI client
+public struct ContentSchemaService: ContentSchemaServiceProtocol {
+    public init() {}
 
     public func fetchContentSchemas() async throws -> [ContentSchema] {
-        return try await apiClient.get(
-            .listContentSchemas,
-            responseType: [ContentSchema].self
-        )
+        let client = StorageAPIClient.shared.client
+
+        let response = try await client.getContentSchemas(.init())
+
+        switch response {
+        case .ok(let okResponse):
+            return try okResponse.body.json
+        case .badRequest(let badRequest):
+            let error = try? badRequest.body.json
+            throw APIError.badRequest(error?.error ?? "Invalid request")
+        case .forbidden:
+            throw APIError.forbidden
+        case .notFound:
+            throw APIError.notFound
+        case .internalServerError:
+            throw APIError.serverError("Internal server error")
+        case .undocumented(let statusCode, _):
+            throw APIError.serverError("HTTP \(statusCode)")
+        }
     }
 }

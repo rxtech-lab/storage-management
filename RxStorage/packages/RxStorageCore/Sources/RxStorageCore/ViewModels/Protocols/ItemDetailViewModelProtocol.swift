@@ -10,8 +10,8 @@ import Foundation
 /// Protocol for item detail view model operations
 @MainActor
 public protocol ItemDetailViewModelProtocol: AnyObject, Observable {
-    /// Current item
-    var item: StorageItem? { get }
+    /// Current item (detail view with children and contents)
+    var item: StorageItemDetail? { get }
 
     /// Child items (if hierarchical)
     var children: [StorageItem] { get }
@@ -47,7 +47,7 @@ public protocol ItemDetailViewModelProtocol: AnyObject, Observable {
     /// Create a new content for this item
     /// Returns tuple of (itemId, contentId) for event emission
     @discardableResult
-    func createContent(type: Content.ContentType, formData: [String: AnyCodable]) async throws -> (itemId: Int, contentId: Int)
+    func createContent(type: ContentType, formData: [String: AnyCodable]) async throws -> (itemId: Int, contentId: Int)
 
     /// Delete an existing content
     /// Returns tuple of (itemId, contentId) for event emission
@@ -55,5 +55,5 @@ public protocol ItemDetailViewModelProtocol: AnyObject, Observable {
     func deleteContent(id: Int) async throws -> (itemId: Int, contentId: Int)
 
     /// Update an existing content
-    func updateContent(id: Int, type: Content.ContentType, formData: [String: AnyCodable]) async throws
+    func updateContent(id: Int, type: ContentType, formData: [String: AnyCodable]) async throws
 }

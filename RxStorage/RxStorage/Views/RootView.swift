@@ -207,6 +207,14 @@ struct RootView: View {
     // MARK: - Deep Link Handling
 
     private func handleDeepLink(_ url: URL) async {
+        // Extract item ID from URL path (e.g., /preview/123)
+        guard let itemIdString = url.pathComponents.last,
+              let itemId = Int(itemIdString) else {
+            deepLinkError = APIError.unsupportedQRCode(url.absoluteString)
+            showDeepLinkError = true
+            return
+        }
+
         // Ensure we're on the items section
         selectedSection = .items
 
@@ -214,8 +222,8 @@ struct RootView: View {
         defer { isLoadingDeepLink = false }
 
         do {
-            let item = try await itemService.fetchItemFromURL(url)
-            selectedItem = item
+            let itemDetail = try await itemService.fetchItem(id: itemId)
+            selectedItem = itemDetail.toStorageItem()
         } catch {
             deepLinkError = error
             showDeepLinkError = true

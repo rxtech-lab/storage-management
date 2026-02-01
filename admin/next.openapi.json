@@ -1,0 +1,72 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Storage Management API",
+    "version": "1.0.0",
+    "description": "REST API for storage management system - consumed by iOS mobile app"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:3000/api",
+      "description": "Development server"
+    },
+    {
+      "url": "https://storage.rxlab.app/api",
+      "description": "Production server"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "Bearer token authentication"
+      }
+    }
+  },
+  "apiDir": "app/api",
+  "schemaDir": "lib/schemas",
+  "schemaType": "zod",
+  "outputFile": "openapi.json",
+  "outputDir": "./public",
+  "includeOpenApiRoutes": false,
+  "defaultResponseSet": "auth",
+  "responseSets": {
+    "auth": ["400", "401", "403", "404", "500"],
+    "public": ["400", "403", "404", "500"]
+  },
+  "errorConfig": {
+    "template": {
+      "type": "object",
+      "properties": {
+        "error": {
+          "type": "string",
+          "example": "{{ERROR_MESSAGE}}"
+        }
+      }
+    },
+    "codes": {
+      "400": {
+        "description": "Bad Request",
+        "variables": { "ERROR_MESSAGE": "Invalid request parameters" }
+      },
+      "401": {
+        "description": "Unauthorized",
+        "variables": { "ERROR_MESSAGE": "Unauthorized" }
+      },
+      "403": {
+        "description": "Forbidden",
+        "variables": { "ERROR_MESSAGE": "Permission denied" }
+      },
+      "404": {
+        "description": "Not Found",
+        "variables": { "ERROR_MESSAGE": "Resource not found" }
+      },
+      "500": {
+        "description": "Internal Server Error",
+        "variables": { "ERROR_MESSAGE": "An unexpected error occurred" }
+      }
+    }
+  }
+}

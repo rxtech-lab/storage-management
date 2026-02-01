@@ -9,6 +9,17 @@ import {
 } from "@/lib/actions/location-actions";
 import { parsePaginationParams } from "@/lib/utils/pagination";
 
+/**
+ * List locations
+ * @operationId getLocations
+ * @description Retrieve a paginated list of locations
+ * @params LocationsQueryParams
+ * @response PaginatedLocationsResponse
+ * @auth bearer
+ * @tag Locations
+ * @responseSet auth
+ * @openapi
+ */
 export async function GET(request: NextRequest) {
   const session = await getSession(request);
   if (!session) {
@@ -57,6 +68,17 @@ export async function GET(request: NextRequest) {
   return NextResponse.json(locations);
 }
 
+/**
+ * Create location
+ * @operationId createLocation
+ * @description Create a new location with coordinates
+ * @body LocationInsertSchema
+ * @response 201:LocationResponseSchema
+ * @auth bearer
+ * @tag Locations
+ * @responseSet auth
+ * @openapi
+ */
 export async function POST(request: NextRequest) {
   const session = await getSession(request);
   if (!session) {

@@ -87,21 +87,17 @@ struct CategoryDetailView: View {
     @ViewBuilder
     private func categoryDetails(_ category: RxStorageCore.Category) -> some View {
         VStack(alignment: .leading, spacing: 12) {
-            if let createdAt = category.createdAt {
-                DetailRow(
-                    label: "Created",
-                    value: createdAt.formatted(date: .abbreviated, time: .shortened),
-                    icon: "calendar"
-                )
-            }
+            DetailRow(
+                label: "Created",
+                value: category.createdAt.formatted(date: .abbreviated, time: .shortened),
+                icon: "calendar"
+            )
 
-            if let updatedAt = category.updatedAt {
-                DetailRow(
-                    label: "Updated",
-                    value: updatedAt.formatted(date: .abbreviated, time: .shortened),
-                    icon: "clock"
-                )
-            }
+            DetailRow(
+                label: "Updated",
+                value: category.updatedAt.formatted(date: .abbreviated, time: .shortened),
+                icon: "clock"
+            )
         }
     }
 }

@@ -2,14 +2,15 @@
 //  AuthorService.swift
 //  RxStorageCore
 //
-//  API service for author operations
+//  Author service protocol and implementation using generated client
 //
 
 import Foundation
 
+// MARK: - Protocol
+
 /// Protocol for author service operations
-@MainActor
-public protocol AuthorServiceProtocol {
+public protocol AuthorServiceProtocol: Sendable {
     func fetchAuthors(filters: AuthorFilters?) async throws -> [Author]
     func fetchAuthorsPaginated(filters: AuthorFilters?) async throws -> PaginatedResponse<Author>
     func fetchAuthor(id: Int) async throws -> Author
@@ -18,58 +19,144 @@ public protocol AuthorServiceProtocol {
     func deleteAuthor(id: Int) async throws
 }
 
-/// Author service implementation
-@MainActor
-public class AuthorService: AuthorServiceProtocol {
-    private let apiClient: APIClient
+// MARK: - Implementation
 
-    public init(apiClient: APIClient = .shared) {
-        self.apiClient = apiClient
+/// Author service implementation using generated OpenAPI client
+public struct AuthorService: AuthorServiceProtocol {
+    public init() {}
+
+    public func fetchAuthors(filters: AuthorFilters?) async throws -> [Author] {
+        let response = try await fetchAuthorsPaginated(filters: filters)
+        return response.data
     }
 
-    public func fetchAuthors(filters: AuthorFilters? = nil) async throws -> [Author] {
-        return try await apiClient.get(
-            .listAuthors(filters: filters),
-            responseType: [Author].self
+    public func fetchAuthorsPaginated(filters: AuthorFilters?) async throws -> PaginatedResponse<Author> {
+        let client = StorageAPIClient.shared.client
+
+        let direction = filters?.direction.flatMap { Operations.getAuthors.Input.Query.directionPayload(rawValue: $0.rawValue) }
+        let query = Operations.getAuthors.Input.Query(
+            cursor: filters?.cursor,
+            direction: direction,
+            limit: filters?.limit,
+            search: filters?.search
         )
-    }
 
-    public func fetchAuthorsPaginated(filters: AuthorFilters? = nil) async throws -> PaginatedResponse<Author> {
-        var paginatedFilters = filters ?? AuthorFilters()
-        if paginatedFilters.limit == nil {
-            paginatedFilters.limit = PaginationDefaults.pageSize
+        let response = try await client.getAuthors(.init(query: query))
+
+        switch response {
+        case .ok(let okResponse):
+            let body = try okResponse.body.json
+            let pagination = PaginationState(from: body.pagination)
+            return PaginatedResponse(data: body.data, pagination: pagination)
+        case .badRequest(let badRequest):
+            let error = try? badRequest.body.json
+            throw APIError.badRequest(error?.error ?? "Invalid request")
+        case .unauthorized:
+            throw APIError.unauthorized
+        case .forbidden:
+            throw APIError.forbidden
+        case .notFound:
+            throw APIError.notFound
+        case .internalServerError:
+            throw APIError.serverError("Internal server error")
+        case .undocumented(let statusCode, _):
+            throw APIError.serverError("HTTP \(statusCode)")
         }
-
-        return try await apiClient.get(
-            .listAuthors(filters: paginatedFilters),
-            responseType: PaginatedResponse<Author>.self
-        )
     }
 
     public func fetchAuthor(id: Int) async throws -> Author {
-        return try await apiClient.get(
-            .getAuthor(id: id),
-            responseType: Author.self
-        )
+        let client = StorageAPIClient.shared.client
+
+        let response = try await client.getAuthor(.init(path: .init(id: String(id))))
+
+        switch response {
+        case .ok(let okResponse):
+            return try okResponse.body.json
+        case .badRequest(let badRequest):
+            let error = try? badRequest.body.json
+            throw APIError.badRequest(error?.error ?? "Invalid request")
+        case .unauthorized:
+            throw APIError.unauthorized
+        case .forbidden:
+            throw APIError.forbidden
+        case .notFound:
+            throw APIError.notFound
+        case .internalServerError:
+            throw APIError.serverError("Internal server error")
+        case .undocumented(let statusCode, _):
+            throw APIError.serverError("HTTP \(statusCode)")
+        }
     }
 
     public func createAuthor(_ request: NewAuthorRequest) async throws -> Author {
-        return try await apiClient.post(
-            .createAuthor,
-            body: request,
-            responseType: Author.self
-        )
+        let client = StorageAPIClient.shared.client
+
+        let response = try await client.createAuthor(.init(body: .json(request)))
+
+        switch response {
+        case .created(let createdResponse):
+            return try createdResponse.body.json
+        case .badRequest(let badRequest):
+            let error = try? badRequest.body.json
+            throw APIError.badRequest(error?.error ?? "Invalid request")
+        case .unauthorized:
+            throw APIError.unauthorized
+        case .forbidden:
+            throw APIError.forbidden
+        case .notFound:
+            throw APIError.notFound
+        case .internalServerError:
+            throw APIError.serverError("Internal server error")
+        case .undocumented(let statusCode, _):
+            throw APIError.serverError("HTTP \(statusCode)")
+        }
     }
 
     public func updateAuthor(id: Int, _ request: UpdateAuthorRequest) async throws -> Author {
-        return try await apiClient.put(
-            .updateAuthor(id: id),
-            body: request,
-            responseType: Author.self
-        )
+        let client = StorageAPIClient.shared.client
+
+        let response = try await client.updateAuthor(.init(path: .init(id: String(id)), body: .json(request)))
+
+        switch response {
+        case .ok(let okResponse):
+            return try okResponse.body.json
+        case .badRequest(let badRequest):
+            let error = try? badRequest.body.json
+            throw APIError.badRequest(error?.error ?? "Invalid request")
+        case .unauthorized:
+            throw APIError.unauthorized
+        case .forbidden:
+            throw APIError.forbidden
+        case .notFound:
+            throw APIError.notFound
+        case .internalServerError:
+            throw APIError.serverError("Internal server error")
+        case .undocumented(let statusCode, _):
+            throw APIError.serverError("HTTP \(statusCode)")
+        }
     }
 
     public func deleteAuthor(id: Int) async throws {
-        try await apiClient.delete(.deleteAuthor(id: id))
+        let client = StorageAPIClient.shared.client
+
+        let response = try await client.deleteAuthor(.init(path: .init(id: String(id))))
+
+        switch response {
+        case .ok:
+            return
+        case .badRequest(let badRequest):
+            let error = try? badRequest.body.json
+            throw APIError.badRequest(error?.error ?? "Invalid request")
+        case .unauthorized:
+            throw APIError.unauthorized
+        case .forbidden:
+            throw APIError.forbidden
+        case .notFound:
+            throw APIError.notFound
+        case .internalServerError:
+            throw APIError.serverError("Internal server error")
+        case .undocumented(let statusCode, _):
+            throw APIError.serverError("HTTP \(statusCode)")
+        }
     }
 }

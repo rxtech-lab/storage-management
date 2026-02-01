@@ -109,7 +109,6 @@ xcodebuild test \
     -project "$PROJECT_PATH" \
     -scheme "$SCHEME" \
     -configuration "$CONFIGURATION" \
-    -sdk "$SDK" \
     -destination "$DESTINATION" \
     -derivedDataPath "$BUILD_DIR" \
     -resultBundlePath "$RESULT_BUNDLE_PATH" \

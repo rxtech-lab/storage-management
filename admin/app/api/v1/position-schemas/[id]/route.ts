@@ -10,6 +10,17 @@ interface RouteParams {
   params: Promise<{ id: string }>;
 }
 
+/**
+ * Get position schema by ID
+ * @operationId getPositionSchema
+ * @description Retrieve a single position schema by its ID
+ * @pathParams IdPathParams
+ * @response PositionSchemaResponseSchema
+ * @auth bearer
+ * @tag PositionSchemas
+ * @responseSet auth
+ * @openapi
+ */
 export async function GET(request: NextRequest, { params }: RouteParams) {
   const session = await getSession(request);
   if (!session) {
@@ -31,6 +42,18 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
   return NextResponse.json(schema);
 }
 
+/**
+ * Update position schema
+ * @operationId updatePositionSchema
+ * @description Update an existing position schema
+ * @pathParams IdPathParams
+ * @body PositionSchemaUpdateSchema
+ * @response PositionSchemaResponseSchema
+ * @auth bearer
+ * @tag PositionSchemas
+ * @responseSet auth
+ * @openapi
+ */
 export async function PUT(request: NextRequest, { params }: RouteParams) {
   const session = await getSession(request);
   if (!session) {
@@ -58,6 +81,17 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
   }
 }
 
+/**
+ * Delete position schema
+ * @operationId deletePositionSchema
+ * @description Delete a position schema by ID
+ * @pathParams IdPathParams
+ * @response 200:SuccessResponse
+ * @auth bearer
+ * @tag PositionSchemas
+ * @responseSet auth
+ * @openapi
+ */
 export async function DELETE(request: NextRequest, { params }: RouteParams) {
   const session = await getSession(request);
   if (!session) {

@@ -47,11 +47,11 @@ struct ContentRowView: View {
                 .frame(width: 32, height: 32)
 
             VStack(alignment: .leading, spacing: 4) {
-                Text(content.data.title ?? "Untitled")
+                Text(content.contentData.title ?? "Untitled")
                     .font(.subheadline)
                     .fontWeight(.medium)
 
-                if let description = content.data.description, !description.isEmpty {
+                if let description = content.contentData.description, !description.isEmpty {
                     Text(description)
                         .font(.caption)
                         .foregroundStyle(.secondary)
@@ -59,19 +59,19 @@ struct ContentRowView: View {
                 }
 
                 HStack(spacing: 8) {
-                    if let mimeType = content.data.mimeType {
+                    if let mimeType = content.contentData.mimeType {
                         Text(mimeType)
                             .font(.caption2)
                             .foregroundStyle(.tertiary)
                     }
 
-                    if let size = content.data.formattedSize {
+                    if let size = content.contentData.formattedSize {
                         Text(size)
                             .font(.caption2)
                             .foregroundStyle(.tertiary)
                     }
 
-                    if let duration = content.data.formattedVideoLength {
+                    if let duration = content.contentData.formattedVideoLength {
                         Label(duration, systemImage: "clock")
                             .font(.caption2)
                             .foregroundStyle(.tertiary)
@@ -85,46 +85,5 @@ struct ContentRowView: View {
     }
 }
 
-#Preview {
-    ContentSectionView(contents: [
-        Content(
-            id: 1,
-            itemId: 1,
-            type: .file,
-            data: ContentData(
-                title: "Document.pdf",
-                description: "Important document",
-                mimeType: "application/pdf",
-                size: 1_024_000
-            ),
-            createdAt: Date(),
-            updatedAt: Date()
-        ),
-        Content(
-            id: 2,
-            itemId: 1,
-            type: .image,
-            data: ContentData(
-                title: "Photo.jpg",
-                mimeType: "image/jpeg",
-                size: 2_048_000
-            ),
-            createdAt: Date(),
-            updatedAt: Date()
-        ),
-        Content(
-            id: 3,
-            itemId: 1,
-            type: .video,
-            data: ContentData(
-                title: "Video.mp4",
-                mimeType: "video/mp4",
-                size: 10_240_000,
-                videoLength: 120
-            ),
-            createdAt: Date(),
-            updatedAt: Date()
-        ),
-    ])
-    .padding()
-}
+// Preview disabled - generated types have different initializers
+// TODO: Update preview to use generated Content types

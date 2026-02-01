@@ -64,7 +64,7 @@ public final class MockLocationService: LocationServiceProtocol {
         let locations = try await fetchLocations(filters: filters)
         return PaginatedResponse(
             data: locations,
-            pagination: PaginationInfo(nextCursor: nil, prevCursor: nil, hasNextPage: false, hasPrevPage: false)
+            pagination: PaginationState(hasNextPage: false, hasPrevPage: false, nextCursor: nil, prevCursor: nil)
         )
     }
 

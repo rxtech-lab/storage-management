@@ -50,7 +50,7 @@ test.describe.serial("Permission Tests", () => {
         data: {
           title: "User1 Private Item",
           description: "Private item owned by user 1",
-          visibility: "private",
+          visibility: "privateAccess",
           categoryId: user1CategoryId,
           locationId: user1LocationId,
           authorId: user1AuthorId,
@@ -196,11 +196,11 @@ test.describe.serial("Permission Tests", () => {
     test("should update item to public", async ({ request }) => {
       const response = await request.put(`/api/v1/items/${user1ItemId}`, {
         headers: { "X-Test-User-Id": USER_1 },
-        data: { visibility: "public" },
+        data: { visibility: "publicAccess" },
       });
       expect(response.status()).toBe(200);
       const body = await response.json();
-      expect(body.visibility).toBe("public");
+      expect(body.visibility).toBe("publicAccess");
     });
   });
 
@@ -213,7 +213,7 @@ test.describe.serial("Permission Tests", () => {
       const body = await response.json();
       const user1Items = body.filter((item: any) => item.id === user1ItemId);
       expect(user1Items.length).toBe(1);
-      expect(user1Items[0].visibility).toBe("public");
+      expect(user1Items[0].visibility).toBe("publicAccess");
     });
 
     test("should access User 1 public item by ID", async ({ request }) => {
@@ -223,7 +223,7 @@ test.describe.serial("Permission Tests", () => {
       expect(response.status()).toBe(200);
       const body = await response.json();
       expect(body.id).toBe(user1ItemId);
-      expect(body.visibility).toBe("public");
+      expect(body.visibility).toBe("publicAccess");
     });
 
     test("should still get 403 when trying to update public item", async ({ request }) => {

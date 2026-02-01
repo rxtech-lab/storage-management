@@ -12,3 +12,7 @@ test.log
 test-results.xcresult
 build.sh
 *.xcuserstate
+*.swiftmodule
+*.swiftdeps
+*.d
+*.dia

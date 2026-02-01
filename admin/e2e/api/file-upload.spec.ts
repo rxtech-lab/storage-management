@@ -65,7 +65,7 @@ test.describe.serial("File Upload API", () => {
       data: {
         title: "Item with Image",
         description: "Test item with uploaded image",
-        visibility: "public",
+        visibility: "publicAccess",
         images: [`file:${fileId}`],
       },
     });
@@ -173,7 +173,7 @@ test.describe.serial("File Upload API", () => {
     const response = await request.post("/api/v1/items", {
       data: {
         title: "Item with Invalid File ID",
-        visibility: "public",
+        visibility: "publicAccess",
         images: ["file:999999"], // Non-existent file ID
       },
     });
@@ -199,7 +199,7 @@ test.describe.serial("File Upload API", () => {
     const createResponse = await request.post("/api/v1/items", {
       data: {
         title: "Item with Deleted File",
-        visibility: "public",
+        visibility: "publicAccess",
         images: [`file:${fileId}`],
       },
     });

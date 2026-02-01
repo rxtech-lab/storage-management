@@ -41,7 +41,7 @@ test.describe.serial("Items API with Relations", () => {
         locationId,
         authorId,
         price: 999.99,
-        visibility: "public",
+        visibility: "publicAccess",
       },
     });
 
@@ -123,7 +123,7 @@ test.describe.serial("Items API with Relations", () => {
         description: "Charger for the laptop",
         parentId: parentItemId,
         categoryId,
-        visibility: "public",
+        visibility: "publicAccess",
       },
     });
 
@@ -137,13 +137,13 @@ test.describe.serial("Items API with Relations", () => {
   test("GET /api/v1/items?visibility=public - should filter by visibility", async ({
     request,
   }) => {
-    const response = await request.get("/api/v1/items?visibility=public");
+    const response = await request.get("/api/v1/items?visibility=publicAccess");
 
     expect(response.status()).toBe(200);
     const body = await response.json();
     expect(body).toBeInstanceOf(Array);
     expect(
-      body.every((item: any) => item.visibility === "public"),
+      body.every((item: any) => item.visibility === "publicAccess"),
     ).toBeTruthy();
   });
 

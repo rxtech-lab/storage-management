@@ -120,7 +120,7 @@ struct ItemDetailView: View {
         .sheet(isPresented: $showingEditSheet) {
             if let item = viewModel.item {
                 NavigationStack {
-                    ItemFormSheet(item: item)
+                    ItemFormSheet(item: item.toStorageItem())
                 }
             }
         }
@@ -261,15 +261,15 @@ struct ItemDetailView: View {
     // MARK: - Stretchy Image Carousel
 
     @ViewBuilder
-    private func stretchyImageCarousel(_ images: [ImageReference]) -> some View {
+    private func stretchyImageCarousel(_ imageUrls: [String]) -> some View {
         GeometryReader { geometry in
             let minY = geometry.frame(in: .global).minY
             let stretchAmount = max(0, minY)
             let calculatedHeight = imageHeight + stretchAmount
 
             TabView(selection: $selectedImageIndex) {
-                ForEach(Array(images.enumerated()), id: \.element.id) { index, imageRef in
-                    AsyncImage(url: URL(string: imageRef.url)) { phase in
+                ForEach(Array(imageUrls.enumerated()), id: \.offset) { index, imageUrl in
+                    AsyncImage(url: URL(string: imageUrl)) { phase in
                         switch phase {
                         case .success(let image):
                             image
@@ -309,14 +309,14 @@ struct ItemDetailView: View {
     // MARK: - Header Card
 
     @ViewBuilder
-    private func headerCard(_ item: StorageItem) -> some View {
+    private func headerCard(_ item: StorageItemDetail) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
                 Text(item.title)
                     .font(.title2)
                     .fontWeight(.bold)
                 Spacer()
-                if item.visibility == .public {
+                if item.visibility == .publicAccess {
                     Label("Public", systemImage: "globe")
                         .font(.caption)
                         .padding(.horizontal, 8)
@@ -347,7 +347,7 @@ struct ItemDetailView: View {
     // MARK: - Details Card
 
     @ViewBuilder
-    private func detailsCard(_ item: StorageItem) -> some View {
+    private func detailsCard(_ item: StorageItemDetail) -> some View {
         VStack(alignment: .leading, spacing: 12) {
             Label("Details", systemImage: "info.circle")
                 .font(.headline)
@@ -356,28 +356,25 @@ struct ItemDetailView: View {
             Divider()
 
             VStack(spacing: 12) {
-                if let category = item.category {
-                    LabeledContent {
-                        Text(category.name)
-                    } label: {
-                        Label("Category", systemImage: "folder")
-                    }
+                // Category
+                LabeledContent {
+                    Text(item.category.value1.name)
+                } label: {
+                    Label("Category", systemImage: "folder")
                 }
 
-                if let location = item.location {
-                    LabeledContent {
-                        Text(location.title)
-                    } label: {
-                        Label("Location", systemImage: "mappin")
-                    }
+                // Location
+                LabeledContent {
+                    Text(item.location.value1.title)
+                } label: {
+                    Label("Location", systemImage: "mappin")
                 }
 
-                if let author = item.author {
-                    LabeledContent {
-                        Text(author.name)
-                    } label: {
-                        Label("Author", systemImage: "person")
-                    }
+                // Author
+                LabeledContent {
+                    Text(item.author.value1.name)
+                } label: {
+                    Label("Author", systemImage: "person")
                 }
 
                 if let price = item.price {
@@ -599,11 +596,11 @@ struct ItemDetailView: View {
                 .frame(width: 32, height: 32)
 
             VStack(alignment: .leading, spacing: 4) {
-                Text(content.data.title ?? "Untitled")
+                Text(content.contentData.title ?? "Untitled")
                     .font(.subheadline)
                     .fontWeight(.medium)
 
-                if let description = content.data.description, !description.isEmpty {
+                if let description = content.contentData.description, !description.isEmpty {
                     Text(description)
                         .font(.caption)
                         .foregroundStyle(.secondary)
@@ -611,19 +608,19 @@ struct ItemDetailView: View {
                 }
 
                 HStack(spacing: 8) {
-                    if let mimeType = content.data.mimeType {
+                    if let mimeType = content.contentData.mimeType {
                         Text(mimeType)
                             .font(.caption2)
                             .foregroundStyle(.tertiary)
                     }
 
-                    if let size = content.data.formattedSize {
+                    if let size = content.contentData.formattedSize {
                         Text(size)
                             .font(.caption2)
                             .foregroundStyle(.tertiary)
                     }
 
-                    if let duration = content.data.formattedVideoLength {
+                    if let duration = content.contentData.formattedVideoLength {
                         Label(duration, systemImage: "clock")
                             .font(.caption2)
                             .foregroundStyle(.tertiary)
@@ -657,7 +654,7 @@ struct ItemDetailView: View {
 
     // MARK: - Content Management
 
-    private func contentIconColor(for type: Content.ContentType) -> Color {
+    private func contentIconColor(for type: ContentType) -> Color {
         switch type {
         case .file:
             return .blue
@@ -668,7 +665,7 @@ struct ItemDetailView: View {
         }
     }
 
-    private func createContent(type: Content.ContentType, data: [String: AnyCodable]) async {
+    private func createContent(type: ContentType, data: [String: AnyCodable]) async {
         do {
             let (itemId, contentId) = try await viewModel.createContent(type: type, formData: data)
             eventViewModel.emit(.contentCreated(itemId: itemId, contentId: contentId))
@@ -688,7 +685,7 @@ struct ItemDetailView: View {
         }
     }
 
-    private func updateContent(_ id: Int, type: Content.ContentType, data: [String: AnyCodable]) async {
+    private func updateContent(_ id: Int, type: ContentType, data: [String: AnyCodable]) async {
         do {
             try await viewModel.updateContent(id: id, type: type, formData: data)
             await viewModel.refresh()

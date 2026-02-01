@@ -2,30 +2,45 @@
 //  DashboardService.swift
 //  RxStorageCore
 //
-//  API service for dashboard operations
+//  Dashboard service protocol and implementation using generated client
 //
 
 import Foundation
 
+// MARK: - Protocol
+
 /// Protocol for dashboard service operations
-@MainActor
-public protocol DashboardServiceProtocol {
-    func fetchDashboardStats() async throws -> DashboardStats
+public protocol DashboardServiceProtocol: Sendable {
+    func fetchStats() async throws -> DashboardStats
 }
 
-/// Dashboard service implementation
-@MainActor
-public class DashboardService: DashboardServiceProtocol {
-    private let apiClient: APIClient
+// MARK: - Implementation
 
-    public init(apiClient: APIClient = .shared) {
-        self.apiClient = apiClient
-    }
+/// Dashboard service implementation using generated OpenAPI client
+public struct DashboardService: DashboardServiceProtocol {
+    public init() {}
 
-    public func fetchDashboardStats() async throws -> DashboardStats {
-        return try await apiClient.get(
-            .getDashboardStats,
-            responseType: DashboardStats.self
-        )
+    public func fetchStats() async throws -> DashboardStats {
+        let client = StorageAPIClient.shared.client
+
+        let response = try await client.getDashboardStats(.init())
+
+        switch response {
+        case .ok(let okResponse):
+            return try okResponse.body.json
+        case .badRequest(let badRequest):
+            let error = try? badRequest.body.json
+            throw APIError.badRequest(error?.error ?? "Invalid request")
+        case .unauthorized:
+            throw APIError.unauthorized
+        case .forbidden:
+            throw APIError.forbidden
+        case .notFound:
+            throw APIError.notFound
+        case .internalServerError:
+            throw APIError.serverError("Internal server error")
+        case .undocumented(let statusCode, _):
+            throw APIError.serverError("HTTP \(statusCode)")
+        }
     }
 }

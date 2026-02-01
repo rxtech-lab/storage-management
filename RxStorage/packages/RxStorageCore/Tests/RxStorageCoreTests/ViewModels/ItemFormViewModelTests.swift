@@ -21,8 +21,8 @@ struct ItemFormViewModelTests {
         locationId: 10,
         authorId: 3,
         price: 49.99,
-        visibility: StorageItem.Visibility.public,
-        images: [TestHelpers.makeImageReference(id: 1, url: "https://example.com/image.jpg")]
+        visibility: .publicAccess,
+        images: ["https://example.com/image.jpg"]
     )
 
     // MARK: - Initialization Tests
@@ -40,7 +40,7 @@ struct ItemFormViewModelTests {
         #expect(sut.selectedLocationId == 10)
         #expect(sut.selectedAuthorId == 3)
         #expect(sut.price == "49.99")
-        #expect(sut.visibility == StorageItem.Visibility.public)
+        #expect(sut.visibility == .publicAccess)
         #expect(sut.existingImages.count == 1)
         #expect(sut.existingImages[0].url == "https://example.com/image.jpg")
     }
@@ -179,7 +179,7 @@ struct ItemFormViewModelTests {
     func testCreateCategoryInline() async throws {
         // Given
         let mockCategoryService = MockCategoryService()
-        let newCategory = RxStorageCore.Category(id: 99, name: "New Category", description: nil)
+        let newCategory = TestHelpers.makeCategory(id: 99, name: "New Category", description: nil)
         mockCategoryService.createCategoryResult = Result<RxStorageCore.Category, Error>.success(newCategory)
 
         let sut = ItemFormViewModel(

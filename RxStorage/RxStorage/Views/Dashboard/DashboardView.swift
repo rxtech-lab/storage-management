@@ -283,7 +283,7 @@ struct StatsCardView: View {
 // MARK: - Recent Item Row
 
 struct RecentItemRow: View {
-    let item: RecentItem
+    let item: StorageItem
     let onTap: () -> Void
 
     var body: some View {
@@ -303,14 +303,12 @@ struct RecentItemRow: View {
                         .foregroundStyle(.primary)
 
                     HStack(spacing: 8) {
-                        if let categoryName = item.categoryName {
-                            Label(categoryName, systemImage: "folder")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                        }
+                        Label(item.category.value1.name, systemImage: "folder")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
 
                         // Visibility badge
-                        if item.visibility == .public {
+                        if item.visibility == .publicAccess {
                             Label("Public", systemImage: "globe")
                                 .font(.caption2)
                                 .foregroundStyle(.green)

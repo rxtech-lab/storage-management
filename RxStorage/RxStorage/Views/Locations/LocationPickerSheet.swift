@@ -67,11 +67,9 @@ struct LocationPickerSheet: View {
                         VStack(alignment: .leading, spacing: 4) {
                             Text(location.title)
                                 .foregroundStyle(.primary)
-                            if let lat = location.latitude, let lon = location.longitude {
-                                Text("Lat: \(lat, specifier: "%.4f"), Lon: \(lon, specifier: "%.4f")")
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
-                            }
+                            Text("Lat: \(location.latitude, specifier: "%.4f"), Lon: \(location.longitude, specifier: "%.4f")")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
                         }
                         Spacer()
                         if location.id == selectedId {

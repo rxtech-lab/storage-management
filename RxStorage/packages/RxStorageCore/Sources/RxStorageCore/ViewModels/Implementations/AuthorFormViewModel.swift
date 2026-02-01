@@ -70,19 +70,22 @@ public final class AuthorFormViewModel: AuthorFormViewModelProtocol {
         error = nil
 
         do {
-            let request = NewAuthorRequest(
-                name: name,
-                bio: bio.isEmpty ? nil : bio
-            )
-
             let result: Author
             if let existingAuthor = author {
-                // Update
-                result = try await authorService.updateAuthor(id: existingAuthor.id, request)
+                // Update - use UpdateAuthorRequest
+                let updateRequest = UpdateAuthorRequest(
+                    name: name,
+                    bio: bio.isEmpty ? nil : bio
+                )
+                result = try await authorService.updateAuthor(id: existingAuthor.id, updateRequest)
                 eventViewModel?.emit(.authorUpdated(id: result.id))
             } else {
-                // Create
-                result = try await authorService.createAuthor(request)
+                // Create - use NewAuthorRequest
+                let createRequest = NewAuthorRequest(
+                    name: name,
+                    bio: bio.isEmpty ? nil : bio
+                )
+                result = try await authorService.createAuthor(createRequest)
                 eventViewModel?.emit(.authorCreated(id: result.id))
             }
 

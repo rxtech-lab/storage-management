@@ -24,7 +24,7 @@ test.describe.serial("Items Pagination API", () => {
         data: {
           title: `Pagination Test Item ${i.toString().padStart(2, "0")}`,
           description: `Item ${i} for pagination testing`,
-          visibility: "private",
+          visibility: "privateAccess",
         },
       });
       expect(response.status()).toBe(201);

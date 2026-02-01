@@ -2,43 +2,70 @@
 //  PositionService.swift
 //  RxStorageCore
 //
-//  API service for position operations
+//  Position service protocol and implementation using generated client
 //
 
 import Foundation
 
+// MARK: - Protocol
+
 /// Protocol for position service operations
-@MainActor
-public protocol PositionServiceProtocol {
+public protocol PositionServiceProtocol: Sendable {
     func fetchItemPositions(itemId: Int) async throws -> [Position]
-    func fetchPosition(id: Int) async throws -> Position
     func deletePosition(id: Int) async throws
 }
 
-/// Position service implementation
-@MainActor
-public class PositionService: PositionServiceProtocol {
-    private let apiClient: APIClient
+// MARK: - Implementation
 
-    public init(apiClient: APIClient = .shared) {
-        self.apiClient = apiClient
-    }
+/// Position service implementation using generated OpenAPI client
+public struct PositionService: PositionServiceProtocol {
+    public init() {}
 
     public func fetchItemPositions(itemId: Int) async throws -> [Position] {
-        return try await apiClient.get(
-            .listItemPositions(itemId: itemId),
-            responseType: [Position].self
-        )
-    }
+        let client = StorageAPIClient.shared.client
 
-    public func fetchPosition(id: Int) async throws -> Position {
-        return try await apiClient.get(
-            .getPosition(id: id),
-            responseType: Position.self
-        )
+        let response = try await client.getItemPositions(.init(path: .init(id: String(itemId))))
+
+        switch response {
+        case .ok(let okResponse):
+            return try okResponse.body.json
+        case .badRequest(let badRequest):
+            let error = try? badRequest.body.json
+            throw APIError.badRequest(error?.error ?? "Invalid request")
+        case .unauthorized:
+            throw APIError.unauthorized
+        case .forbidden:
+            throw APIError.forbidden
+        case .notFound:
+            throw APIError.notFound
+        case .internalServerError:
+            throw APIError.serverError("Internal server error")
+        case .undocumented(let statusCode, _):
+            throw APIError.serverError("HTTP \(statusCode)")
+        }
     }
 
     public func deletePosition(id: Int) async throws {
-        try await apiClient.delete(.deletePosition(id: id))
+        let client = StorageAPIClient.shared.client
+
+        let response = try await client.deletePosition(.init(path: .init(id: String(id))))
+
+        switch response {
+        case .ok:
+            return
+        case .badRequest(let badRequest):
+            let error = try? badRequest.body.json
+            throw APIError.badRequest(error?.error ?? "Invalid request")
+        case .unauthorized:
+            throw APIError.unauthorized
+        case .forbidden:
+            throw APIError.forbidden
+        case .notFound:
+            throw APIError.notFound
+        case .internalServerError:
+            throw APIError.serverError("Internal server error")
+        case .undocumented(let statusCode, _):
+            throw APIError.serverError("HTTP \(statusCode)")
+        }
     }
 }

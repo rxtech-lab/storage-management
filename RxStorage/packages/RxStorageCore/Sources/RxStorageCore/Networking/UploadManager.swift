@@ -7,6 +7,7 @@
 
 import Foundation
 import Logging
+import OpenAPIRuntime
 
 /// Progress callback type: (uploadedBytes, totalBytes)
 public typealias UploadProgressHandler = @Sendable (Int64, Int64) -> Void
@@ -16,7 +17,6 @@ public actor UploadManager: NSObject {
     /// Shared singleton instance
     public static let shared = UploadManager()
 
-    private let uploadService: UploadService
     private let logger = Logger(label: "com.rxlab.rxstorage.UploadManager")
 
     /// Active upload tasks keyed by URLSession task identifier
@@ -35,20 +35,13 @@ public actor UploadManager: NSObject {
         let uploadId: UUID
         let progressHandler: UploadProgressHandler?
         let continuation: CheckedContinuation<UploadResult, Error>
-        let presignedResponse: PresignedURLResponse
+        let presignedResponse: PresignedUploadResponse
         var urlSessionTask: URLSessionUploadTask?
     }
 
     // MARK: - Initialization
 
     private override init() {
-        self.uploadService = UploadService()
-        super.init()
-    }
-
-    /// Initialize with custom upload service (for testing)
-    public init(uploadService: UploadService) {
-        self.uploadService = uploadService
         super.init()
     }
 
@@ -86,14 +79,36 @@ public actor UploadManager: NSObject {
             "size": "\(fileSize)",
         ])
 
-        // 2. Get presigned URL from backend
-        let presignedResponse: PresignedURLResponse
+        // 2. Get presigned URL from backend using generated client
+        let presignedResponse: PresignedUploadResponse
         do {
-            presignedResponse = try await uploadService.getPresignedURL(
+            let client = StorageAPIClient.shared.client
+            let request = PresignedUploadRequest(
                 filename: filename,
                 contentType: contentType,
                 size: Int(fileSize)
             )
+            let response = try await client.getPresignedUploadUrl(.init(body: .json(request)))
+            switch response {
+            case .created(let createdResponse):
+                presignedResponse = try createdResponse.body.json
+            case .badRequest(let badRequest):
+                let error = try? badRequest.body.json
+                throw APIError.badRequest(error?.error ?? "Invalid request")
+            case .unauthorized:
+                throw APIError.unauthorized
+            case .forbidden:
+                throw APIError.forbidden
+            case .notFound:
+                throw APIError.notFound
+            case .internalServerError:
+                throw APIError.serverError("Internal server error")
+            case .undocumented(let statusCode, _):
+                throw APIError.serverError("HTTP \(statusCode)")
+            }
+        } catch let error as APIError {
+            logger.error("Failed to get presigned URL", metadata: ["error": "\(error)"])
+            throw UploadError.presignedURLFailed(error.localizedDescription)
         } catch {
             logger.error("Failed to get presigned URL", metadata: ["error": "\(error)"])
             throw UploadError.presignedURLFailed(error.localizedDescription)
@@ -146,7 +161,7 @@ public actor UploadManager: NSObject {
 
     private func performUpload(
         fileURL: URL,
-        presignedResponse: PresignedURLResponse,
+        presignedResponse: PresignedUploadResponse,
         contentType: String,
         progressHandler: UploadProgressHandler?,
         continuation: CheckedContinuation<UploadResult, Error>

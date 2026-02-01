@@ -7,6 +7,7 @@
 
 import JSONSchema
 import JSONSchemaForm
+import OpenAPIRuntime
 import RxStorageCore
 import SwiftUI
 
@@ -14,9 +15,9 @@ import SwiftUI
 struct ContentFormSheet: View {
     @Binding var contentSchemas: [ContentSchema]
     let existingContent: Content?
-    let onSubmit: (Content.ContentType, [String: RxStorageCore.AnyCodable]) -> Void
+    let onSubmit: (ContentType, [String: RxStorageCore.AnyCodable]) -> Void
 
-    @State private var selectedType: Content.ContentType?
+    @State private var selectedType: ContentType?
     @State private var formData: FormData = .object(properties: [:])
     @Environment(\.dismiss) private var dismiss
 
@@ -28,7 +29,7 @@ struct ContentFormSheet: View {
     init(
         contentSchemas: Binding<[ContentSchema]>,
         existingContent: Content? = nil,
-        onSubmit: @escaping (Content.ContentType, [String: RxStorageCore.AnyCodable]) -> Void
+        onSubmit: @escaping (ContentType, [String: RxStorageCore.AnyCodable]) -> Void
     ) {
         self._contentSchemas = contentSchemas
         self.existingContent = existingContent
@@ -37,7 +38,7 @@ struct ContentFormSheet: View {
 
     var selectedSchema: ContentSchema? {
         guard let type = selectedType else { return nil }
-        return contentSchemas.first { $0.type == type.rawValue }
+        return contentSchemas.first(where: { $0._type.rawValue == type.rawValue })
     }
 
     /// Check if form has data
@@ -53,10 +54,10 @@ struct ContentFormSheet: View {
             // Content type picker
             Section {
                 Picker("Type", selection: $selectedType) {
-                    Text("Select a type").tag(nil as Content.ContentType?)
-                    ForEach(Content.ContentType.allCases, id: \.self) { type in
+                    Text("Select a type").tag(nil as ContentType?)
+                    ForEach(ContentType.allCases, id: \.self) { type in
                         Label(type.displayName, systemImage: type.icon)
-                            .tag(type as Content.ContentType?)
+                            .tag(type as ContentType?)
                     }
                 }
                 .disabled(isEditing)
@@ -102,12 +103,21 @@ struct ContentFormSheet: View {
         .onAppear {
             if let content = existingContent {
                 selectedType = content.type
-                formData = contentDataToFormData(content.data)
+                formData = contentDataToFormData(content.contentData)
             }
         }
     }
 
     // MARK: - Helper Methods
+
+    /// Parse schema from schemaPayload (additionalProperties)
+    private func parseSchema(from schemaPayload: ContentSchema.schemaPayload) -> JSONSchema? {
+        let dict = schemaPayload.additionalProperties.compactMapValues { $0.value }
+        guard let data = try? JSONSerialization.data(withJSONObject: dict) else {
+            return nil
+        }
+        return try? JSONDecoder().decode(JSONSchema.self, from: data)
+    }
 
     /// Parse schema dictionary to JSONSchema
     private func parseSchema(from dict: [String: RxStorageCore.AnyCodable]) -> JSONSchema? {
@@ -161,55 +171,5 @@ struct ContentFormSheet: View {
     }
 }
 
-#Preview("Add Content") {
-    @Previewable @State var schemas: [ContentSchema] = [
-        ContentSchema(
-            type: "file",
-            name: "File",
-            schema: [
-                "type": RxStorageCore.AnyCodable("object"),
-                "properties": RxStorageCore.AnyCodable([
-                    "title": ["type": "string", "title": "Title"],
-                    "description": ["type": "string", "title": "Description"],
-                ] as [String: Any]),
-            ]
-        ),
-    ]
-    NavigationStack {
-        ContentFormSheet(
-            contentSchemas: $schemas,
-            onSubmit: { _, _ in }
-        )
-    }
-}
-
-#Preview("Edit Content") {
-    @Previewable @State var schemas: [ContentSchema] = [
-        ContentSchema(
-            type: "file",
-            name: "File",
-            schema: [
-                "type": RxStorageCore.AnyCodable("object"),
-                "properties": RxStorageCore.AnyCodable([
-                    "title": ["type": "string", "title": "Title"],
-                    "description": ["type": "string", "title": "Description"],
-                ] as [String: Any]),
-            ]
-        ),
-    ]
-    let existingContent = Content(
-        id: 1,
-        itemId: 1,
-        type: .file,
-        data: ContentData(title: "Test File", description: "A test file"),
-        createdAt: Date(),
-        updatedAt: Date()
-    )
-    NavigationStack {
-        ContentFormSheet(
-            contentSchemas: $schemas,
-            existingContent: existingContent,
-            onSubmit: { _, _ in }
-        )
-    }
-}
+// Previews disabled - generated types have different initializers
+// TODO: Update previews to use generated ContentSchema and Content types

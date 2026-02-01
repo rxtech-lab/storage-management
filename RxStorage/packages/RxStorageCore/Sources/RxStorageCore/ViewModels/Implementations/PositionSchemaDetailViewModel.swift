@@ -7,7 +7,6 @@
 
 import Foundation
 import Observation
-import RxStorageCore
 
 /// Position schema detail view model
 @Observable

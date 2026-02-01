@@ -5,8 +5,9 @@
 //  Position schema list view
 //
 
-import SwiftUI
+import OpenAPIRuntime
 import RxStorageCore
+import SwiftUI
 
 /// Position schema list view
 struct PositionSchemaListView: View {
@@ -186,12 +187,22 @@ struct PositionSchemaListView: View {
 struct PositionSchemaRow: View {
     let schema: PositionSchema
 
+    /// Count of properties in the JSON schema
+    private var fieldCount: Int {
+        // The schema is an OpenAPIObjectContainer with additionalProperties
+        // JSON Schema stores fields in the "properties" key
+        if let properties = schema.schema.additionalProperties["properties"]?.value as? [String: Any] {
+            return properties.count
+        }
+        return 0
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
             Text(schema.name)
                 .font(.headline)
 
-            Text("\(schema.schema.count) fields")
+            Text("\(fieldCount) fields")
                 .font(.caption)
                 .foregroundStyle(.secondary)
         }

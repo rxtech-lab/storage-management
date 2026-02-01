@@ -70,19 +70,22 @@ public final class CategoryFormViewModel: CategoryFormViewModelProtocol {
         error = nil
 
         do {
-            let request = NewCategoryRequest(
-                name: name,
-                description: description.isEmpty ? nil : description
-            )
-
             let result: Category
             if let existingCategory = category {
-                // Update
-                result = try await categoryService.updateCategory(id: existingCategory.id, request)
+                // Update - use UpdateCategoryRequest
+                let updateRequest = UpdateCategoryRequest(
+                    name: name,
+                    description: description.isEmpty ? nil : description
+                )
+                result = try await categoryService.updateCategory(id: existingCategory.id, updateRequest)
                 eventViewModel?.emit(.categoryUpdated(id: result.id))
             } else {
-                // Create
-                result = try await categoryService.createCategory(request)
+                // Create - use NewCategoryRequest
+                let createRequest = NewCategoryRequest(
+                    name: name,
+                    description: description.isEmpty ? nil : description
+                )
+                result = try await categoryService.createCategory(createRequest)
                 eventViewModel?.emit(.categoryCreated(id: result.id))
             }
 

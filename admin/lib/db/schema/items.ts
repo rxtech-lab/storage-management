@@ -16,9 +16,9 @@ export const items = sqliteTable("items", {
   parentId: integer("parent_id"),
   price: real("price"),
   currency: text("currency").default("USD"),
-  visibility: text("visibility", { enum: ["public", "private"] })
+  visibility: text("visibility", { enum: ["publicAccess", "privateAccess"] })
     .notNull()
-    .default("private"),
+    .default("privateAccess"),
   images: text("images", { mode: "json" }).$type<string[]>().default([]),
   createdAt: integer("created_at", { mode: "timestamp" })
     .notNull()

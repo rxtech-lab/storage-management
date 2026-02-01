@@ -6,6 +6,17 @@ interface RouteParams {
   params: Promise<{ id: string }>;
 }
 
+/**
+ * Get category by ID
+ * @operationId getCategory
+ * @description Retrieve a single category by its ID
+ * @pathParams IdPathParams
+ * @response CategoryResponseSchema
+ * @auth bearer
+ * @tag Categories
+ * @responseSet auth
+ * @openapi
+ */
 export async function GET(request: NextRequest, { params }: RouteParams) {
   const session = await getSession(request);
   if (!session) {
@@ -27,6 +38,18 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
   return NextResponse.json(category);
 }
 
+/**
+ * Update category
+ * @operationId updateCategory
+ * @description Update an existing category
+ * @pathParams IdPathParams
+ * @body CategoryUpdateSchema
+ * @response CategoryResponseSchema
+ * @auth bearer
+ * @tag Categories
+ * @responseSet auth
+ * @openapi
+ */
 export async function PUT(request: NextRequest, { params }: RouteParams) {
   const session = await getSession(request);
   if (!session) {
@@ -54,6 +77,17 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
   }
 }
 
+/**
+ * Delete category
+ * @operationId deleteCategory
+ * @description Delete a category by ID
+ * @pathParams IdPathParams
+ * @response 200:SuccessResponse
+ * @auth bearer
+ * @tag Categories
+ * @responseSet auth
+ * @openapi
+ */
 export async function DELETE(request: NextRequest, { params }: RouteParams) {
   const session = await getSession(request);
   if (!session) {

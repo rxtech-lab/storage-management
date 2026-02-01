@@ -21,7 +21,7 @@ public protocol ItemFormViewModelProtocol: AnyObject, Observable {
     var selectedAuthorId: Int? { get set }
     var selectedParentId: Int? { get set }
     var price: String { get set }
-    var visibility: StorageItem.Visibility { get set }
+    var visibility: Visibility { get set }
     var existingImages: [ImageReference] { get set }
 
     /// Reference data

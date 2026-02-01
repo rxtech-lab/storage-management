@@ -9,6 +9,17 @@ import {
 } from "@/lib/actions/category-actions";
 import { parsePaginationParams } from "@/lib/utils/pagination";
 
+/**
+ * List categories
+ * @operationId getCategories
+ * @description Retrieve a paginated list of categories
+ * @params CategoriesQueryParams
+ * @response PaginatedCategoriesResponse
+ * @auth bearer
+ * @tag Categories
+ * @responseSet auth
+ * @openapi
+ */
 export async function GET(request: NextRequest) {
   const session = await getSession(request);
   if (!session) {
@@ -57,6 +68,17 @@ export async function GET(request: NextRequest) {
   return NextResponse.json(categories);
 }
 
+/**
+ * Create category
+ * @operationId createCategory
+ * @description Create a new category
+ * @body CategoryInsertSchema
+ * @response 201:CategoryResponseSchema
+ * @auth bearer
+ * @tag Categories
+ * @responseSet auth
+ * @openapi
+ */
 export async function POST(request: NextRequest) {
   const session = await getSession(request);
   if (!session) {

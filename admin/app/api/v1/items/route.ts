@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth-helper";
 import {
-  getItems,
   getItemsPaginated,
   createItemAction,
   type ItemFilters,
@@ -10,6 +9,17 @@ import {
 import { signImagesArrayWithIds } from "@/lib/actions/s3-upload-actions";
 import { parsePaginationParams } from "@/lib/utils/pagination";
 
+/**
+ * List items
+ * @operationId getItems
+ * @description Retrieve a paginated list of items with optional filters. Supports cursor-based pagination.
+ * @params ItemsQueryParams
+ * @response PaginatedItemsResponse
+ * @auth bearer
+ * @tag Items
+ * @responseSet auth
+ * @openapi
+ */
 export async function GET(request: NextRequest) {
   const session = await getSession(request);
   if (!session) {
@@ -35,57 +45,28 @@ export async function GET(request: NextRequest) {
     filters.parentId = parentId === "null" ? null : parseInt(parentId!);
   }
   if (searchParams.has("visibility")) {
-    filters.visibility = searchParams.get("visibility") as "public" | "private";
+    filters.visibility = searchParams.get("visibility") as "publicAccess" | "privateAccess";
   }
   if (searchParams.has("search")) {
     filters.search = searchParams.get("search")!;
   }
 
-  // Check if pagination is requested
-  const hasPaginationParams =
-    searchParams.has("cursor") || searchParams.has("limit");
+  const paginationParams = parsePaginationParams({
+    cursor: searchParams.get("cursor"),
+    direction: searchParams.get("direction"),
+    limit: searchParams.get("limit"),
+  });
 
-  if (hasPaginationParams) {
-    const paginationParams = parsePaginationParams({
-      cursor: searchParams.get("cursor"),
-      direction: searchParams.get("direction"),
-      limit: searchParams.get("limit"),
-    });
+  const paginatedFilters: PaginatedItemFilters = {
+    ...filters,
+    ...paginationParams,
+  };
 
-    const paginatedFilters: PaginatedItemFilters = {
-      ...filters,
-      ...paginationParams,
-    };
+  const result = await getItemsPaginated(session.user.id, paginatedFilters);
 
-    const result = await getItemsPaginated(session.user.id, paginatedFilters);
-
-    // Sign images for each item
-    const dataWithSignedImages = await Promise.all(
-      result.data.map(async (item) => {
-        const images =
-          item.images && item.images.length > 0
-            ? await signImagesArrayWithIds(item.images)
-            : [];
-        return {
-          ...item,
-          images,
-          previewUrl: `${process.env.NEXT_PUBLIC_URL}/preview/item/${item.id}`,
-        };
-      })
-    );
-
-    return NextResponse.json({
-      data: dataWithSignedImages,
-      pagination: result.pagination,
-    });
-  }
-
-  // Legacy: return full array for backward compatibility
-  const items = await getItems(session.user.id, filters);
-
-  // Sign images for each item - replace file IDs with signed URLs
-  const itemsWithSignedImages = await Promise.all(
-    items.map(async (item) => {
+  // Sign images for each item
+  const dataWithSignedImages = await Promise.all(
+    result.data.map(async (item) => {
       const images =
         item.images && item.images.length > 0
           ? await signImagesArrayWithIds(item.images)
@@ -98,9 +79,23 @@ export async function GET(request: NextRequest) {
     })
   );
 
-  return NextResponse.json(itemsWithSignedImages);
+  return NextResponse.json({
+    data: dataWithSignedImages,
+    pagination: result.pagination,
+  });
 }
 
+/**
+ * Create item
+ * @operationId createItem
+ * @description Create a new storage item
+ * @body ItemInsertSchema
+ * @response 201:ItemResponseSchema
+ * @auth bearer
+ * @tag Items
+ * @responseSet auth
+ * @openapi
+ */
 export async function POST(request: NextRequest) {
   const session = await getSession(request);
   if (!session) {

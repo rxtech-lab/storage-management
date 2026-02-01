@@ -6,7 +6,7 @@ export interface ItemSearchResult {
   title: string;
   snippet?: string;
   category?: string;
-  visibility: "public" | "private";
+  visibility: "publicAccess" | "privateAccess";
   metadata: ItemWithRelations;
 }
 
@@ -22,7 +22,7 @@ export interface DisplayItemsOutput {
     category?: string | null;
     location?: string | null;
     author?: string | null;
-    visibility: "public" | "private";
+    visibility: "publicAccess" | "privateAccess";
     price?: number | null;
     currency?: string | null;
     images?: string[] | null;

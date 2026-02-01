@@ -16,65 +16,76 @@ enum TestHelpers {
         ISO8601DateFormatter().date(from: "2024-01-01T00:00:00Z")!
     }()
 
+    /// Default test user ID
+    static let defaultUserId = "test-user-id"
+
     /// Create a StorageItem for testing
     static func makeStorageItem(
         id: Int = 1,
+        userId: String = defaultUserId,
         title: String = "Test Item",
         description: String? = nil,
+        originalQrCode: String? = nil,
         categoryId: Int? = nil,
         locationId: Int? = nil,
         authorId: Int? = nil,
         parentId: Int? = nil,
         price: Double? = nil,
-        visibility: StorageItem.Visibility = .public,
-        images: [ImageReference] = [],
+        currency: String? = nil,
+        visibility: StorageItem.visibilityPayload = .publicAccess,
         createdAt: Date = defaultDate,
         updatedAt: Date = defaultDate,
-        category: RxStorageCore.Category? = nil,
-        location: Location? = nil,
-        author: Author? = nil,
         previewUrl: String = "https://example.com/preview/1",
-        children: [StorageItem]? = nil,
-        contents: [Content]? = nil
+        images: [String] = [],
+        category: CategoryRef? = nil,
+        location: LocationRef? = nil,
+        author: AuthorRef? = nil
     ) -> StorageItem {
-        StorageItem(
+        // Create default refs if not provided
+        let categoryRef = category ?? CategoryRef(id: categoryId ?? 0, name: "Default Category")
+        let locationRef = location ?? LocationRef(id: locationId ?? 0, title: "Default Location", latitude: 0.0, longitude: 0.0)
+        let authorRef = author ?? AuthorRef(id: authorId ?? 0, name: "Default Author")
+
+        return StorageItem(
             id: id,
+            userId: userId,
             title: title,
             description: description,
+            originalQrCode: originalQrCode,
             categoryId: categoryId,
             locationId: locationId,
             authorId: authorId,
             parentId: parentId,
             price: price,
+            currency: currency,
             visibility: visibility,
-            images: images,
             createdAt: createdAt,
             updatedAt: updatedAt,
-            category: category,
-            location: location,
-            author: author,
             previewUrl: previewUrl,
-            children: children,
-            contents: contents
+            images: images,
+            category: StorageItem.categoryPayload(value1: categoryRef),
+            location: StorageItem.locationPayload(value1: locationRef),
+            author: StorageItem.authorPayload(value1: authorRef)
         )
     }
 
     /// Create an ImageReference for testing
     static func makeImageReference(
-        id: Int = 1,
-        url: String = "https://example.com/signed/image.jpg"
+        id: UUID = UUID(),
+        url: String = "https://example.com/signed/image.jpg",
+        fileId: Int? = nil
     ) -> ImageReference {
-        ImageReference(id: id, url: url)
+        ImageReference(id: id, url: url, fileId: fileId)
     }
 
     /// Create a Category for testing
     static func makeCategory(
         id: Int = 1,
-        userId: String? = nil,
+        userId: String = defaultUserId,
         name: String = "Test Category",
         description: String? = nil,
-        createdAt: Date? = nil,
-        updatedAt: Date? = nil
+        createdAt: Date = defaultDate,
+        updatedAt: Date = defaultDate
     ) -> RxStorageCore.Category {
         RxStorageCore.Category(
             id: id,
@@ -89,14 +100,16 @@ enum TestHelpers {
     /// Create a Location for testing
     static func makeLocation(
         id: Int = 1,
+        userId: String = defaultUserId,
         title: String = "Test Location",
-        latitude: Double? = nil,
-        longitude: Double? = nil,
-        createdAt: Date? = nil,
-        updatedAt: Date? = nil
+        latitude: Double = 0.0,
+        longitude: Double = 0.0,
+        createdAt: Date = defaultDate,
+        updatedAt: Date = defaultDate
     ) -> Location {
         Location(
             id: id,
+            userId: userId,
             title: title,
             latitude: latitude,
             longitude: longitude,
@@ -108,13 +121,15 @@ enum TestHelpers {
     /// Create an Author for testing
     static func makeAuthor(
         id: Int = 1,
+        userId: String = defaultUserId,
         name: String = "Test Author",
         bio: String? = nil,
-        createdAt: Date? = nil,
-        updatedAt: Date? = nil
+        createdAt: Date = defaultDate,
+        updatedAt: Date = defaultDate
     ) -> Author {
         Author(
             id: id,
+            userId: userId,
             name: name,
             bio: bio,
             createdAt: createdAt,
@@ -122,18 +137,102 @@ enum TestHelpers {
         )
     }
 
-    /// Create QRCodeData for testing
-    static func makeQRCodeData(
-        itemId: Int = 1,
-        itemTitle: String = "Test Item",
+    /// Create a CategoryRef for testing
+    static func makeCategoryRef(
+        id: Int = 1,
+        name: String = "Test Category"
+    ) -> CategoryRef {
+        CategoryRef(id: id, name: name)
+    }
+
+    /// Create a LocationRef for testing
+    static func makeLocationRef(
+        id: Int = 1,
+        title: String = "Test Location",
+        latitude: Double = 0.0,
+        longitude: Double = 0.0
+    ) -> LocationRef {
+        LocationRef(id: id, title: title, latitude: latitude, longitude: longitude)
+    }
+
+    /// Create an AuthorRef for testing
+    static func makeAuthorRef(
+        id: Int = 1,
+        name: String = "Test Author"
+    ) -> AuthorRef {
+        AuthorRef(id: id, name: name)
+    }
+
+    /// Create a StorageItemDetail for testing
+    static func makeStorageItemDetail(
+        id: Int = 1,
+        userId: String = defaultUserId,
+        title: String = "Test Item",
+        description: String? = nil,
+        originalQrCode: String? = nil,
+        categoryId: Int? = nil,
+        locationId: Int? = nil,
+        authorId: Int? = nil,
+        parentId: Int? = nil,
+        price: Double? = nil,
+        currency: String? = nil,
+        visibility: StorageItemDetail.visibilityPayload = .publicAccess,
+        createdAt: Date = defaultDate,
+        updatedAt: Date = defaultDate,
         previewUrl: String = "https://example.com/preview/1",
-        qrCodeDataUrl: String = "data:image/png;base64,test"
-    ) -> QRCodeData {
-        QRCodeData(
-            itemId: itemId,
-            itemTitle: itemTitle,
+        images: [String] = [],
+        category: CategoryRef? = nil,
+        location: LocationRef? = nil,
+        author: AuthorRef? = nil,
+        children: [StorageItem] = [],
+        contents: [ContentRef] = [],
+        positions: [PositionRef] = []
+    ) -> StorageItemDetail {
+        // Create default refs if not provided
+        let categoryRef = category ?? CategoryRef(id: categoryId ?? 0, name: "Default Category")
+        let locationRef = location ?? LocationRef(id: locationId ?? 0, title: "Default Location", latitude: 0.0, longitude: 0.0)
+        let authorRef = author ?? AuthorRef(id: authorId ?? 0, name: "Default Author")
+
+        return StorageItemDetail(
+            id: id,
+            userId: userId,
+            title: title,
+            description: description,
+            originalQrCode: originalQrCode,
+            categoryId: categoryId,
+            locationId: locationId,
+            authorId: authorId,
+            parentId: parentId,
+            price: price,
+            currency: currency,
+            visibility: visibility,
+            createdAt: createdAt,
+            updatedAt: updatedAt,
             previewUrl: previewUrl,
-            qrCodeDataUrl: qrCodeDataUrl
+            images: images,
+            category: StorageItemDetail.categoryPayload(value1: categoryRef),
+            location: StorageItemDetail.locationPayload(value1: locationRef),
+            author: StorageItemDetail.authorPayload(value1: authorRef),
+            children: children,
+            contents: contents,
+            positions: positions
+        )
+    }
+
+    /// Create a ContentRef for testing
+    static func makeContentRef(
+        id: Int = 1,
+        type: ContentRef._typePayload = .image,
+        data: ContentRef.dataPayload = ContentRef.dataPayload(),
+        createdAt: Date = defaultDate,
+        updatedAt: Date = defaultDate
+    ) -> ContentRef {
+        ContentRef(
+            id: id,
+            _type: type,
+            data: data,
+            createdAt: createdAt,
+            updatedAt: updatedAt
         )
     }
 }

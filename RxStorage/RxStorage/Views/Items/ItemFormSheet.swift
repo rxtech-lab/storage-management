@@ -5,6 +5,7 @@
 //  Item create/edit form with inline entity creation
 //
 
+import OpenAPIRuntime
 import PhotosUI
 import RxStorageCore
 import SwiftUI
@@ -150,8 +151,8 @@ struct ItemFormSheet: View {
             // Visibility
             Section("Privacy") {
                 Picker("Visibility", selection: $viewModel.visibility) {
-                    Text("Public").tag(StorageItem.Visibility.public)
-                    Text("Private").tag(StorageItem.Visibility.private)
+                    Text("Public").tag(Visibility.publicAccess)
+                    Text("Private").tag(Visibility.privateAccess)
                 }
                 .pickerStyle(.menu)
             }
@@ -471,6 +472,28 @@ struct ItemFormSheet: View {
 
     // MARK: - Position Helpers
 
+    /// Summarize position data from generated dataPayload type
+    private func positionDataSummary(_ data: Position.dataPayload) -> String {
+        let items = data.additionalProperties.map { key, value -> String in
+            let valueStr: String
+            switch value.value {
+            case let str as String:
+                valueStr = str
+            case let num as Int:
+                valueStr = String(num)
+            case let num as Double:
+                valueStr = String(format: "%.2f", num)
+            case let bool as Bool:
+                valueStr = bool ? "Yes" : "No"
+            default:
+                valueStr = String(describing: value.value ?? "")
+            }
+            return "\(key): \(valueStr)"
+        }
+        return items.joined(separator: ", ")
+    }
+
+    /// Summarize position data from AnyCodable dictionary (for pending positions)
     private func positionDataSummary(_ data: [String: AnyCodable]) -> String {
         let items = data.map { key, value -> String in
             let valueStr: String
