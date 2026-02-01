@@ -27,7 +27,7 @@ enum TestHelpers {
         parentId: Int? = nil,
         price: Double? = nil,
         visibility: StorageItem.Visibility = .public,
-        images: [String] = [],
+        images: [ImageReference] = [],
         createdAt: Date = defaultDate,
         updatedAt: Date = defaultDate,
         category: RxStorageCore.Category? = nil,
@@ -57,6 +57,14 @@ enum TestHelpers {
             children: children,
             contents: contents
         )
+    }
+
+    /// Create an ImageReference for testing
+    static func makeImageReference(
+        id: Int = 1,
+        url: String = "https://example.com/signed/image.jpg"
+    ) -> ImageReference {
+        ImageReference(id: id, url: url)
     }
 
     /// Create a Category for testing

@@ -15,6 +15,7 @@ struct CategoryFormSheet: View {
 
     @State private var viewModel: CategoryFormViewModel
     @Environment(\.dismiss) private var dismiss
+    @Environment(EventViewModel.self) private var eventViewModel
 
     init(category: RxStorageCore.Category? = nil, onCreated: ((RxStorageCore.Category) -> Void)? = nil) {
         self.category = category
@@ -74,12 +75,15 @@ struct CategoryFormSheet: View {
 
     private func submitForm() async {
         do {
-            try await viewModel.submit()
-            // If callback provided, fetch the created category
-            if let onCreated = onCreated, category == nil {
-                // Note: In real implementation, submit should return the created category
-                // For now, we'll dismiss and let the parent handle refresh
+            let savedCategory = try await viewModel.submit()
+            // Emit event based on create vs update
+            if category == nil {
+                eventViewModel.emit(.categoryCreated(id: savedCategory.id))
+            } else {
+                eventViewModel.emit(.categoryUpdated(id: savedCategory.id))
             }
+            // If callback provided, call with created category
+            onCreated?(savedCategory)
             dismiss()
         } catch {
             // Error is already tracked in viewModel.error

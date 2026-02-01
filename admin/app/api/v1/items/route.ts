@@ -7,7 +7,7 @@ import {
   type ItemFilters,
   type PaginatedItemFilters,
 } from "@/lib/actions/item-actions";
-import { signImagesArray } from "@/lib/actions/s3-upload-actions";
+import { signImagesArrayWithIds } from "@/lib/actions/s3-upload-actions";
 import { parsePaginationParams } from "@/lib/utils/pagination";
 
 export async function GET(request: NextRequest) {
@@ -64,7 +64,7 @@ export async function GET(request: NextRequest) {
       result.data.map(async (item) => {
         const images =
           item.images && item.images.length > 0
-            ? await signImagesArray(item.images)
+            ? await signImagesArrayWithIds(item.images)
             : [];
         return {
           ...item,
@@ -88,7 +88,7 @@ export async function GET(request: NextRequest) {
     items.map(async (item) => {
       const images =
         item.images && item.images.length > 0
-          ? await signImagesArray(item.images)
+          ? await signImagesArrayWithIds(item.images)
           : [];
       return {
         ...item,
@@ -115,7 +115,7 @@ export async function POST(request: NextRequest) {
       // Sign images - replace file IDs with signed URLs
       const images =
         result.data.images && result.data.images.length > 0
-          ? await signImagesArray(result.data.images)
+          ? await signImagesArrayWithIds(result.data.images)
           : [];
 
       const previewUrl = `${process.env.NEXT_PUBLIC_URL}/preview/item/${result.data.id}`;

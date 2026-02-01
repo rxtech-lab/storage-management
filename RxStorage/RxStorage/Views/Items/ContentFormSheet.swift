@@ -2,7 +2,7 @@
 //  ContentFormSheet.swift
 //  RxStorage
 //
-//  Form sheet for adding content with type selection and dynamic form
+//  Form sheet for adding/editing content with type selection and dynamic form
 //
 
 import JSONSchema
@@ -10,14 +10,30 @@ import JSONSchemaForm
 import RxStorageCore
 import SwiftUI
 
-/// Content form sheet for adding content to items
+/// Content form sheet for adding/editing content to items
 struct ContentFormSheet: View {
     @Binding var contentSchemas: [ContentSchema]
+    let existingContent: Content?
     let onSubmit: (Content.ContentType, [String: RxStorageCore.AnyCodable]) -> Void
 
     @State private var selectedType: Content.ContentType?
     @State private var formData: FormData = .object(properties: [:])
     @Environment(\.dismiss) private var dismiss
+
+    /// Check if we're editing an existing content
+    private var isEditing: Bool {
+        existingContent != nil
+    }
+
+    init(
+        contentSchemas: Binding<[ContentSchema]>,
+        existingContent: Content? = nil,
+        onSubmit: @escaping (Content.ContentType, [String: RxStorageCore.AnyCodable]) -> Void
+    ) {
+        self._contentSchemas = contentSchemas
+        self.existingContent = existingContent
+        self.onSubmit = onSubmit
+    }
 
     var selectedSchema: ContentSchema? {
         guard let type = selectedType else { return nil }
@@ -43,9 +59,12 @@ struct ContentFormSheet: View {
                             .tag(type as Content.ContentType?)
                     }
                 }
+                .disabled(isEditing)
                 .onChange(of: selectedType) { _, _ in
-                    // Reset form data when type changes
-                    formData = .object(properties: [:])
+                    // Reset form data when type changes (only for new content)
+                    if !isEditing {
+                        formData = .object(properties: [:])
+                    }
                 }
             } header: {
                 Text("Content Type")
@@ -65,18 +84,25 @@ struct ContentFormSheet: View {
 
                 // Submit button
                 Section {
-                    Button("Add Content") {
+                    Button(isEditing ? "Save Changes" : "Add Content") {
                         handleSubmit()
                     }
                     .disabled(!hasFormData)
                 }
             }
         }
-        .navigationTitle("Add Content")
+        .formStyle(.grouped)
+        .navigationTitle(isEditing ? "Edit Content" : "Add Content")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .cancellationAction) {
                 Button("Cancel") { dismiss() }
+            }
+        }
+        .onAppear {
+            if let content = existingContent {
+                selectedType = content.type
+                formData = contentDataToFormData(content.data)
             }
         }
     }
@@ -92,6 +118,38 @@ struct ContentFormSheet: View {
         return try? JSONDecoder().decode(JSONSchema.self, from: data)
     }
 
+    /// Convert ContentData to FormData for editing
+    private func contentDataToFormData(_ data: ContentData) -> FormData {
+        var properties: [String: FormData] = [:]
+
+        if let title = data.title {
+            properties["title"] = .string(title)
+        }
+        if let description = data.description {
+            properties["description"] = .string(description)
+        }
+        if let mimeType = data.mimeType {
+            properties["mime_type"] = .string(mimeType)
+        }
+        if let size = data.size {
+            properties["size"] = .number(Double(size))
+        }
+        if let filePath = data.filePath {
+            properties["file_path"] = .string(filePath)
+        }
+        if let previewImageUrl = data.previewImageUrl {
+            properties["preview_image_url"] = .string(previewImageUrl)
+        }
+        if let videoLength = data.videoLength {
+            properties["video_length"] = .number(Double(videoLength))
+        }
+        if let previewVideoUrl = data.previewVideoUrl {
+            properties["preview_video_url"] = .string(previewVideoUrl)
+        }
+
+        return .object(properties: properties)
+    }
+
     private func handleSubmit() {
         guard let type = selectedType,
               let dataDict = formData.toDictionary() as? [String: Any]
@@ -103,7 +161,7 @@ struct ContentFormSheet: View {
     }
 }
 
-#Preview {
+#Preview("Add Content") {
     @Previewable @State var schemas: [ContentSchema] = [
         ContentSchema(
             type: "file",
@@ -120,6 +178,37 @@ struct ContentFormSheet: View {
     NavigationStack {
         ContentFormSheet(
             contentSchemas: $schemas,
+            onSubmit: { _, _ in }
+        )
+    }
+}
+
+#Preview("Edit Content") {
+    @Previewable @State var schemas: [ContentSchema] = [
+        ContentSchema(
+            type: "file",
+            name: "File",
+            schema: [
+                "type": RxStorageCore.AnyCodable("object"),
+                "properties": RxStorageCore.AnyCodable([
+                    "title": ["type": "string", "title": "Title"],
+                    "description": ["type": "string", "title": "Description"],
+                ] as [String: Any]),
+            ]
+        ),
+    ]
+    let existingContent = Content(
+        id: 1,
+        itemId: 1,
+        type: .file,
+        data: ContentData(title: "Test File", description: "A test file"),
+        createdAt: Date(),
+        updatedAt: Date()
+    )
+    NavigationStack {
+        ContentFormSheet(
+            contentSchemas: $schemas,
+            existingContent: existingContent,
             onSubmit: { _, _ in }
         )
     }

@@ -28,15 +28,18 @@ public final class CategoryFormViewModel: CategoryFormViewModelProtocol {
     // MARK: - Dependencies
 
     private let categoryService: CategoryServiceProtocol
+    private let eventViewModel: EventViewModel?
 
     // MARK: - Initialization
 
     public init(
         category: Category? = nil,
-        categoryService: CategoryServiceProtocol = CategoryService()
+        categoryService: CategoryServiceProtocol = CategoryService(),
+        eventViewModel: EventViewModel? = nil
     ) {
         self.category = category
         self.categoryService = categoryService
+        self.eventViewModel = eventViewModel
 
         // Populate form if editing
         if let category = category {
@@ -57,7 +60,8 @@ public final class CategoryFormViewModel: CategoryFormViewModelProtocol {
         return validationErrors.isEmpty
     }
 
-    public func submit() async throws {
+    @discardableResult
+    public func submit() async throws -> Category {
         guard validate() else {
             throw FormError.validationFailed
         }
@@ -71,15 +75,19 @@ public final class CategoryFormViewModel: CategoryFormViewModelProtocol {
                 description: description.isEmpty ? nil : description
             )
 
+            let result: Category
             if let existingCategory = category {
                 // Update
-                _ = try await categoryService.updateCategory(id: existingCategory.id, request)
+                result = try await categoryService.updateCategory(id: existingCategory.id, request)
+                eventViewModel?.emit(.categoryUpdated(id: result.id))
             } else {
                 // Create
-                _ = try await categoryService.createCategory(request)
+                result = try await categoryService.createCategory(request)
+                eventViewModel?.emit(.categoryCreated(id: result.id))
             }
 
             isSubmitting = false
+            return result
         } catch {
             self.error = error
             isSubmitting = false

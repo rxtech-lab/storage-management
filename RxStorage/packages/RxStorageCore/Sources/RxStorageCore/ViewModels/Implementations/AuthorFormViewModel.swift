@@ -28,15 +28,18 @@ public final class AuthorFormViewModel: AuthorFormViewModelProtocol {
     // MARK: - Dependencies
 
     private let authorService: AuthorServiceProtocol
+    private let eventViewModel: EventViewModel?
 
     // MARK: - Initialization
 
     public init(
         author: Author? = nil,
-        authorService: AuthorServiceProtocol = AuthorService()
+        authorService: AuthorServiceProtocol = AuthorService(),
+        eventViewModel: EventViewModel? = nil
     ) {
         self.author = author
         self.authorService = authorService
+        self.eventViewModel = eventViewModel
 
         // Populate form if editing
         if let author = author {
@@ -57,7 +60,8 @@ public final class AuthorFormViewModel: AuthorFormViewModelProtocol {
         return validationErrors.isEmpty
     }
 
-    public func submit() async throws {
+    @discardableResult
+    public func submit() async throws -> Author {
         guard validate() else {
             throw FormError.validationFailed
         }
@@ -71,15 +75,19 @@ public final class AuthorFormViewModel: AuthorFormViewModelProtocol {
                 bio: bio.isEmpty ? nil : bio
             )
 
+            let result: Author
             if let existingAuthor = author {
                 // Update
-                _ = try await authorService.updateAuthor(id: existingAuthor.id, request)
+                result = try await authorService.updateAuthor(id: existingAuthor.id, request)
+                eventViewModel?.emit(.authorUpdated(id: result.id))
             } else {
                 // Create
-                _ = try await authorService.createAuthor(request)
+                result = try await authorService.createAuthor(request)
+                eventViewModel?.emit(.authorCreated(id: result.id))
             }
 
             isSubmitting = false
+            return result
         } catch {
             self.error = error
             isSubmitting = false

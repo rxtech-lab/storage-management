@@ -8,7 +8,7 @@ import {
 } from "@/lib/actions/item-actions";
 import { getItemContents } from "@/lib/actions/content-actions";
 import { getItemPositions } from "@/lib/actions/position-actions";
-import { signImagesArray } from "@/lib/actions/s3-upload-actions";
+import { signImagesArrayWithIds } from "@/lib/actions/s3-upload-actions";
 import { isEmailWhitelisted } from "@/lib/actions/whitelist-actions";
 
 interface RouteParams {
@@ -62,7 +62,7 @@ async function buildItemResponse(
   // Fetch item images, children, contents, and positions in parallel
   const [images, children, contents, positions] = await Promise.all([
     item.images && item.images.length > 0
-      ? signImagesArray(item.images)
+      ? signImagesArrayWithIds(item.images)
       : Promise.resolve([]),
     getItemChildren(itemId, userId ?? undefined),
     getItemContents(itemId),
@@ -74,7 +74,7 @@ async function buildItemResponse(
     children.map(async (child) => {
       const childImages =
         child.images && child.images.length > 0
-          ? await signImagesArray(child.images)
+          ? await signImagesArrayWithIds(child.images)
           : [];
       return {
         ...child,
@@ -112,7 +112,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       // Sign images - replace file IDs with signed URLs
       const images =
         result.data.images && result.data.images.length > 0
-          ? await signImagesArray(result.data.images)
+          ? await signImagesArrayWithIds(result.data.images)
           : [];
 
       return NextResponse.json({ ...result.data, images, previewUrl });

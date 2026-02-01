@@ -111,8 +111,12 @@ public final class ItemDetailViewModel: ItemDetailViewModelProtocol {
     // MARK: - Child Management
 
     /// Add a child item by its ID - fetches fresh data to avoid memory issues
-    public func addChildById(_ childId: Int) async throws {
-        guard let currentItemId = item?.id else { return }
+    /// Returns tuple of (parentId, childId) for event emission
+    @discardableResult
+    public func addChildById(_ childId: Int) async throws -> (parentId: Int, childId: Int) {
+        guard let currentItemId = item?.id else {
+            throw ItemDetailError.noItemLoaded
+        }
 
         // Fetch the item fresh from API to avoid memory issues with passed objects
         let childItem = try await itemService.fetchItem(id: childId)
@@ -134,12 +138,22 @@ public final class ItemDetailViewModel: ItemDetailViewModelProtocol {
 
         // Add to local children list
         children.append(updatedChild)
+
+        return (parentId: currentItemId, childId: childId)
     }
 
     /// Remove a child item by its ID
-    public func removeChildById(_ childId: Int) async throws {
+    /// Returns tuple of (parentId, childId) for event emission
+    @discardableResult
+    public func removeChildById(_ childId: Int) async throws -> (parentId: Int, childId: Int) {
+        guard let currentItemId = item?.id else {
+            throw ItemDetailError.noItemLoaded
+        }
+
         // Find the child in our local list to get its data
-        guard let childItem = children.first(where: { $0.id == childId }) else { return }
+        guard let childItem = children.first(where: { $0.id == childId }) else {
+            throw ItemDetailError.childNotFound
+        }
 
         // Create update request with nil parentId
         let request = UpdateItemRequest(
@@ -158,22 +172,75 @@ public final class ItemDetailViewModel: ItemDetailViewModelProtocol {
 
         // Remove from local children list
         children.removeAll { $0.id == childId }
+
+        return (parentId: currentItemId, childId: childId)
     }
 
     // MARK: - Content Management
 
     /// Create a new content for this item
-    public func createContent(type: Content.ContentType, formData: [String: AnyCodable]) async throws {
-        guard let itemId = item?.id else { return }
+    /// Returns tuple of (itemId, contentId) for event emission
+    @discardableResult
+    public func createContent(type: Content.ContentType, formData: [String: AnyCodable]) async throws -> (itemId: Int, contentId: Int) {
+        guard let itemId = item?.id else {
+            throw ItemDetailError.noItemLoaded
+        }
 
         let pending = PendingContent(type: type, formData: formData)
         let created = try await contentService.createContent(itemId: itemId, pending.asContentRequest)
         contents.append(created)
+
+        return (itemId: itemId, contentId: created.id)
     }
 
     /// Delete an existing content
-    public func deleteContent(id: Int) async throws {
+    /// Returns tuple of (itemId, contentId) for event emission
+    @discardableResult
+    public func deleteContent(id: Int) async throws -> (itemId: Int, contentId: Int) {
+        guard let itemId = item?.id else {
+            throw ItemDetailError.noItemLoaded
+        }
+
         try await contentService.deleteContent(id: id)
         contents.removeAll { $0.id == id }
+
+        return (itemId: itemId, contentId: id)
+    }
+
+    /// Update an existing content
+    public func updateContent(id: Int, type: Content.ContentType, formData: [String: AnyCodable]) async throws {
+        let contentData = ContentData(
+            title: formData["title"]?.value as? String,
+            description: formData["description"]?.value as? String,
+            mimeType: formData["mime_type"]?.value as? String,
+            size: formData["size"]?.value as? Int,
+            filePath: formData["file_path"]?.value as? String,
+            previewImageUrl: formData["preview_image_url"]?.value as? String,
+            videoLength: formData["video_length"]?.value as? Int,
+            previewVideoUrl: formData["preview_video_url"]?.value as? String
+        )
+        let request = ContentRequest(type: type, data: contentData)
+        let updated = try await contentService.updateContent(id: id, request)
+
+        // Update the content in our local list
+        if let index = contents.firstIndex(where: { $0.id == id }) {
+            contents[index] = updated
+        }
+    }
+}
+
+// MARK: - Item Detail Errors
+
+public enum ItemDetailError: LocalizedError {
+    case noItemLoaded
+    case childNotFound
+
+    public var errorDescription: String? {
+        switch self {
+        case .noItemLoaded:
+            return "No item is currently loaded"
+        case .childNotFound:
+            return "Child item not found"
+        }
     }
 }

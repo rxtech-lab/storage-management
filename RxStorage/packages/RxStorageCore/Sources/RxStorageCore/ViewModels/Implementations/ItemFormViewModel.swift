@@ -25,7 +25,7 @@ public final class ItemFormViewModel: ItemFormViewModelProtocol {
     public var selectedParentId: Int?
     public var price = ""
     public var visibility: StorageItem.Visibility = .public
-    public var imageURLs: [String] = []
+    public var existingImages: [ImageReference] = []
 
     // Reference data
     public private(set) var categories: [Category] = []
@@ -64,6 +64,7 @@ public final class ItemFormViewModel: ItemFormViewModelProtocol {
     private let contentSchemaService: ContentSchemaServiceProtocol
     private let contentService: ContentServiceProtocol
     private let uploadManager: UploadManager
+    private let eventViewModel: EventViewModel?
 
     // MARK: - Initialization
 
@@ -77,7 +78,8 @@ public final class ItemFormViewModel: ItemFormViewModelProtocol {
         positionService: PositionServiceProtocol = PositionService(),
         contentSchemaService: ContentSchemaServiceProtocol = ContentSchemaService(),
         contentService: ContentServiceProtocol = ContentService(),
-        uploadManager: UploadManager = .shared
+        uploadManager: UploadManager = .shared,
+        eventViewModel: EventViewModel? = nil
     ) {
         self.item = item
         self.itemService = itemService
@@ -89,6 +91,7 @@ public final class ItemFormViewModel: ItemFormViewModelProtocol {
         self.contentSchemaService = contentSchemaService
         self.contentService = contentService
         self.uploadManager = uploadManager
+        self.eventViewModel = eventViewModel
 
         // Populate form if editing
         if let item = item {
@@ -184,7 +187,8 @@ public final class ItemFormViewModel: ItemFormViewModelProtocol {
         return validationErrors.isEmpty
     }
 
-    public func submit() async throws {
+    @discardableResult
+    public func submit() async throws -> StorageItem {
         guard validate() else {
             throw FormError.validationFailed
         }
@@ -211,18 +215,22 @@ public final class ItemFormViewModel: ItemFormViewModelProtocol {
                 positions: positionsData
             )
 
+            let result: StorageItem
             if let existingItem = item {
                 // Update
-                _ = try await itemService.updateItem(id: existingItem.id, request)
+                result = try await itemService.updateItem(id: existingItem.id, request)
+                eventViewModel?.emit(.itemUpdated(id: result.id))
             } else {
                 // Create
-                _ = try await itemService.createItem(request)
+                result = try await itemService.createItem(request)
+                eventViewModel?.emit(.itemCreated(id: result.id))
             }
 
             // Clear pending positions after successful save
             pendingPositions.removeAll()
 
             isSubmitting = false
+            return result
         } catch {
             self.error = error
             isSubmitting = false
@@ -239,6 +247,9 @@ public final class ItemFormViewModel: ItemFormViewModelProtocol {
         // Add to local list
         categories.append(created)
 
+        // Emit event
+        eventViewModel?.emit(.categoryCreated(id: created.id))
+
         return created
     }
 
@@ -249,6 +260,9 @@ public final class ItemFormViewModel: ItemFormViewModelProtocol {
         // Add to local list
         locations.append(created)
 
+        // Emit event
+        eventViewModel?.emit(.locationCreated(id: created.id))
+
         return created
     }
 
@@ -258,6 +272,9 @@ public final class ItemFormViewModel: ItemFormViewModelProtocol {
 
         // Add to local list
         authors.append(created)
+
+        // Emit event
+        eventViewModel?.emit(.authorCreated(id: created.id))
 
         return created
     }
@@ -388,17 +405,17 @@ public final class ItemFormViewModel: ItemFormViewModelProtocol {
         pendingUploads.removeAll { $0.id == id }
     }
 
-    /// Remove a saved image from the imageURLs array
+    /// Remove an existing image
     public func removeSavedImage(at index: Int) {
-        guard index >= 0 && index < imageURLs.count else { return }
-        imageURLs.remove(at: index)
+        guard index >= 0 && index < existingImages.count else { return }
+        existingImages.remove(at: index)
     }
 
     /// Get all image references for item submission
     /// Returns file references for completed pending uploads + existing saved images
     public var allImageReferences: [String] {
-        // Start with existing saved images (they might be "file:N" or signed URLs)
-        var references = imageURLs
+        // Start with existing images, converted to file references
+        var references = existingImages.map { $0.fileReference }
 
         // Add completed pending uploads as "file:N" references
         let completedReferences = pendingUploads.compactMap { $0.fileReference }
@@ -418,7 +435,7 @@ public final class ItemFormViewModel: ItemFormViewModelProtocol {
         selectedParentId = item.parentId
         price = item.price.map { String($0) } ?? ""
         visibility = item.visibility
-        imageURLs = item.images
+        existingImages = item.images
 
         // Pre-populate reference data with embedded objects for immediate display
         // This prevents the "None" -> "Selected" visual flash when editing

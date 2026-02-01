@@ -22,7 +22,7 @@ struct ItemFormViewModelTests {
         authorId: 3,
         price: 49.99,
         visibility: StorageItem.Visibility.public,
-        images: ["https://example.com/image.jpg"]
+        images: [TestHelpers.makeImageReference(id: 1, url: "https://example.com/image.jpg")]
     )
 
     // MARK: - Initialization Tests
@@ -41,7 +41,8 @@ struct ItemFormViewModelTests {
         #expect(sut.selectedAuthorId == 3)
         #expect(sut.price == "49.99")
         #expect(sut.visibility == StorageItem.Visibility.public)
-        #expect(sut.imageURLs == ["https://example.com/image.jpg"])
+        #expect(sut.existingImages.count == 1)
+        #expect(sut.existingImages[0].url == "https://example.com/image.jpg")
     }
 
     // MARK: - Validation Tests

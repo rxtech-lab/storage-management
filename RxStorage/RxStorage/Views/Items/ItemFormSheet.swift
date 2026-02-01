@@ -15,6 +15,7 @@ struct ItemFormSheet: View {
 
     @State private var viewModel: ItemFormViewModel
     @Environment(\.dismiss) private var dismiss
+    @Environment(EventViewModel.self) private var eventViewModel
 
     // Inline creation sheets
     @State private var showingCategorySheet = false
@@ -157,10 +158,10 @@ struct ItemFormSheet: View {
 
             // Images
             Section("Images") {
-                // Saved images (from imageURLs)
-                ForEach(Array(viewModel.imageURLs.enumerated()), id: \.offset) { index, url in
+                // Existing images
+                ForEach(Array(viewModel.existingImages.enumerated()), id: \.element.id) { index, imageRef in
                     HStack {
-                        AsyncImage(url: URL(string: url)) { image in
+                        AsyncImage(url: URL(string: imageRef.url)) { image in
                             image
                                 .resizable()
                                 .scaledToFill()
@@ -455,7 +456,13 @@ struct ItemFormSheet: View {
         }
 
         do {
-            try await viewModel.submit()
+            let savedItem = try await viewModel.submit()
+            // Emit event based on create vs update
+            if item == nil {
+                eventViewModel.emit(.itemCreated(id: savedItem.id))
+            } else {
+                eventViewModel.emit(.itemUpdated(id: savedItem.id))
+            }
             dismiss()
         } catch {
             // Error is already tracked in viewModel.error

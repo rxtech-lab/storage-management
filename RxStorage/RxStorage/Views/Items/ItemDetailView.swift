@@ -14,6 +14,7 @@ struct ItemDetailView: View {
     let isViewOnly: Bool
 
     @State private var viewModel = ItemDetailViewModel()
+    @Environment(EventViewModel.self) private var eventViewModel
     @State private var showingEditSheet = false
     @State private var showingQRSheet = false
     @State private var nfcWriter = NFCWriter()
@@ -30,6 +31,12 @@ struct ItemDetailView: View {
     @State private var showingContentSheet = false
     @State private var contentError: Error?
     @State private var showContentError = false
+    @State private var selectedImageIndex = 0
+    @State private var selectedChildForEdit: StorageItem?
+    @State private var selectedContentForEdit: Content?
+    @State private var selectedContentForDetail: Content?
+    @State private var isRefreshing = false
+    private let imageHeight: CGFloat = 400
 
     init(itemId: Int, isViewOnly: Bool = false) {
         self.itemId = itemId
@@ -38,28 +45,35 @@ struct ItemDetailView: View {
 
     var body: some View {
         Group {
-            if viewModel.isLoading {
+            if viewModel.isLoading && viewModel.item == nil {
                 ProgressView("Loading...")
             } else if let item = viewModel.item {
                 ScrollView {
-                    VStack(alignment: .leading, spacing: 20) {
-                        // Header
-                        itemHeader(item)
+                    VStack(spacing: 0) {
+                        // Stretchy image carousel inside scroll
+                        if !item.images.isEmpty {
+                            stretchyImageCarousel(item.images)
+                        }
 
-                        Divider()
-
-                        // Details
-                        itemDetails(item)
-
-                        // Contents
-                        Divider()
-                        contentsSection
-
-                        // Children
-                        Divider()
-                        childrenSection
+                        // Card-styled sections
+                        VStack(spacing: 16) {
+                            headerCard(item)
+                            detailsCard(item)
+                            contentsCard
+                            childrenCard
+                        }
+                        .padding(.horizontal, 16)
+                        .padding(.top, item.images.isEmpty ? 16 : 8)
+                        .padding(.bottom, 32)
                     }
-                    .padding()
+                    .frame(maxWidth: .infinity)
+                }
+                .ignoresSafeArea(edges: item.images.isEmpty ? [] : .top)
+                .background(Color(.systemGroupedBackground))
+                .overlay {
+                    if isRefreshing {
+                        LoadingOverlay(title: "Refreshing...")
+                    }
                 }
                 .toolbar {
                     if !isViewOnly {
@@ -121,6 +135,27 @@ struct ItemDetailView: View {
             await viewModel.fetchItem(id: itemId)
             await viewModel.fetchContentSchemas()
         }
+        .task(id: itemId) {
+            // Listen for events related to this item
+            for await event in eventViewModel.stream {
+                switch event {
+                case .itemUpdated(let id) where id == itemId:
+                    isRefreshing = true
+                    await viewModel.refresh()
+                    isRefreshing = false
+                case .contentCreated(let iId, _), .contentDeleted(let iId, _) where iId == itemId:
+                    isRefreshing = true
+                    await viewModel.refresh()
+                    isRefreshing = false
+                case .childAdded(let pId, _), .childRemoved(let pId, _) where pId == itemId:
+                    isRefreshing = true
+                    await viewModel.refresh()
+                    isRefreshing = false
+                default:
+                    break
+                }
+            }
+        }
         .alert("NFC Write Successful", isPresented: $showNFCSuccess) {
             Button("OK", role: .cancel) {}
         } message: {
@@ -176,6 +211,37 @@ struct ItemDetailView: View {
         } message: {
             Text(contentError?.localizedDescription ?? "An error occurred.")
         }
+        .sheet(item: $selectedChildForEdit) { child in
+            NavigationStack {
+                ItemFormSheet(item: child)
+            }
+        }
+        .sheet(item: $selectedContentForEdit) { content in
+            NavigationStack {
+                ContentFormSheet(
+                    contentSchemas: $viewModel.contentSchemas,
+                    existingContent: content,
+                    onSubmit: { type, data in
+                        Task {
+                            await updateContent(content.id, type: type, data: data)
+                        }
+                    }
+                )
+            }
+        }
+        .sheet(item: $selectedContentForDetail) { content in
+            NavigationStack {
+                ContentDetailSheet(
+                    content: content,
+                    contentSchemas: $viewModel.contentSchemas,
+                    onEdit: {
+                        // Trigger edit sheet after detail sheet dismisses
+                        selectedContentForEdit = content
+                    },
+                    isViewOnly: isViewOnly
+                )
+            }
+        }
     }
 
     // MARK: - NFC Writing
@@ -192,22 +258,64 @@ struct ItemDetailView: View {
         }
     }
 
-    // MARK: - Item Header
+    // MARK: - Stretchy Image Carousel
 
     @ViewBuilder
-    private func itemHeader(_ item: StorageItem) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text(item.title)
-                .font(.title2)
-                .fontWeight(.bold)
+    private func stretchyImageCarousel(_ images: [ImageReference]) -> some View {
+        GeometryReader { geometry in
+            let minY = geometry.frame(in: .global).minY
+            let stretchAmount = max(0, minY)
+            let calculatedHeight = imageHeight + stretchAmount
 
-            if let description = item.description {
-                Text(description)
-                    .font(.body)
-                    .foregroundStyle(.secondary)
+            TabView(selection: $selectedImageIndex) {
+                ForEach(Array(images.enumerated()), id: \.element.id) { index, imageRef in
+                    AsyncImage(url: URL(string: imageRef.url)) { phase in
+                        switch phase {
+                        case .success(let image):
+                            image
+                                .resizable()
+                                .scaledToFill()
+                                .frame(width: geometry.size.width, height: calculatedHeight)
+                                .clipped()
+                        case .failure:
+                            VStack {
+                                Image(systemName: "photo")
+                                    .font(.largeTitle)
+                                    .foregroundStyle(.secondary)
+                                Text("Failed to load")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                            .frame(width: geometry.size.width, height: calculatedHeight)
+                            .background(Color(.systemGray6))
+                        case .empty:
+                            ProgressView()
+                                .frame(width: geometry.size.width, height: calculatedHeight)
+                                .background(Color(.systemGray6))
+                        @unknown default:
+                            EmptyView()
+                        }
+                    }
+                    .tag(index)
+                }
             }
+            .tabViewStyle(.page(indexDisplayMode: .automatic))
+            .frame(width: geometry.size.width, height: calculatedHeight)
+            .offset(y: minY > 0 ? -minY : 0)
+        }
+        .frame(height: imageHeight)
+    }
 
+    // MARK: - Header Card
+
+    @ViewBuilder
+    private func headerCard(_ item: StorageItem) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
             HStack {
+                Text(item.title)
+                    .font(.title2)
+                    .fontWeight(.bold)
+                Spacer()
                 if item.visibility == .public {
                     Label("Public", systemImage: "globe")
                         .font(.caption)
@@ -226,74 +334,73 @@ struct ItemDetailView: View {
                         .cornerRadius(4)
                 }
             }
+
+            if let description = item.description {
+                Text(description)
+                    .font(.body)
+                    .foregroundStyle(.secondary)
+            }
         }
+        .cardStyle()
     }
 
-    // MARK: - Item Details
+    // MARK: - Details Card
 
     @ViewBuilder
-    private func itemDetails(_ item: StorageItem) -> some View {
+    private func detailsCard(_ item: StorageItem) -> some View {
         VStack(alignment: .leading, spacing: 12) {
-            if let category = item.category {
-                DetailRow(label: "Category", value: category.name, icon: "folder")
-            }
+            Label("Details", systemImage: "info.circle")
+                .font(.headline)
+                .foregroundStyle(.secondary)
 
-            if let location = item.location {
-                DetailRow(label: "Location", value: location.title, icon: "mappin")
-            }
+            Divider()
 
-            if let author = item.author {
-                DetailRow(label: "Author", value: author.name, icon: "person")
-            }
+            VStack(spacing: 12) {
+                if let category = item.category {
+                    LabeledContent {
+                        Text(category.name)
+                    } label: {
+                        Label("Category", systemImage: "folder")
+                    }
+                }
 
-            if let price = item.price {
-                DetailRow(label: "Price", value: String(format: "%.2f", price), icon: "dollarsign.circle")
-            }
+                if let location = item.location {
+                    LabeledContent {
+                        Text(location.title)
+                    } label: {
+                        Label("Location", systemImage: "mappin")
+                    }
+                }
 
-            if !item.images.isEmpty {
-                VStack(alignment: .leading, spacing: 8) {
-                    Label("Images", systemImage: "photo")
-                        .font(.headline)
+                if let author = item.author {
+                    LabeledContent {
+                        Text(author.name)
+                    } label: {
+                        Label("Author", systemImage: "person")
+                    }
+                }
 
-                    ScrollView(.horizontal, showsIndicators: false) {
-                        HStack(spacing: 12) {
-                            ForEach(item.images, id: \.self) { imageURL in
-                                AsyncImage(url: URL(string: imageURL)) { image in
-                                    image
-                                        .resizable()
-                                        .scaledToFill()
-                                } placeholder: {
-                                    ProgressView()
-                                }
-                                .frame(width: 100, height: 100)
-                                .clipShape(RoundedRectangle(cornerRadius: 8))
-                            }
-                        }
+                if let price = item.price {
+                    LabeledContent {
+                        Text(price, format: .currency(code: "USD"))
+                    } label: {
+                        Label("Price", systemImage: "dollarsign.circle")
                     }
                 }
             }
         }
+        .cardStyle()
     }
 
-    // MARK: - Children Section
+    // MARK: - Children Card
 
-    private var childrenSection: some View {
+    private var childrenCard: some View {
         VStack(alignment: .leading, spacing: 12) {
-            HStack {
-                Label("Child Items", systemImage: "list.bullet.indent")
-                    .font(.headline)
+            Label("Child Items", systemImage: "list.bullet.indent")
+                .font(.headline)
+                .foregroundStyle(.secondary)
 
-                Spacer()
-
-                if !isViewOnly {
-                    Button {
-                        showingAddChildSheet = true
-                    } label: {
-                        Label("Add Child", systemImage: "plus.circle")
-                            .font(.subheadline)
-                    }
-                }
-            }
+            Divider()
 
             if viewModel.children.isEmpty {
                 Text("No child items")
@@ -301,28 +408,78 @@ struct ItemDetailView: View {
                     .foregroundStyle(.secondary)
                     .padding(.vertical, 8)
             } else {
-                ForEach(viewModel.children) { child in
-                    HStack {
-                        NavigationLink(value: child) {
-                            ItemRow(item: child)
-                        }
-
-                        Spacer()
-
-                        if !isViewOnly {
-                            Button(role: .destructive) {
-                                // Capture child ID synchronously before entering async context
-                                let childId = child.id
-                                Task {
-                                    await removeChild(childId)
-                                }
-                            } label: {
-                                Image(systemName: "minus.circle")
-                                    .foregroundStyle(.red)
-                            }
-                            .buttonStyle(.plain)
-                        }
+                ForEach(Array(viewModel.children.enumerated()), id: \.element.id) { index, child in
+                    childRowWithActions(child)
+                    if index < viewModel.children.count - 1 {
+                        Divider()
                     }
+                }
+            }
+
+            // Add child button as list row
+            if !isViewOnly {
+                Divider()
+                Button {
+                    showingAddChildSheet = true
+                } label: {
+                    HStack {
+                        Image(systemName: "plus.circle")
+                            .foregroundStyle(.blue)
+                        Text("Add Child Item")
+                            .foregroundStyle(.blue)
+                    }
+                }
+                .padding(.vertical, 4)
+            }
+        }
+        .cardStyle()
+    }
+
+    @ViewBuilder
+    private func childRowWithActions(_ child: StorageItem) -> some View {
+        HStack {
+            NavigationLink(value: child) {
+                ItemRow(item: child)
+            }
+            .buttonStyle(.plain)
+
+            if !isViewOnly {
+                HStack(spacing: 12) {
+                    Button {
+                        selectedChildForEdit = child
+                    } label: {
+                        Image(systemName: "pencil")
+                            .foregroundStyle(.blue)
+                    }
+                    .buttonStyle(.plain)
+
+                    Button {
+                        Task {
+                            await removeChild(child.id)
+                        }
+                    } label: {
+                        Image(systemName: "minus.circle")
+                            .foregroundStyle(.red)
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+        }
+        .padding(.vertical, 4)
+        .contentShape(Rectangle())
+        .contextMenu {
+            if !isViewOnly {
+                Button {
+                    selectedChildForEdit = child
+                } label: {
+                    Label("Edit", systemImage: "pencil")
+                }
+                Button(role: .destructive) {
+                    Task {
+                        await removeChild(child.id)
+                    }
+                } label: {
+                    Label("Remove from Parent", systemImage: "minus.circle")
                 }
             }
         }
@@ -334,7 +491,8 @@ struct ItemDetailView: View {
         isAddingChild = true
         defer { isAddingChild = false }
         do {
-            try await viewModel.addChildById(childId)
+            let (parentId, childId) = try await viewModel.addChildById(childId)
+            eventViewModel.emit(.childAdded(parentId: parentId, childId: childId))
         } catch {
             addChildError = error
             showAddChildError = true
@@ -343,94 +501,155 @@ struct ItemDetailView: View {
 
     private func removeChild(_ childId: Int) async {
         do {
-            try await viewModel.removeChildById(childId)
+            let (parentId, childId) = try await viewModel.removeChildById(childId)
+            eventViewModel.emit(.childRemoved(parentId: parentId, childId: childId))
         } catch {
             removeChildError = error
             showRemoveChildError = true
         }
     }
 
-    // MARK: - Contents Section
+    // MARK: - Contents Card
 
-    private var contentsSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
+    private var contentsCard: some View {
+        VStack(alignment: .leading, spacing: 0) {
             HStack {
                 Label("Contents", systemImage: "doc.on.doc")
                     .font(.headline)
-
+                    .foregroundStyle(.secondary)
                 Spacer()
-
-                if !isViewOnly {
-                    Button {
-                        showingContentSheet = true
-                    } label: {
-                        Label("Add Content", systemImage: "plus.circle")
-                            .font(.subheadline)
-                    }
-                }
             }
+            .padding(.horizontal, 16)
+            .padding(.top, 16)
+            .padding(.bottom, 12)
+
+            Divider()
+                .padding(.leading, 16)
 
             if viewModel.contents.isEmpty {
                 Text("No contents")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
-                    .padding(.vertical, 8)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 12)
             } else {
-                ForEach(viewModel.contents) { content in
-                    HStack(alignment: .top, spacing: 12) {
-                        Image(systemName: content.type.icon)
-                            .font(.title2)
-                            .foregroundStyle(contentIconColor(for: content.type))
-                            .frame(width: 32, height: 32)
-
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text(content.data.title ?? "Untitled")
-                                .font(.subheadline)
-                                .fontWeight(.medium)
-
-                            if let description = content.data.description, !description.isEmpty {
-                                Text(description)
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
-                                    .lineLimit(2)
-                            }
-
-                            HStack(spacing: 8) {
-                                if let mimeType = content.data.mimeType {
-                                    Text(mimeType)
-                                        .font(.caption2)
-                                        .foregroundStyle(.tertiary)
-                                }
-
-                                if let size = content.data.formattedSize {
-                                    Text(size)
-                                        .font(.caption2)
-                                        .foregroundStyle(.tertiary)
-                                }
-
-                                if let duration = content.data.formattedVideoLength {
-                                    Label(duration, systemImage: "clock")
-                                        .font(.caption2)
-                                        .foregroundStyle(.tertiary)
+                List {
+                    ForEach(viewModel.contents) { content in
+                        contentRow(content)
+                            .listRowInsets(EdgeInsets(top: 20, leading: 16, bottom: 20, trailing: 16))
+                            .listRowBackground(Color.clear)
+                            .swipeActions(edge: .leading, allowsFullSwipe: false) {
+                                if !isViewOnly {
+                                    Button {
+                                        selectedContentForEdit = content
+                                    } label: {
+                                        Label("Edit", systemImage: "pencil")
+                                    }
+                                    .tint(.blue)
                                 }
                             }
-                        }
-
-                        Spacer()
-
-                        if !isViewOnly {
-                            Button(role: .destructive) {
-                                Task {
-                                    await deleteContent(content.id)
+                            .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                                if !isViewOnly {
+                                    Button(role: .destructive) {
+                                        Task {
+                                            await deleteContent(content.id)
+                                        }
+                                    } label: {
+                                        Label("Delete", systemImage: "trash")
+                                    }
                                 }
-                            } label: {
-                                Image(systemName: "trash")
-                                    .foregroundStyle(.red)
                             }
-                            .buttonStyle(.plain)
-                        }
                     }
-                    .padding(.vertical, 4)
+                }
+                .listStyle(.plain)
+                .scrollDisabled(true)
+                .frame(minHeight: CGFloat(viewModel.contents.count) * 80)
+            }
+
+            // Add content button as list row
+            if !isViewOnly {
+                Divider()
+                    .padding(.leading, 16)
+                Button {
+                    showingContentSheet = true
+                } label: {
+                    HStack {
+                        Image(systemName: "plus.circle")
+                            .foregroundStyle(.blue)
+                        Text("Add Content")
+                            .foregroundStyle(.blue)
+                    }
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 12)
+            }
+        }
+        .background(Color(.secondarySystemGroupedBackground))
+        .clipShape(RoundedRectangle(cornerRadius: 12))
+    }
+
+    // MARK: - Content Row
+
+    @ViewBuilder
+    private func contentRow(_ content: Content) -> some View {
+        HStack(alignment: .top, spacing: 12) {
+            Image(systemName: content.type.icon)
+                .font(.title2)
+                .foregroundStyle(contentIconColor(for: content.type))
+                .frame(width: 32, height: 32)
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text(content.data.title ?? "Untitled")
+                    .font(.subheadline)
+                    .fontWeight(.medium)
+
+                if let description = content.data.description, !description.isEmpty {
+                    Text(description)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(2)
+                }
+
+                HStack(spacing: 8) {
+                    if let mimeType = content.data.mimeType {
+                        Text(mimeType)
+                            .font(.caption2)
+                            .foregroundStyle(.tertiary)
+                    }
+
+                    if let size = content.data.formattedSize {
+                        Text(size)
+                            .font(.caption2)
+                            .foregroundStyle(.tertiary)
+                    }
+
+                    if let duration = content.data.formattedVideoLength {
+                        Label(duration, systemImage: "clock")
+                            .font(.caption2)
+                            .foregroundStyle(.tertiary)
+                    }
+                }
+            }
+
+            Spacer()
+        }
+        .contentShape(Rectangle())
+        .onTapGesture {
+            selectedContentForDetail = content
+        }
+        .contextMenu {
+            if !isViewOnly {
+                Button {
+                    selectedContentForEdit = content
+                } label: {
+                    Label("Edit", systemImage: "pencil")
+                }
+                Button(role: .destructive) {
+                    Task {
+                        await deleteContent(content.id)
+                    }
+                } label: {
+                    Label("Delete", systemImage: "trash")
                 }
             }
         }
@@ -451,7 +670,8 @@ struct ItemDetailView: View {
 
     private func createContent(type: Content.ContentType, data: [String: AnyCodable]) async {
         do {
-            try await viewModel.createContent(type: type, formData: data)
+            let (itemId, contentId) = try await viewModel.createContent(type: type, formData: data)
+            eventViewModel.emit(.contentCreated(itemId: itemId, contentId: contentId))
         } catch {
             contentError = error
             showContentError = true
@@ -460,7 +680,18 @@ struct ItemDetailView: View {
 
     private func deleteContent(_ id: Int) async {
         do {
-            try await viewModel.deleteContent(id: id)
+            let (itemId, contentId) = try await viewModel.deleteContent(id: id)
+            eventViewModel.emit(.contentDeleted(itemId: itemId, contentId: contentId))
+        } catch {
+            contentError = error
+            showContentError = true
+        }
+    }
+
+    private func updateContent(_ id: Int, type: Content.ContentType, data: [String: AnyCodable]) async {
+        do {
+            try await viewModel.updateContent(id: id, type: type, formData: data)
+            await viewModel.refresh()
         } catch {
             contentError = error
             showContentError = true
@@ -468,7 +699,17 @@ struct ItemDetailView: View {
     }
 }
 
-/// Detail row component
+// MARK: - Card Style Extension
+
+extension View {
+    func cardStyle() -> some View {
+        padding(16)
+            .background(Color(.secondarySystemGroupedBackground))
+            .clipShape(RoundedRectangle(cornerRadius: 12))
+    }
+}
+
+/// Detail row component (shared with other views)
 struct DetailRow: View {
     let label: String
     let value: String

@@ -358,22 +358,25 @@ export async function signFileUrlsAction(
 
 /**
  * Sign images from an images array that may contain both file IDs and legacy URLs
- * Returns an array of signed URLs in the same order as input
+ * Returns an array of signed URLs, filtering out null/undefined values
  */
 export async function signImagesArray(
-  images: string[],
+  images: (string | null | undefined)[],
   expiresIn: number = 3600
 ): Promise<string[]> {
-  if (images.length === 0) {
+  // Filter out null/undefined values first
+  const validImages = images.filter((img): img is string => img != null && img !== "");
+
+  if (validImages.length === 0) {
     return [];
   }
 
-  const signedUrls: string[] = new Array(images.length);
+  const signedUrls: string[] = new Array(validImages.length);
   const fileIdIndices: { index: number; fileId: number }[] = [];
   const urlIndices: { index: number; url: string }[] = [];
 
   // Separate file IDs and legacy URLs
-  images.forEach((image, index) => {
+  validImages.forEach((image, index) => {
     if (isFileId(image)) {
       const fileId = parseInt(image.substring(5), 10);
       if (!isNaN(fileId)) {
@@ -409,4 +412,58 @@ export async function signImagesArray(
   }
 
   return signedUrls;
+}
+
+// --- Sign Images with IDs (returns {id, url} objects) ---
+
+export interface SignedImage {
+  id: number;
+  url: string;
+}
+
+/**
+ * Sign images from a file:{id} format array and return objects with both id and signed URL.
+ * Filters out null/undefined/empty values and non-file: format strings.
+ * @param images Array of strings in file:{id} format
+ * @param expiresIn Expiration time in seconds (default 1 hour)
+ * @returns Array of {id, url} objects
+ */
+export async function signImagesArrayWithIds(
+  images: (string | null | undefined)[],
+  expiresIn: number = 3600
+): Promise<SignedImage[]> {
+  // Filter out null/undefined and non-file: format values
+  const validImages = images.filter(
+    (img): img is string => img != null && img !== "" && isFileId(img)
+  );
+
+  if (validImages.length === 0) {
+    return [];
+  }
+
+  // Extract file IDs
+  const fileIds: number[] = [];
+  for (const image of validImages) {
+    const id = parseInt(image.substring(5), 10);
+    if (!isNaN(id)) {
+      fileIds.push(id);
+    }
+  }
+
+  if (fileIds.length === 0) {
+    return [];
+  }
+
+  // Sign the file URLs
+  const result = await signFileUrlsAction(fileIds, expiresIn);
+
+  if (!result.success || !result.data) {
+    return [];
+  }
+
+  // Map to SignedImage format
+  return result.data.map((r) => ({
+    id: r.fileId,
+    url: r.signedUrl,
+  }));
 }

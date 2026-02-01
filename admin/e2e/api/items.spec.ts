@@ -144,4 +144,61 @@ test.describe.serial("Items API", () => {
     const body = await response.json();
     expect(body).toHaveProperty("error");
   });
+
+  test("POST /api/v1/items - should reject full URLs in images array", async ({
+    request,
+  }) => {
+    const response = await request.post("/api/v1/items", {
+      data: {
+        title: "Test Item with Invalid Images",
+        visibility: "private",
+        images: ["https://example.com/image.jpg"],
+      },
+    });
+
+    expect(response.status()).toBe(400);
+    const body = await response.json();
+    expect(body).toHaveProperty("error");
+    expect(body.error).toContain("file:{id}");
+  });
+
+  test("POST /api/v1/items - should reject mixed format in images array", async ({
+    request,
+  }) => {
+    const response = await request.post("/api/v1/items", {
+      data: {
+        title: "Test Item with Mixed Images",
+        visibility: "private",
+        images: ["file:1", "https://example.com/image.jpg"],
+      },
+    });
+
+    expect(response.status()).toBe(400);
+    const body = await response.json();
+    expect(body).toHaveProperty("error");
+  });
+
+  test("GET /api/v1/items - images should be objects with id and url", async ({
+    request,
+  }) => {
+    const response = await request.get("/api/v1/items");
+
+    expect(response.status()).toBe(200);
+    const body = await response.json();
+    expect(body).toBeInstanceOf(Array);
+
+    // Check each item's images are in the correct format
+    for (const item of body) {
+      expect(item).toHaveProperty("images");
+      expect(item.images).toBeInstanceOf(Array);
+
+      // If item has images, verify they are objects with id and url
+      for (const image of item.images) {
+        expect(image).toHaveProperty("id");
+        expect(image).toHaveProperty("url");
+        expect(typeof image.id).toBe("number");
+        expect(typeof image.url).toBe("string");
+      }
+    }
+  });
 });

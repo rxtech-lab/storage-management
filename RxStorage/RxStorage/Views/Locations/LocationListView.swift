@@ -14,6 +14,12 @@ struct LocationListView: View {
 
     @State private var viewModel = LocationListViewModel()
     @State private var showingCreateSheet = false
+    @State private var isRefreshing = false
+    @Environment(EventViewModel.self) private var eventViewModel
+
+    // Delete confirmation state
+    @State private var locationToDelete: Location?
+    @State private var showDeleteConfirmation = false
 
     /// Initialize with an optional binding (defaults to constant nil for standalone use)
     init(selectedLocation: Binding<Location?> = .constant(nil)) {
@@ -61,6 +67,41 @@ struct LocationListView: View {
         .task {
             await viewModel.fetchLocations()
         }
+        .task {
+            // Listen for location events and refresh
+            for await event in eventViewModel.stream {
+                switch event {
+                case .locationCreated, .locationUpdated, .locationDeleted:
+                    isRefreshing = true
+                    await viewModel.refreshLocations()
+                    isRefreshing = false
+                default:
+                    break
+                }
+            }
+        }
+        .overlay {
+            if isRefreshing {
+                LoadingOverlay(title: "Refreshing...")
+            }
+        }
+        .confirmationDialog(
+            title: "Delete Location",
+            message: "Are you sure you want to delete \"\(locationToDelete?.title ?? "")\"? This action cannot be undone.",
+            confirmButtonTitle: "Delete",
+            isPresented: $showDeleteConfirmation,
+            onConfirm: {
+                if let location = locationToDelete {
+                    Task {
+                        if let deletedId = try? await viewModel.deleteLocation(location) {
+                            eventViewModel.emit(.locationDeleted(id: deletedId))
+                        }
+                        locationToDelete = nil
+                    }
+                }
+            },
+            onCancel: { locationToDelete = nil }
+        )
     }
 
     // MARK: - Locations List
@@ -76,9 +117,8 @@ struct LocationListView: View {
                     }
                     .swipeActions(edge: .trailing, allowsFullSwipe: false) {
                         Button(role: .destructive) {
-                            Task {
-                                try? await viewModel.deleteLocation(location)
-                            }
+                            locationToDelete = location
+                            showDeleteConfirmation = true
                         } label: {
                             Label("Delete", systemImage: "trash")
                         }
@@ -99,9 +139,8 @@ struct LocationListView: View {
                     .listRowBackground(selectedLocation?.id == location.id ? Color.accentColor.opacity(0.2) : nil)
                     .swipeActions(edge: .trailing, allowsFullSwipe: false) {
                         Button(role: .destructive) {
-                            Task {
-                                try? await viewModel.deleteLocation(location)
-                            }
+                            locationToDelete = location
+                            showDeleteConfirmation = true
                         } label: {
                             Label("Delete", systemImage: "trash")
                         }

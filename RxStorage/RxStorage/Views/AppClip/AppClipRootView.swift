@@ -27,6 +27,18 @@ struct AppClipRootView: View {
     @State private var isAuthenticating = false
     @State private var authError: String?
 
+    // Animation states for sign-in view
+    @State private var showSignInTitle = false
+    @State private var showSignInButton = false
+
+    // Animation states for access denied view
+    @State private var showDeniedTitle = false
+    @State private var showDeniedButton = false
+
+    // Sign out confirmation state
+    @State private var showSignOutConfirmation = false
+    @State private var showTryDifferentAccountConfirmation = false
+
     var body: some View {
         NavigationStack {
             Group {
@@ -45,10 +57,38 @@ struct AppClipRootView: View {
                     )
                 } else if viewModel.isLoading {
                     // Loading state
-                    ProgressView("Loading...")
-                } else if viewModel.item != nil {
-                    // Show item detail when loaded successfully
-                    itemDetailContent
+                    ZStack {
+                        AnimatedGradientBackground()
+                        ProgressView("Loading...")
+                    }
+                } else if let id = itemId, viewModel.item != nil {
+                    // Show item detail using shared view
+                    ItemDetailView(itemId: id, isViewOnly: true)
+                        .toolbar {
+                            ToolbarItem(placement: .navigationBarTrailing) {
+                                Menu {
+                                    Button(role: .destructive) {
+                                        showSignOutConfirmation = true
+                                    } label: {
+                                        Label("Sign Out", systemImage: "rectangle.portrait.and.arrow.right")
+                                    }
+                                } label: {
+                                    Image(systemName: "ellipsis.circle")
+                                }
+                            }
+                        }
+                        .confirmationDialog(
+                            title: "Sign Out",
+                            message: "Are you sure you want to sign out?",
+                            confirmButtonTitle: "Sign Out",
+                            isPresented: $showSignOutConfirmation
+                        ) {
+                            Task {
+                                try? await TokenStorage.shared.clearAll()
+                                await oauthManager.logout()
+                                await fetchItem(id)
+                            }
+                        }
                 } else if let error = viewModel.error {
                     // Show fetch error
                     ContentUnavailableView(
@@ -79,220 +119,177 @@ struct AppClipRootView: View {
     // MARK: - Sign In View
 
     private var signInView: some View {
-        VStack(spacing: 30) {
-            VStack(spacing: 12) {
-                Image(systemName: "lock.shield")
-                    .font(.system(size: 60))
-                    .foregroundStyle(.orange)
+        ZStack {
+            AnimatedGradientBackground()
 
+            VStack(spacing: 0) {
+                Spacer(minLength: 80)
+
+                AnimatedSecurityIcon(style: .lock)
+
+                Spacer()
+                    .frame(height: 24)
+
+                // Title with animation
                 Text("Sign In Required")
                     .font(.title2)
                     .fontWeight(.bold)
+                    .opacity(showSignInTitle ? 1 : 0)
+                    .offset(y: showSignInTitle ? 0 : 15)
 
+                Spacer()
+                    .frame(height: 12)
+
+                // Description
                 Text("This item is private. Please sign in to view it.")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
-            }
+                    .padding(.horizontal, 32)
+                    .opacity(showSignInTitle ? 1 : 0)
+                    .offset(y: showSignInTitle ? 0 : 10)
 
-            if let authError = authError {
-                Text(authError)
-                    .font(.callout)
-                    .foregroundStyle(.red)
-                    .multilineTextAlignment(.center)
-                    .padding()
-                    .background(Color.red.opacity(0.1))
-                    .cornerRadius(8)
-            }
+                Spacer()
 
-            Button {
-                Task {
-                    await signIn()
+                // Error and button section
+                VStack(spacing: 16) {
+                    AuthErrorBanner(message: authError)
+                        .padding(.horizontal, 32)
+
+                    PrimaryAuthButton(
+                        "Sign In with RxLab",
+                        isLoading: isAuthenticating
+                    ) {
+                        Task {
+                            await signIn()
+                        }
+                    }
+                    .padding(.horizontal, 90)
+                    .opacity(showSignInButton ? 1 : 0)
+                    .scaleEffect(showSignInButton ? 1 : 0.95)
                 }
-            } label: {
-                if isAuthenticating {
-                    ProgressView()
-                        .progressViewStyle(.circular)
-                        .tint(.white)
-                } else {
-                    
-                    Text("Sign In with RxLab")
-                }
+
+                Spacer()
+                    .frame(height: 60)
             }
-            .buttonStyle(.borderedProminent)
-            .controlSize(.large)
-            .disabled(isAuthenticating)
         }
-        .padding()
+        .onAppear {
+            triggerSignInAnimations()
+        }
+    }
+
+    private func triggerSignInAnimations() {
+        withAnimation(.easeOut(duration: 0.5).delay(0.2)) {
+            showSignInTitle = true
+        }
+
+        withAnimation(.spring(response: 0.5, dampingFraction: 0.7).delay(0.5)) {
+            showSignInButton = true
+        }
     }
 
     // MARK: - Access Denied View
 
     private var accessDeniedView: some View {
-        VStack(spacing: 20) {
-            Image(systemName: "hand.raised.fill")
-                .font(.system(size: 60))
-                .foregroundStyle(.red)
+        ZStack {
+            AnimatedGradientBackground()
 
-            Text("Access Denied")
-                .font(.title2)
-                .fontWeight(.bold)
+            VStack(spacing: 0) {
+                Spacer(minLength: 80)
 
-            Text(
-                "You don't have permission to view this item. Contact the owner to request access."
-            )
-            .font(.subheadline)
-            .foregroundStyle(.secondary)
-            .multilineTextAlignment(.center)
+                AnimatedSecurityIcon(style: .denied)
 
-            if let user = oauthManager.currentUser, let email = user.email {
-                Text("Signed in as: \(email)")
-                    .font(.caption)
+                Spacer()
+                    .frame(height: 24)
+
+                // Title with animation
+                Text("Access Denied")
+                    .font(.title2)
+                    .fontWeight(.bold)
+                    .opacity(showDeniedTitle ? 1 : 0)
+                    .offset(y: showDeniedTitle ? 0 : 15)
+
+                Spacer()
+                    .frame(height: 12)
+
+                // Description
+                Text("You don't have permission to view this item. Contact the owner to request access.")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 32)
+                    .opacity(showDeniedTitle ? 1 : 0)
+                    .offset(y: showDeniedTitle ? 0 : 10)
+
+                Spacer()
+                    .frame(height: 24)
+
+                // Signed in as indicator
+                if let user = oauthManager.currentUser, let email = user.email {
+                    HStack(spacing: 6) {
+                        Image(systemName: "person.circle.fill")
+                            .font(.caption)
+                        Text("Signed in as \(email)")
+                            .font(.caption)
+                    }
                     .foregroundStyle(.tertiary)
-            }
-        }
-        .padding()
-    }
+                    .opacity(showDeniedTitle ? 1 : 0)
+                }
 
-    // MARK: - Item Detail Content
+                Spacer()
 
-    private var itemDetailContent: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 20) {
-                if let item = viewModel.item {
-                    // Header
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text(item.title)
-                            .font(.title2)
-                            .fontWeight(.bold)
-
-                        if let description = item.description {
-                            Text(description)
-                                .font(.body)
-                                .foregroundStyle(.secondary)
-                        }
-
-                        HStack {
-                            if item.visibility == .public {
-                                Label("Public", systemImage: "globe")
-                                    .font(.caption)
-                                    .padding(.horizontal, 8)
-                                    .padding(.vertical, 4)
-                                    .background(Color.green.opacity(0.2))
-                                    .foregroundStyle(.green)
-                                    .cornerRadius(4)
-                            } else {
-                                Label("Private", systemImage: "lock.fill")
-                                    .font(.caption)
-                                    .padding(.horizontal, 8)
-                                    .padding(.vertical, 4)
-                                    .background(Color.orange.opacity(0.2))
-                                    .foregroundStyle(.orange)
-                                    .cornerRadius(4)
-                            }
-                        }
-                    }
-
-                    Divider()
-
-                    // Details
-                    VStack(alignment: .leading, spacing: 12) {
-                        if let category = item.category {
-                            detailRow(label: "Category", value: category.name, icon: "folder")
-                        }
-
-                        if let location = item.location {
-                            detailRow(label: "Location", value: location.title, icon: "mappin")
-                        }
-
-                        if let author = item.author {
-                            detailRow(label: "Author", value: author.name, icon: "person")
-                        }
-
-                        if let price = item.price {
-                            detailRow(
-                                label: "Price", value: String(format: "%.2f", price),
-                                icon: "dollarsign.circle")
-                        }
-
-                        if !item.images.isEmpty {
-                            VStack(alignment: .leading, spacing: 8) {
-                                Label("Images", systemImage: "photo")
-                                    .font(.headline)
-
-                                ScrollView(.horizontal, showsIndicators: false) {
-                                    HStack(spacing: 12) {
-                                        ForEach(item.images, id: \.self) { imageURL in
-                                            AsyncImage(url: URL(string: imageURL)) { image in
-                                                image
-                                                    .resizable()
-                                                    .scaledToFill()
-                                            } placeholder: {
-                                                ProgressView()
-                                            }
-                                            .frame(width: 100, height: 100)
-                                            .clipShape(RoundedRectangle(cornerRadius: 8))
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    // Children
-                    if !viewModel.children.isEmpty {
-                        Divider()
-
-                        VStack(alignment: .leading, spacing: 12) {
-                            Label("Child Items", systemImage: "list.bullet.indent")
-                                .font(.headline)
-
-                            ForEach(viewModel.children) { child in
-                                NavigationLink(value: child) {
-                                    ItemRow(item: child)
-                                }
-                            }
-                        }
+                // Try different account button
+                SecondaryAuthButton(
+                    "Try Different Account",
+                    icon: "arrow.triangle.2.circlepath"
+                ) {
+                    showTryDifferentAccountConfirmation = true
+                }
+                .opacity(showDeniedButton ? 1 : 0)
+                .confirmationDialog(
+                    title: "Sign Out",
+                    message: "Are you sure you want to sign out and try a different account?",
+                    confirmButtonTitle: "Sign Out",
+                    isPresented: $showTryDifferentAccountConfirmation
+                ) {
+                    Task {
+                        await tryDifferentAccount()
                     }
                 }
+
+                Spacer()
+                    .frame(height: 60)
             }
-            .padding()
         }
-        .navigationTitle(viewModel.item?.title ?? "Item")
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .navigationBarTrailing) {
-                Menu {
-                    Button(role: .destructive) {
-                        Task {
-                            try? await TokenStorage.shared.clearAll()
-                            await oauthManager.logout()
-                            // Reset state to show sign-in again
-                            if let id = itemId {
-                                await fetchItem(id)
-                            }
-                        }
-                    } label: {
-                        Label("Sign Out", systemImage: "rectangle.portrait.and.arrow.right")
-                    }
-                } label: {
-                    Image(systemName: "ellipsis.circle")
-                }
-            }
+        .onAppear {
+            triggerDeniedAnimations()
         }
     }
 
-    @ViewBuilder
-    private func detailRow(label: String, value: String, icon: String) -> some View {
-        HStack(alignment: .top, spacing: 12) {
-            Label(label, systemImage: icon)
-                .font(.headline)
-                .frame(width: 120, alignment: .leading)
+    private func triggerDeniedAnimations() {
+        withAnimation(.easeOut(duration: 0.5).delay(0.2)) {
+            showDeniedTitle = true
+        }
 
-            Text(value)
-                .foregroundStyle(.secondary)
+        withAnimation(.spring(response: 0.5, dampingFraction: 0.7).delay(0.6)) {
+            showDeniedButton = true
+        }
+    }
 
-            Spacer()
+    private func tryDifferentAccount() async {
+        // Clear tokens and sign out
+        try? await TokenStorage.shared.clearAll()
+        await oauthManager.logout()
+
+        // Reset animation states
+        showSignInTitle = false
+        showSignInButton = false
+        showDeniedTitle = false
+        showDeniedButton = false
+
+        // Retry fetching the item (will show sign-in view again)
+        if let id = itemId {
+            await fetchItem(id)
         }
     }
 
@@ -312,11 +309,11 @@ struct AppClipRootView: View {
 
         // Path format: ["", "preview", "item", "123"]
         if pathComponents.count >= 4,
-            pathComponents[1] == "preview",
-            pathComponents[2] == "item",
-            let id = Int(pathComponents[3])
+           pathComponents[1] == "preview",
+           pathComponents[2] == "item",
+           let id = Int(pathComponents[3])
         {
-            self.itemId = id
+            itemId = id
             // Start fetching the item
             Task {
                 await fetchItem(id)

@@ -30,15 +30,18 @@ public final class LocationFormViewModel: LocationFormViewModelProtocol {
     // MARK: - Dependencies
 
     private let locationService: LocationServiceProtocol
+    private let eventViewModel: EventViewModel?
 
     // MARK: - Initialization
 
     public init(
         location: Location? = nil,
-        locationService: LocationServiceProtocol = LocationService()
+        locationService: LocationServiceProtocol = LocationService(),
+        eventViewModel: EventViewModel? = nil
     ) {
         self.location = location
         self.locationService = locationService
+        self.eventViewModel = eventViewModel
 
         // Populate form if editing
         if let location = location {
@@ -77,7 +80,8 @@ public final class LocationFormViewModel: LocationFormViewModelProtocol {
         return validationErrors.isEmpty
     }
 
-    public func submit() async throws {
+    @discardableResult
+    public func submit() async throws -> Location {
         guard validate() else {
             throw FormError.validationFailed
         }
@@ -95,15 +99,19 @@ public final class LocationFormViewModel: LocationFormViewModelProtocol {
                 longitude: lonValue
             )
 
+            let result: Location
             if let existingLocation = location {
                 // Update
-                _ = try await locationService.updateLocation(id: existingLocation.id, request)
+                result = try await locationService.updateLocation(id: existingLocation.id, request)
+                eventViewModel?.emit(.locationUpdated(id: result.id))
             } else {
                 // Create
-                _ = try await locationService.createLocation(request)
+                result = try await locationService.createLocation(request)
+                eventViewModel?.emit(.locationCreated(id: result.id))
             }
 
             isSubmitting = false
+            return result
         } catch {
             self.error = error
             isSubmitting = false

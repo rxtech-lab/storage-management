@@ -15,6 +15,7 @@ struct AuthorFormSheet: View {
 
     @State private var viewModel: AuthorFormViewModel
     @Environment(\.dismiss) private var dismiss
+    @Environment(EventViewModel.self) private var eventViewModel
 
     init(author: Author? = nil, onCreated: ((Author) -> Void)? = nil) {
         self.author = author
@@ -79,7 +80,15 @@ struct AuthorFormSheet: View {
 
     private func submitForm() async {
         do {
-            try await viewModel.submit()
+            let savedAuthor = try await viewModel.submit()
+            // Emit event based on create vs update
+            if author == nil {
+                eventViewModel.emit(.authorCreated(id: savedAuthor.id))
+            } else {
+                eventViewModel.emit(.authorUpdated(id: savedAuthor.id))
+            }
+            // If callback provided, call with created author
+            onCreated?(savedAuthor)
             dismiss()
         } catch {
             // Error is already tracked in viewModel.error

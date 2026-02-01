@@ -35,12 +35,45 @@ public final class CategoryListViewModel: CategoryListViewModelProtocol {
     // MARK: - Dependencies
 
     private let categoryService: CategoryServiceProtocol
+    private let eventViewModel: EventViewModel?
+    @ObservationIgnored private nonisolated(unsafe) var eventTask: Task<Void, Never>?
 
     // MARK: - Initialization
 
-    public init(categoryService: CategoryServiceProtocol = CategoryService()) {
+    public init(
+        categoryService: CategoryServiceProtocol = CategoryService(),
+        eventViewModel: EventViewModel? = nil
+    ) {
         self.categoryService = categoryService
+        self.eventViewModel = eventViewModel
         setupSearchPipeline()
+        setupEventSubscription()
+    }
+
+    deinit {
+        eventTask?.cancel()
+    }
+
+    // MARK: - Event Subscription
+
+    private func setupEventSubscription() {
+        guard let eventViewModel else { return }
+
+        eventTask = Task { [weak self] in
+            for await event in eventViewModel.stream {
+                guard let self else { break }
+                await self.handleEvent(event)
+            }
+        }
+    }
+
+    private func handleEvent(_ event: AppEvent) async {
+        switch event {
+        case .categoryCreated, .categoryUpdated, .categoryDeleted:
+            await refreshCategories()
+        default:
+            break
+        }
     }
 
     // MARK: - Private Methods
@@ -156,10 +189,17 @@ public final class CategoryListViewModel: CategoryListViewModelProtocol {
         }
     }
 
-    public func deleteCategory(_ category: Category) async throws {
-        try await categoryService.deleteCategory(id: category.id)
+    @discardableResult
+    public func deleteCategory(_ category: Category) async throws -> Int {
+        let categoryId = category.id
+        try await categoryService.deleteCategory(id: categoryId)
 
         // Remove from local list
-        categories.removeAll { $0.id == category.id }
+        categories.removeAll { $0.id == categoryId }
+
+        // Emit event
+        eventViewModel?.emit(.categoryDeleted(id: categoryId))
+
+        return categoryId
     }
 }

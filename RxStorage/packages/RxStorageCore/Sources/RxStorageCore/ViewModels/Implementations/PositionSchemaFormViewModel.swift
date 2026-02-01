@@ -28,15 +28,18 @@ public final class PositionSchemaFormViewModel: PositionSchemaFormViewModelProto
     // MARK: - Dependencies
 
     private let schemaService: PositionSchemaServiceProtocol
+    private let eventViewModel: EventViewModel?
 
     // MARK: - Initialization
 
     public init(
         schema: PositionSchema? = nil,
-        schemaService: PositionSchemaServiceProtocol = PositionSchemaService()
+        schemaService: PositionSchemaServiceProtocol = PositionSchemaService(),
+        eventViewModel: EventViewModel? = nil
     ) {
         self.schema = schema
         self.schemaService = schemaService
+        self.eventViewModel = eventViewModel
 
         // Populate form if editing
         if let schema = schema {
@@ -105,9 +108,11 @@ public final class PositionSchemaFormViewModel: PositionSchemaFormViewModelProto
                     schema: anyCodableDict
                 )
                 result = try await schemaService.updatePositionSchema(id: existingSchema.id, updateRequest)
+                eventViewModel?.emit(.positionSchemaUpdated(id: result.id))
             } else {
                 // Create
                 result = try await schemaService.createPositionSchema(request)
+                eventViewModel?.emit(.positionSchemaCreated(id: result.id))
             }
 
             isSubmitting = false

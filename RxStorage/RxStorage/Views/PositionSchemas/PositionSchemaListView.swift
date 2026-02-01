@@ -14,6 +14,12 @@ struct PositionSchemaListView: View {
 
     @State private var viewModel = PositionSchemaListViewModel()
     @State private var showingCreateSheet = false
+    @State private var isRefreshing = false
+    @Environment(EventViewModel.self) private var eventViewModel
+
+    // Delete confirmation state
+    @State private var schemaToDelete: PositionSchema?
+    @State private var showDeleteConfirmation = false
 
     /// Initialize with an optional binding (defaults to constant nil for standalone use)
     init(selectedSchema: Binding<PositionSchema?> = .constant(nil)) {
@@ -61,6 +67,41 @@ struct PositionSchemaListView: View {
         .task {
             await viewModel.fetchSchemas()
         }
+        .task {
+            // Listen for position schema events and refresh
+            for await event in eventViewModel.stream {
+                switch event {
+                case .positionSchemaCreated, .positionSchemaUpdated, .positionSchemaDeleted:
+                    isRefreshing = true
+                    await viewModel.refreshSchemas()
+                    isRefreshing = false
+                default:
+                    break
+                }
+            }
+        }
+        .overlay {
+            if isRefreshing {
+                LoadingOverlay(title: "Refreshing...")
+            }
+        }
+        .confirmationDialog(
+            title: "Delete Schema",
+            message: "Are you sure you want to delete \"\(schemaToDelete?.name ?? "")\"? This action cannot be undone.",
+            confirmButtonTitle: "Delete",
+            isPresented: $showDeleteConfirmation,
+            onConfirm: {
+                if let schema = schemaToDelete {
+                    Task {
+                        if let deletedId = try? await viewModel.deleteSchema(schema) {
+                            eventViewModel.emit(.positionSchemaDeleted(id: deletedId))
+                        }
+                        schemaToDelete = nil
+                    }
+                }
+            },
+            onCancel: { schemaToDelete = nil }
+        )
     }
 
     // MARK: - Schemas List
@@ -76,9 +117,8 @@ struct PositionSchemaListView: View {
                     }
                     .swipeActions(edge: .trailing, allowsFullSwipe: false) {
                         Button(role: .destructive) {
-                            Task {
-                                try? await viewModel.deleteSchema(schema)
-                            }
+                            schemaToDelete = schema
+                            showDeleteConfirmation = true
                         } label: {
                             Label("Delete", systemImage: "trash")
                         }
@@ -99,9 +139,8 @@ struct PositionSchemaListView: View {
                     .listRowBackground(selectedSchema?.id == schema.id ? Color.accentColor.opacity(0.2) : nil)
                     .swipeActions(edge: .trailing, allowsFullSwipe: false) {
                         Button(role: .destructive) {
-                            Task {
-                                try? await viewModel.deleteSchema(schema)
-                            }
+                            schemaToDelete = schema
+                            showDeleteConfirmation = true
                         } label: {
                             Label("Delete", systemImage: "trash")
                         }

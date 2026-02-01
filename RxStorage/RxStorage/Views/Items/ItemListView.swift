@@ -12,6 +12,7 @@ import SwiftUI
 struct ItemListView: View {
     @Binding var selectedItem: StorageItem?
     @State private var viewModel = ItemListViewModel()
+    @Environment(EventViewModel.self) private var eventViewModel
 
     /// Initialize with an optional binding (defaults to constant nil for standalone use)
     init(selectedItem: Binding<StorageItem?> = .constant(nil)) {
@@ -28,6 +29,13 @@ struct ItemListView: View {
     @State private var qrScanError: Error?
     @State private var showQrScanError = false
     private let itemService = ItemService()
+
+    // Refresh state
+    @State private var isRefreshing = false
+
+    // Delete confirmation state
+    @State private var itemToDelete: StorageItem?
+    @State private var showDeleteConfirmation = false
 
     var body: some View {
         Group {
@@ -105,6 +113,20 @@ struct ItemListView: View {
         .task {
             await viewModel.fetchItems()
         }
+        .task {
+            // Listen for item events and refresh
+            for await event in eventViewModel.stream {
+                switch event {
+                case .itemCreated, .itemUpdated, .itemDeleted,
+                     .childAdded, .childRemoved:
+                    isRefreshing = true
+                    await viewModel.refreshItems()
+                    isRefreshing = false
+                default:
+                    break
+                }
+            }
+        }
         .onChange(of: viewModel.error != nil) { _, hasError in
             showingError = hasError
         }
@@ -125,6 +147,8 @@ struct ItemListView: View {
         .overlay {
             if isLoadingFromQR {
                 LoadingOverlay(title: "Loading item from QR code..")
+            } else if isRefreshing {
+                LoadingOverlay(title: "Refreshing...")
             }
         }
         .alert("QR Code Error", isPresented: $showQrScanError) {
@@ -134,6 +158,23 @@ struct ItemListView: View {
                 Text(error.localizedDescription)
             }
         }
+        .confirmationDialog(
+            title: "Delete Item",
+            message: "Are you sure you want to delete \"\(itemToDelete?.title ?? "")\"? This action cannot be undone.",
+            confirmButtonTitle: "Delete",
+            isPresented: $showDeleteConfirmation,
+            onConfirm: {
+                if let item = itemToDelete {
+                    Task {
+                        if let deletedId = try? await viewModel.deleteItem(item) {
+                            eventViewModel.emit(.itemDeleted(id: deletedId))
+                        }
+                        itemToDelete = nil
+                    }
+                }
+            },
+            onCancel: { itemToDelete = nil }
+        )
     }
 
     // MARK: - Items List
@@ -151,9 +192,8 @@ struct ItemListView: View {
                     }
                     .swipeActions(edge: .trailing, allowsFullSwipe: false) {
                         Button(role: .destructive) {
-                            Task {
-                                try? await viewModel.deleteItem(item)
-                            }
+                            itemToDelete = item
+                            showDeleteConfirmation = true
                         } label: {
                             Label("Delete", systemImage: "trash")
                         }
@@ -174,9 +214,8 @@ struct ItemListView: View {
                     .listRowBackground(selectedItem?.id == item.id ? Color.accentColor.opacity(0.2) : nil)
                     .swipeActions(edge: .trailing, allowsFullSwipe: false) {
                         Button(role: .destructive) {
-                            Task {
-                                try? await viewModel.deleteItem(item)
-                            }
+                            itemToDelete = item
+                            showDeleteConfirmation = true
                         } label: {
                             Label("Delete", systemImage: "trash")
                         }
@@ -249,6 +288,11 @@ struct ItemFilterSheet: View {
     @State private var viewModel: ItemFilterViewModel
     @Environment(\.dismiss) private var dismiss
 
+    // Picker sheet states
+    @State private var showingCategoryPicker = false
+    @State private var showingLocationPicker = false
+    @State private var showingAuthorPicker = false
+
     init(filters: Binding<ItemFilters>, onApply: @escaping () -> Void) {
         self._filters = filters
         self.onApply = onApply
@@ -277,30 +321,54 @@ struct ItemFilterSheet: View {
 
                 // Category Section
                 Section("Category") {
-                    Picker("Category", selection: $viewModel.selectedCategoryId) {
-                        Text("All Categories").tag(nil as Int?)
-                        ForEach(viewModel.categories) { category in
-                            Text(category.name).tag(category.id as Int?)
+                    Button {
+                        showingCategoryPicker = true
+                    } label: {
+                        HStack {
+                            Text("Category")
+                                .foregroundStyle(.primary)
+                            Spacer()
+                            Text(selectedCategoryName)
+                                .foregroundStyle(.secondary)
+                            Image(systemName: "chevron.right")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
                         }
                     }
                 }
 
                 // Location Section
                 Section("Location") {
-                    Picker("Location", selection: $viewModel.selectedLocationId) {
-                        Text("All Locations").tag(nil as Int?)
-                        ForEach(viewModel.locations) { location in
-                            Text(location.title).tag(location.id as Int?)
+                    Button {
+                        showingLocationPicker = true
+                    } label: {
+                        HStack {
+                            Text("Location")
+                                .foregroundStyle(.primary)
+                            Spacer()
+                            Text(selectedLocationName)
+                                .foregroundStyle(.secondary)
+                            Image(systemName: "chevron.right")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
                         }
                     }
                 }
 
                 // Author Section
                 Section("Author") {
-                    Picker("Author", selection: $viewModel.selectedAuthorId) {
-                        Text("All Authors").tag(nil as Int?)
-                        ForEach(viewModel.authors) { author in
-                            Text(author.name).tag(author.id as Int?)
+                    Button {
+                        showingAuthorPicker = true
+                    } label: {
+                        HStack {
+                            Text("Author")
+                                .foregroundStyle(.primary)
+                            Spacer()
+                            Text(selectedAuthorName)
+                                .foregroundStyle(.secondary)
+                            Image(systemName: "chevron.right")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
                         }
                     }
                 }
@@ -332,9 +400,59 @@ struct ItemFilterSheet: View {
                 .disabled(viewModel.isLoading)
             }
         }
+        .sheet(isPresented: $showingCategoryPicker) {
+            NavigationStack {
+                CategoryPickerSheet(selectedId: viewModel.selectedCategoryId) { category in
+                    viewModel.selectedCategoryId = category?.id
+                }
+            }
+        }
+        .sheet(isPresented: $showingLocationPicker) {
+            NavigationStack {
+                LocationPickerSheet(selectedId: viewModel.selectedLocationId) { location in
+                    viewModel.selectedLocationId = location?.id
+                }
+            }
+        }
+        .sheet(isPresented: $showingAuthorPicker) {
+            NavigationStack {
+                AuthorPickerSheet(selectedId: viewModel.selectedAuthorId) { author in
+                    viewModel.selectedAuthorId = author?.id
+                }
+            }
+        }
         .task {
             await viewModel.loadFilterOptions()
         }
+    }
+
+    // MARK: - Computed Properties
+
+    private var selectedCategoryName: String {
+        guard let id = viewModel.selectedCategoryId,
+              let category = viewModel.categories.first(where: { $0.id == id })
+        else {
+            return "All Categories"
+        }
+        return category.name
+    }
+
+    private var selectedLocationName: String {
+        guard let id = viewModel.selectedLocationId,
+              let location = viewModel.locations.first(where: { $0.id == id })
+        else {
+            return "All Locations"
+        }
+        return location.title
+    }
+
+    private var selectedAuthorName: String {
+        guard let id = viewModel.selectedAuthorId,
+              let author = viewModel.authors.first(where: { $0.id == id })
+        else {
+            return "All Authors"
+        }
+        return author.name
     }
 }
 

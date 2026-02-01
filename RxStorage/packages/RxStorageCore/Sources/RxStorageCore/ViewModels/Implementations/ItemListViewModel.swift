@@ -37,13 +37,46 @@ public final class ItemListViewModel: ItemListViewModelProtocol {
     // MARK: - Dependencies
 
     private let itemService: ItemServiceProtocol
+    private let eventViewModel: EventViewModel?
     private let logger = Logger(label: "com.rxlab.rxstorage.ItemListViewModel")
+    @ObservationIgnored private nonisolated(unsafe) var eventTask: Task<Void, Never>?
 
     // MARK: - Initialization
 
-    public init(itemService: ItemServiceProtocol = ItemService()) {
+    public init(
+        itemService: ItemServiceProtocol = ItemService(),
+        eventViewModel: EventViewModel? = nil
+    ) {
         self.itemService = itemService
+        self.eventViewModel = eventViewModel
         setupSearchPipeline()
+        setupEventSubscription()
+    }
+
+    deinit {
+        eventTask?.cancel()
+    }
+
+    // MARK: - Event Subscription
+
+    private func setupEventSubscription() {
+        guard let eventViewModel else { return }
+
+        eventTask = Task { [weak self] in
+            for await event in eventViewModel.stream {
+                guard let self else { break }
+                await self.handleEvent(event)
+            }
+        }
+    }
+
+    private func handleEvent(_ event: AppEvent) async {
+        switch event {
+        case .itemCreated, .itemUpdated, .itemDeleted:
+            await refreshItems()
+        default:
+            break
+        }
     }
 
     // MARK: - Private Methods
@@ -192,11 +225,18 @@ public final class ItemListViewModel: ItemListViewModelProtocol {
         }
     }
 
-    public func deleteItem(_ item: StorageItem) async throws {
-        try await itemService.deleteItem(id: item.id)
+    @discardableResult
+    public func deleteItem(_ item: StorageItem) async throws -> Int {
+        let itemId = item.id
+        try await itemService.deleteItem(id: itemId)
 
         // Remove from local list
-        items.removeAll { $0.id == item.id }
+        items.removeAll { $0.id == itemId }
+
+        // Emit event
+        eventViewModel?.emit(.itemDeleted(id: itemId))
+
+        return itemId
     }
 
     public func clearFilters() {
