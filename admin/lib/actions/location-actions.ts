@@ -2,15 +2,24 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { eq, like, and } from "drizzle-orm";
+import { eq, like, or, and, asc, desc, gt, lt } from "drizzle-orm";
 import { db, locations, type Location, type NewLocation } from "@/lib/db";
 import { ensureSchemaInitialized } from "@/lib/db/client";
 import { getSession } from "@/lib/auth-helper";
+import {
+  type PaginationParams,
+  type PaginatedResult,
+  decodeCursor,
+  buildPaginatedResponse,
+  DEFAULT_PAGE_SIZE,
+} from "@/lib/utils/pagination";
 
 export interface LocationFilters {
   search?: string;
   limit?: number;
 }
+
+export interface PaginatedLocationFilters extends LocationFilters, PaginationParams {}
 
 export async function getLocations(userId?: string, filters?: LocationFilters): Promise<Location[]> {
   await ensureSchemaInitialized();
@@ -185,4 +194,85 @@ export async function deleteLocationAndRedirect(id: number, userId?: string) {
 export async function deleteLocationFormAction(id: number): Promise<void> {
   await deleteLocationAction(id);
   revalidatePath("/locations");
+}
+
+export async function getLocationsPaginated(
+  userId?: string,
+  filters?: PaginatedLocationFilters
+): Promise<PaginatedResult<Location>> {
+  await ensureSchemaInitialized();
+
+  // Get userId from session if not provided
+  let resolvedUserId = userId;
+  if (!resolvedUserId) {
+    const session = await getSession();
+    resolvedUserId = session?.user?.id;
+  }
+
+  if (!resolvedUserId) {
+    return {
+      data: [],
+      pagination: {
+        nextCursor: null,
+        prevCursor: null,
+        hasNextPage: false,
+        hasPrevPage: false,
+      },
+    };
+  }
+
+  const limit = filters?.limit ?? DEFAULT_PAGE_SIZE;
+  const direction = filters?.direction ?? "next";
+  const cursor = filters?.cursor ? decodeCursor(filters.cursor) : null;
+
+  const conditions = [eq(locations.userId, resolvedUserId)];
+
+  if (filters?.search) {
+    conditions.push(like(locations.title, `%${filters.search}%`));
+  }
+
+  // Add cursor conditions for pagination
+  // Locations are sorted by title ASC, id ASC
+  if (cursor) {
+    const cursorTitle = String(cursor.sortValue);
+    const cursorId = cursor.id;
+
+    if (direction === "next") {
+      const cursorCondition = or(
+        gt(locations.title, cursorTitle),
+        and(eq(locations.title, cursorTitle), gt(locations.id, cursorId))
+      );
+      if (cursorCondition) conditions.push(cursorCondition);
+    } else {
+      const cursorCondition = or(
+        lt(locations.title, cursorTitle),
+        and(eq(locations.title, cursorTitle), lt(locations.id, cursorId))
+      );
+      if (cursorCondition) conditions.push(cursorCondition);
+    }
+  }
+
+  let query = db.select().from(locations).$dynamic();
+
+  if (conditions.length > 0) {
+    query = query.where(and(...conditions));
+  }
+
+  if (direction === "next") {
+    query = query.orderBy(asc(locations.title), asc(locations.id));
+  } else {
+    query = query.orderBy(desc(locations.title), desc(locations.id));
+  }
+
+  query = query.limit(limit + 1);
+
+  const results = await query;
+
+  return buildPaginatedResponse(
+    results,
+    limit,
+    direction,
+    (item) => item.title,
+    !!cursor
+  );
 }

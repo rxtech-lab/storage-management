@@ -2,15 +2,24 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { eq, like, or, and } from "drizzle-orm";
+import { eq, like, or, and, asc, desc, gt, lt } from "drizzle-orm";
 import { db, authors, type Author, type NewAuthor } from "@/lib/db";
 import { ensureSchemaInitialized } from "@/lib/db/client";
 import { getSession } from "@/lib/auth-helper";
+import {
+  type PaginationParams,
+  type PaginatedResult,
+  decodeCursor,
+  buildPaginatedResponse,
+  DEFAULT_PAGE_SIZE,
+} from "@/lib/utils/pagination";
 
 export interface AuthorFilters {
   search?: string;
   limit?: number;
 }
+
+export interface PaginatedAuthorFilters extends AuthorFilters, PaginationParams {}
 
 export async function getAuthors(userId?: string, filters?: AuthorFilters): Promise<Author[]> {
   await ensureSchemaInitialized();
@@ -190,4 +199,91 @@ export async function deleteAuthorAndRedirect(id: number, userId?: string) {
 export async function deleteAuthorFormAction(id: number): Promise<void> {
   await deleteAuthorAction(id);
   revalidatePath("/authors");
+}
+
+export async function getAuthorsPaginated(
+  userId?: string,
+  filters?: PaginatedAuthorFilters
+): Promise<PaginatedResult<Author>> {
+  await ensureSchemaInitialized();
+
+  // Get userId from session if not provided
+  let resolvedUserId = userId;
+  if (!resolvedUserId) {
+    const session = await getSession();
+    resolvedUserId = session?.user?.id;
+  }
+
+  if (!resolvedUserId) {
+    return {
+      data: [],
+      pagination: {
+        nextCursor: null,
+        prevCursor: null,
+        hasNextPage: false,
+        hasPrevPage: false,
+      },
+    };
+  }
+
+  const limit = filters?.limit ?? DEFAULT_PAGE_SIZE;
+  const direction = filters?.direction ?? "next";
+  const cursor = filters?.cursor ? decodeCursor(filters.cursor) : null;
+
+  const conditions = [eq(authors.userId, resolvedUserId)];
+
+  if (filters?.search) {
+    const searchCondition = or(
+      like(authors.name, `%${filters.search}%`),
+      like(authors.bio, `%${filters.search}%`)
+    );
+    if (searchCondition) {
+      conditions.push(searchCondition);
+    }
+  }
+
+  // Add cursor conditions for pagination
+  // Authors are sorted by name ASC, id ASC
+  if (cursor) {
+    const cursorName = String(cursor.sortValue);
+    const cursorId = cursor.id;
+
+    if (direction === "next") {
+      const cursorCondition = or(
+        gt(authors.name, cursorName),
+        and(eq(authors.name, cursorName), gt(authors.id, cursorId))
+      );
+      if (cursorCondition) conditions.push(cursorCondition);
+    } else {
+      const cursorCondition = or(
+        lt(authors.name, cursorName),
+        and(eq(authors.name, cursorName), lt(authors.id, cursorId))
+      );
+      if (cursorCondition) conditions.push(cursorCondition);
+    }
+  }
+
+  let query = db.select().from(authors).$dynamic();
+
+  if (conditions.length > 0) {
+    query = query.where(and(...conditions));
+  }
+
+  if (direction === "next") {
+    query = query.orderBy(asc(authors.name), asc(authors.id));
+  } else {
+    query = query.orderBy(desc(authors.name), desc(authors.id));
+  }
+
+  query = query.limit(limit + 1);
+
+  const results = await query;
+
+  return buildPaginatedResponse(
+    results,
+    limit,
+    direction,
+    (item) => item.name,
+    !!cursor
+  );
 }

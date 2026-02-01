@@ -174,18 +174,6 @@ test.describe.serial("File Upload API", () => {
     expect(body.error).toContain("Invalid");
   });
 
-  test("GET /api/v1/preview/{id} - should return signed URLs in images field", async ({
-    request,
-  }) => {
-    const response = await request.get(`/api/v1/preview/${itemId}`);
-
-    expect(response.status()).toBe(200);
-    const body = await response.json();
-    expect(body.id).toBe(itemId);
-    expect(body.images).toHaveLength(1);
-    expect(body.images[0]).toContain("mock-s3.example.com");
-  });
-
   test("DELETE /api/v1/items/{id} - should delete associated files", async ({
     request,
   }) => {

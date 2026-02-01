@@ -1,8 +1,7 @@
 name: E2E Tests
 
 on:
-  push:
-    branches: [main, e2e]
+  push
 
 jobs:
   test:

@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { eq, like, or, desc, isNull, and, ne } from "drizzle-orm";
+import { eq, like, or, desc, asc, isNull, and, ne, lt, gt } from "drizzle-orm";
 import { z } from "zod";
 import {
   db,
@@ -24,6 +24,13 @@ import {
   deleteFilesForItem,
 } from "./file-actions";
 import { parseFileIds } from "@/lib/utils/file-utils";
+import {
+  type PaginationParams,
+  type PaginatedResult,
+  decodeCursor,
+  buildPaginatedResponse,
+  DEFAULT_PAGE_SIZE,
+} from "@/lib/utils/pagination";
 
 // Zod schema for position data
 const positionDataSchema = z.object({
@@ -70,6 +77,8 @@ export interface ItemFilters {
   visibility?: "public" | "private";
   search?: string;
 }
+
+export interface PaginatedItemFilters extends ItemFilters, PaginationParams {}
 
 export async function getItems(
   userId?: string,
@@ -628,4 +637,171 @@ export async function searchItems(
     .limit(limit);
 
   return results;
+}
+
+export async function getItemsPaginated(
+  userId?: string,
+  filters?: PaginatedItemFilters
+): Promise<PaginatedResult<ItemWithRelations>> {
+  await ensureSchemaInitialized();
+
+  // Get userId from session
+  const session = await getSession();
+  if (!session?.user?.id && !userId) {
+    return {
+      data: [],
+      pagination: {
+        nextCursor: null,
+        prevCursor: null,
+        hasNextPage: false,
+        hasPrevPage: false,
+      },
+    };
+  }
+  const sessionUserId = session?.user.id ?? userId;
+  if (!sessionUserId) {
+    return {
+      data: [],
+      pagination: {
+        nextCursor: null,
+        prevCursor: null,
+        hasNextPage: false,
+        hasPrevPage: false,
+      },
+    };
+  }
+
+  const limit = filters?.limit ?? DEFAULT_PAGE_SIZE;
+  const direction = filters?.direction ?? "next";
+  const cursor = filters?.cursor ? decodeCursor(filters.cursor) : null;
+
+  // Build base conditions (same as getItems)
+  const conditions = [
+    or(eq(items.userId, sessionUserId), eq(items.visibility, "public")),
+  ];
+
+  if (filters?.categoryId) {
+    conditions.push(eq(items.categoryId, filters.categoryId));
+  }
+  if (filters?.locationId) {
+    conditions.push(eq(items.locationId, filters.locationId));
+  }
+  if (filters?.authorId) {
+    conditions.push(eq(items.authorId, filters.authorId));
+  }
+  if (filters?.parentId !== undefined) {
+    if (filters.parentId === null) {
+      conditions.push(isNull(items.parentId));
+    } else {
+      conditions.push(eq(items.parentId, filters.parentId));
+    }
+  }
+  if (filters?.visibility) {
+    conditions.push(eq(items.visibility, filters.visibility));
+  }
+  if (filters?.search) {
+    const searchCondition = or(
+      like(items.title, `%${filters.search}%`),
+      like(items.description, `%${filters.search}%`)
+    );
+    if (searchCondition) {
+      conditions.push(searchCondition);
+    }
+  }
+
+  // Add cursor conditions for pagination
+  // Items are sorted by updatedAt DESC, id DESC
+  if (cursor) {
+    const cursorDate = new Date(cursor.sortValue);
+    const cursorId = cursor.id;
+
+    if (direction === "next") {
+      // Forward pagination: get items older than cursor
+      // WHERE (updatedAt < cursorDate) OR (updatedAt = cursorDate AND id < cursorId)
+      const cursorCondition = or(
+        lt(items.updatedAt, cursorDate),
+        and(eq(items.updatedAt, cursorDate), lt(items.id, cursorId))
+      );
+      if (cursorCondition) conditions.push(cursorCondition);
+    } else {
+      // Backward pagination: get items newer than cursor
+      // WHERE (updatedAt > cursorDate) OR (updatedAt = cursorDate AND id > cursorId)
+      const cursorCondition = or(
+        gt(items.updatedAt, cursorDate),
+        and(eq(items.updatedAt, cursorDate), gt(items.id, cursorId))
+      );
+      if (cursorCondition) conditions.push(cursorCondition);
+    }
+  }
+
+  // Build query with appropriate order
+  let query = db
+    .select({
+      id: items.id,
+      userId: items.userId,
+      title: items.title,
+      description: items.description,
+      originalQrCode: items.originalQrCode,
+      categoryId: items.categoryId,
+      locationId: items.locationId,
+      authorId: items.authorId,
+      parentId: items.parentId,
+      price: items.price,
+      currency: items.currency,
+      visibility: items.visibility,
+      images: items.images,
+      createdAt: items.createdAt,
+      updatedAt: items.updatedAt,
+      category: {
+        id: categories.id,
+        name: categories.name,
+      },
+      location: {
+        id: locations.id,
+        title: locations.title,
+      },
+      author: {
+        id: authors.id,
+        name: authors.name,
+      },
+    })
+    .from(items)
+    .leftJoin(categories, eq(items.categoryId, categories.id))
+    .leftJoin(locations, eq(items.locationId, locations.id))
+    .leftJoin(authors, eq(items.authorId, authors.id))
+    .$dynamic();
+
+  if (conditions.length > 0) {
+    query = query.where(and(...conditions));
+  }
+
+  // Order depends on direction
+  if (direction === "next") {
+    query = query.orderBy(desc(items.updatedAt), desc(items.id));
+  } else {
+    // Reverse order for backward pagination
+    query = query.orderBy(asc(items.updatedAt), asc(items.id));
+  }
+
+  // Fetch one extra to determine if there are more items
+  query = query.limit(limit + 1);
+
+  const results = await query;
+
+  // Map results to proper format
+  const mappedResults = results.map((row) => ({
+    ...row,
+    category: row.category?.id ? row.category : null,
+    location: row.location?.id ? row.location : null,
+    author: row.author?.id ? row.author : null,
+  }));
+
+  // Build paginated response
+  return buildPaginatedResponse(
+    mappedResults,
+    limit,
+    direction,
+    (item) => item.updatedAt.toISOString(),
+    !!cursor
+  );
 }
