@@ -201,6 +201,39 @@ export async function deleteCategoryFormAction(id: number): Promise<void> {
   revalidatePath("/categories");
 }
 
+export async function searchCategories(
+  query: string,
+  limit: number = 20
+): Promise<{ id: number; name: string }[]> {
+  await ensureSchemaInitialized();
+
+  const session = await getSession();
+  if (!session?.user?.id) {
+    return [];
+  }
+
+  const conditions = [eq(categories.userId, session.user.id)];
+
+  if (query) {
+    const searchCondition = or(
+      like(categories.name, `%${query}%`),
+      like(categories.description, `%${query}%`)
+    );
+    if (searchCondition) {
+      conditions.push(searchCondition);
+    }
+  }
+
+  const results = await db
+    .select({ id: categories.id, name: categories.name })
+    .from(categories)
+    .where(and(...conditions))
+    .orderBy(asc(categories.name))
+    .limit(limit);
+
+  return results;
+}
+
 export async function getCategoriesPaginated(
   userId?: string,
   filters?: PaginatedCategoryFilters

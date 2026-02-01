@@ -17,9 +17,6 @@ import {
 import type { ItemWithRelations } from "@/lib/actions/item-actions";
 import type { PositionWithSchema } from "@/lib/actions/position-actions";
 import type {
-  Category,
-  Location,
-  Author,
   PositionSchema,
   Content,
   ItemWhitelist,
@@ -28,9 +25,6 @@ import type {
 
 interface ItemPageClientProps {
   item: ItemWithRelations;
-  categories: Category[];
-  locations: Location[];
-  authors: Author[];
   positionSchemas: PositionSchema[];
   positions: PositionWithSchema[];
   contents: Content[];
@@ -41,9 +35,6 @@ interface ItemPageClientProps {
 
 export function ItemPageClient({
   item,
-  categories,
-  locations,
-  authors,
   positionSchemas,
   positions,
   contents,
@@ -107,9 +98,6 @@ export function ItemPageClient({
           </SheetHeader>
           <ItemDetailEdit
             item={item}
-            categories={categories}
-            locations={locations}
-            authors={authors}
             onSave={handleSave}
             onCancel={() => setIsEditOpen(false)}
           />

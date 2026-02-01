@@ -1,9 +1,7 @@
 import { notFound } from "next/navigation";
 import { ItemPageClient } from "./item-page-client";
 import { getItem, getItemChildren } from "@/lib/actions/item-actions";
-import { getCategories } from "@/lib/actions/category-actions";
-import { getLocations, getLocation } from "@/lib/actions/location-actions";
-import { getAuthors } from "@/lib/actions/author-actions";
+import { getLocation } from "@/lib/actions/location-actions";
 import { getPositionSchemas } from "@/lib/actions/position-schema-actions";
 import { getItemPositions } from "@/lib/actions/position-actions";
 import { getItemContents } from "@/lib/actions/content-actions";
@@ -26,18 +24,12 @@ export default async function ItemDetailPage({
   }
 
   const [
-    categories,
-    locations,
-    authors,
     positionSchemas,
     positions,
     contents,
     whitelist,
     children,
   ] = await Promise.all([
-    getCategories(),
-    getLocations(),
-    getAuthors(),
     getPositionSchemas(),
     getItemPositions(itemId),
     getItemContents(itemId),
@@ -50,9 +42,6 @@ export default async function ItemDetailPage({
   return (
     <ItemPageClient
       item={item}
-      categories={categories}
-      locations={locations}
-      authors={authors}
       positionSchemas={positionSchemas}
       positions={positions}
       contents={contents}

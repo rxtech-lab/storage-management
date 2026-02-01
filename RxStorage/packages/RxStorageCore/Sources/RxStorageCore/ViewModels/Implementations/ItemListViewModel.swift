@@ -2,7 +2,7 @@
 //  ItemListViewModel.swift
 //  RxStorageCore
 //
-//  Item list view model implementation
+//  Item list view model implementation with pagination support
 //
 
 @preconcurrency import Combine
@@ -22,6 +22,12 @@ public final class ItemListViewModel: ItemListViewModelProtocol {
     public private(set) var error: Error?
     public var filters = ItemFilters()
     public var searchText = ""
+
+    // MARK: - Pagination State
+
+    public private(set) var isLoadingMore = false
+    public private(set) var hasNextPage = true
+    private var nextCursor: String?
 
     // MARK: - Combine
 
@@ -65,11 +71,21 @@ public final class ItemListViewModel: ItemListViewModelProtocol {
             filters.search = trimmedQuery
         }
 
+        // Reset pagination state for new search
+        nextCursor = nil
+        hasNextPage = true
+
         isSearching = true
         error = nil
 
         do {
-            items = try await itemService.fetchItems(filters: filters.isEmpty ? nil : filters)
+            var paginatedFilters = filters.isEmpty ? ItemFilters() : filters
+            paginatedFilters.limit = PaginationDefaults.pageSize
+
+            let response = try await itemService.fetchItemsPaginated(filters: paginatedFilters)
+            items = response.data
+            nextCursor = response.pagination.nextCursor
+            hasNextPage = response.pagination.hasNextPage
             isSearching = false
         } catch is CancellationError {
             isSearching = false
@@ -98,8 +114,18 @@ public final class ItemListViewModel: ItemListViewModelProtocol {
         isLoading = true
         error = nil
 
+        // Reset pagination state
+        nextCursor = nil
+        hasNextPage = true
+
         do {
-            items = try await itemService.fetchItems(filters: filters.isEmpty ? nil : filters)
+            var paginatedFilters = filters.isEmpty ? ItemFilters() : filters
+            paginatedFilters.limit = PaginationDefaults.pageSize
+
+            let response = try await itemService.fetchItemsPaginated(filters: paginatedFilters)
+            items = response.data
+            nextCursor = response.pagination.nextCursor
+            hasNextPage = response.pagination.hasNextPage
             isLoading = false
         } catch is CancellationError {
             // Task was cancelled (e.g., view dismissed) - ignore silently
@@ -116,6 +142,45 @@ public final class ItemListViewModel: ItemListViewModelProtocol {
             ])
             self.error = error
             isLoading = false
+        }
+    }
+
+    public func loadMoreItems() async {
+        // Guard conditions
+        guard !isLoadingMore, !isLoading, !isSearching, hasNextPage, let cursor = nextCursor else {
+            return
+        }
+
+        isLoadingMore = true
+
+        do {
+            var paginatedFilters = filters.isEmpty ? ItemFilters() : filters
+            paginatedFilters.cursor = cursor
+            paginatedFilters.direction = .next
+            paginatedFilters.limit = PaginationDefaults.pageSize
+
+            let response = try await itemService.fetchItemsPaginated(filters: paginatedFilters)
+
+            // Append new items (avoid duplicates)
+            let existingIds = Set(items.map { $0.id })
+            let newItems = response.data.filter { !existingIds.contains($0.id) }
+            items.append(contentsOf: newItems)
+
+            nextCursor = response.pagination.nextCursor
+            hasNextPage = response.pagination.hasNextPage
+            isLoadingMore = false
+        } catch is CancellationError {
+            isLoadingMore = false
+        } catch let apiError as APIError where apiError.isCancellation {
+            isLoadingMore = false
+        } catch let error as NSError where error.domain == NSURLErrorDomain && error.code == NSURLErrorCancelled {
+            isLoadingMore = false
+        } catch {
+            logger.error("Failed to load more items: \(error.localizedDescription)", metadata: [
+                "error": "\(error)"
+            ])
+            self.error = error
+            isLoadingMore = false
         }
     }
 
@@ -137,6 +202,9 @@ public final class ItemListViewModel: ItemListViewModelProtocol {
     public func clearFilters() {
         filters = ItemFilters()
         searchText = ""
+        // Reset pagination
+        nextCursor = nil
+        hasNextPage = true
     }
 
     public func applyFilters(_ filters: ItemFilters) {
@@ -144,6 +212,9 @@ public final class ItemListViewModel: ItemListViewModelProtocol {
         if let search = filters.search {
             searchText = search
         }
+        // Reset pagination when filters change
+        nextCursor = nil
+        hasNextPage = true
     }
 
     public func clearError() {

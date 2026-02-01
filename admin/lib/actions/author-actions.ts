@@ -201,6 +201,39 @@ export async function deleteAuthorFormAction(id: number): Promise<void> {
   revalidatePath("/authors");
 }
 
+export async function searchAuthors(
+  query: string,
+  limit: number = 20
+): Promise<{ id: number; name: string }[]> {
+  await ensureSchemaInitialized();
+
+  const session = await getSession();
+  if (!session?.user?.id) {
+    return [];
+  }
+
+  const conditions = [eq(authors.userId, session.user.id)];
+
+  if (query) {
+    const searchCondition = or(
+      like(authors.name, `%${query}%`),
+      like(authors.bio, `%${query}%`)
+    );
+    if (searchCondition) {
+      conditions.push(searchCondition);
+    }
+  }
+
+  const results = await db
+    .select({ id: authors.id, name: authors.name })
+    .from(authors)
+    .where(and(...conditions))
+    .orderBy(asc(authors.name))
+    .limit(limit);
+
+  return results;
+}
+
 export async function getAuthorsPaginated(
   userId?: string,
   filters?: PaginatedAuthorFilters

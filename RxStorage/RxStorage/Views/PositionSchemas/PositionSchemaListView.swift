@@ -65,23 +65,81 @@ struct PositionSchemaListView: View {
 
     // MARK: - Schemas List
 
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+
     private var schemasList: some View {
-        List(selection: $selectedSchema) {
+        List {
             ForEach(viewModel.schemas) { schema in
-                NavigationLink(value: schema) {
-                    PositionSchemaRow(schema: schema)
-                }
-                .swipeActions(edge: .trailing, allowsFullSwipe: false) {
-                    Button(role: .destructive) {
-                        Task {
-                            try? await viewModel.deleteSchema(schema)
+                if horizontalSizeClass == .compact {
+                    NavigationLink(value: schema) {
+                        PositionSchemaRow(schema: schema)
+                    }
+                    .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                        Button(role: .destructive) {
+                            Task {
+                                try? await viewModel.deleteSchema(schema)
+                            }
+                        } label: {
+                            Label("Delete", systemImage: "trash")
                         }
+                    }
+                    .onAppear {
+                        if shouldLoadMore(for: schema) {
+                            Task {
+                                await viewModel.loadMoreSchemas()
+                            }
+                        }
+                    }
+                } else {
+                    Button {
+                        selectedSchema = schema
                     } label: {
-                        Label("Delete", systemImage: "trash")
+                        PositionSchemaRow(schema: schema)
+                    }
+                    .listRowBackground(selectedSchema?.id == schema.id ? Color.accentColor.opacity(0.2) : nil)
+                    .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                        Button(role: .destructive) {
+                            Task {
+                                try? await viewModel.deleteSchema(schema)
+                            }
+                        } label: {
+                            Label("Delete", systemImage: "trash")
+                        }
+                    }
+                    .onAppear {
+                        if shouldLoadMore(for: schema) {
+                            Task {
+                                await viewModel.loadMoreSchemas()
+                            }
+                        }
                     }
                 }
             }
+
+            // Loading more indicator
+            if viewModel.isLoadingMore {
+                HStack {
+                    Spacer()
+                    ProgressView()
+                        .padding()
+                    Spacer()
+                }
+                .listRowSeparator(.hidden)
+            }
         }
+    }
+
+    // MARK: - Pagination Helper
+
+    private func shouldLoadMore(for schema: PositionSchema) -> Bool {
+        guard let index = viewModel.schemas.firstIndex(where: { $0.id == schema.id }) else {
+            return false
+        }
+        let threshold = 3
+        return index >= viewModel.schemas.count - threshold &&
+               viewModel.hasNextPage &&
+               !viewModel.isLoadingMore &&
+               !viewModel.isLoading
     }
 }
 

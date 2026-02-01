@@ -196,6 +196,33 @@ export async function deleteLocationFormAction(id: number): Promise<void> {
   revalidatePath("/locations");
 }
 
+export async function searchLocations(
+  query: string,
+  limit: number = 20
+): Promise<{ id: number; title: string }[]> {
+  await ensureSchemaInitialized();
+
+  const session = await getSession();
+  if (!session?.user?.id) {
+    return [];
+  }
+
+  const conditions = [eq(locations.userId, session.user.id)];
+
+  if (query) {
+    conditions.push(like(locations.title, `%${query}%`));
+  }
+
+  const results = await db
+    .select({ id: locations.id, title: locations.title })
+    .from(locations)
+    .where(and(...conditions))
+    .orderBy(asc(locations.title))
+    .limit(limit);
+
+  return results;
+}
+
 export async function getLocationsPaginated(
   userId?: string,
   filters?: PaginatedLocationFilters

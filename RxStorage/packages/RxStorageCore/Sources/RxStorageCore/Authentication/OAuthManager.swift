@@ -49,6 +49,12 @@ public final class OAuthManager {
     private let tokenStorage: TokenStorage
     private let apiClient: APIClient
 
+    /// Timer for periodic token refresh checks
+    private var refreshTimer: Timer?
+
+    /// Interval between token refresh checks (5 minutes)
+    private let refreshCheckInterval: TimeInterval = 300
+
     /// Current authentication state
     public private(set) var authState: AuthenticationState = .unknown
 
@@ -84,6 +90,7 @@ public final class OAuthManager {
     }
 
     deinit {
+        refreshTimer?.invalidate()
         NotificationCenter.default.removeObserver(self)
     }
 
@@ -96,9 +103,39 @@ public final class OAuthManager {
 
     /// Clear tokens and update auth state when session expires
     private func handleSessionExpiration() async {
+        stopRefreshTimer()
         try? await tokenStorage.clearAll()
         authState = .unauthenticated
         currentUser = nil
+    }
+
+    // MARK: - Token Refresh Timer
+
+    /// Start the periodic token refresh timer
+    private func startRefreshTimer() {
+        stopRefreshTimer()
+        refreshTimer = Timer.scheduledTimer(withTimeInterval: refreshCheckInterval, repeats: true) { [weak self] _ in
+            Task { @MainActor [weak self] in
+                await self?.performPeriodicRefreshCheck()
+            }
+        }
+    }
+
+    /// Stop the refresh timer
+    private func stopRefreshTimer() {
+        refreshTimer?.invalidate()
+        refreshTimer = nil
+    }
+
+    /// Perform periodic token refresh check
+    private func performPeriodicRefreshCheck() async {
+        guard authState == .authenticated else { return }
+
+        do {
+            try await refreshTokenIfNeeded()
+        } catch {
+            print("Periodic token refresh failed: \(error)")
+        }
     }
 
     // MARK: - Authentication
@@ -257,6 +294,7 @@ public final class OAuthManager {
         try await fetchUserInfo()
 
         authState = .authenticated
+        startRefreshTimer()
     }
 
     /// Fetch user information from userinfo endpoint
@@ -302,6 +340,7 @@ public final class OAuthManager {
 
     /// Logout user
     public func logout() async {
+        stopRefreshTimer()
         try? await tokenStorage.clearAll()
         authState = .unauthenticated
         currentUser = nil
@@ -332,6 +371,7 @@ public final class OAuthManager {
         // If token is not expired, we're good
         if await !tokenStorage.isTokenExpired() {
             authState = .authenticated
+            startRefreshTimer()
             try? await fetchUserInfo()
             return
         }
@@ -347,6 +387,7 @@ public final class OAuthManager {
             try await apiClient.refreshAccessToken()
             try await fetchUserInfo()
             authState = .authenticated
+            startRefreshTimer()
         } catch {
             // Refresh failed - clear tokens and require re-login
             try? await tokenStorage.clearAll()
