@@ -49,9 +49,7 @@ struct AddChildSheet: View {
     }
 
     var body: some View {
-        VStack(spacing: 0) {
-            searchBar
-
+        Group {
             if viewModel.isSearching || viewModel.isLoadingDefaults {
                 Spacer()
                 ProgressView(viewModel.isSearching ? "Searching..." : "Loading...")
@@ -89,40 +87,15 @@ struct AddChildSheet: View {
                 }
             }
         }
+        .searchable(text: $viewModel.searchText, prompt: "Search items")
+        .onChange(of: viewModel.searchText) { _, newValue in
+            viewModel.search(newValue)
+        }
         .overlay {
             if isAdding {
                 LoadingOverlay()
             }
         }
-    }
-
-    // MARK: - Search Bar
-
-    private var searchBar: some View {
-        HStack {
-            Image(systemName: "magnifyingglass")
-                .foregroundStyle(.secondary)
-
-            TextField("Search items...", text: $viewModel.searchText)
-                .textInputAutocapitalization(.never)
-                .autocorrectionDisabled()
-                .onChange(of: viewModel.searchText) { _, newValue in
-                    viewModel.search(newValue)
-                }
-
-            if !viewModel.searchText.isEmpty {
-                Button {
-                    viewModel.clearSearch()
-                } label: {
-                    Image(systemName: "xmark.circle.fill")
-                        .foregroundStyle(.secondary)
-                }
-            }
-        }
-        .padding()
-        .background(Color(.systemGray6))
-        .cornerRadius(10)
-        .padding()
     }
 
     // MARK: - Items List

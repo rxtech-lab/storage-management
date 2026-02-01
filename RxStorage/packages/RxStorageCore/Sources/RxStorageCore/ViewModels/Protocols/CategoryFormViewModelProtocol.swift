@@ -19,5 +19,6 @@ public protocol CategoryFormViewModelProtocol: AnyObject, Observable {
     var validationErrors: [String: String] { get }
 
     func validate() -> Bool
-    func submit() async throws
+    @discardableResult
+    func submit() async throws -> Category
 }

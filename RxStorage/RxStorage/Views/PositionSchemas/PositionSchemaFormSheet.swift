@@ -18,6 +18,7 @@ struct PositionSchemaFormSheet: View {
     @State private var viewModel: PositionSchemaFormViewModel
     @State private var jsonSchema: JSONSchema?
     @Environment(\.dismiss) private var dismiss
+    @Environment(EventViewModel.self) private var eventViewModel
 
     init(schema: PositionSchema? = nil, onCreated: ((PositionSchema) -> Void)? = nil) {
         self.schema = schema
@@ -119,8 +120,15 @@ struct PositionSchemaFormSheet: View {
 
     private func submitForm() async {
         do {
-            let createdSchema = try await viewModel.submit()
-            onCreated?(createdSchema)
+            let savedSchema = try await viewModel.submit()
+            // Emit event based on create vs update
+            if schema == nil {
+                eventViewModel.emit(.positionSchemaCreated(id: savedSchema.id))
+            } else {
+                eventViewModel.emit(.positionSchemaUpdated(id: savedSchema.id))
+            }
+            // If callback provided, call with created schema
+            onCreated?(savedSchema)
             dismiss()
         } catch {
             // Error is already tracked in viewModel.error

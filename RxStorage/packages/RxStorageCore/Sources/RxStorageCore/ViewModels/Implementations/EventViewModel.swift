@@ -9,18 +9,45 @@
 import SwiftUI
 
 public enum AppEvent: Sendable {
+    // Item events
     case itemCreated(id: Int)
     case itemUpdated(id: Int)
     case itemDeleted(id: Int)
+
+    // Category events
     case categoryCreated(id: Int)
     case categoryUpdated(id: Int)
     case categoryDeleted(id: Int)
+
+    // Location events
     case locationCreated(id: Int)
     case locationUpdated(id: Int)
     case locationDeleted(id: Int)
+
+    // Author events
     case authorCreated(id: Int)
     case authorUpdated(id: Int)
     case authorDeleted(id: Int)
+
+    // Position schema events
+    case positionSchemaCreated(id: Int)
+    case positionSchemaUpdated(id: Int)
+    case positionSchemaDeleted(id: Int)
+
+    // Content events (tied to item)
+    case contentCreated(itemId: Int, contentId: Int)
+    case contentUpdated(itemId: Int, contentId: Int)
+    case contentDeleted(itemId: Int, contentId: Int)
+
+    // Child relationship events
+    case childAdded(parentId: Int, childId: Int)
+    case childRemoved(parentId: Int, childId: Int)
+
+    // Position events (tied to item)
+    case positionCreated(itemId: Int, positionId: Int)
+    case positionDeleted(itemId: Int, positionId: Int)
+
+    // Error event
     case error(message: String)
 }
 

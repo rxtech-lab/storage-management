@@ -22,7 +22,7 @@ public protocol ItemFormViewModelProtocol: AnyObject, Observable {
     var selectedParentId: Int? { get set }
     var price: String { get set }
     var visibility: StorageItem.Visibility { get set }
-    var imageURLs: [String] { get set }
+    var existingImages: [ImageReference] { get set }
 
     /// Reference data
     var categories: [Category] { get }
@@ -47,7 +47,8 @@ public protocol ItemFormViewModelProtocol: AnyObject, Observable {
     func validate() -> Bool
 
     /// Submit form (create or update)
-    func submit() async throws
+    @discardableResult
+    func submit() async throws -> StorageItem
 
     /// Inline entity creation
     func createCategory(name: String, description: String?) async throws -> Category
@@ -68,7 +69,7 @@ public protocol ItemFormViewModelProtocol: AnyObject, Observable {
     /// Remove a pending upload (before item is saved)
     func removePendingUpload(id: UUID)
 
-    /// Remove a saved image from the imageURLs array
+    /// Remove an existing image
     func removeSavedImage(at index: Int)
 
     /// Get all image references for item submission

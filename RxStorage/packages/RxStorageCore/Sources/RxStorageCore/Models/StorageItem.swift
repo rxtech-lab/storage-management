@@ -7,6 +7,22 @@
 
 import Foundation
 
+/// Image reference with ID and signed URL
+public struct ImageReference: Codable, Identifiable, Hashable, Sendable {
+    public let id: Int
+    public let url: String
+
+    public init(id: Int, url: String) {
+        self.id = id
+        self.url = url
+    }
+
+    /// Returns the file reference format for API requests (e.g., "file:7")
+    public var fileReference: String {
+        "file:\(id)"
+    }
+}
+
 /// Main storage item entity
 public struct StorageItem: Codable, Identifiable, Hashable, Sendable {
     public let id: Int
@@ -18,7 +34,7 @@ public struct StorageItem: Codable, Identifiable, Hashable, Sendable {
     public let parentId: Int?
     public let price: Double?
     public let visibility: Visibility
-    public let images: [String]
+    public let images: [ImageReference]
     public let createdAt: Date
     public let updatedAt: Date
     public let previewUrl: String
@@ -47,7 +63,7 @@ public struct StorageItem: Codable, Identifiable, Hashable, Sendable {
         parentId: Int?,
         price: Double?,
         visibility: Visibility,
-        images: [String],
+        images: [ImageReference],
         createdAt: Date,
         updatedAt: Date,
         category: Category? = nil,

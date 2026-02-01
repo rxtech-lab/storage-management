@@ -33,6 +33,9 @@
 	<key>NFCReaderUsageDescription</key>
 	<string>NFC access is needed to write item information to NFC tags</string>
 
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Location access is needed to pick your current location on the map</string>
+
 	<!-- App Information (Xcode manages these) -->
 	<key>CFBundleDisplayName</key>
 	<string>$(PRODUCT_NAME)</string>

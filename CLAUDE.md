@@ -305,6 +305,29 @@ The `getSession()` helper in `lib/auth-helper.ts` checks:
 - **Dynamic Forms** - JSON schema-based position forms
 - **Inline Creation** - Create related entities (categories, locations) during item creation
 
+### UI Patterns
+
+**Confirmation Dialogs** - Use the custom `.confirmationDialog` modifier for delete and destructive actions:
+```swift
+// For delete confirmations
+.confirmationDialog(
+    title: "Delete Item",
+    message: "Are you sure you want to delete \"\(itemToDelete?.title ?? "")\"? This action cannot be undone.",
+    isPresented: $showDeleteConfirmation,
+    onConfirm: {
+        // Perform delete action
+    },
+    onCancel: { itemToDelete = nil }
+)
+
+// For sign out confirmations
+.signOutConfirmation(isPresented: $showSignOutConfirmation) {
+    // Perform sign out action
+}
+```
+
+See `Views/Modifiers/ConfirmationDialogModifier.swift` for the implementation.
+
 ### Testing
 
 **Run Unit Tests:**

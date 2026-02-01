@@ -35,12 +35,45 @@ public final class LocationListViewModel: LocationListViewModelProtocol {
     // MARK: - Dependencies
 
     private let locationService: LocationServiceProtocol
+    private let eventViewModel: EventViewModel?
+    @ObservationIgnored private nonisolated(unsafe) var eventTask: Task<Void, Never>?
 
     // MARK: - Initialization
 
-    public init(locationService: LocationServiceProtocol = LocationService()) {
+    public init(
+        locationService: LocationServiceProtocol = LocationService(),
+        eventViewModel: EventViewModel? = nil
+    ) {
         self.locationService = locationService
+        self.eventViewModel = eventViewModel
         setupSearchPipeline()
+        setupEventSubscription()
+    }
+
+    deinit {
+        eventTask?.cancel()
+    }
+
+    // MARK: - Event Subscription
+
+    private func setupEventSubscription() {
+        guard let eventViewModel else { return }
+
+        eventTask = Task { [weak self] in
+            for await event in eventViewModel.stream {
+                guard let self else { break }
+                await self.handleEvent(event)
+            }
+        }
+    }
+
+    private func handleEvent(_ event: AppEvent) async {
+        switch event {
+        case .locationCreated, .locationUpdated, .locationDeleted:
+            await refreshLocations()
+        default:
+            break
+        }
     }
 
     // MARK: - Private Methods
@@ -156,10 +189,17 @@ public final class LocationListViewModel: LocationListViewModelProtocol {
         }
     }
 
-    public func deleteLocation(_ location: Location) async throws {
-        try await locationService.deleteLocation(id: location.id)
+    @discardableResult
+    public func deleteLocation(_ location: Location) async throws -> Int {
+        let locationId = location.id
+        try await locationService.deleteLocation(id: locationId)
 
         // Remove from local list
-        locations.removeAll { $0.id == location.id }
+        locations.removeAll { $0.id == locationId }
+
+        // Emit event
+        eventViewModel?.emit(.locationDeleted(id: locationId))
+
+        return locationId
     }
 }

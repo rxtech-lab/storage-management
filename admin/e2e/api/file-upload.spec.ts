@@ -74,10 +74,12 @@ test.describe.serial("File Upload API", () => {
     const body = await response.json();
     expect(body).toHaveProperty("id");
     expect(body.title).toBe("Item with Image");
-    // images should contain signed URLs, not raw file IDs
+    // images should be objects with id and url, containing signed URLs
     expect(body.images).toHaveLength(1);
-    expect(body.images[0]).toContain("mock-s3.example.com");
-    expect(body.images[0]).not.toContain("file:");
+    expect(body.images[0]).toHaveProperty("id");
+    expect(body.images[0]).toHaveProperty("url");
+    expect(body.images[0].url).toContain("mock-s3.example.com");
+    expect(body.images[0].url).not.toContain("file:");
 
     itemId = body.id;
   });
@@ -90,10 +92,12 @@ test.describe.serial("File Upload API", () => {
     expect(response.status()).toBe(200);
     const body = await response.json();
     expect(body.id).toBe(itemId);
-    // images should contain signed URLs, not raw file IDs
+    // images should be objects with id and url, containing signed URLs
     expect(body.images).toHaveLength(1);
-    expect(body.images[0]).toMatch(/^https:\/\//);
-    expect(body.images[0]).not.toContain("file:");
+    expect(body.images[0]).toHaveProperty("id");
+    expect(body.images[0]).toHaveProperty("url");
+    expect(body.images[0].url).toMatch(/^https:\/\//);
+    expect(body.images[0].url).not.toContain("file:");
   });
 
   test("GET /api/v1/items - should return signed URLs in images field for list", async ({
@@ -109,7 +113,9 @@ test.describe.serial("File Upload API", () => {
     const itemWithImages = body.find((item: { id: number }) => item.id === itemId);
     expect(itemWithImages).toBeDefined();
     expect(itemWithImages.images).toHaveLength(1);
-    expect(itemWithImages.images[0]).toContain("mock-s3.example.com");
+    expect(itemWithImages.images[0]).toHaveProperty("id");
+    expect(itemWithImages.images[0]).toHaveProperty("url");
+    expect(itemWithImages.images[0].url).toContain("mock-s3.example.com");
   });
 
   test("PUT /api/v1/items/{id} - should handle adding new file IDs", async ({
@@ -136,10 +142,14 @@ test.describe.serial("File Upload API", () => {
 
     expect(response.status()).toBe(200);
     const body = await response.json();
-    // images should contain signed URLs
+    // images should be objects with id and url, containing signed URLs
     expect(body.images).toHaveLength(2);
-    expect(body.images[0]).toContain("mock-s3.example.com");
-    expect(body.images[1]).toContain("mock-s3.example.com");
+    expect(body.images[0]).toHaveProperty("id");
+    expect(body.images[0]).toHaveProperty("url");
+    expect(body.images[0].url).toContain("mock-s3.example.com");
+    expect(body.images[1]).toHaveProperty("id");
+    expect(body.images[1]).toHaveProperty("url");
+    expect(body.images[1].url).toContain("mock-s3.example.com");
   });
 
   test("PUT /api/v1/items/{id} - should handle removing file IDs", async ({

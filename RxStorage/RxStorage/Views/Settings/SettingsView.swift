@@ -111,18 +111,14 @@ struct SettingsView: View {
         }
         .navigationTitle("Settings")
         .confirmationDialog(
-            "Sign Out",
-            isPresented: $showingSignOutConfirmation,
-            titleVisibility: .visible
+            title: "Sign Out",
+            message: "Are you sure you want to sign out?",
+            confirmButtonTitle: "Sign Out",
+            isPresented: $showingSignOutConfirmation
         ) {
-            Button("Sign Out", role: .destructive) {
-                Task {
-                    await signOut()
-                }
+            Task {
+                await signOut()
             }
-            Button("Cancel", role: .cancel) {}
-        } message: {
-            Text("Are you sure you want to sign out?")
         }
     }
 
