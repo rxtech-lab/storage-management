@@ -7,6 +7,7 @@
 
 import Foundation
 import AuthenticationServices
+import Logging
 import Observation
 
 #if canImport(UIKit)
@@ -48,6 +49,7 @@ public final class OAuthManager {
     private let configuration: AppConfiguration
     private let tokenStorage: TokenStorage
     private let apiClient: APIClient
+    private let logger = Logger(label: "com.rxlab.rxstorage.OAuthManager")
 
     /// Timer for periodic token refresh checks
     private var refreshTimer: Timer?
@@ -90,7 +92,9 @@ public final class OAuthManager {
     }
 
     deinit {
-        refreshTimer?.invalidate()
+        MainActor.assumeIsolated {
+            refreshTimer?.invalidate()
+        }
         NotificationCenter.default.removeObserver(self)
     }
 
@@ -134,7 +138,7 @@ public final class OAuthManager {
         do {
             try await refreshTokenIfNeeded()
         } catch {
-            print("Periodic token refresh failed: \(error)")
+            logger.warning("Periodic token refresh failed: \(error.localizedDescription)")
         }
     }
 

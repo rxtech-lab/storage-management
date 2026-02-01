@@ -62,9 +62,9 @@ const itemUpdateSchema = itemInsertSchema
   });
 
 export interface ItemWithRelations extends Item {
-  category?: { id: number; name: string } | null;
-  location?: { id: number; title: string } | null;
-  author?: { id: number; name: string } | null;
+  category?: { id: number; name: string; description: string | null } | null;
+  location?: { id: number; title: string; latitude: number | null; longitude: number | null } | null;
+  author?: { id: number; name: string; bio: string | null } | null;
   parent?: { id: number; title: string } | null;
 }
 
@@ -116,14 +116,18 @@ export async function getItems(
       category: {
         id: categories.id,
         name: categories.name,
+        description: categories.description,
       },
       location: {
         id: locations.id,
         title: locations.title,
+        latitude: locations.latitude,
+        longitude: locations.longitude,
       },
       author: {
         id: authors.id,
         name: authors.name,
+        bio: authors.bio,
       },
     })
     .from(items)
@@ -205,14 +209,18 @@ export async function getItem(
       category: {
         id: categories.id,
         name: categories.name,
+        description: categories.description,
       },
       location: {
         id: locations.id,
         title: locations.title,
+        latitude: locations.latitude,
+        longitude: locations.longitude,
       },
       author: {
         id: authors.id,
         name: authors.name,
+        bio: authors.bio,
       },
     })
     .from(items)
@@ -755,14 +763,18 @@ export async function getItemsPaginated(
       category: {
         id: categories.id,
         name: categories.name,
+        description: categories.description,
       },
       location: {
         id: locations.id,
         title: locations.title,
+        latitude: locations.latitude,
+        longitude: locations.longitude,
       },
       author: {
         id: authors.id,
         name: authors.name,
+        bio: authors.bio,
       },
     })
     .from(items)

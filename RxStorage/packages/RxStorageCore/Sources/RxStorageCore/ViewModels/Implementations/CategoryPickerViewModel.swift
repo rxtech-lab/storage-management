@@ -7,6 +7,7 @@
 
 @preconcurrency import Combine
 import Foundation
+import Logging
 import Observation
 
 /// Category picker view model for searchable selection
@@ -32,6 +33,7 @@ public final class CategoryPickerViewModel {
     // MARK: - Dependencies
 
     private let categoryService: CategoryServiceProtocol
+    private let logger = Logger(label: "com.rxlab.rxstorage.CategoryPickerViewModel")
 
     // MARK: - Initialization
 
@@ -77,7 +79,7 @@ public final class CategoryPickerViewModel {
             nextCursor = response.pagination.nextCursor
             hasNextPage = response.pagination.hasNextPage
         } catch {
-            // Silent fail for search
+            logger.debug("Category search failed: \(error.localizedDescription)")
         }
 
         isSearching = false
@@ -102,7 +104,7 @@ public final class CategoryPickerViewModel {
             nextCursor = response.pagination.nextCursor
             hasNextPage = response.pagination.hasNextPage
         } catch {
-            // Silent fail
+            logger.debug("Failed to load categories: \(error.localizedDescription)")
         }
 
         isLoading = false
@@ -139,7 +141,7 @@ public final class CategoryPickerViewModel {
             nextCursor = response.pagination.nextCursor
             hasNextPage = response.pagination.hasNextPage
         } catch {
-            // Silent fail
+            logger.debug("Failed to load more categories: \(error.localizedDescription)")
         }
 
         isLoadingMore = false

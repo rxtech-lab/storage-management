@@ -7,6 +7,7 @@
 
 @preconcurrency import Combine
 import Foundation
+import Logging
 import Observation
 
 /// Location picker view model for searchable selection
@@ -32,6 +33,7 @@ public final class LocationPickerViewModel {
     // MARK: - Dependencies
 
     private let locationService: LocationServiceProtocol
+    private let logger = Logger(label: "com.rxlab.rxstorage.LocationPickerViewModel")
 
     // MARK: - Initialization
 
@@ -77,7 +79,7 @@ public final class LocationPickerViewModel {
             nextCursor = response.pagination.nextCursor
             hasNextPage = response.pagination.hasNextPage
         } catch {
-            // Silent fail for search
+            logger.debug("Location search failed: \(error.localizedDescription)")
         }
 
         isSearching = false
@@ -102,7 +104,7 @@ public final class LocationPickerViewModel {
             nextCursor = response.pagination.nextCursor
             hasNextPage = response.pagination.hasNextPage
         } catch {
-            // Silent fail
+            logger.debug("Failed to load locations: \(error.localizedDescription)")
         }
 
         isLoading = false
@@ -139,7 +141,7 @@ public final class LocationPickerViewModel {
             nextCursor = response.pagination.nextCursor
             hasNextPage = response.pagination.hasNextPage
         } catch {
-            // Silent fail
+            logger.debug("Failed to load more locations: \(error.localizedDescription)")
         }
 
         isLoadingMore = false

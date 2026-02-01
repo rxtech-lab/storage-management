@@ -17,38 +17,11 @@ struct CategoryPickerSheet: View {
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
-        VStack(spacing: 0) {
-            // Search bar
-            HStack {
-                Image(systemName: "magnifyingglass")
-                    .foregroundStyle(.secondary)
-                TextField("Search categories...", text: $viewModel.searchText)
-                    .textFieldStyle(.plain)
-                    .autocorrectionDisabled()
-                if !viewModel.searchText.isEmpty {
-                    Button {
-                        viewModel.searchText = ""
-                        viewModel.search("")
-                    } label: {
-                        Image(systemName: "xmark.circle.fill")
-                            .foregroundStyle(.secondary)
-                    }
-                }
-            }
-            .padding()
-            .background(Color(.systemGray6))
-
-            Divider()
-
-            // Content
+        Group {
             if viewModel.isLoading {
-                Spacer()
                 ProgressView("Loading categories...")
-                Spacer()
             } else if viewModel.isSearching {
-                Spacer()
                 ProgressView("Searching...")
-                Spacer()
             } else if viewModel.displayItems.isEmpty {
                 ContentUnavailableView(
                     viewModel.searchText.isEmpty ? "No Categories" : "No Results",
@@ -74,11 +47,12 @@ struct CategoryPickerSheet: View {
                 }
             }
         }
-        .task {
-            await viewModel.loadCategories()
-        }
+        .searchable(text: $viewModel.searchText, prompt: "Search categories")
         .onChange(of: viewModel.searchText) { _, newValue in
             viewModel.search(newValue)
+        }
+        .task {
+            await viewModel.loadCategories()
         }
     }
 
@@ -126,7 +100,6 @@ struct CategoryPickerSheet: View {
                 .listRowSeparator(.hidden)
             }
         }
-        .listStyle(.plain)
     }
 }
 

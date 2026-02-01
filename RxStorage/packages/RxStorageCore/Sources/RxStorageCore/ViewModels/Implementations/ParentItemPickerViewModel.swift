@@ -7,6 +7,7 @@
 
 @preconcurrency import Combine
 import Foundation
+import Logging
 import Observation
 
 /// Parent item picker view model for searchable selection
@@ -35,6 +36,7 @@ public final class ParentItemPickerViewModel {
     // MARK: - Dependencies
 
     private let itemService: ItemServiceProtocol
+    private let logger = Logger(label: "com.rxlab.rxstorage.ParentItemPickerViewModel")
 
     // MARK: - Initialization
 
@@ -86,7 +88,7 @@ public final class ParentItemPickerViewModel {
             nextCursor = response.pagination.nextCursor
             hasNextPage = response.pagination.hasNextPage
         } catch {
-            // Silent fail for search
+            logger.debug("Parent item search failed: \(error.localizedDescription)")
         }
 
         isSearching = false
@@ -111,7 +113,7 @@ public final class ParentItemPickerViewModel {
             nextCursor = response.pagination.nextCursor
             hasNextPage = response.pagination.hasNextPage
         } catch {
-            // Silent fail
+            logger.debug("Failed to load parent items: \(error.localizedDescription)")
         }
 
         isLoading = false
@@ -149,7 +151,7 @@ public final class ParentItemPickerViewModel {
             nextCursor = response.pagination.nextCursor
             hasNextPage = response.pagination.hasNextPage
         } catch {
-            // Silent fail
+            logger.debug("Failed to load more parent items: \(error.localizedDescription)")
         }
 
         isLoadingMore = false

@@ -152,7 +152,7 @@ struct ItemFormSheet: View {
                     Text("Public").tag(StorageItem.Visibility.public)
                     Text("Private").tag(StorageItem.Visibility.private)
                 }
-                .pickerStyle(.segmented)
+                .pickerStyle(.menu)
             }
 
             // Images
@@ -404,7 +404,8 @@ struct ItemFormSheet: View {
 
     private var selectedCategoryName: String {
         guard let id = viewModel.selectedCategoryId,
-              let category = viewModel.categories.first(where: { $0.id == id }) else {
+              let category = viewModel.categories.first(where: { $0.id == id })
+        else {
             return "None"
         }
         return category.name
@@ -412,7 +413,8 @@ struct ItemFormSheet: View {
 
     private var selectedLocationName: String {
         guard let id = viewModel.selectedLocationId,
-              let location = viewModel.locations.first(where: { $0.id == id }) else {
+              let location = viewModel.locations.first(where: { $0.id == id })
+        else {
             return "None"
         }
         return location.title
@@ -420,7 +422,8 @@ struct ItemFormSheet: View {
 
     private var selectedAuthorName: String {
         guard let id = viewModel.selectedAuthorId,
-              let author = viewModel.authors.first(where: { $0.id == id }) else {
+              let author = viewModel.authors.first(where: { $0.id == id })
+        else {
             return "None"
         }
         return author.name
@@ -428,7 +431,8 @@ struct ItemFormSheet: View {
 
     private var selectedParentItemName: String {
         guard let id = viewModel.selectedParentId,
-              let parentItem = viewModel.parentItems.first(where: { $0.id == id }) else {
+              let parentItem = viewModel.parentItems.first(where: { $0.id == id })
+        else {
             return "None"
         }
         return parentItem.title

@@ -134,7 +134,6 @@ struct ParentItemPickerSheet: View {
                 .listRowSeparator(.hidden)
             }
         }
-        .listStyle(.plain)
     }
 }
 

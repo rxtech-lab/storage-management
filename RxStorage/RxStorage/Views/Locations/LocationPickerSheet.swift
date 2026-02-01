@@ -17,38 +17,11 @@ struct LocationPickerSheet: View {
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
-        VStack(spacing: 0) {
-            // Search bar
-            HStack {
-                Image(systemName: "magnifyingglass")
-                    .foregroundStyle(.secondary)
-                TextField("Search locations...", text: $viewModel.searchText)
-                    .textFieldStyle(.plain)
-                    .autocorrectionDisabled()
-                if !viewModel.searchText.isEmpty {
-                    Button {
-                        viewModel.searchText = ""
-                        viewModel.search("")
-                    } label: {
-                        Image(systemName: "xmark.circle.fill")
-                            .foregroundStyle(.secondary)
-                    }
-                }
-            }
-            .padding()
-            .background(Color(.systemGray6))
-
-            Divider()
-
-            // Content
+        Group {
             if viewModel.isLoading {
-                Spacer()
                 ProgressView("Loading locations...")
-                Spacer()
             } else if viewModel.isSearching {
-                Spacer()
                 ProgressView("Searching...")
-                Spacer()
             } else if viewModel.displayItems.isEmpty {
                 ContentUnavailableView(
                     viewModel.searchText.isEmpty ? "No Locations" : "No Results",
@@ -74,11 +47,12 @@ struct LocationPickerSheet: View {
                 }
             }
         }
-        .task {
-            await viewModel.loadLocations()
-        }
+        .searchable(text: $viewModel.searchText, prompt: "Search locations")
         .onChange(of: viewModel.searchText) { _, newValue in
             viewModel.search(newValue)
+        }
+        .task {
+            await viewModel.loadLocations()
         }
     }
 
@@ -125,7 +99,6 @@ struct LocationPickerSheet: View {
                 .listRowSeparator(.hidden)
             }
         }
-        .listStyle(.plain)
     }
 }
 

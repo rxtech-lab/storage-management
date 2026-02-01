@@ -17,38 +17,11 @@ struct AuthorPickerSheet: View {
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
-        VStack(spacing: 0) {
-            // Search bar
-            HStack {
-                Image(systemName: "magnifyingglass")
-                    .foregroundStyle(.secondary)
-                TextField("Search authors...", text: $viewModel.searchText)
-                    .textFieldStyle(.plain)
-                    .autocorrectionDisabled()
-                if !viewModel.searchText.isEmpty {
-                    Button {
-                        viewModel.searchText = ""
-                        viewModel.search("")
-                    } label: {
-                        Image(systemName: "xmark.circle.fill")
-                            .foregroundStyle(.secondary)
-                    }
-                }
-            }
-            .padding()
-            .background(Color(.systemGray6))
-
-            Divider()
-
-            // Content
+        Group {
             if viewModel.isLoading {
-                Spacer()
                 ProgressView("Loading authors...")
-                Spacer()
             } else if viewModel.isSearching {
-                Spacer()
                 ProgressView("Searching...")
-                Spacer()
             } else if viewModel.displayItems.isEmpty {
                 ContentUnavailableView(
                     viewModel.searchText.isEmpty ? "No Authors" : "No Results",
@@ -74,11 +47,12 @@ struct AuthorPickerSheet: View {
                 }
             }
         }
-        .task {
-            await viewModel.loadAuthors()
-        }
+        .searchable(text: $viewModel.searchText, prompt: "Search authors")
         .onChange(of: viewModel.searchText) { _, newValue in
             viewModel.search(newValue)
+        }
+        .task {
+            await viewModel.loadAuthors()
         }
     }
 

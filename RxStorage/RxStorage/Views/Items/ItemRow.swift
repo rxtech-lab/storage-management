@@ -15,7 +15,7 @@ struct ItemRow: View {
             Text(item.title)
                 .font(.headline)
 
-            if let description = item.description {
+            if let description = item.description, !description.isEmpty {
                 Text(description)
                     .font(.caption)
                     .foregroundStyle(.secondary)

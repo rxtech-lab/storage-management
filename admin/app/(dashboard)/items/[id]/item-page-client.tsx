@@ -20,7 +20,6 @@ import type {
   PositionSchema,
   Content,
   ItemWhitelist,
-  Location as LocationType,
 } from "@/lib/db";
 
 interface ItemPageClientProps {
@@ -30,7 +29,6 @@ interface ItemPageClientProps {
   contents: Content[];
   whitelist: ItemWhitelist[];
   childItems: ItemWithRelations[];
-  location: LocationType | null;
 }
 
 export function ItemPageClient({
@@ -40,7 +38,6 @@ export function ItemPageClient({
   contents,
   whitelist,
   childItems,
-  location,
 }: ItemPageClientProps) {
   const router = useRouter();
   const [isEditOpen, setIsEditOpen] = useState(false);
@@ -68,9 +65,9 @@ export function ItemPageClient({
       {/* Hero Map */}
       <div className="-mt-14">
         <HeroMap
-          latitude={location?.latitude}
-          longitude={location?.longitude}
-          title={location?.title}
+          latitude={item.location?.latitude ?? undefined}
+          longitude={item.location?.longitude ?? undefined}
+          title={item.location?.title ?? undefined}
         />
       </div>
 

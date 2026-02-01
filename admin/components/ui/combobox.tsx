@@ -248,7 +248,7 @@ function ComboboxLabel({ children, className }: { children: React.ReactNode; cla
   )
 }
 
-// Stub exports for API compatibility (not commonly used)
+// Passthrough components for API compatibility with alternative combobox implementations
 function ComboboxCollection({ children }: { children: React.ReactNode }) {
   return <>{children}</>
 }

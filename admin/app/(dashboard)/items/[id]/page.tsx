@@ -1,7 +1,6 @@
 import { notFound } from "next/navigation";
 import { ItemPageClient } from "./item-page-client";
 import { getItem, getItemChildren } from "@/lib/actions/item-actions";
-import { getLocation } from "@/lib/actions/location-actions";
 import { getPositionSchemas } from "@/lib/actions/position-schema-actions";
 import { getItemPositions } from "@/lib/actions/position-actions";
 import { getItemContents } from "@/lib/actions/content-actions";
@@ -37,8 +36,6 @@ export default async function ItemDetailPage({
     getItemChildren(itemId),
   ]);
 
-  const location = item.locationId ? (await getLocation(item.locationId)) ?? null : null;
-
   return (
     <ItemPageClient
       item={item}
@@ -47,7 +44,6 @@ export default async function ItemDetailPage({
       contents={contents}
       whitelist={whitelist}
       childItems={children}
-      location={location}
     />
   );
 }

@@ -7,6 +7,7 @@
 
 @preconcurrency import Combine
 import Foundation
+import Logging
 import Observation
 
 /// Author picker view model for searchable selection
@@ -32,6 +33,7 @@ public final class AuthorPickerViewModel {
     // MARK: - Dependencies
 
     private let authorService: AuthorServiceProtocol
+    private let logger = Logger(label: "com.rxlab.rxstorage.AuthorPickerViewModel")
 
     // MARK: - Initialization
 
@@ -77,7 +79,7 @@ public final class AuthorPickerViewModel {
             nextCursor = response.pagination.nextCursor
             hasNextPage = response.pagination.hasNextPage
         } catch {
-            // Silent fail for search
+            logger.debug("Author search failed: \(error.localizedDescription)")
         }
 
         isSearching = false
@@ -102,7 +104,7 @@ public final class AuthorPickerViewModel {
             nextCursor = response.pagination.nextCursor
             hasNextPage = response.pagination.hasNextPage
         } catch {
-            // Silent fail
+            logger.debug("Failed to load authors: \(error.localizedDescription)")
         }
 
         isLoading = false
@@ -139,7 +141,7 @@ public final class AuthorPickerViewModel {
             nextCursor = response.pagination.nextCursor
             hasNextPage = response.pagination.hasNextPage
         } catch {
-            // Silent fail
+            logger.debug("Failed to load more authors: \(error.localizedDescription)")
         }
 
         isLoadingMore = false
