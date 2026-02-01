@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth-helper";
 import { setItemParent } from "@/lib/actions/item-actions";
-import { signImagesArray } from "@/lib/actions/s3-upload-actions";
+import { signImagesArrayWithIds } from "@/lib/actions/s3-upload-actions";
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -33,7 +33,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       // Sign images - replace file IDs with signed URLs
       const images =
         result.data.images && result.data.images.length > 0
-          ? await signImagesArray(result.data.images)
+          ? await signImagesArrayWithIds(result.data.images)
           : [];
 
       return NextResponse.json({ ...result.data, images, previewUrl });

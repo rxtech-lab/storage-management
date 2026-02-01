@@ -35,8 +35,25 @@ public protocol ItemDetailViewModelProtocol: AnyObject, Observable {
     func refresh() async
 
     /// Add a child item by its ID (fetches fresh data to avoid memory issues)
-    func addChildById(_ childId: Int) async throws
+    /// Returns tuple of (parentId, childId) for event emission
+    @discardableResult
+    func addChildById(_ childId: Int) async throws -> (parentId: Int, childId: Int)
 
     /// Remove a child item by its ID
-    func removeChildById(_ childId: Int) async throws
+    /// Returns tuple of (parentId, childId) for event emission
+    @discardableResult
+    func removeChildById(_ childId: Int) async throws -> (parentId: Int, childId: Int)
+
+    /// Create a new content for this item
+    /// Returns tuple of (itemId, contentId) for event emission
+    @discardableResult
+    func createContent(type: Content.ContentType, formData: [String: AnyCodable]) async throws -> (itemId: Int, contentId: Int)
+
+    /// Delete an existing content
+    /// Returns tuple of (itemId, contentId) for event emission
+    @discardableResult
+    func deleteContent(id: Int) async throws -> (itemId: Int, contentId: Int)
+
+    /// Update an existing content
+    func updateContent(id: Int, type: Content.ContentType, formData: [String: AnyCodable]) async throws
 }

@@ -23,5 +23,6 @@ public protocol CategoryListViewModelProtocol: AnyObject, Observable {
     func fetchCategories() async
     func loadMoreCategories() async
     func refreshCategories() async
-    func deleteCategory(_ category: Category) async throws
+    @discardableResult
+    func deleteCategory(_ category: Category) async throws -> Int
 }

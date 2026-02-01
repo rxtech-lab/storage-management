@@ -105,6 +105,11 @@
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Views/AppClip/AppClipRootView.swift,
+				Views/Auth/AnimatedAppLogo.swift,
+				Views/Auth/AnimatedGradientBackground.swift,
+				Views/Auth/AnimatedSecurityIcon.swift,
+				Views/Auth/AuthErrorBanner.swift,
+				Views/Auth/PrimaryAuthButton.swift,
 				Views/Authors/AuthorDetailView.swift,
 				Views/Authors/AuthorFormSheet.swift,
 				Views/Authors/AuthorListView.swift,
@@ -114,6 +119,7 @@
 				Views/Categories/CategoryListView.swift,
 				Views/Categories/CategoryPickerSheet.swift,
 				Views/Items/AddChildSheet.swift,
+				Views/Items/ContentDetailSheet.swift,
 				Views/Items/ContentFormSheet.swift,
 				Views/Items/ContentSectionView.swift,
 				Views/Items/ItemDetailView.swift,
@@ -127,6 +133,8 @@
 				Views/Locations/LocationFormSheet.swift,
 				Views/Locations/LocationListView.swift,
 				Views/Locations/LocationPickerSheet.swift,
+				Views/Locations/MapPickerView.swift,
+				Views/Modifiers/ConfirmationDialogModifier.swift,
 				Views/PositionSchemas/PositionSchemaFormSheet.swift,
 				Views/QRCode/QRCodeScannerView.swift,
 				Views/QRCode/QRCodeView.swift,

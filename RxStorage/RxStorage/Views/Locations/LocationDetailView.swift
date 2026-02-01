@@ -2,42 +2,57 @@
 //  LocationDetailView.swift
 //  RxStorage
 //
-//  Location detail view with map
+//  Location detail view with full-screen map and bottom sheet
 //
 
-import SwiftUI
 import MapKit
 import RxStorageCore
+import SwiftUI
 
-/// Location detail view
+/// Sheet types for location detail view
+private enum LocationSheet: Identifiable, Equatable {
+    case info(Location)
+    case edit(Location)
+
+    var id: String {
+        switch self {
+        case .info(let location):
+            return "info-\(location.id)"
+        case .edit(let location):
+            return "edit-\(location.id)"
+        }
+    }
+}
+
+/// Location detail view with full-screen map and bottom sheet for info
 struct LocationDetailView: View {
     let locationId: Int
 
     @Environment(LocationDetailViewModel.self) private var viewModel
-    @State private var showingEditSheet = false
+    @State private var cameraPosition: MapCameraPosition = .automatic
+    @State private var activeSheet: LocationSheet?
 
     var body: some View {
         Group {
             if viewModel.isLoading {
                 ProgressView("Loading...")
             } else if let location = viewModel.location {
-                ScrollView {
-                    VStack(alignment: .leading, spacing: 20) {
-                        // Header
-                        locationHeader(location)
-
-                        // Map
-                        if let coordinate = location.coordinate {
-                            mapSection(coordinate: coordinate, title: location.title)
+                fullScreenMapContent(location)
+                    .onAppear {
+                        // Show info sheet when location loads
+                        if activeSheet == nil {
+                            activeSheet = .info(location)
                         }
-
-                        Divider()
-
-                        // Details
-                        locationDetails(location)
                     }
-                    .padding()
-                }
+                    .toolbar {
+                        ToolbarItem(placement: .primaryAction) {
+                            Button {
+                                activeSheet = .edit(location)
+                            } label: {
+                                Label("Edit", systemImage: "pencil")
+                            }
+                        }
+                    }
             } else if let error = viewModel.error {
                 ContentUnavailableView(
                     "Error Loading Location",
@@ -50,19 +65,26 @@ struct LocationDetailView: View {
         }
         .navigationTitle(viewModel.location?.title ?? "Location")
         .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .primaryAction) {
-                Button {
-                    showingEditSheet = true
-                } label: {
-                    Label("Edit", systemImage: "pencil")
+        .sheet(item: $activeSheet) { sheet in
+            switch sheet {
+            case .info(let location):
+                LocationInfoSheet(location: location)
+                    .presentationDetents([.height(180), .medium, .large])
+                    .presentationDragIndicator(.visible)
+                    .presentationBackgroundInteraction(.enabled(upThrough: .medium))
+                    .interactiveDismissDisabled(true)
+
+            case .edit(let location):
+                NavigationStack {
+                    LocationFormSheet(location: location)
                 }
             }
         }
-        .sheet(isPresented: $showingEditSheet) {
-            if let location = viewModel.location {
-                NavigationStack {
-                    LocationFormSheet(location: location)
+        .onChange(of: activeSheet) { oldValue, newValue in
+            // When edit sheet is dismissed, show info sheet again
+            if case .edit = oldValue, newValue == nil {
+                if let location = viewModel.location {
+                    activeSheet = .info(location)
                 }
             }
         }
@@ -71,75 +93,101 @@ struct LocationDetailView: View {
         }
     }
 
-    // MARK: - Location Header
+    // MARK: - Full Screen Map Content
 
     @ViewBuilder
-    private func locationHeader(_ location: Location) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text(location.title)
-                .font(.title2)
-                .fontWeight(.bold)
-
-            if let lat = location.latitude, let lon = location.longitude {
-                Text(String(format: "%.6f, %.6f", lat, lon))
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
+    private func fullScreenMapContent(_ location: Location) -> some View {
+        ZStack {
+            if let coordinate = location.coordinate {
+                Map(position: $cameraPosition) {
+                    Marker(location.title, coordinate: coordinate)
+                        .tint(.red)
+                }
+                .mapControls {
+                    MapCompass()
+                    MapScaleView()
+                }
+                .mapStyle(.standard(elevation: .realistic))
+                .onAppear {
+                    cameraPosition = .region(MKCoordinateRegion(
+                        center: coordinate,
+                        span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)
+                    ))
+                }
+            } else {
+                ContentUnavailableView(
+                    "No Coordinates",
+                    systemImage: "mappin.slash",
+                    description: Text("This location has no coordinates set.")
+                )
             }
         }
+        .ignoresSafeArea(.all)
     }
+}
 
-    // MARK: - Map Section
+// MARK: - Location Info Sheet
 
-    @ViewBuilder
-    private func mapSection(coordinate: CLLocationCoordinate2D, title: String) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Label("Map", systemImage: "map")
-                .font(.headline)
+private struct LocationInfoSheet: View {
+    let location: Location
 
-            Map {
-                Marker(title, coordinate: coordinate)
+    var body: some View {
+        NavigationStack {
+            List {
+                // Header section
+                Section {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text(location.title)
+                            .font(.title2)
+                            .fontWeight(.bold)
+
+                        if let lat = location.latitude, let lon = location.longitude {
+                            Text(String(format: "%.6f, %.6f", lat, lon))
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                }
+
+                // Coordinates section
+                Section("Coordinates") {
+                    if let latitude = location.latitude {
+                        LabeledContent {
+                            Text(String(format: "%.6f", latitude))
+                        } label: {
+                            Label("Latitude", systemImage: "location")
+                        }
+                    }
+
+                    if let longitude = location.longitude {
+                        LabeledContent {
+                            Text(String(format: "%.6f", longitude))
+                        } label: {
+                            Label("Longitude", systemImage: "location")
+                        }
+                    }
+                }
+
+                // Metadata section
+                Section("Details") {
+                    if let createdAt = location.createdAt {
+                        LabeledContent {
+                            Text(createdAt.formatted(date: .abbreviated, time: .shortened))
+                        } label: {
+                            Label("Created", systemImage: "calendar")
+                        }
+                    }
+
+                    if let updatedAt = location.updatedAt {
+                        LabeledContent {
+                            Text(updatedAt.formatted(date: .abbreviated, time: .shortened))
+                        } label: {
+                            Label("Updated", systemImage: "clock")
+                        }
+                    }
+                }
             }
-            .frame(height: 250)
-            .clipShape(RoundedRectangle(cornerRadius: 12))
-        }
-    }
-
-    // MARK: - Location Details
-
-    @ViewBuilder
-    private func locationDetails(_ location: Location) -> some View {
-        VStack(alignment: .leading, spacing: 12) {
-            if let latitude = location.latitude {
-                DetailRow(
-                    label: "Latitude",
-                    value: String(format: "%.6f", latitude),
-                    icon: "location"
-                )
-            }
-
-            if let longitude = location.longitude {
-                DetailRow(
-                    label: "Longitude",
-                    value: String(format: "%.6f", longitude),
-                    icon: "location"
-                )
-            }
-
-            if let createdAt = location.createdAt {
-                DetailRow(
-                    label: "Created",
-                    value: createdAt.formatted(date: .abbreviated, time: .shortened),
-                    icon: "calendar"
-                )
-            }
-
-            if let updatedAt = location.updatedAt {
-                DetailRow(
-                    label: "Updated",
-                    value: updatedAt.formatted(date: .abbreviated, time: .shortened),
-                    icon: "clock"
-                )
-            }
+            .listStyle(.insetGrouped)
         }
     }
 }

@@ -35,12 +35,45 @@ public final class AuthorListViewModel: AuthorListViewModelProtocol {
     // MARK: - Dependencies
 
     private let authorService: AuthorServiceProtocol
+    private let eventViewModel: EventViewModel?
+    @ObservationIgnored private nonisolated(unsafe) var eventTask: Task<Void, Never>?
 
     // MARK: - Initialization
 
-    public init(authorService: AuthorServiceProtocol = AuthorService()) {
+    public init(
+        authorService: AuthorServiceProtocol = AuthorService(),
+        eventViewModel: EventViewModel? = nil
+    ) {
         self.authorService = authorService
+        self.eventViewModel = eventViewModel
         setupSearchPipeline()
+        setupEventSubscription()
+    }
+
+    deinit {
+        eventTask?.cancel()
+    }
+
+    // MARK: - Event Subscription
+
+    private func setupEventSubscription() {
+        guard let eventViewModel else { return }
+
+        eventTask = Task { [weak self] in
+            for await event in eventViewModel.stream {
+                guard let self else { break }
+                await self.handleEvent(event)
+            }
+        }
+    }
+
+    private func handleEvent(_ event: AppEvent) async {
+        switch event {
+        case .authorCreated, .authorUpdated, .authorDeleted:
+            await refreshAuthors()
+        default:
+            break
+        }
     }
 
     // MARK: - Private Methods
@@ -156,10 +189,17 @@ public final class AuthorListViewModel: AuthorListViewModelProtocol {
         }
     }
 
-    public func deleteAuthor(_ author: Author) async throws {
-        try await authorService.deleteAuthor(id: author.id)
+    @discardableResult
+    public func deleteAuthor(_ author: Author) async throws -> Int {
+        let authorId = author.id
+        try await authorService.deleteAuthor(id: authorId)
 
         // Remove from local list
-        authors.removeAll { $0.id == author.id }
+        authors.removeAll { $0.id == authorId }
+
+        // Emit event
+        eventViewModel?.emit(.authorDeleted(id: authorId))
+
+        return authorId
     }
 }

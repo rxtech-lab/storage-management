@@ -38,6 +38,9 @@ const positionDataSchema = z.object({
   data: z.record(z.unknown()),
 });
 
+// Regex pattern for file:{id} format
+const fileIdPattern = /^file:\d+$/;
+
 // Zod schema for item validation
 const itemInsertSchema = z.object({
   title: z.string().min(1, "Title is required"),
@@ -50,7 +53,9 @@ const itemInsertSchema = z.object({
   price: z.number().nullable().optional(),
   currency: z.string().optional(),
   visibility: z.enum(["public", "private"]),
-  images: z.array(z.string()).optional(),
+  images: z
+    .array(z.string().regex(fileIdPattern, "Images must be in 'file:{id}' format"))
+    .optional(),
   positions: z.array(positionDataSchema).optional(),
 });
 

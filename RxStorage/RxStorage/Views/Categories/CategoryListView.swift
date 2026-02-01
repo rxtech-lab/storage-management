@@ -14,6 +14,12 @@ struct CategoryListView: View {
 
     @State private var viewModel = CategoryListViewModel()
     @State private var showingCreateSheet = false
+    @State private var isRefreshing = false
+    @Environment(EventViewModel.self) private var eventViewModel
+
+    // Delete confirmation state
+    @State private var categoryToDelete: RxStorageCore.Category?
+    @State private var showDeleteConfirmation = false
 
     /// Initialize with an optional binding (defaults to constant nil for standalone use)
     init(selectedCategory: Binding<RxStorageCore.Category?> = .constant(nil)) {
@@ -61,6 +67,41 @@ struct CategoryListView: View {
         .task {
             await viewModel.fetchCategories()
         }
+        .task {
+            // Listen for category events and refresh
+            for await event in eventViewModel.stream {
+                switch event {
+                case .categoryCreated, .categoryUpdated, .categoryDeleted:
+                    isRefreshing = true
+                    await viewModel.refreshCategories()
+                    isRefreshing = false
+                default:
+                    break
+                }
+            }
+        }
+        .overlay {
+            if isRefreshing {
+                LoadingOverlay(title: "Refreshing...")
+            }
+        }
+        .confirmationDialog(
+            title: "Delete Category",
+            message: "Are you sure you want to delete \"\(categoryToDelete?.name ?? "")\"? This action cannot be undone.",
+            confirmButtonTitle: "Delete",
+            isPresented: $showDeleteConfirmation,
+            onConfirm: {
+                if let category = categoryToDelete {
+                    Task {
+                        if let deletedId = try? await viewModel.deleteCategory(category) {
+                            eventViewModel.emit(.categoryDeleted(id: deletedId))
+                        }
+                        categoryToDelete = nil
+                    }
+                }
+            },
+            onCancel: { categoryToDelete = nil }
+        )
     }
 
     // MARK: - Categories List
@@ -76,9 +117,8 @@ struct CategoryListView: View {
                     }
                     .swipeActions(edge: .trailing, allowsFullSwipe: false) {
                         Button(role: .destructive) {
-                            Task {
-                                try? await viewModel.deleteCategory(category)
-                            }
+                            categoryToDelete = category
+                            showDeleteConfirmation = true
                         } label: {
                             Label("Delete", systemImage: "trash")
                         }
@@ -99,9 +139,8 @@ struct CategoryListView: View {
                     .listRowBackground(selectedCategory?.id == category.id ? Color.accentColor.opacity(0.2) : nil)
                     .swipeActions(edge: .trailing, allowsFullSwipe: false) {
                         Button(role: .destructive) {
-                            Task {
-                                try? await viewModel.deleteCategory(category)
-                            }
+                            categoryToDelete = category
+                            showDeleteConfirmation = true
                         } label: {
                             Label("Delete", systemImage: "trash")
                         }

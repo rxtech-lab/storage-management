@@ -35,12 +35,45 @@ public final class PositionSchemaListViewModel: PositionSchemaListViewModelProto
     // MARK: - Dependencies
 
     private let schemaService: PositionSchemaServiceProtocol
+    private let eventViewModel: EventViewModel?
+    @ObservationIgnored private nonisolated(unsafe) var eventTask: Task<Void, Never>?
 
     // MARK: - Initialization
 
-    public init(schemaService: PositionSchemaServiceProtocol = PositionSchemaService()) {
+    public init(
+        schemaService: PositionSchemaServiceProtocol = PositionSchemaService(),
+        eventViewModel: EventViewModel? = nil
+    ) {
         self.schemaService = schemaService
+        self.eventViewModel = eventViewModel
         setupSearchPipeline()
+        setupEventSubscription()
+    }
+
+    deinit {
+        eventTask?.cancel()
+    }
+
+    // MARK: - Event Subscription
+
+    private func setupEventSubscription() {
+        guard let eventViewModel else { return }
+
+        eventTask = Task { [weak self] in
+            for await event in eventViewModel.stream {
+                guard let self else { break }
+                await self.handleEvent(event)
+            }
+        }
+    }
+
+    private func handleEvent(_ event: AppEvent) async {
+        switch event {
+        case .positionSchemaCreated, .positionSchemaUpdated, .positionSchemaDeleted:
+            await refreshSchemas()
+        default:
+            break
+        }
     }
 
     // MARK: - Private Methods
@@ -156,10 +189,17 @@ public final class PositionSchemaListViewModel: PositionSchemaListViewModelProto
         }
     }
 
-    public func deleteSchema(_ schema: PositionSchema) async throws {
-        try await schemaService.deletePositionSchema(id: schema.id)
+    @discardableResult
+    public func deleteSchema(_ schema: PositionSchema) async throws -> Int {
+        let schemaId = schema.id
+        try await schemaService.deletePositionSchema(id: schemaId)
 
         // Remove from local list
-        schemas.removeAll { $0.id == schema.id }
+        schemas.removeAll { $0.id == schemaId }
+
+        // Emit event
+        eventViewModel?.emit(.positionSchemaDeleted(id: schemaId))
+
+        return schemaId
     }
 }

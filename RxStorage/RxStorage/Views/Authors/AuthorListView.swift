@@ -14,6 +14,12 @@ struct AuthorListView: View {
 
     @State private var viewModel = AuthorListViewModel()
     @State private var showingCreateSheet = false
+    @State private var isRefreshing = false
+    @Environment(EventViewModel.self) private var eventViewModel
+
+    // Delete confirmation state
+    @State private var authorToDelete: Author?
+    @State private var showDeleteConfirmation = false
 
     /// Initialize with an optional binding (defaults to constant nil for standalone use)
     init(selectedAuthor: Binding<Author?> = .constant(nil)) {
@@ -61,6 +67,41 @@ struct AuthorListView: View {
         .task {
             await viewModel.fetchAuthors()
         }
+        .task {
+            // Listen for author events and refresh
+            for await event in eventViewModel.stream {
+                switch event {
+                case .authorCreated, .authorUpdated, .authorDeleted:
+                    isRefreshing = true
+                    await viewModel.refreshAuthors()
+                    isRefreshing = false
+                default:
+                    break
+                }
+            }
+        }
+        .overlay {
+            if isRefreshing {
+                LoadingOverlay(title: "Refreshing...")
+            }
+        }
+        .confirmationDialog(
+            title: "Delete Author",
+            message: "Are you sure you want to delete \"\(authorToDelete?.name ?? "")\"? This action cannot be undone.",
+            confirmButtonTitle: "Delete",
+            isPresented: $showDeleteConfirmation,
+            onConfirm: {
+                if let author = authorToDelete {
+                    Task {
+                        if let deletedId = try? await viewModel.deleteAuthor(author) {
+                            eventViewModel.emit(.authorDeleted(id: deletedId))
+                        }
+                        authorToDelete = nil
+                    }
+                }
+            },
+            onCancel: { authorToDelete = nil }
+        )
     }
 
     // MARK: - Authors List
@@ -76,9 +117,8 @@ struct AuthorListView: View {
                     }
                     .swipeActions(edge: .trailing, allowsFullSwipe: false) {
                         Button(role: .destructive) {
-                            Task {
-                                try? await viewModel.deleteAuthor(author)
-                            }
+                            authorToDelete = author
+                            showDeleteConfirmation = true
                         } label: {
                             Label("Delete", systemImage: "trash")
                         }
@@ -99,9 +139,8 @@ struct AuthorListView: View {
                     .listRowBackground(selectedAuthor?.id == author.id ? Color.accentColor.opacity(0.2) : nil)
                     .swipeActions(edge: .trailing, allowsFullSwipe: false) {
                         Button(role: .destructive) {
-                            Task {
-                                try? await viewModel.deleteAuthor(author)
-                            }
+                            authorToDelete = author
+                            showDeleteConfirmation = true
                         } label: {
                             Label("Delete", systemImage: "trash")
                         }
