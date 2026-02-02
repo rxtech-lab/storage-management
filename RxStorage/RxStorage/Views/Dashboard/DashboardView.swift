@@ -283,7 +283,7 @@ struct StatsCardView: View {
 // MARK: - Recent Item Row
 
 struct RecentItemRow: View {
-    let item: StorageItem
+    let item: DashboardRecentItem
     let onTap: () -> Void
 
     var body: some View {
@@ -303,8 +303,8 @@ struct RecentItemRow: View {
                         .foregroundStyle(.primary)
 
                     HStack(spacing: 8) {
-                        if let category = item.category {
-                            Label(category.value1.name, systemImage: "folder")
+                        if let categoryName = item.categoryName {
+                            Label(categoryName, systemImage: "folder")
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                         }

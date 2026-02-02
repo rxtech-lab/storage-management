@@ -153,6 +153,12 @@ export const PositionRefSchema = z.object({
   data: z.record(z.unknown()).describe("Position data"),
 });
 
+// Signed image with ID and URL
+export const SignedImageSchema = z.object({
+  id: z.number().int().describe("File ID"),
+  url: z.string().url().describe("Signed image URL"),
+});
+
 // Extended response with relations and computed fields (defined inline to avoid extend issues with generator)
 export const ItemResponseSchema = z.object({
   id: z.number().int().describe("Unique item identifier"),
@@ -176,7 +182,7 @@ export const ItemResponseSchema = z.object({
   createdAt: z.coerce.date().describe("Creation timestamp"),
   updatedAt: z.coerce.date().describe("Last update timestamp"),
   previewUrl: z.string().url().describe("Public preview URL for the item"),
-  images: z.array(z.string().url()).describe("Signed image URLs"),
+  images: z.array(SignedImageSchema).describe("Signed images with IDs and URLs"),
   category: CategoryRefSchema.nullable().describe("Associated category"),
   location: LocationRefSchema.nullable().describe("Associated location"),
   author: AuthorRefSchema.nullable().describe("Associated author"),
@@ -205,7 +211,7 @@ export const ItemDetailResponseSchema = z.object({
   createdAt: z.coerce.date().describe("Creation timestamp"),
   updatedAt: z.coerce.date().describe("Last update timestamp"),
   previewUrl: z.string().url().describe("Public preview URL for the item"),
-  images: z.array(z.string().url()).describe("Signed image URLs"),
+  images: z.array(SignedImageSchema).describe("Signed images with IDs and URLs"),
   category: CategoryRefSchema.nullable().describe("Associated category"),
   location: LocationRefSchema.nullable().describe("Associated location"),
   author: AuthorRefSchema.nullable().describe("Associated author"),

@@ -434,11 +434,10 @@ export async function updateItemAction(
       positions?: Array<{ positionSchemaId: number; data: Record<string, unknown> }>;
     };
 
-    const result = await db
+    await db
       .update(items)
       .set({ ...itemData, updatedAt: new Date() })
-      .where(eq(items.id, id))
-      .returning();
+      .where(eq(items.id, id));
 
     // Create new positions if provided
     if (positionsData && positionsData.length > 0) {
@@ -457,7 +456,13 @@ export async function updateItemAction(
 
     revalidatePath("/items");
     revalidatePath(`/items/${id}`);
-    return { success: true, data: result[0] };
+
+    // Fetch the full item with relations for the response
+    const updatedItem = await getItem(id);
+    if (!updatedItem) {
+      return { success: false, error: "Item not found after update" };
+    }
+    return { success: true, data: updatedItem };
   } catch (error) {
     return {
       success: false,

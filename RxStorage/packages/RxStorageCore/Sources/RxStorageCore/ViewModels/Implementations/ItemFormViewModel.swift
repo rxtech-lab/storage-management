@@ -27,12 +27,6 @@ public final class ItemFormViewModel: ItemFormViewModelProtocol {
     public var visibility: Visibility = .publicAccess
     public var existingImages: [ImageReference] = []
 
-    // Reference data
-    public private(set) var categories: [Category] = []
-    public private(set) var locations: [Location] = []
-    public private(set) var authors: [Author] = []
-    public private(set) var parentItems: [StorageItem] = []
-
     // Position data
     public var positionSchemas: [PositionSchema] = []       // Public for binding (inline creation)
     public private(set) var positions: [Position] = []      // Edit mode: existing positions
@@ -56,9 +50,6 @@ public final class ItemFormViewModel: ItemFormViewModelProtocol {
     // MARK: - Dependencies
 
     private let itemService: ItemServiceProtocol
-    private let categoryService: CategoryServiceProtocol
-    private let locationService: LocationServiceProtocol
-    private let authorService: AuthorServiceProtocol
     private let positionSchemaService: PositionSchemaServiceProtocol
     private let positionService: PositionServiceProtocol
     private let contentSchemaService: ContentSchemaServiceProtocol
@@ -71,9 +62,6 @@ public final class ItemFormViewModel: ItemFormViewModelProtocol {
     public init(
         item: StorageItem? = nil,
         itemService: ItemServiceProtocol = ItemService(),
-        categoryService: CategoryServiceProtocol = CategoryService(),
-        locationService: LocationServiceProtocol = LocationService(),
-        authorService: AuthorServiceProtocol = AuthorService(),
         positionSchemaService: PositionSchemaServiceProtocol = PositionSchemaService(),
         positionService: PositionServiceProtocol = PositionService(),
         contentSchemaService: ContentSchemaServiceProtocol = ContentSchemaService(),
@@ -83,9 +71,6 @@ public final class ItemFormViewModel: ItemFormViewModelProtocol {
     ) {
         self.item = item
         self.itemService = itemService
-        self.categoryService = categoryService
-        self.locationService = locationService
-        self.authorService = authorService
         self.positionSchemaService = positionSchemaService
         self.positionService = positionService
         self.contentSchemaService = contentSchemaService
@@ -103,36 +88,6 @@ public final class ItemFormViewModel: ItemFormViewModelProtocol {
 
     public func loadReferenceData() async {
         isLoading = true
-
-        // Fetch reference data sequentially (all on MainActor)
-        do {
-            categories = try await categoryService.fetchCategories(filters: nil)
-        } catch {
-            print("Failed to load categories: \(error)")
-        }
-
-        do {
-            locations = try await locationService.fetchLocations(filters: nil)
-        } catch {
-            print("Failed to load locations: \(error)")
-        }
-
-        do {
-            authors = try await authorService.fetchAuthors(filters: nil)
-        } catch {
-            print("Failed to load authors: \(error)")
-        }
-
-        do {
-            let items = try await itemService.fetchItems(filters: nil)
-            if let currentItemId = item?.id {
-                parentItems = items.filter { $0.id != currentItemId }
-            } else {
-                parentItems = items
-            }
-        } catch {
-            print("Failed to load parent items: \(error)")
-        }
 
         // Load position schemas
         do {
@@ -249,47 +204,6 @@ public final class ItemFormViewModel: ItemFormViewModelProtocol {
             isSubmitting = false
             throw error
         }
-    }
-
-    // MARK: - Inline Entity Creation
-
-    public func createCategory(name: String, description: String?) async throws -> Category {
-        let request = NewCategoryRequest(name: name, description: description)
-        let created = try await categoryService.createCategory(request)
-
-        // Add to local list
-        categories.append(created)
-
-        // Emit event
-        eventViewModel?.emit(.categoryCreated(id: created.id))
-
-        return created
-    }
-
-    public func createLocation(title: String, latitude: Double, longitude: Double) async throws -> Location {
-        let request = NewLocationRequest(title: title, latitude: latitude, longitude: longitude)
-        let created = try await locationService.createLocation(request)
-
-        // Add to local list
-        locations.append(created)
-
-        // Emit event
-        eventViewModel?.emit(.locationCreated(id: created.id))
-
-        return created
-    }
-
-    public func createAuthor(name: String, bio: String?) async throws -> Author {
-        let request = NewAuthorRequest(name: name, bio: bio)
-        let created = try await authorService.createAuthor(request)
-
-        // Add to local list
-        authors.append(created)
-
-        // Emit event
-        eventViewModel?.emit(.authorCreated(id: created.id))
-
-        return created
     }
 
     // MARK: - Position Management
@@ -448,8 +362,8 @@ public final class ItemFormViewModel: ItemFormViewModelProtocol {
         selectedParentId = item.parentId
         price = item.price.map { String($0) } ?? ""
         visibility = item.visibility
-        // Convert image URLs to ImageReference objects
-        existingImages = item.images.map { ImageReference(url: $0, fileId: nil) }
+        // Convert signed images to ImageReference objects
+        existingImages = item.images.map { ImageReference(url: $0.url, fileId: $0.id) }
 
         // Note: Reference data (categories, locations, authors) and embedded data
         // (positions, contents) are loaded via loadReferenceData() which fetches

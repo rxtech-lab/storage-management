@@ -47,11 +47,11 @@ public enum UploadError: LocalizedError, Sendable {
 
 /// Result of a successful upload
 public struct UploadResult: Sendable {
-    public let fileId: String
+    public let fileId: Int
     public let publicUrl: String
     public let key: String
 
-    public init(fileId: String, publicUrl: String, key: String) {
+    public init(fileId: Int, publicUrl: String, key: String) {
         self.fileId = fileId
         self.publicUrl = publicUrl
         self.key = key
@@ -72,7 +72,7 @@ public struct PendingUpload: Identifiable, Sendable {
     public let filename: String
     public let contentType: String
     public let fileSize: Int64
-    public var fileId: String?
+    public var fileId: Int?
     public var publicUrl: String?
     public var progress: Double
     public var status: UploadStatus
@@ -83,7 +83,7 @@ public struct PendingUpload: Identifiable, Sendable {
         filename: String,
         contentType: String,
         fileSize: Int64,
-        fileId: String? = nil,
+        fileId: Int? = nil,
         publicUrl: String? = nil,
         progress: Double = 0,
         status: UploadStatus = .pending

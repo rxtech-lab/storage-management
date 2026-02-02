@@ -6,6 +6,10 @@
 //
 
 import Foundation
+import Logging
+import OpenAPIRuntime
+
+fileprivate let logger = Logger(label: "CategoryService")
 
 // MARK: - Protocol
 
@@ -30,9 +34,8 @@ public struct CategoryService: CategoryServiceProtocol {
         return response.data
     }
 
+    @APICall(.ok, transform: "transformPaginatedCategories")
     public func fetchCategoriesPaginated(filters: CategoryFilters?) async throws -> PaginatedResponse<Category> {
-        let client = StorageAPIClient.shared.client
-
         let direction = filters?.direction.flatMap { Operations.getCategories.Input.Query.directionPayload(rawValue: $0.rawValue) }
         let query = Operations.getCategories.Input.Query(
             cursor: filters?.cursor,
@@ -41,105 +44,32 @@ public struct CategoryService: CategoryServiceProtocol {
             search: filters?.search
         )
 
-        let response = try await client.getCategories(.init(query: query))
-
-        switch response {
-        case .ok(let okResponse):
-            let body = try okResponse.body.json
-            let pagination = PaginationState(from: body.pagination)
-            return PaginatedResponse(data: body.data, pagination: pagination)
-        case .badRequest(let badRequest):
-            let error = try? badRequest.body.json
-            throw APIError.badRequest(error?.error ?? "Invalid request")
-        case .unauthorized:
-            throw APIError.unauthorized
-        case .forbidden:
-            throw APIError.forbidden
-        case .notFound:
-            throw APIError.notFound
-        case .internalServerError:
-            throw APIError.serverError("Internal server error")
-        case .undocumented(let statusCode, _):
-            throw APIError.serverError("HTTP \(statusCode)")
-        }
+        try await StorageAPIClient.shared.client.getCategories(.init(query: query))
     }
 
+    /// Transforms paginated categories response to PaginatedResponse
+    private func transformPaginatedCategories(_ body: Components.Schemas.PaginatedCategoriesResponse) -> PaginatedResponse<Category> {
+        let pagination = PaginationState(from: body.pagination)
+        return PaginatedResponse(data: body.data, pagination: pagination)
+    }
+
+    @APICall(.ok)
     public func fetchCategory(id: Int) async throws -> Category {
-        let client = StorageAPIClient.shared.client
-
-        let response = try await client.getCategory(.init(path: .init(id: String(id))))
-
-        switch response {
-        case .ok(let okResponse):
-            return try okResponse.body.json
-        case .badRequest(let badRequest):
-            let error = try? badRequest.body.json
-            throw APIError.badRequest(error?.error ?? "Invalid request")
-        case .unauthorized:
-            throw APIError.unauthorized
-        case .forbidden:
-            throw APIError.forbidden
-        case .notFound:
-            throw APIError.notFound
-        case .internalServerError:
-            throw APIError.serverError("Internal server error")
-        case .undocumented(let statusCode, _):
-            throw APIError.serverError("HTTP \(statusCode)")
-        }
+        try await StorageAPIClient.shared.client.getCategory(.init(path: .init(id: String(id))))
     }
 
+    @APICall(.created)
     public func createCategory(_ request: NewCategoryRequest) async throws -> Category {
-        let client = StorageAPIClient.shared.client
-
-        let response = try await client.createCategory(.init(body: .json(request)))
-
-        switch response {
-        case .created(let createdResponse):
-            return try createdResponse.body.json
-        case .badRequest(let badRequest):
-            let error = try? badRequest.body.json
-            throw APIError.badRequest(error?.error ?? "Invalid request")
-        case .unauthorized:
-            throw APIError.unauthorized
-        case .forbidden:
-            throw APIError.forbidden
-        case .notFound:
-            throw APIError.notFound
-        case .internalServerError:
-            throw APIError.serverError("Internal server error")
-        case .undocumented(let statusCode, _):
-            throw APIError.serverError("HTTP \(statusCode)")
-        }
+        try await StorageAPIClient.shared.client.createCategory(.init(body: .json(request)))
     }
 
+    @APICall(.ok)
     public func updateCategory(id: Int, _ request: UpdateCategoryRequest) async throws -> Category {
-        let client = StorageAPIClient.shared.client
-
-        let response = try await client.updateCategory(.init(path: .init(id: String(id)), body: .json(request)))
-
-        switch response {
-        case .ok(let okResponse):
-            return try okResponse.body.json
-        case .badRequest(let badRequest):
-            let error = try? badRequest.body.json
-            throw APIError.badRequest(error?.error ?? "Invalid request")
-        case .unauthorized:
-            throw APIError.unauthorized
-        case .forbidden:
-            throw APIError.forbidden
-        case .notFound:
-            throw APIError.notFound
-        case .internalServerError:
-            throw APIError.serverError("Internal server error")
-        case .undocumented(let statusCode, _):
-            throw APIError.serverError("HTTP \(statusCode)")
-        }
+        try await StorageAPIClient.shared.client.updateCategory(.init(path: .init(id: String(id)), body: .json(request)))
     }
 
     public func deleteCategory(id: Int) async throws {
-        let client = StorageAPIClient.shared.client
-
-        let response = try await client.deleteCategory(.init(path: .init(id: String(id))))
+        let response = try await StorageAPIClient.shared.client.deleteCategory(.init(path: .init(id: String(id))))
 
         switch response {
         case .ok:

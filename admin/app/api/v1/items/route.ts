@@ -8,6 +8,7 @@ import {
 } from "@/lib/actions/item-actions";
 import { signImagesArrayWithIds } from "@/lib/actions/s3-upload-actions";
 import { parsePaginationParams } from "@/lib/utils/pagination";
+import { PaginatedItemsResponse, ItemResponseSchema } from "@/lib/schemas/items";
 
 /**
  * List items
@@ -79,10 +80,13 @@ export async function GET(request: NextRequest) {
     })
   );
 
-  return NextResponse.json({
+  // Validate response against schema
+  const response = PaginatedItemsResponse.parse({
     data: dataWithSignedImages,
     pagination: result.pagination,
   });
+
+  return NextResponse.json(response);
 }
 
 /**
@@ -114,10 +118,11 @@ export async function POST(request: NextRequest) {
           : [];
 
       const previewUrl = `${process.env.NEXT_PUBLIC_URL}/preview/item/${result.data.id}`;
-      return NextResponse.json(
-        { ...result.data, images, previewUrl },
-        { status: 201 }
-      );
+
+      // Validate response against schema
+      const response = ItemResponseSchema.parse({ ...result.data, images, previewUrl });
+
+      return NextResponse.json(response, { status: 201 });
     } else {
       return NextResponse.json({ error: result.error }, { status: 400 });
     }

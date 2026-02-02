@@ -9,7 +9,7 @@ import Foundation
 import Logging
 import OpenAPIRuntime
 
-let logger = Logger(label: "ItemService")
+fileprivate let logger = Logger(label: "ItemService")
 
 // MARK: - Protocol
 

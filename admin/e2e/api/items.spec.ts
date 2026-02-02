@@ -207,7 +207,7 @@ test.describe.serial("Items API", () => {
     expect(body).toHaveProperty("error");
   });
 
-  test("GET /api/v1/items - images should be valid URLs", async ({
+  test("GET /api/v1/items - images should be objects with id and url", async ({
     request,
   }) => {
     const response = await request.get("/api/v1/items");
@@ -215,18 +215,20 @@ test.describe.serial("Items API", () => {
     expect(response.status()).toBe(200);
     const body = await response.json();
 
-    // Validate response matches OpenAPI schema (this validates images are URL strings)
+    // Validate response matches OpenAPI schema (this validates images are {id, url} objects)
     const validated = PaginatedItemsResponse.parse(body);
 
     expect(validated.data).toBeInstanceOf(Array);
 
-    // Additional check: images should be URL strings per schema
+    // Additional check: images should be objects with id and url per schema
     for (const item of validated.data) {
       expect(item.images).toBeInstanceOf(Array);
       for (const image of item.images) {
-        expect(typeof image).toBe("string");
-        // Should be a valid URL
-        expect(() => new URL(image)).not.toThrow();
+        expect(typeof image).toBe("object");
+        expect(typeof image.id).toBe("number");
+        expect(typeof image.url).toBe("string");
+        // URL should be valid
+        expect(() => new URL(image.url)).not.toThrow();
       }
     }
   });

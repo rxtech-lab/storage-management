@@ -39,6 +39,9 @@ public typealias ContentSchema = Components.Schemas.ContentSchemaDefinitionSchem
 /// Dashboard statistics
 public typealias DashboardStats = Components.Schemas.DashboardStatsResponseSchema
 
+/// Dashboard recent item (simplified item for dashboard display)
+public typealias DashboardRecentItem = Components.Schemas.DashboardRecentItemSchema
+
 /// Whitelist entry
 public typealias Whitelist = Components.Schemas.WhitelistResponseSchema
 
@@ -129,6 +132,9 @@ public typealias ContentRef = Components.Schemas.ContentRefSchema
 /// Position reference in item detail
 public typealias PositionRef = Components.Schemas.PositionRefSchema
 
+/// Signed image with id and URL
+public typealias SignedImage = Components.Schemas.SignedImageSchema
+
 // MARK: - Content Data Type Aliases
 
 /// File content data
@@ -167,6 +173,7 @@ extension Components.Schemas.AuthorResponseSchema: Identifiable {}
 extension Components.Schemas.PositionSchemaResponseSchema: Identifiable {}
 extension Components.Schemas.PositionResponseSchema: Identifiable {}
 extension Components.Schemas.ContentResponseSchema: Identifiable {}
+extension Components.Schemas.DashboardRecentItemSchema: Identifiable {}
 
 // Reference schemas also need Identifiable
 extension Components.Schemas.CategoryRefSchema: Identifiable {}

@@ -11,7 +11,7 @@ export const PresignedUploadRequestSchema = z.object({
 export const PresignedUploadResponseSchema = z.object({
   uploadUrl: z.string().url().describe("Presigned URL for upload"),
   publicUrl: z.string().url().describe("Public URL where the file will be accessible after upload"),
-  fileId: z.string().describe("Unique file identifier"),
+  fileId: z.number().int().describe("Unique file identifier"),
   key: z.string().describe("S3 object key"),
   expiresAt: z.string().describe("Expiration timestamp of the presigned URL"),
 });

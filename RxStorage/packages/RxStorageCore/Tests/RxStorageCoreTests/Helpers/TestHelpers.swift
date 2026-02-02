@@ -36,7 +36,7 @@ enum TestHelpers {
         createdAt: Date = defaultDate,
         updatedAt: Date = defaultDate,
         previewUrl: String = "https://example.com/preview/1",
-        images: [String] = [],
+        images: [SignedImage] = [],
         category: CategoryRef? = nil,
         location: LocationRef? = nil,
         author: AuthorRef? = nil
@@ -67,6 +67,14 @@ enum TestHelpers {
             location: StorageItem.locationPayload(value1: locationRef),
             author: StorageItem.authorPayload(value1: authorRef)
         )
+    }
+
+    /// Create a SignedImage for testing
+    static func makeSignedImage(
+        id: Int = 1,
+        url: String = "https://example.com/signed/image.jpg"
+    ) -> SignedImage {
+        SignedImage(id: id, url: url)
     }
 
     /// Create an ImageReference for testing
@@ -180,7 +188,7 @@ enum TestHelpers {
         createdAt: Date = defaultDate,
         updatedAt: Date = defaultDate,
         previewUrl: String = "https://example.com/preview/1",
-        images: [String] = [],
+        images: [SignedImage] = [],
         category: CategoryRef? = nil,
         location: LocationRef? = nil,
         author: AuthorRef? = nil,

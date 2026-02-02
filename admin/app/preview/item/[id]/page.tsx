@@ -63,7 +63,7 @@ export default async function PreviewPage({ params }: PreviewPageProps) {
   }
 
   // Check visibility
-  if (item.visibility === "private") {
+  if (item.visibility === "privateAccess") {
     const session = await auth();
 
     if (!session?.user) {
@@ -121,7 +121,7 @@ export default async function PreviewPage({ params }: PreviewPageProps) {
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center gap-2 mb-2">
-            {item.visibility === "private" && (
+            {item.visibility === "privateAccess" && (
               <Badge variant="secondary" className="gap-1">
                 <Lock className="h-3 w-3" />
                 Private

@@ -31,7 +31,7 @@ struct ItemDetailViewModelTests {
         description: "Test Description",
         price: 99.99,
         visibility: .publicAccess,
-        images: ["https://example.com/image.jpg"],
+        images: [TestHelpers.makeSignedImage(id: 1, url: "https://example.com/image.jpg")],
         children: [testChild],
         contents: [testContent]
     )

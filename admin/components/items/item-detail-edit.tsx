@@ -53,7 +53,7 @@ const itemSchema = z.object({
   parentId: z.number().nullable().optional(),
   price: z.number().nullable().optional(),
   currency: z.string().optional(),
-  visibility: z.enum(["public", "private"]),
+  visibility: z.enum(["publicAccess", "privateAccess"]),
   images: z.array(z.string()).optional(),
 });
 
@@ -199,13 +199,13 @@ export function ItemDetailEdit({
         <div className="flex items-center space-x-2">
           <Switch
             id="visibility"
-            checked={visibility === "public"}
+            checked={visibility === "publicAccess"}
             onCheckedChange={(checked) =>
-              setValue("visibility", checked ? "public" : "private")
+              setValue("visibility", checked ? "publicAccess" : "privateAccess")
             }
           />
           <Label htmlFor="visibility">
-            {visibility === "public" ? "Public" : "Private"}
+            {visibility === "publicAccess" ? "Public" : "Private"}
           </Label>
         </div>
       </div>

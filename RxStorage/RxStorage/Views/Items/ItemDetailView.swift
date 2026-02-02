@@ -261,15 +261,15 @@ struct ItemDetailView: View {
     // MARK: - Stretchy Image Carousel
 
     @ViewBuilder
-    private func stretchyImageCarousel(_ imageUrls: [String]) -> some View {
+    private func stretchyImageCarousel(_ images: [Components.Schemas.SignedImageSchema]) -> some View {
         GeometryReader { geometry in
             let minY = geometry.frame(in: .global).minY
             let stretchAmount = max(0, minY)
             let calculatedHeight = imageHeight + stretchAmount
 
             TabView(selection: $selectedImageIndex) {
-                ForEach(Array(imageUrls.enumerated()), id: \.offset) { index, imageUrl in
-                    AsyncImage(url: URL(string: imageUrl)) { phase in
+                ForEach(Array(images.enumerated()), id: \.offset) { index, image in
+                    AsyncImage(url: URL(string: image.url)) { phase in
                         switch phase {
                         case .success(let image):
                             image

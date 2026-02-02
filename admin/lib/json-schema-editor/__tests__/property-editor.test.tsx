@@ -17,6 +17,7 @@ describe("PropertyEditor", () => {
     render(
       <PropertyEditor
         item={item}
+        index={0}
         onChange={vi.fn()}
         onDelete={vi.fn()}
       />
@@ -31,6 +32,7 @@ describe("PropertyEditor", () => {
     render(
       <PropertyEditor
         item={item}
+        index={0}
         onChange={vi.fn()}
         onDelete={vi.fn()}
       />
@@ -46,6 +48,7 @@ describe("PropertyEditor", () => {
     render(
       <PropertyEditor
         item={item}
+        index={0}
         onChange={onChange}
         onDelete={vi.fn()}
       />
@@ -67,6 +70,7 @@ describe("PropertyEditor", () => {
     render(
       <PropertyEditor
         item={item}
+        index={0}
         onChange={vi.fn()}
         onDelete={onDelete}
       />
@@ -88,6 +92,7 @@ describe("PropertyEditor", () => {
     render(
       <PropertyEditor
         item={item}
+        index={0}
         onChange={vi.fn()}
         onDelete={vi.fn()}
         onMoveUp={vi.fn()}
@@ -105,6 +110,7 @@ describe("PropertyEditor", () => {
     render(
       <PropertyEditor
         item={item}
+        index={0}
         onChange={vi.fn()}
         onDelete={vi.fn()}
         onMoveUp={vi.fn()}
@@ -127,6 +133,7 @@ describe("PropertyEditor", () => {
     render(
       <PropertyEditor
         item={item}
+        index={0}
         onChange={vi.fn()}
         onDelete={vi.fn()}
         onMoveUp={vi.fn()}
@@ -149,6 +156,7 @@ describe("PropertyEditor", () => {
     render(
       <PropertyEditor
         item={item}
+        index={0}
         onChange={vi.fn()}
         onDelete={vi.fn()}
       />
@@ -162,6 +170,7 @@ describe("PropertyEditor", () => {
     render(
       <PropertyEditor
         item={item}
+        index={0}
         onChange={vi.fn()}
         onDelete={vi.fn()}
       />
@@ -178,6 +187,7 @@ describe("PropertyEditor", () => {
     render(
       <PropertyEditor
         item={item}
+        index={0}
         onChange={onChange}
         onDelete={vi.fn()}
       />
@@ -198,6 +208,7 @@ describe("PropertyEditor", () => {
     render(
       <PropertyEditor
         item={item}
+        index={0}
         onChange={vi.fn()}
         onDelete={vi.fn()}
       />
@@ -223,6 +234,7 @@ describe("PropertyEditor", () => {
     render(
       <PropertyEditor
         item={item}
+        index={0}
         onChange={vi.fn()}
         onDelete={vi.fn()}
         disabled={true}
@@ -242,6 +254,7 @@ describe("PropertyEditor", () => {
     render(
       <PropertyEditor
         item={item}
+        index={0}
         onChange={onChange}
         onDelete={vi.fn()}
       />

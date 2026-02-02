@@ -25,7 +25,7 @@ final class DashboardViewModel {
     // MARK: - Computed Properties
 
     /// Recent items from the stats response
-    var recentItems: [StorageItem] {
+    var recentItems: [DashboardRecentItem] {
         stats?.recentItems ?? []
     }
 

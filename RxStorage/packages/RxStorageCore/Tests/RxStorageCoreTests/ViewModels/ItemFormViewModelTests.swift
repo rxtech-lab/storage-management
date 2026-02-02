@@ -22,7 +22,7 @@ struct ItemFormViewModelTests {
         authorId: 3,
         price: 49.99,
         visibility: .publicAccess,
-        images: ["https://example.com/image.jpg"]
+        images: [TestHelpers.makeSignedImage(id: 1, url: "https://example.com/image.jpg")]
     )
 
     // MARK: - Initialization Tests
@@ -40,7 +40,7 @@ struct ItemFormViewModelTests {
         #expect(sut.selectedLocationId == 10)
         #expect(sut.selectedAuthorId == 3)
         #expect(sut.price == "49.99")
-        #expect(sut.visibility == .publicAccess)
+        #expect(sut.visibility == Visibility.publicAccess)
         #expect(sut.existingImages.count == 1)
         #expect(sut.existingImages[0].url == "https://example.com/image.jpg")
     }
@@ -105,10 +105,7 @@ struct ItemFormViewModelTests {
         mockItemService.createItemResult = .success(createdItem)
 
         let sut = ItemFormViewModel(
-            itemService: mockItemService,
-            categoryService: MockCategoryService(),
-            locationService: MockLocationService(),
-            authorService: MockAuthorService()
+            itemService: mockItemService
         )
 
         sut.title = "New Item"
@@ -135,10 +132,7 @@ struct ItemFormViewModelTests {
 
         let sut = ItemFormViewModel(
             item: Self.testItem,
-            itemService: mockItemService,
-            categoryService: MockCategoryService(),
-            locationService: MockLocationService(),
-            authorService: MockAuthorService()
+            itemService: mockItemService
         )
 
         sut.title = "Updated Title"
@@ -170,31 +164,5 @@ struct ItemFormViewModelTests {
         }
 
         #expect(mockItemService.createItemCalled == false)
-    }
-
-    // MARK: - Inline Creation Tests
-
-    @Test("Create category inline")
-    @MainActor
-    func testCreateCategoryInline() async throws {
-        // Given
-        let mockCategoryService = MockCategoryService()
-        let newCategory = TestHelpers.makeCategory(id: 99, name: "New Category", description: nil)
-        mockCategoryService.createCategoryResult = Result<RxStorageCore.Category, Error>.success(newCategory)
-
-        let sut = ItemFormViewModel(
-            itemService: MockItemService(),
-            categoryService: mockCategoryService,
-            locationService: MockLocationService(),
-            authorService: MockAuthorService()
-        )
-
-        // When
-        let created = try await sut.createCategory(name: "New Category", description: nil)
-
-        // Then
-        #expect(created.name == "New Category")
-        #expect(sut.categories.contains(where: { $0.id == 99 }))
-        #expect(mockCategoryService.createCategoryCalled == true)
     }
 }

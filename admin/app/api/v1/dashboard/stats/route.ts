@@ -2,22 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth-helper";
 import { db, items, categories, locations, authors } from "@/lib/db";
 import { eq, count, and } from "drizzle-orm";
-
-export interface DashboardStatsResponse {
-  totalItems: number;
-  publicItems: number;
-  privateItems: number;
-  totalCategories: number;
-  totalLocations: number;
-  totalAuthors: number;
-  recentItems: Array<{
-    id: number;
-    title: string;
-    visibility: "publicAccess" | "privateAccess";
-    categoryName: string | null;
-    updatedAt: Date;
-  }>;
-}
+import { DashboardStatsResponseSchema } from "@/lib/schemas/dashboard";
 
 /**
  * Get dashboard statistics
@@ -94,7 +79,7 @@ export async function GET(request: NextRequest) {
     }),
   ]);
 
-  const response: DashboardStatsResponse = {
+  const responseData = {
     totalItems: totalItemsResult[0]?.count ?? 0,
     publicItems: publicItemsResult[0]?.count ?? 0,
     privateItems: privateItemsResult[0]?.count ?? 0,
@@ -106,9 +91,12 @@ export async function GET(request: NextRequest) {
       title: item.title,
       visibility: item.visibility,
       categoryName: item.category?.name ?? null,
-      updatedAt: item.updatedAt,
+      updatedAt: item.updatedAt.toISOString(),
     })),
   };
+
+  // Validate response against schema
+  const response = DashboardStatsResponseSchema.parse(responseData);
 
   return NextResponse.json(response);
 }

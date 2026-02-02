@@ -6,6 +6,10 @@
 //
 
 import Foundation
+import Logging
+import OpenAPIRuntime
+
+fileprivate let logger = Logger(label: "LocationService")
 
 // MARK: - Protocol
 
@@ -30,9 +34,8 @@ public struct LocationService: LocationServiceProtocol {
         return response.data
     }
 
+    @APICall(.ok, transform: "transformPaginatedLocations")
     public func fetchLocationsPaginated(filters: LocationFilters?) async throws -> PaginatedResponse<Location> {
-        let client = StorageAPIClient.shared.client
-
         let direction = filters?.direction.flatMap { Operations.getLocations.Input.Query.directionPayload(rawValue: $0.rawValue) }
         let query = Operations.getLocations.Input.Query(
             cursor: filters?.cursor,
@@ -41,105 +44,32 @@ public struct LocationService: LocationServiceProtocol {
             search: filters?.search
         )
 
-        let response = try await client.getLocations(.init(query: query))
-
-        switch response {
-        case .ok(let okResponse):
-            let body = try okResponse.body.json
-            let pagination = PaginationState(from: body.pagination)
-            return PaginatedResponse(data: body.data, pagination: pagination)
-        case .badRequest(let badRequest):
-            let error = try? badRequest.body.json
-            throw APIError.badRequest(error?.error ?? "Invalid request")
-        case .unauthorized:
-            throw APIError.unauthorized
-        case .forbidden:
-            throw APIError.forbidden
-        case .notFound:
-            throw APIError.notFound
-        case .internalServerError:
-            throw APIError.serverError("Internal server error")
-        case .undocumented(let statusCode, _):
-            throw APIError.serverError("HTTP \(statusCode)")
-        }
+        try await StorageAPIClient.shared.client.getLocations(.init(query: query))
     }
 
+    /// Transforms paginated locations response to PaginatedResponse
+    private func transformPaginatedLocations(_ body: Components.Schemas.PaginatedLocationsResponse) -> PaginatedResponse<Location> {
+        let pagination = PaginationState(from: body.pagination)
+        return PaginatedResponse(data: body.data, pagination: pagination)
+    }
+
+    @APICall(.ok)
     public func fetchLocation(id: Int) async throws -> Location {
-        let client = StorageAPIClient.shared.client
-
-        let response = try await client.getLocation(.init(path: .init(id: String(id))))
-
-        switch response {
-        case .ok(let okResponse):
-            return try okResponse.body.json
-        case .badRequest(let badRequest):
-            let error = try? badRequest.body.json
-            throw APIError.badRequest(error?.error ?? "Invalid request")
-        case .unauthorized:
-            throw APIError.unauthorized
-        case .forbidden:
-            throw APIError.forbidden
-        case .notFound:
-            throw APIError.notFound
-        case .internalServerError:
-            throw APIError.serverError("Internal server error")
-        case .undocumented(let statusCode, _):
-            throw APIError.serverError("HTTP \(statusCode)")
-        }
+        try await StorageAPIClient.shared.client.getLocation(.init(path: .init(id: String(id))))
     }
 
+    @APICall(.created)
     public func createLocation(_ request: NewLocationRequest) async throws -> Location {
-        let client = StorageAPIClient.shared.client
-
-        let response = try await client.createLocation(.init(body: .json(request)))
-
-        switch response {
-        case .created(let createdResponse):
-            return try createdResponse.body.json
-        case .badRequest(let badRequest):
-            let error = try? badRequest.body.json
-            throw APIError.badRequest(error?.error ?? "Invalid request")
-        case .unauthorized:
-            throw APIError.unauthorized
-        case .forbidden:
-            throw APIError.forbidden
-        case .notFound:
-            throw APIError.notFound
-        case .internalServerError:
-            throw APIError.serverError("Internal server error")
-        case .undocumented(let statusCode, _):
-            throw APIError.serverError("HTTP \(statusCode)")
-        }
+        try await StorageAPIClient.shared.client.createLocation(.init(body: .json(request)))
     }
 
+    @APICall(.ok)
     public func updateLocation(id: Int, _ request: UpdateLocationRequest) async throws -> Location {
-        let client = StorageAPIClient.shared.client
-
-        let response = try await client.updateLocation(.init(path: .init(id: String(id)), body: .json(request)))
-
-        switch response {
-        case .ok(let okResponse):
-            return try okResponse.body.json
-        case .badRequest(let badRequest):
-            let error = try? badRequest.body.json
-            throw APIError.badRequest(error?.error ?? "Invalid request")
-        case .unauthorized:
-            throw APIError.unauthorized
-        case .forbidden:
-            throw APIError.forbidden
-        case .notFound:
-            throw APIError.notFound
-        case .internalServerError:
-            throw APIError.serverError("Internal server error")
-        case .undocumented(let statusCode, _):
-            throw APIError.serverError("HTTP \(statusCode)")
-        }
+        try await StorageAPIClient.shared.client.updateLocation(.init(path: .init(id: String(id)), body: .json(request)))
     }
 
     public func deleteLocation(id: Int) async throws {
-        let client = StorageAPIClient.shared.client
-
-        let response = try await client.deleteLocation(.init(path: .init(id: String(id))))
+        let response = try await StorageAPIClient.shared.client.deleteLocation(.init(path: .init(id: String(id))))
 
         switch response {
         case .ok:

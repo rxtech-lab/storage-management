@@ -6,6 +6,10 @@
 //
 
 import Foundation
+import Logging
+import OpenAPIRuntime
+
+fileprivate let logger = Logger(label: "ContentSchemaService")
 
 // MARK: - Protocol
 
@@ -20,27 +24,8 @@ public protocol ContentSchemaServiceProtocol: Sendable {
 public struct ContentSchemaService: ContentSchemaServiceProtocol {
     public init() {}
 
+    @APICall(.ok)
     public func fetchContentSchemas() async throws -> [ContentSchema] {
-        let client = StorageAPIClient.shared.client
-
-        let response = try await client.getContentSchemas(.init())
-
-        switch response {
-        case .ok(let okResponse):
-            return try okResponse.body.json
-        case .badRequest(let badRequest):
-            let error = try? badRequest.body.json
-            throw APIError.badRequest(error?.error ?? "Invalid request")
-        case .unauthorized:
-            throw APIError.unauthorized
-        case .forbidden:
-            throw APIError.forbidden
-        case .notFound:
-            throw APIError.notFound
-        case .internalServerError:
-            throw APIError.serverError("Internal server error")
-        case .undocumented(let statusCode, _):
-            throw APIError.serverError("HTTP \(statusCode)")
-        }
+        try await StorageAPIClient.shared.client.getContentSchemas(.init())
     }
 }

@@ -30,6 +30,12 @@ struct ItemFormSheet: View {
     @State private var showingAuthorPicker = false
     @State private var showingParentItemPicker = false
 
+    // Selected entities from pickers (for display names)
+    @State private var selectedCategory: RxStorageCore.Category?
+    @State private var selectedLocation: RxStorageCore.Location?
+    @State private var selectedAuthor: RxStorageCore.Author?
+    @State private var selectedParentItem: RxStorageCore.StorageItem?
+
     // Photo picker
     @State private var selectedPhotos: [PhotosPickerItem] = []
 
@@ -334,6 +340,7 @@ struct ItemFormSheet: View {
             NavigationStack {
                 CategoryFormSheet { newCategory in
                     viewModel.selectedCategoryId = newCategory.id
+                    selectedCategory = newCategory
                 }
             }
         }
@@ -341,6 +348,7 @@ struct ItemFormSheet: View {
             NavigationStack {
                 LocationFormSheet { newLocation in
                     viewModel.selectedLocationId = newLocation.id
+                    selectedLocation = newLocation
                 }
             }
         }
@@ -348,6 +356,7 @@ struct ItemFormSheet: View {
             NavigationStack {
                 AuthorFormSheet { newAuthor in
                     viewModel.selectedAuthorId = newAuthor.id
+                    selectedAuthor = newAuthor
                 }
             }
         }
@@ -365,6 +374,7 @@ struct ItemFormSheet: View {
             NavigationStack {
                 CategoryPickerSheet(selectedId: viewModel.selectedCategoryId) { category in
                     viewModel.selectedCategoryId = category?.id
+                    selectedCategory = category
                 }
             }
         }
@@ -372,6 +382,7 @@ struct ItemFormSheet: View {
             NavigationStack {
                 LocationPickerSheet(selectedId: viewModel.selectedLocationId) { location in
                     viewModel.selectedLocationId = location?.id
+                    selectedLocation = location
                 }
             }
         }
@@ -379,6 +390,7 @@ struct ItemFormSheet: View {
             NavigationStack {
                 AuthorPickerSheet(selectedId: viewModel.selectedAuthorId) { author in
                     viewModel.selectedAuthorId = author?.id
+                    selectedAuthor = author
                 }
             }
         }
@@ -389,6 +401,7 @@ struct ItemFormSheet: View {
                     excludeItemId: item?.id
                 ) { parentItem in
                     viewModel.selectedParentId = parentItem?.id
+                    selectedParentItem = parentItem
                 }
             }
         }
@@ -405,39 +418,43 @@ struct ItemFormSheet: View {
     // MARK: - Computed Properties
 
     private var selectedCategoryName: String {
-        guard let id = viewModel.selectedCategoryId,
-              let category = viewModel.categories.first(where: { $0.id == id })
-        else {
-            return "None"
+        // Check if a new selection was made via picker
+        if let category = selectedCategory {
+            return category.name
         }
-        return category.name
+        // Use item's embedded FK object for initial display
+        if let categoryRef = item?.category?.value1 {
+            return categoryRef.name
+        }
+        return "None"
     }
 
     private var selectedLocationName: String {
-        guard let id = viewModel.selectedLocationId,
-              let location = viewModel.locations.first(where: { $0.id == id })
-        else {
-            return "None"
+        if let location = selectedLocation {
+            return location.title
         }
-        return location.title
+        if let locationRef = item?.location?.value1 {
+            return locationRef.title
+        }
+        return "None"
     }
 
     private var selectedAuthorName: String {
-        guard let id = viewModel.selectedAuthorId,
-              let author = viewModel.authors.first(where: { $0.id == id })
-        else {
-            return "None"
+        if let author = selectedAuthor {
+            return author.name
         }
-        return author.name
+        if let authorRef = item?.author?.value1 {
+            return authorRef.name
+        }
+        return "None"
     }
 
     private var selectedParentItemName: String {
-        guard let id = viewModel.selectedParentId,
-              let parentItem = viewModel.parentItems.first(where: { $0.id == id })
-        else {
-            return "None"
+        if let parentItem = selectedParentItem {
+            return parentItem.title
         }
-        return parentItem.title
+        // Parent is not embedded in API response - shows "None" until picker is used
+        return "None"
     }
 
     // MARK: - Actions
