@@ -69,7 +69,7 @@ test.describe.serial("Permission Tests", () => {
       });
       expect(response.status()).toBe(200);
       const body = await response.json();
-      const user1Items = body.filter((item: any) => item.id === user1ItemId);
+      const user1Items = body.data.filter((item: any) => item.id === user1ItemId);
       expect(user1Items.length).toBe(0);
     });
 
@@ -211,7 +211,7 @@ test.describe.serial("Permission Tests", () => {
       });
       expect(response.status()).toBe(200);
       const body = await response.json();
-      const user1Items = body.filter((item: any) => item.id === user1ItemId);
+      const user1Items = body.data.filter((item: any) => item.id === user1ItemId);
       expect(user1Items.length).toBe(1);
       expect(user1Items[0].visibility).toBe("publicAccess");
     });

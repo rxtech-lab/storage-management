@@ -82,9 +82,9 @@ test.describe.serial("Items API with Relations", () => {
 
     expect(response.status()).toBe(200);
     const body = await response.json();
-    expect(body).toBeInstanceOf(Array);
+    expect(body.data).toBeInstanceOf(Array);
     expect(
-      body.every((item: any) => item.categoryId === categoryId),
+      body.data.every((item: any) => item.categoryId === categoryId),
     ).toBeTruthy();
   });
 
@@ -97,9 +97,9 @@ test.describe.serial("Items API with Relations", () => {
 
     expect(response.status()).toBe(200);
     const body = await response.json();
-    expect(body).toBeInstanceOf(Array);
+    expect(body.data).toBeInstanceOf(Array);
     expect(
-      body.every((item: any) => item.locationId === locationId),
+      body.data.every((item: any) => item.locationId === locationId),
     ).toBeTruthy();
   });
 
@@ -110,8 +110,8 @@ test.describe.serial("Items API with Relations", () => {
 
     expect(response.status()).toBe(200);
     const body = await response.json();
-    expect(body).toBeInstanceOf(Array);
-    expect(body.every((item: any) => item.authorId === authorId)).toBeTruthy();
+    expect(body.data).toBeInstanceOf(Array);
+    expect(body.data.every((item: any) => item.authorId === authorId)).toBeTruthy();
   });
 
   test("POST /api/v1/items - should create child item with parent", async ({
@@ -141,9 +141,9 @@ test.describe.serial("Items API with Relations", () => {
 
     expect(response.status()).toBe(200);
     const body = await response.json();
-    expect(body).toBeInstanceOf(Array);
+    expect(body.data).toBeInstanceOf(Array);
     expect(
-      body.every((item: any) => item.visibility === "publicAccess"),
+      body.data.every((item: any) => item.visibility === "publicAccess"),
     ).toBeTruthy();
   });
 

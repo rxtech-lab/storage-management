@@ -349,7 +349,13 @@ export async function createItemAction(
     }
 
     revalidatePath("/items");
-    return { success: true, data: result[0] };
+
+    // Fetch the full item with relations for the response
+    const createdItem = await getItem(result[0].id);
+    if (!createdItem) {
+      return { success: false, error: "Item not found after creation" };
+    }
+    return { success: true, data: createdItem };
   } catch (error) {
     return {
       success: false,
