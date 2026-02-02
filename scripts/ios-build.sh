@@ -84,6 +84,7 @@ xcodebuild build \
     -configuration "$CONFIGURATION" \
     -destination "$DESTINATION" \
     -derivedDataPath "$BUILD_DIR" \
+    -skipPackagePluginValidation \
     CODE_SIGN_IDENTITY="" \
     CODE_SIGNING_REQUIRED=NO \
     CODE_SIGNING_ALLOWED=NO \

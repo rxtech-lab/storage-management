@@ -18,4 +18,13 @@ ENDPOINT="${OPENAPI_DOCUMENTATION_ENDPOINT:-http://localhost:3000/api/openapi}"
 echo "Downloading OpenAPI spec from: $ENDPOINT"
 curl -sS -o "$TARGET_FILE" "$ENDPOINT"
 
+# Validate that the downloaded file is valid JSON
+echo "Validating JSON..."
+if ! python3 -m json.tool "$TARGET_FILE" > /dev/null 2>&1; then
+    echo "Error: Downloaded file is not valid JSON"
+    echo "Contents of $TARGET_FILE:"
+    head -20 "$TARGET_FILE"
+    exit 1
+fi
+
 echo "OpenAPI spec updated at: $TARGET_FILE"

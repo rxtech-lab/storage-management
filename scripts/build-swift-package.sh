@@ -5,4 +5,4 @@ cd /Users/qiweili/Desktop/rxlab/storage-management/RxStorage/packages/RxStorageC
 
 # Clean and build
 rm -rf .build
-swift build 2>&1
+swift build --disable-sandbox 2>&1
