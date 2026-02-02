@@ -36,6 +36,10 @@
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Location access is needed to pick your current location on the map</string>
 
+	<!-- Export Compliance -->
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
+
 	<!-- App Information (Xcode manages these) -->
 	<key>CFBundleDisplayName</key>
 	<string>$(PRODUCT_NAME)</string>

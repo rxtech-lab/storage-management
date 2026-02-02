@@ -9,6 +9,16 @@
 		<key>NSAppClipRequestLocationConfirmation</key>
 		<false/>
 	</dict>
+
+	<!-- Permissions -->
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Location access is needed to pick your current location on the map</string>
+
+	<!-- Export Compliance -->
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
+
+	<!-- API Configuration -->
 	<key>API_BASE_URL</key>
 	<string>$(API_BASE_URL)</string>
 	<key>AUTH_ISSUER</key>
