@@ -12,7 +12,7 @@ jobs:
   build:
     name: Build iOS App
     runs-on: macos-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
 
     steps:
       - name: Checkout code
@@ -96,8 +96,8 @@ jobs:
 
   test:
     name: Run Tests
-    runs-on: macos-latest
-    timeout-minutes: 20
+    runs-on: macos-26
+    timeout-minutes: 30
 
     steps:
       - name: Checkout code
@@ -286,7 +286,7 @@ jobs:
   build-app-clips:
     name: Build App Clips
     runs-on: macos-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
 
     steps:
       - name: Checkout code
