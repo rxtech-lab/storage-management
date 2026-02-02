@@ -1,13 +1,13 @@
 #!/bin/bash
 
-# iOS Test Script for CI/CD
-# Runs tests for the RxStorage iOS app
+# iOS UI Test Script for CI/CD
+# Runs UI tests for the RxStorage iOS app
 
 set -e  # Exit on error
 set -o pipefail  # Catch errors in pipes
 
 echo "======================================"
-echo "RxStorage iOS Test Script"
+echo "RxStorage iOS UI Test Script"
 echo "======================================"
 echo ""
 
@@ -24,7 +24,8 @@ SCHEME="${SCHEME:-RxStorage}"
 CONFIGURATION="${CONFIGURATION:-Debug}"
 SDK="${SDK:-iphonesimulator}"
 BUILD_DIR="${BUILD_DIR:-.build}"
-RESULT_BUNDLE_PATH="${RESULT_BUNDLE_PATH:-test-results.xcresult}"
+RESULT_BUNDLE_PATH="${RESULT_BUNDLE_PATH:-ui-test-results.xcresult}"
+LOG_FILE="${LOG_FILE:-ui-test.log}"
 
 # Find an available iOS simulator if DESTINATION is not set
 if [ -z "$DESTINATION" ]; then
@@ -55,6 +56,16 @@ if [ ! -f "$SECRETS_CONFIG" ]; then
     echo "This file should be created from GitHub secrets in CI or manually for local builds."
 fi
 
+# Check if test credentials are set
+if [ -z "$TEST_EMAIL" ] || [ -z "$TEST_PASSWORD" ]; then
+    echo -e "${YELLOW}⚠️  Warning: TEST_EMAIL or TEST_PASSWORD not set${NC}"
+    echo "UI tests may fail without valid test credentials."
+    echo "Set these environment variables before running UI tests:"
+    echo "  export TEST_EMAIL=your-test-email@example.com"
+    echo "  export TEST_PASSWORD=your-test-password"
+    echo ""
+fi
+
 echo -e "${BLUE}📦 Project:${NC} $PROJECT_PATH"
 echo -e "${BLUE}🎯 Scheme:${NC} $SCHEME"
 echo -e "${BLUE}⚙️  Configuration:${NC} $CONFIGURATION"
@@ -62,82 +73,57 @@ echo -e "${BLUE}📱 SDK:${NC} $SDK"
 echo -e "${BLUE}🎯 Destination:${NC} $DESTINATION"
 echo -e "${BLUE}📂 Build Directory:${NC} $BUILD_DIR"
 echo -e "${BLUE}📊 Result Bundle:${NC} $RESULT_BUNDLE_PATH"
+echo -e "${BLUE}📝 Log File:${NC} $LOG_FILE"
 echo ""
 
 # Clean previous test results
 echo "🧹 Cleaning previous test results..."
 rm -rf "$RESULT_BUNDLE_PATH"
+rm -f "$LOG_FILE"
 
 echo ""
 
-# Run Swift Package tests
-echo "🧪 Running Swift Package tests..."
+# Build and run UI tests in one step
+echo "🔨 Building and running UI tests..."
+echo ""
+echo "📱 This will build the app, boot the simulator, and run tests."
+echo "⏱️  This may take several minutes. Logs will appear as tests run."
 echo ""
 
-PACKAGES_DIR="RxStorage/packages"
-PACKAGE_TEST_FAILED=0
-
-for package_dir in "$PACKAGES_DIR"/*/; do
-    if [ -f "${package_dir}Package.swift" ]; then
-        package_name=$(basename "$package_dir")
-        echo -e "${BLUE}📦 Testing package: ${package_name}${NC}"
-
-        if swift test --package-path "$package_dir" --disable-sandbox; then
-            echo -e "${GREEN}✅ ${package_name} tests passed${NC}"
-        else
-            echo -e "${RED}❌ ${package_name} tests failed${NC}"
-            PACKAGE_TEST_FAILED=1
-        fi
-        echo ""
-    fi
-done
-
-if [ $PACKAGE_TEST_FAILED -ne 0 ]; then
-    echo -e "${RED}❌ One or more Swift Package tests failed!${NC}"
-    exit 1
-fi
-
-echo ""
-
-# Run tests
-echo "🧪 Running xcodebuild tests..."
-echo ""
-
-# Run xcodebuild and capture exit code properly
 set +e  # Temporarily disable exit on error to capture the exit code
 
 # Use xcbeautify for pretty printing if available, otherwise raw output
 if command -v xcbeautify &> /dev/null; then
-    xcodebuild test \
+    TEST_EMAIL="$TEST_EMAIL" TEST_PASSWORD="$TEST_PASSWORD" xcodebuild test \
         -project "$PROJECT_PATH" \
         -scheme "$SCHEME" \
         -configuration "$CONFIGURATION" \
         -destination "$DESTINATION" \
         -derivedDataPath "$BUILD_DIR" \
         -resultBundlePath "$RESULT_BUNDLE_PATH" \
-        -skip-testing:RxStorageUITests \
+        -only-testing:RxStorageUITests \
+        -parallel-testing-enabled NO \
         -skipPackagePluginValidation \
-        -enableCodeCoverage YES \
         CODE_SIGN_IDENTITY="" \
         CODE_SIGNING_REQUIRED=NO \
         CODE_SIGNING_ALLOWED=NO \
-        2>&1 | tee test.log | xcbeautify
+        2>&1 | tee "$LOG_FILE" | xcbeautify
     TEST_EXIT_CODE=${PIPESTATUS[0]}
 else
-    xcodebuild test \
+    TEST_EMAIL="$TEST_EMAIL" TEST_PASSWORD="$TEST_PASSWORD" xcodebuild test \
         -project "$PROJECT_PATH" \
         -scheme "$SCHEME" \
         -configuration "$CONFIGURATION" \
         -destination "$DESTINATION" \
         -derivedDataPath "$BUILD_DIR" \
         -resultBundlePath "$RESULT_BUNDLE_PATH" \
-        -skip-testing:RxStorageUITests \
+        -only-testing:RxStorageUITests \
+        -parallel-testing-enabled NO \
         -skipPackagePluginValidation \
-        -enableCodeCoverage YES \
         CODE_SIGN_IDENTITY="" \
         CODE_SIGNING_REQUIRED=NO \
         CODE_SIGNING_ALLOWED=NO \
-        2>&1 | tee test.log
+        2>&1 | tee "$LOG_FILE"
     TEST_EXIT_CODE=${PIPESTATUS[0]}
 fi
 
@@ -147,31 +133,58 @@ echo ""
 echo "======================================"
 
 if [ $TEST_EXIT_CODE -eq 0 ]; then
-    echo -e "${GREEN}✅ All tests passed!${NC}"
+    echo -e "${GREEN}✅ All UI tests passed!${NC}"
     echo ""
-    echo "Test log saved to: test.log"
+    echo "Test log saved to: $LOG_FILE"
     echo "Result bundle saved to: $RESULT_BUNDLE_PATH"
 
-    # Display test summary if xcresult is available
+    # Extract and display test logs from result bundle
     if command -v xcrun &> /dev/null && [ -d "$RESULT_BUNDLE_PATH" ]; then
         echo ""
-        echo "📊 Test Summary:"
-        xcrun xcresulttool get --format json --path "$RESULT_BUNDLE_PATH" > /dev/null 2>&1 || true
+        echo "📝 Test Logs (NSLog output):"
+        echo "======================================"
+
+        # Extract standard output which contains NSLog statements
+        xcrun xcresulttool get --path "$RESULT_BUNDLE_PATH" 2>/dev/null | \
+            grep -E "🔐|⏱️|✅|❌|Safari|field|password|email|sign-in" || \
+            echo "No NSLog statements found in test output"
+
+        echo ""
+        echo "Full test output saved to: ui-test-details.log"
+        xcrun xcresulttool get --path "$RESULT_BUNDLE_PATH" > ui-test-details.log 2>&1 || true
     fi
 
     exit 0
 else
-    echo -e "${RED}❌ Tests failed!${NC}"
+    echo -e "${RED}❌ UI tests failed!${NC}"
     echo ""
-    echo "Test log saved to: test.log"
+    echo "Test log saved to: $LOG_FILE"
     echo "Result bundle saved to: $RESULT_BUNDLE_PATH"
+
+    # Extract and display test logs from result bundle on failure
+    if command -v xcrun &> /dev/null && [ -d "$RESULT_BUNDLE_PATH" ]; then
+        echo ""
+        echo "📝 Test Logs (NSLog output):"
+        echo "======================================"
+
+        # Extract standard output which contains NSLog statements
+        xcrun xcresulttool get --path "$RESULT_BUNDLE_PATH" 2>/dev/null | \
+            grep -E "🔐|⏱️|✅|❌|Safari|field|password|email|sign-in" || \
+            echo "No NSLog statements found in test output"
+
+        echo ""
+        echo "Full test output saved to: ui-test-details.log"
+        xcrun xcresulttool get --path "$RESULT_BUNDLE_PATH" > ui-test-details.log 2>&1 || true
+    fi
+
     echo ""
     echo "Common issues:"
     echo "1. Check test failures in the log above"
-    echo "2. Verify simulator is available and booted"
-    echo "3. Check if RxStorageCore package tests are failing"
-    echo "4. Ensure Secrets.xcconfig is present with valid values"
+    echo "2. Verify backend server is running at http://localhost:3000"
+    echo "3. Ensure TEST_EMAIL and TEST_PASSWORD are set correctly"
+    echo "4. Check if simulator is booted and accessible"
+    echo "5. Review OAuth configuration in Secrets.xcconfig"
     echo ""
-    echo "See test.log for full error details"
+    echo "See $LOG_FILE for full error details"
     exit 1
 fi
