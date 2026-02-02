@@ -48,6 +48,7 @@ struct PrimaryAuthButton: View {
             .font(.headline.weight(.semibold))
             .frame(maxWidth: .infinity)
         }
+        .accessibilityIdentifier("sign-in-button")
         .buttonStyle(.glassProminent)
         .disabled(isLoading)
         .animation(.easeInOut(duration: 0.2), value: isLoading)

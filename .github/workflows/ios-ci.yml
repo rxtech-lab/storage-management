@@ -54,15 +54,12 @@ jobs:
       - name: Install xcbeautify
         run: brew install xcbeautify
 
-      - name: Cache Swift Package Manager
-        uses: actions/cache@v5
+      - name: Cache Xcode Build
+        uses: irgaly/xcode-cache@v1
         with:
-          path: |
-            RxStorage/.build
-            ~/Library/Developer/Xcode/DerivedData
-          key: ${{ runner.os }}-spm-${{ hashFiles('RxStorage/RxStorageCore/Package.swift') }}
-          restore-keys: |
-            ${{ runner.os }}-spm-
+          key: xcode-${{ runner.os }}-${{ hashFiles('RxStorage/RxStorageCore/Package.swift') }}
+          restore-keys: xcode-${{ runner.os }}-
+
       - name: Start Backend Server
         run: bun install && bun dev &
         working-directory: admin
@@ -105,7 +102,7 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
-      
+
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: latest
@@ -133,15 +130,11 @@ jobs:
       - name: Install xcbeautify
         run: brew install xcbeautify
 
-      - name: Cache Swift Package Manager
-        uses: actions/cache@v5
+      - name: Cache Xcode Build
+        uses: irgaly/xcode-cache@v1
         with:
-          path: |
-            RxStorage/.build
-            ~/Library/Developer/Xcode/DerivedData
-          key: ${{ runner.os }}-spm-${{ hashFiles('RxStorage/RxStorageCore/Package.swift') }}
-          restore-keys: |
-            ${{ runner.os }}-spm-
+          key: xcode-${{ runner.os }}-${{ hashFiles('RxStorage/RxStorageCore/Package.swift') }}
+          restore-keys: xcode-${{ runner.os }}-
 
       - name: Start Backend Server
         run: bun install && bun dev &
@@ -194,6 +187,102 @@ jobs:
             echo "Test results bundle available in artifacts." >> $GITHUB_STEP_SUMMARY
           fi
 
+  # ui-tests:
+  #   name: Run UI Tests
+  #   runs-on: macos-latest
+  #   timeout-minutes: 30
+
+  #   steps:
+  #     - name: Checkout code
+  #       uses: actions/checkout@v6
+
+  #     - uses: oven-sh/setup-bun@v2
+  #       with:
+  #         bun-version: latest
+
+  #     - uses: maxim-lobanov/setup-xcode@v1
+  #       with:
+  #         xcode-version: latest-stable
+
+  #     - name: Setup Secrets.xcconfig from GitHub Secrets
+  #       env:
+  #         SECRETS_XCCONFIG_BASE64: ${{ secrets.SECRETS_XCCONFIG_BASE64 }}
+  #       run: |
+  #         if [ -z "$SECRETS_XCCONFIG_BASE64" ]; then
+  #           echo "⚠️ Warning: SECRETS_XCCONFIG_BASE64 secret is not set"
+  #           cat > RxStorage/RxStorage/Config/Secrets.xcconfig << 'EOF'
+  #         // Secrets.xcconfig - CI Generated
+  #         AUTH_CLIENT_ID_DEV = client_ci_placeholder
+  #         AUTH_CLIENT_ID_PROD = client_ci_placeholder
+  #         EOF
+  #         else
+  #           echo "✅ Decoding Secrets.xcconfig from GitHub secrets"
+  #           echo "$SECRETS_XCCONFIG_BASE64" | base64 --decode > RxStorage/RxStorage/Config/Secrets.xcconfig
+  #         fi
+
+  #     - name: Install xcbeautify
+  #       run: brew install xcbeautify
+
+  #     - name: Cache Xcode Build
+  #       uses: irgaly/xcode-cache@v1
+  #       with:
+  #         key: xcode-${{ runner.os }}-${{ hashFiles('RxStorage/RxStorageCore/Package.swift') }}
+  #         restore-keys: xcode-${{ runner.os }}-
+
+  #     - name: Start Backend Server
+  #       run: bun install && bun dev:e2e &
+  #       working-directory: admin
+
+  #     - name: Wait for Backend Server
+  #       run: |
+  #         echo "Waiting for backend server to start..."
+  #         for i in {1..30}; do
+  #           if curl -s http://localhost:3000; then
+  #             echo "Backend server is up!"
+  #             exit 0
+  #           fi
+  #           sleep 2
+  #         done
+  #         echo "Backend server did not start in time."
+  #         exit 1
+
+  #     - name: Generate openapi documentation
+  #       run: ./scripts/ios-update-openapi.sh
+
+  #     - name: Run UI Tests
+  #       env:
+  #         TEST_EMAIL: ${{ secrets.TEST_EMAIL }}
+  #         TEST_PASSWORD: ${{ secrets.TEST_PASSWORD }}
+  #         SCHEME: ${{ env.SCHEME }}
+  #         CONFIGURATION: ${{ env.CONFIGURATION }}
+  #         SDK: ${{ env.SDK }}
+  #       run: ./scripts/ios-ui-test.sh
+
+  #     - name: Upload UI Test Logs
+  #       if: always()
+  #       uses: actions/upload-artifact@v6
+  #       with:
+  #         name: ui-test-logs
+  #         path: ui-test.log
+  #         retention-days: 7
+
+  #     - name: Upload UI Test Results
+  #       if: always()
+  #       uses: actions/upload-artifact@v6
+  #       with:
+  #         name: ui-test-results
+  #         path: ui-test-results.xcresult
+  #         retention-days: 7
+
+  #     - name: Generate UI Test Report
+  #       if: always()
+  #       run: |
+  #         if [ -d "ui-test-results.xcresult" ]; then
+  #           echo "## UI Test Results" >> $GITHUB_STEP_SUMMARY
+  #           echo "" >> $GITHUB_STEP_SUMMARY
+  #           echo "UI test results bundle available in artifacts." >> $GITHUB_STEP_SUMMARY
+  #         fi
+
   build-app-clips:
     name: Build App Clips
     runs-on: macos-latest
@@ -206,7 +295,7 @@ jobs:
       - uses: maxim-lobanov/setup-xcode@v1
         with:
           xcode-version: latest-stable
-      
+
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: latest
@@ -230,6 +319,12 @@ jobs:
       - name: Install xcbeautify
         run: brew install xcbeautify
 
+      - name: Cache Xcode Build
+        uses: irgaly/xcode-cache@v1
+        with:
+          key: xcode-${{ runner.os }}-${{ hashFiles('RxStorage/RxStorageCore/Package.swift') }}
+          restore-keys: xcode-${{ runner.os }}-
+
       - name: Start Backend Server
         run: bun install && bun dev &
         working-directory: admin
@@ -246,7 +341,7 @@ jobs:
           done
           echo "Backend server did not start in time."
           exit 1
-      
+
       - name: Generate openapi documentation
         run: ./scripts/ios-update-openapi.sh
 

@@ -78,24 +78,37 @@ echo ""
 
 # Run xcodebuild and capture exit code properly
 set +e  # Temporarily disable exit on error to capture the exit code
-xcodebuild build \
-    -project "$PROJECT_PATH" \
-    -scheme "$SCHEME" \
-    -configuration "$CONFIGURATION" \
-    -destination "$DESTINATION" \
-    -derivedDataPath "$BUILD_DIR" \
-    -skipPackagePluginValidation \
-    CODE_SIGN_IDENTITY="" \
-    CODE_SIGNING_REQUIRED=NO \
-    CODE_SIGNING_ALLOWED=NO \
-    2>&1 | tee build.log
-BUILD_EXIT_CODE=${PIPESTATUS[0]}
-set -e  # Re-enable exit on error
 
-# Pretty print if xcbeautify is available, otherwise show raw output
-if command -v xcbeautify &> /dev/null && [ -f build.log ]; then
-    cat build.log | xcbeautify || true
+# Use xcbeautify for pretty printing if available, otherwise raw output
+if command -v xcbeautify &> /dev/null; then
+    xcodebuild build \
+        -project "$PROJECT_PATH" \
+        -scheme "$SCHEME" \
+        -configuration "$CONFIGURATION" \
+        -destination "$DESTINATION" \
+        -derivedDataPath "$BUILD_DIR" \
+        -skipPackagePluginValidation \
+        CODE_SIGN_IDENTITY="" \
+        CODE_SIGNING_REQUIRED=NO \
+        CODE_SIGNING_ALLOWED=NO \
+        2>&1 | tee build.log | xcbeautify
+    BUILD_EXIT_CODE=${PIPESTATUS[0]}
+else
+    xcodebuild build \
+        -project "$PROJECT_PATH" \
+        -scheme "$SCHEME" \
+        -configuration "$CONFIGURATION" \
+        -destination "$DESTINATION" \
+        -derivedDataPath "$BUILD_DIR" \
+        -skipPackagePluginValidation \
+        CODE_SIGN_IDENTITY="" \
+        CODE_SIGNING_REQUIRED=NO \
+        CODE_SIGNING_ALLOWED=NO \
+        2>&1 | tee build.log
+    BUILD_EXIT_CODE=${PIPESTATUS[0]}
 fi
+
+set -e  # Re-enable exit on error
 
 echo ""
 echo "======================================"
