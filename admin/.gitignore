@@ -51,3 +51,10 @@ e2e-test.db-wal
 
 # OpenAPI generated file
 /public/openapi.json
+
+# Local development data
+.local-data/
+.local-s3/
+*.db
+*.db-shm
+*.db-wal

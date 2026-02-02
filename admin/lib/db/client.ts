@@ -1,10 +1,23 @@
 import { createClient } from "@libsql/client";
+import { join } from "path";
 
 let clientInstance: ReturnType<typeof createClient> | null = null;
 let initPromise: Promise<void> | null = null;
 
 export function createDatabaseClient() {
   if (clientInstance) {
+    return clientInstance;
+  }
+
+  // Local development with file-based SQLite
+  if (process.env.USE_LOCAL_DB === "true") {
+    const dbPath = process.env.LOCAL_DB_PATH || join(process.cwd(), ".local-data", "local.db");
+    console.log(`Using local SQLite database at: ${dbPath}`);
+
+    clientInstance = createClient({
+      url: `file:${dbPath}`
+    });
+
     return clientInstance;
   }
 

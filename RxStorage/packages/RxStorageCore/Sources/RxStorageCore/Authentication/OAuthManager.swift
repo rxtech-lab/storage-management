@@ -207,7 +207,10 @@ public final class OAuthManager {
             let contextProvider = WebAuthenticationPresentationContextProvider()
             session.presentationContextProvider = contextProvider
             #endif
-            session.prefersEphemeralWebBrowserSession = false
+
+            // Use ephemeral session by default to prevent Safari from caching credentials
+            // This provides better privacy and ensures fresh login experience
+            session.prefersEphemeralWebBrowserSession = true
 
             if !session.start() {
                 continuation.resume(throwing: OAuthError.sessionStartFailed)

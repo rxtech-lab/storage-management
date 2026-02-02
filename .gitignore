@@ -16,3 +16,5 @@ build.sh
 *.swiftdeps
 *.d
 *.dia
+RxStorage/RxStorage.xcodeproj/xcshareddata/xcschemes/RxStorage.xcscheme
+*.log
