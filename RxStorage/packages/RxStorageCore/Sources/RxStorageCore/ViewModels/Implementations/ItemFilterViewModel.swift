@@ -33,7 +33,7 @@ public final class ItemFilterViewModel {
     public var selectedCategoryId: Int?
     public var selectedLocationId: Int?
     public var selectedAuthorId: Int?
-    public var selectedVisibility: StorageItem.Visibility?
+    public var selectedVisibility: Visibility?
 
     // MARK: - Dependencies
 

@@ -9,9 +9,9 @@ import Foundation
 
 /// Application configuration loaded from Info.plist
 @Observable
-public class AppConfiguration {
+public class AppConfiguration: @unchecked Sendable {
     /// Shared singleton instance
-    nonisolated(unsafe) public static let shared = AppConfiguration()
+    public static let shared = AppConfiguration()
 
     /// API base URL (e.g., "https://api.example.com" or "http://localhost:3000")
     public let apiBaseURL: String

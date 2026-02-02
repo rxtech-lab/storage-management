@@ -7,6 +7,7 @@
 
 import JSONSchema
 import JsonSchemaEditor
+import OpenAPIRuntime
 import RxStorageCore
 import SwiftUI
 
@@ -30,6 +31,15 @@ struct PositionSchemaFormSheet: View {
         } else {
             _jsonSchema = State(initialValue: nil)
         }
+    }
+
+    /// Parse schema from schemaPayload (additionalProperties)
+    private static func parseSchema(from schemaPayload: PositionSchema.schemaPayload) -> JSONSchema? {
+        let dict = schemaPayload.additionalProperties.compactMapValues { $0.value }
+        guard let data = try? JSONSerialization.data(withJSONObject: dict, options: []) else {
+            return nil
+        }
+        return try? JSONDecoder().decode(JSONSchema.self, from: data)
     }
 
     /// Parse schema dictionary to JSONSchema

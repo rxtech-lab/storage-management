@@ -7,6 +7,7 @@
 
 import JSONSchema
 import JSONSchemaForm
+import OpenAPIRuntime
 import RxStorageCore
 import SwiftUI
 
@@ -22,7 +23,7 @@ struct ContentDetailSheet: View {
 
     /// Get the schema for this content's type
     private var selectedSchema: ContentSchema? {
-        contentSchemas.first { $0.type == content.type.rawValue }
+        contentSchemas.first(where: { $0._type.rawValue == content.type.rawValue })
     }
 
     /// Color for content type icon
@@ -50,7 +51,7 @@ struct ContentDetailSheet: View {
                     VStack(alignment: .leading, spacing: 4) {
                         Text(content.type.displayName)
                             .font(.headline)
-                        if let mimeType = content.data.mimeType {
+                        if let mimeType = content.contentData.mimeType {
                             Text(mimeType)
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
@@ -60,7 +61,7 @@ struct ContentDetailSheet: View {
                     Spacer()
 
                     // File size badge
-                    if let size = content.data.formattedSize {
+                    if let size = content.contentData.formattedSize {
                         Text(size)
                             .font(.caption)
                             .padding(.horizontal, 8)
@@ -86,16 +87,16 @@ struct ContentDetailSheet: View {
             } else {
                 // Fallback display when no schema is available
                 Section("Content Data") {
-                    if let title = content.data.title {
+                    if let title = content.contentData.title {
                         LabeledContent("Title", value: title)
                     }
-                    if let description = content.data.description {
+                    if let description = content.contentData.description {
                         LabeledContent("Description", value: description)
                     }
-                    if let filePath = content.data.filePath {
+                    if let filePath = content.contentData.filePath {
                         LabeledContent("File Path", value: filePath)
                     }
-                    if let videoLength = content.data.formattedVideoLength {
+                    if let videoLength = content.contentData.formattedVideoLength {
                         LabeledContent("Duration", value: videoLength)
                     }
                 }
@@ -112,7 +113,7 @@ struct ContentDetailSheet: View {
             }
         }
         .formStyle(.grouped)
-        .navigationTitle(content.data.title ?? "Content Details")
+        .navigationTitle(content.contentData.title ?? "Content Details")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .cancellationAction) {
@@ -128,11 +129,20 @@ struct ContentDetailSheet: View {
             }
         }
         .onAppear {
-            formData = contentDataToFormData(content.data)
+            formData = contentDataToFormData(content.contentData)
         }
     }
 
     // MARK: - Helper Methods
+
+    /// Parse schema from schemaPayload (additionalProperties)
+    private func parseSchema(from schemaPayload: ContentSchema.schemaPayload) -> JSONSchema? {
+        let dict = schemaPayload.additionalProperties.compactMapValues { $0.value }
+        guard let data = try? JSONSerialization.data(withJSONObject: dict) else {
+            return nil
+        }
+        return try? JSONDecoder().decode(JSONSchema.self, from: data)
+    }
 
     /// Parse schema dictionary to JSONSchema
     private func parseSchema(from dict: [String: RxStorageCore.AnyCodable]) -> JSONSchema? {
@@ -176,78 +186,5 @@ struct ContentDetailSheet: View {
     }
 }
 
-#Preview("File Content") {
-    @Previewable @State var schemas: [ContentSchema] = [
-        ContentSchema(
-            type: "file",
-            name: "File",
-            schema: [
-                "type": RxStorageCore.AnyCodable("object"),
-                "properties": RxStorageCore.AnyCodable([
-                    "title": ["type": "string", "title": "Title"],
-                    "description": ["type": "string", "title": "Description"],
-                    "mime_type": ["type": "string", "title": "MIME Type"],
-                    "size": ["type": "number", "title": "Size (bytes)"],
-                ] as [String: Any]),
-            ]
-        ),
-    ]
-    let content = Content(
-        id: 1,
-        itemId: 1,
-        type: .file,
-        data: ContentData(
-            title: "Document.pdf",
-            description: "An important document",
-            mimeType: "application/pdf",
-            size: 1_024_000
-        ),
-        createdAt: Date(),
-        updatedAt: Date()
-    )
-    NavigationStack {
-        ContentDetailSheet(
-            content: content,
-            contentSchemas: $schemas,
-            onEdit: {},
-            isViewOnly: false
-        )
-    }
-}
-
-#Preview("Video Content - View Only") {
-    @Previewable @State var schemas: [ContentSchema] = [
-        ContentSchema(
-            type: "video",
-            name: "Video",
-            schema: [
-                "type": RxStorageCore.AnyCodable("object"),
-                "properties": RxStorageCore.AnyCodable([
-                    "title": ["type": "string", "title": "Title"],
-                    "video_length": ["type": "number", "title": "Duration (seconds)"],
-                ] as [String: Any]),
-            ]
-        ),
-    ]
-    let content = Content(
-        id: 2,
-        itemId: 1,
-        type: .video,
-        data: ContentData(
-            title: "Tutorial.mp4",
-            mimeType: "video/mp4",
-            size: 50_000_000,
-            videoLength: 300
-        ),
-        createdAt: Date(),
-        updatedAt: Date()
-    )
-    NavigationStack {
-        ContentDetailSheet(
-            content: content,
-            contentSchemas: $schemas,
-            onEdit: {},
-            isViewOnly: true
-        )
-    }
-}
+// Previews disabled - generated types have different initializers
+// TODO: Update previews to use generated ContentSchema and Content types

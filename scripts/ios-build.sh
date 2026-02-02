@@ -82,9 +82,9 @@ xcodebuild build \
     -project "$PROJECT_PATH" \
     -scheme "$SCHEME" \
     -configuration "$CONFIGURATION" \
-    -sdk "$SDK" \
     -destination "$DESTINATION" \
     -derivedDataPath "$BUILD_DIR" \
+    -skipPackagePluginValidation \
     CODE_SIGN_IDENTITY="" \
     CODE_SIGNING_REQUIRED=NO \
     CODE_SIGNING_ALLOWED=NO \

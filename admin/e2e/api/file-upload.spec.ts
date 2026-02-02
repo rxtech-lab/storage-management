@@ -65,7 +65,7 @@ test.describe.serial("File Upload API", () => {
       data: {
         title: "Item with Image",
         description: "Test item with uploaded image",
-        visibility: "public",
+        visibility: "publicAccess",
         images: [`file:${fileId}`],
       },
     });
@@ -107,10 +107,10 @@ test.describe.serial("File Upload API", () => {
 
     expect(response.status()).toBe(200);
     const body = await response.json();
-    expect(body).toBeInstanceOf(Array);
+    expect(body.data).toBeInstanceOf(Array);
 
     // Find our item with images
-    const itemWithImages = body.find((item: { id: number }) => item.id === itemId);
+    const itemWithImages = body.data.find((item: { id: number }) => item.id === itemId);
     expect(itemWithImages).toBeDefined();
     expect(itemWithImages.images).toHaveLength(1);
     expect(itemWithImages.images[0]).toHaveProperty("id");
@@ -173,7 +173,7 @@ test.describe.serial("File Upload API", () => {
     const response = await request.post("/api/v1/items", {
       data: {
         title: "Item with Invalid File ID",
-        visibility: "public",
+        visibility: "publicAccess",
         images: ["file:999999"], // Non-existent file ID
       },
     });
@@ -199,7 +199,7 @@ test.describe.serial("File Upload API", () => {
     const createResponse = await request.post("/api/v1/items", {
       data: {
         title: "Item with Deleted File",
-        visibility: "public",
+        visibility: "publicAccess",
         images: [`file:${fileId}`],
       },
     });

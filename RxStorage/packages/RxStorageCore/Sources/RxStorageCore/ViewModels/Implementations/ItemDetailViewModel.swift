@@ -14,7 +14,7 @@ import Observation
 public final class ItemDetailViewModel: ItemDetailViewModelProtocol {
     // MARK: - Published Properties
 
-    public private(set) var item: StorageItem?
+    public private(set) var item: StorageItemDetail?
     public private(set) var children: [StorageItem] = []
     public private(set) var contents: [Content] = []
     public var contentSchemas: [ContentSchema] = []
@@ -52,8 +52,8 @@ public final class ItemDetailViewModel: ItemDetailViewModelProtocol {
             // Use children from item response
             children = item?.children ?? []
 
-            // Use contents from item response
-            contents = item?.contents ?? []
+            // Fetch contents separately (item detail only includes ContentRef, not full Content)
+            await fetchContents()
         } catch {
             self.error = error
             isLoading = false
@@ -76,8 +76,8 @@ public final class ItemDetailViewModel: ItemDetailViewModelProtocol {
             // Use children from item response
             children = item?.children ?? []
 
-            // Use contents from item response
-            contents = item?.contents ?? []
+            // Fetch contents separately (item detail only includes ContentRef, not full Content)
+            await fetchContents()
         } catch {
             self.error = error
             isLoading = false
@@ -122,6 +122,8 @@ public final class ItemDetailViewModel: ItemDetailViewModelProtocol {
         let childItem = try await itemService.fetchItem(id: childId)
 
         // Create update request with new parentId
+        // Convert visibility from response schema to update schema type
+        let updateVisibility = UpdateVisibility(rawValue: childItem.visibility.rawValue)
         let request = UpdateItemRequest(
             title: childItem.title,
             description: childItem.description,
@@ -130,7 +132,7 @@ public final class ItemDetailViewModel: ItemDetailViewModelProtocol {
             authorId: childItem.authorId,
             parentId: currentItemId,
             price: childItem.price,
-            visibility: childItem.visibility,
+            visibility: updateVisibility,
             images: []  // Don't modify images - they contain signed URLs, not file IDs
         )
 
@@ -156,6 +158,8 @@ public final class ItemDetailViewModel: ItemDetailViewModelProtocol {
         }
 
         // Create update request with nil parentId
+        // Convert visibility from response schema to update schema type
+        let updateVisibility = UpdateVisibility(rawValue: childItem.visibility.rawValue)
         let request = UpdateItemRequest(
             title: childItem.title,
             description: childItem.description,
@@ -164,7 +168,7 @@ public final class ItemDetailViewModel: ItemDetailViewModelProtocol {
             authorId: childItem.authorId,
             parentId: nil,
             price: childItem.price,
-            visibility: childItem.visibility,
+            visibility: updateVisibility,
             images: []  // Don't modify images - they contain signed URLs, not file IDs
         )
 
@@ -181,7 +185,7 @@ public final class ItemDetailViewModel: ItemDetailViewModelProtocol {
     /// Create a new content for this item
     /// Returns tuple of (itemId, contentId) for event emission
     @discardableResult
-    public func createContent(type: Content.ContentType, formData: [String: AnyCodable]) async throws -> (itemId: Int, contentId: Int) {
+    public func createContent(type: ContentType, formData: [String: AnyCodable]) async throws -> (itemId: Int, contentId: Int) {
         guard let itemId = item?.id else {
             throw ItemDetailError.noItemLoaded
         }
@@ -208,7 +212,7 @@ public final class ItemDetailViewModel: ItemDetailViewModelProtocol {
     }
 
     /// Update an existing content
-    public func updateContent(id: Int, type: Content.ContentType, formData: [String: AnyCodable]) async throws {
+    public func updateContent(id: Int, type: ContentType, formData: [String: AnyCodable]) async throws {
         let contentData = ContentData(
             title: formData["title"]?.value as? String,
             description: formData["description"]?.value as? String,

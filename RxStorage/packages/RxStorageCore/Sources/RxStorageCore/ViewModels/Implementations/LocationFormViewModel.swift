@@ -93,20 +93,24 @@ public final class LocationFormViewModel: LocationFormViewModelProtocol {
             let latValue = Double(latitude)!
             let lonValue = Double(longitude)!
 
-            let request = NewLocationRequest(
-                title: title,
-                latitude: latValue,
-                longitude: lonValue
-            )
-
             let result: Location
             if let existingLocation = location {
-                // Update
-                result = try await locationService.updateLocation(id: existingLocation.id, request)
+                // Update - use UpdateLocationRequest
+                let updateRequest = UpdateLocationRequest(
+                    title: title,
+                    latitude: latValue,
+                    longitude: lonValue
+                )
+                result = try await locationService.updateLocation(id: existingLocation.id, updateRequest)
                 eventViewModel?.emit(.locationUpdated(id: result.id))
             } else {
-                // Create
-                result = try await locationService.createLocation(request)
+                // Create - use NewLocationRequest
+                let createRequest = NewLocationRequest(
+                    title: title,
+                    latitude: latValue,
+                    longitude: lonValue
+                )
+                result = try await locationService.createLocation(createRequest)
                 eventViewModel?.emit(.locationCreated(id: result.id))
             }
 
@@ -128,7 +132,7 @@ public final class LocationFormViewModel: LocationFormViewModelProtocol {
 
     private func populateForm(from location: Location) {
         title = location.title
-        latitude = location.latitude.map { String($0) } ?? ""
-        longitude = location.longitude.map { String($0) } ?? ""
+        latitude = String(location.latitude)
+        longitude = String(location.longitude)
     }
 }

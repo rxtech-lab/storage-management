@@ -12,8 +12,15 @@ interface RouteParams {
 }
 
 /**
- * GET /api/v1/items/:id/whitelist
- * Returns all whitelist entries for an item (owner only)
+ * List whitelist entries
+ * @operationId getItemWhitelist
+ * @description Returns all whitelisted emails for a private item (owner only)
+ * @pathParams IdPathParams
+ * @response WhitelistListResponse
+ * @auth bearer
+ * @tag Whitelists
+ * @responseSet auth
+ * @openapi
  */
 export async function GET(request: NextRequest, { params }: RouteParams) {
   const session = await getSession(request);
@@ -43,8 +50,16 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 }
 
 /**
- * POST /api/v1/items/:id/whitelist
- * Adds an email to the whitelist (owner only)
+ * Add to whitelist
+ * @operationId addToWhitelist
+ * @description Add an email address to the whitelist for accessing a private item
+ * @pathParams IdPathParams
+ * @body WhitelistAddRequestSchema
+ * @response 201:WhitelistResponseSchema
+ * @auth bearer
+ * @tag Whitelists
+ * @responseSet auth
+ * @openapi
  */
 export async function POST(request: NextRequest, { params }: RouteParams) {
   const session = await getSession(request);
@@ -89,9 +104,16 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 }
 
 /**
- * DELETE /api/v1/items/:id/whitelist
- * Removes an email from the whitelist (owner only)
- * Expects { email: string } in request body
+ * Remove from whitelist
+ * @operationId removeFromWhitelist
+ * @description Remove an email from the whitelist
+ * @pathParams IdPathParams
+ * @body WhitelistRemoveRequestSchema
+ * @response 200:SuccessResponse
+ * @auth bearer
+ * @tag Whitelists
+ * @responseSet auth
+ * @openapi
  */
 export async function DELETE(request: NextRequest, { params }: RouteParams) {
   const session = await getSession(request);

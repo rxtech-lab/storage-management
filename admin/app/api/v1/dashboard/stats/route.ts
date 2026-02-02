@@ -2,23 +2,18 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth-helper";
 import { db, items, categories, locations, authors } from "@/lib/db";
 import { eq, count, and } from "drizzle-orm";
+import { DashboardStatsResponseSchema } from "@/lib/schemas/dashboard";
 
-export interface DashboardStatsResponse {
-  totalItems: number;
-  publicItems: number;
-  privateItems: number;
-  totalCategories: number;
-  totalLocations: number;
-  totalAuthors: number;
-  recentItems: Array<{
-    id: number;
-    title: string;
-    visibility: "public" | "private";
-    categoryName: string | null;
-    updatedAt: Date;
-  }>;
-}
-
+/**
+ * Get dashboard statistics
+ * @operationId getDashboardStats
+ * @description Returns overview statistics including item counts, recent items, and entity totals
+ * @response DashboardStatsResponseSchema
+ * @auth bearer
+ * @tag Dashboard
+ * @responseSet auth
+ * @openapi
+ */
 export async function GET(request: NextRequest) {
   const session = await getSession(request);
   if (!session) {
@@ -47,13 +42,13 @@ export async function GET(request: NextRequest) {
     db
       .select({ count: count() })
       .from(items)
-      .where(and(eq(items.userId, userId), eq(items.visibility, "public"))),
+      .where(and(eq(items.userId, userId), eq(items.visibility, "publicAccess"))),
 
     // Private items count
     db
       .select({ count: count() })
       .from(items)
-      .where(and(eq(items.userId, userId), eq(items.visibility, "private"))),
+      .where(and(eq(items.userId, userId), eq(items.visibility, "privateAccess"))),
 
     // Total categories count
     db
@@ -84,7 +79,7 @@ export async function GET(request: NextRequest) {
     }),
   ]);
 
-  const response: DashboardStatsResponse = {
+  const responseData = {
     totalItems: totalItemsResult[0]?.count ?? 0,
     publicItems: publicItemsResult[0]?.count ?? 0,
     privateItems: privateItemsResult[0]?.count ?? 0,
@@ -96,9 +91,12 @@ export async function GET(request: NextRequest) {
       title: item.title,
       visibility: item.visibility,
       categoryName: item.category?.name ?? null,
-      updatedAt: item.updatedAt,
+      updatedAt: item.updatedAt.toISOString(),
     })),
   };
+
+  // Validate response against schema
+  const response = DashboardStatsResponseSchema.parse(responseData);
 
   return NextResponse.json(response);
 }

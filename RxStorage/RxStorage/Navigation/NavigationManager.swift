@@ -118,7 +118,8 @@ final class NavigationManager {
         defer { isLoadingDeepLink = false }
 
         do {
-            let item = try await itemService.fetchItem(id: id)
+            let itemDetail = try await itemService.fetchItem(id: id)
+            let item = itemDetail.toStorageItem()
             selectedItem = item
             itemsNavigationPath.append(item)
         } catch {
@@ -158,20 +159,15 @@ final class NavigationManager {
 
     /// Handle deep link URL
     func handleDeepLink(_ url: URL) async {
-        // Ensure we're on the items section
-        selectedTab = .items
-
-        isLoadingDeepLink = true
-        defer { isLoadingDeepLink = false }
-
-        do {
-            let item = try await itemService.fetchItemFromURL(url)
-            selectedItem = item
-            // Push onto navigation stack for TabView
-            itemsNavigationPath.append(item)
-        } catch {
-            deepLinkError = error
+        // Extract item ID from URL path (e.g., /preview/123)
+        guard let itemIdString = url.pathComponents.last,
+              let itemId = Int(itemIdString) else {
+            deepLinkError = APIError.unsupportedQRCode(url.absoluteString)
             showDeepLinkError = true
+            return
         }
+
+        // Navigate to the item by ID
+        await navigateToItemById(itemId)
     }
 }

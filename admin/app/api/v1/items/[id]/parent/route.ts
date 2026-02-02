@@ -7,8 +7,18 @@ interface RouteParams {
   params: Promise<{ id: string }>;
 }
 
-// PUT /api/v1/items/[id]/parent - Set or remove parent
-// Body: { parentId: number | null }
+/**
+ * Set item parent
+ * @operationId setItemParent
+ * @description Set or remove the parent of an item for hierarchical organization
+ * @pathParams IdPathParams
+ * @body SetParentRequestSchema
+ * @response ItemResponseSchema
+ * @auth bearer
+ * @tag Items
+ * @responseSet auth
+ * @openapi
+ */
 export async function PUT(request: NextRequest, { params }: RouteParams) {
   const session = await getSession(request);
   if (!session) {

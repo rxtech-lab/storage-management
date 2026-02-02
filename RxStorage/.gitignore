@@ -77,3 +77,7 @@ fastlane/test_output
 
 iOSInjectionProject/
 *.log
+
+# Swift OpenAPI Generator
+# OpenAPI spec downloaded from remote (not committed - run update-openapi.sh)
+packages/RxStorageCore/Sources/RxStorageCore/openapi.json

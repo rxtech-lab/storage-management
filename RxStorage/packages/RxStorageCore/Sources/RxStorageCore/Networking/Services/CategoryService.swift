@@ -2,14 +2,19 @@
 //  CategoryService.swift
 //  RxStorageCore
 //
-//  API service for category operations
+//  Category service protocol and implementation using generated client
 //
 
 import Foundation
+import Logging
+import OpenAPIRuntime
+
+fileprivate let logger = Logger(label: "CategoryService")
+
+// MARK: - Protocol
 
 /// Protocol for category service operations
-@MainActor
-public protocol CategoryServiceProtocol {
+public protocol CategoryServiceProtocol: Sendable {
     func fetchCategories(filters: CategoryFilters?) async throws -> [Category]
     func fetchCategoriesPaginated(filters: CategoryFilters?) async throws -> PaginatedResponse<Category>
     func fetchCategory(id: Int) async throws -> Category
@@ -18,58 +23,70 @@ public protocol CategoryServiceProtocol {
     func deleteCategory(id: Int) async throws
 }
 
-/// Category service implementation
-@MainActor
-public class CategoryService: CategoryServiceProtocol {
-    private let apiClient: APIClient
+// MARK: - Implementation
 
-    public init(apiClient: APIClient = .shared) {
-        self.apiClient = apiClient
+/// Category service implementation using generated OpenAPI client
+public struct CategoryService: CategoryServiceProtocol {
+    public init() {}
+
+    public func fetchCategories(filters: CategoryFilters?) async throws -> [Category] {
+        let response = try await fetchCategoriesPaginated(filters: filters)
+        return response.data
     }
 
-    public func fetchCategories(filters: CategoryFilters? = nil) async throws -> [Category] {
-        return try await apiClient.get(
-            .listCategories(filters: filters),
-            responseType: [Category].self
+    @APICall(.ok, transform: "transformPaginatedCategories")
+    public func fetchCategoriesPaginated(filters: CategoryFilters?) async throws -> PaginatedResponse<Category> {
+        let direction = filters?.direction.flatMap { Operations.getCategories.Input.Query.directionPayload(rawValue: $0.rawValue) }
+        let query = Operations.getCategories.Input.Query(
+            cursor: filters?.cursor,
+            direction: direction,
+            limit: filters?.limit,
+            search: filters?.search
         )
+
+        try await StorageAPIClient.shared.client.getCategories(.init(query: query))
     }
 
-    public func fetchCategoriesPaginated(filters: CategoryFilters? = nil) async throws -> PaginatedResponse<Category> {
-        var paginatedFilters = filters ?? CategoryFilters()
-        if paginatedFilters.limit == nil {
-            paginatedFilters.limit = PaginationDefaults.pageSize
-        }
-
-        return try await apiClient.get(
-            .listCategories(filters: paginatedFilters),
-            responseType: PaginatedResponse<Category>.self
-        )
+    /// Transforms paginated categories response to PaginatedResponse
+    private func transformPaginatedCategories(_ body: Components.Schemas.PaginatedCategoriesResponse) -> PaginatedResponse<Category> {
+        let pagination = PaginationState(from: body.pagination)
+        return PaginatedResponse(data: body.data, pagination: pagination)
     }
 
+    @APICall(.ok)
     public func fetchCategory(id: Int) async throws -> Category {
-        return try await apiClient.get(
-            .getCategory(id: id),
-            responseType: Category.self
-        )
+        try await StorageAPIClient.shared.client.getCategory(.init(path: .init(id: String(id))))
     }
 
+    @APICall(.created)
     public func createCategory(_ request: NewCategoryRequest) async throws -> Category {
-        return try await apiClient.post(
-            .createCategory,
-            body: request,
-            responseType: Category.self
-        )
+        try await StorageAPIClient.shared.client.createCategory(.init(body: .json(request)))
     }
 
+    @APICall(.ok)
     public func updateCategory(id: Int, _ request: UpdateCategoryRequest) async throws -> Category {
-        return try await apiClient.put(
-            .updateCategory(id: id),
-            body: request,
-            responseType: Category.self
-        )
+        try await StorageAPIClient.shared.client.updateCategory(.init(path: .init(id: String(id)), body: .json(request)))
     }
 
     public func deleteCategory(id: Int) async throws {
-        try await apiClient.delete(.deleteCategory(id: id))
+        let response = try await StorageAPIClient.shared.client.deleteCategory(.init(path: .init(id: String(id))))
+
+        switch response {
+        case .ok:
+            return
+        case .badRequest(let badRequest):
+            let error = try? badRequest.body.json
+            throw APIError.badRequest(error?.error ?? "Invalid request")
+        case .unauthorized:
+            throw APIError.unauthorized
+        case .forbidden:
+            throw APIError.forbidden
+        case .notFound:
+            throw APIError.notFound
+        case .internalServerError:
+            throw APIError.serverError("Internal server error")
+        case .undocumented(let statusCode, _):
+            throw APIError.serverError("HTTP \(statusCode)")
+        }
     }
 }

@@ -3,21 +3,15 @@ import { getSession } from "@/lib/auth-helper";
 import { getImageUploadUrlAction } from "@/lib/actions/s3-upload-actions";
 
 /**
- * POST /api/v1/upload/presigned
- *
- * Request body:
- * - filename: string (required) - Original filename
- * - contentType: string (required) - MIME type (must start with "image/")
- * - size: number (optional) - File size in bytes
- *
- * Response:
- * - uploadUrl: string - Presigned URL for uploading to S3
- * - fileId: number - Database file record ID
- * - key: string - S3 object key
- * - expiresAt: string - ISO timestamp when the upload URL expires
- *
- * Note: File record is created immediately. File existence in S3 will be
- * verified when the file is associated with an item via POST/PUT /api/v1/items.
+ * Get presigned upload URL
+ * @operationId getPresignedUploadUrl
+ * @description Generate a presigned URL for direct file upload to S3. Returns upload URL, file ID, and expiration time.
+ * @body PresignedUploadRequestSchema
+ * @response 201:PresignedUploadResponseSchema
+ * @auth bearer
+ * @tag Upload
+ * @responseSet auth
+ * @openapi
  */
 export async function POST(request: NextRequest) {
   const session = await getSession(request);

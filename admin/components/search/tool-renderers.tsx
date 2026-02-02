@@ -69,7 +69,7 @@ export function ItemsRenderer({ output, onAction }: ToolResultRendererProps) {
                 )}
               </div>
             </div>
-            {item.visibility === "public" ? (
+            {item.visibility === "publicAccess" ? (
               <Eye className="size-4 text-green-500 shrink-0" />
             ) : (
               <EyeOff className="size-4 text-muted-foreground shrink-0" />

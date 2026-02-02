@@ -1,0 +1,1 @@
+ALTER TABLE `items` ALTER COLUMN "visibility" TO "visibility" text NOT NULL DEFAULT 'privateAccess';

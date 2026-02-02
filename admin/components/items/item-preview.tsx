@@ -67,7 +67,7 @@ export function ItemPreview({ item, view }: ItemPreviewProps) {
             {item.price !== null && (
               <Badge variant="secondary">${item.price.toFixed(2)}</Badge>
             )}
-            {item.visibility === "public" ? (
+            {item.visibility === "publicAccess" ? (
               <Eye className="h-4 w-4 text-green-500" />
             ) : (
               <EyeOff className="h-4 w-4 text-muted-foreground" />
@@ -98,7 +98,7 @@ export function ItemPreview({ item, view }: ItemPreviewProps) {
         <CardContent className="p-4">
           <div className="flex items-start justify-between gap-2">
             <CardTitle className="text-lg line-clamp-1">{item.title}</CardTitle>
-            {item.visibility === "public" ? (
+            {item.visibility === "publicAccess" ? (
               <Eye className="h-4 w-4 text-green-500 flex-shrink-0" />
             ) : (
               <EyeOff className="h-4 w-4 text-muted-foreground flex-shrink-0" />

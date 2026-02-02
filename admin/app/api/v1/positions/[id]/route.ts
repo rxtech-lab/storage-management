@@ -5,6 +5,16 @@ import {
   deletePositionAction,
 } from "@/lib/actions/position-actions";
 
+/**
+ * Get position by ID
+ * @description Retrieve a single position by its ID
+ * @pathParams IdPathParams
+ * @response PositionResponseSchema
+ * @auth bearer
+ * @tag Positions
+ * @responseSet auth
+ * @openapi
+ */
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -29,6 +39,17 @@ export async function GET(
   return NextResponse.json(position);
 }
 
+/**
+ * Delete position
+ * @operationId deletePosition
+ * @description Delete a position by ID
+ * @pathParams IdPathParams
+ * @response 200:SuccessResponse
+ * @auth bearer
+ * @tag Positions
+ * @responseSet auth
+ * @openapi
+ */
 export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }

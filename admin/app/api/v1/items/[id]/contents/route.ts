@@ -5,8 +5,15 @@ import { getItemContents, createContentAction } from "@/lib/actions/content-acti
 import type { ContentData } from "@/lib/db";
 
 /**
- * GET /api/v1/items/:id/contents
- * Returns all contents for an item
+ * List item contents
+ * @operationId getItemContents
+ * @description Returns all content attachments (files, images, videos) for an item
+ * @pathParams IdPathParams
+ * @response ContentsListResponse
+ * @auth bearer
+ * @tag Contents
+ * @responseSet auth
+ * @openapi
  */
 export async function GET(
   request: NextRequest,
@@ -35,8 +42,16 @@ export async function GET(
 }
 
 /**
- * POST /api/v1/items/:id/contents
- * Creates a new content for an item
+ * Create item content
+ * @operationId createItemContent
+ * @description Create a new content attachment for an item
+ * @pathParams IdPathParams
+ * @body ContentInsertSchema
+ * @response 201:ContentResponseSchema
+ * @auth bearer
+ * @tag Contents
+ * @responseSet auth
+ * @openapi
  */
 export async function POST(
   request: NextRequest,

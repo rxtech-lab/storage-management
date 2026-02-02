@@ -48,3 +48,6 @@ package-lock.json
 e2e-test.db
 e2e-test.db-shm
 e2e-test.db-wal
+
+# OpenAPI generated file
+/public/openapi.json

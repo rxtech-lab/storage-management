@@ -15,35 +15,31 @@ public final class MockItemService: ItemServiceProtocol {
 
     public var fetchItemsResult: Result<[StorageItem], Error> = .success([])
     public var fetchItemsPaginatedResult: Result<PaginatedResponse<StorageItem>, Error>?
-    public var fetchItemResult: Result<StorageItem, Error>?
-    public var fetchPreviewItemResult: Result<StorageItem, Error>?
-    public var fetchItemFromURLResult: Result<StorageItem, Error>?
+    public var fetchItemResult: Result<StorageItemDetail, Error>?
+    public var fetchPreviewItemResult: Result<StorageItemDetail, Error>?
     public var createItemResult: Result<StorageItem, Error>?
     public var updateItemResult: Result<StorageItem, Error>?
-    public var setItemParentResult: Result<StorageItem, Error>?
+    public var setParentResult: Result<StorageItem, Error>?
     public var deleteItemResult: Result<Void, Error>?
-    public var generateQRCodeResult: Result<QRCodeData, Error>?
 
     // Call tracking
     public var fetchItemsCalled = false
     public var fetchItemsPaginatedCalled = false
     public var fetchItemCalled = false
     public var fetchPreviewItemCalled = false
-    public var fetchItemFromURLCalled = false
     public var createItemCalled = false
     public var updateItemCalled = false
-    public var setItemParentCalled = false
+    public var setParentCalled = false
     public var deleteItemCalled = false
-    public var generateQRCodeCalled = false
 
     public var lastFetchItemId: Int?
     public var lastFetchPreviewItemId: Int?
-    public var lastFetchItemFromURL: URL?
     public var lastCreateItemRequest: NewItemRequest?
     public var lastUpdateItemId: Int?
     public var lastUpdateItemRequest: UpdateItemRequest?
     public var lastDeleteItemId: Int?
-    public var lastGenerateQRCodeItemId: Int?
+    public var lastSetParentItemId: Int?
+    public var lastSetParentParentId: Int?
 
     // MARK: - Initialization
 
@@ -75,11 +71,11 @@ public final class MockItemService: ItemServiceProtocol {
         let items = try await fetchItems(filters: filters)
         return PaginatedResponse(
             data: items,
-            pagination: PaginationInfo(nextCursor: nil, prevCursor: nil, hasNextPage: false, hasPrevPage: false)
+            pagination: PaginationState(hasNextPage: false, hasPrevPage: false, nextCursor: nil, prevCursor: nil)
         )
     }
 
-    public func fetchItem(id: Int) async throws -> StorageItem {
+    public func fetchItem(id: Int) async throws -> StorageItemDetail {
         fetchItemCalled = true
         lastFetchItemId = id
 
@@ -95,27 +91,11 @@ public final class MockItemService: ItemServiceProtocol {
         throw APIError.notFound
     }
 
-    public func fetchPreviewItem(id: Int) async throws -> StorageItem {
+    public func fetchPreviewItem(id: Int) async throws -> StorageItemDetail {
         fetchPreviewItemCalled = true
         lastFetchPreviewItemId = id
 
         if let result = fetchPreviewItemResult {
-            switch result {
-            case .success(let item):
-                return item
-            case .failure(let error):
-                throw error
-            }
-        }
-
-        throw APIError.notFound
-    }
-
-    public func fetchItemFromURL(_ url: URL) async throws -> StorageItem {
-        fetchItemFromURLCalled = true
-        lastFetchItemFromURL = url
-
-        if let result = fetchItemFromURLResult {
             switch result {
             case .success(let item):
                 return item
@@ -160,10 +140,12 @@ public final class MockItemService: ItemServiceProtocol {
         throw APIError.serverError("Not configured")
     }
 
-    public func setItemParent(childId: String, parentId: Int?) async throws -> StorageItem {
-        setItemParentCalled = true
+    public func setParent(itemId: Int, parentId: Int?) async throws -> StorageItem {
+        setParentCalled = true
+        lastSetParentItemId = itemId
+        lastSetParentParentId = parentId
 
-        if let result = setItemParentResult {
+        if let result = setParentResult {
             switch result {
             case .success(let item):
                 return item
@@ -187,21 +169,5 @@ public final class MockItemService: ItemServiceProtocol {
                 throw error
             }
         }
-    }
-
-    public func generateQRCode(itemId: Int) async throws -> QRCodeData {
-        generateQRCodeCalled = true
-        lastGenerateQRCodeItemId = itemId
-
-        if let result = generateQRCodeResult {
-            switch result {
-            case .success(let qrData):
-                return qrData
-            case .failure(let error):
-                throw error
-            }
-        }
-
-        throw APIError.serverError("Not configured")
     }
 }

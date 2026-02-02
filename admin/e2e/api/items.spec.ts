@@ -1,4 +1,9 @@
 import { test, expect } from "@playwright/test";
+import {
+  ItemResponseSchema,
+  ItemDetailResponseSchema,
+  PaginatedItemsResponse,
+} from "@/lib/schemas/items";
 
 test.describe.serial("Items API", () => {
   let createdItemId: number;
@@ -8,21 +13,23 @@ test.describe.serial("Items API", () => {
       data: {
         title: "Test Item from API",
         description: "Created via API test",
-        visibility: "private",
+        visibility: "privateAccess",
       },
     });
 
     expect(response.status()).toBe(201);
     const body = await response.json();
-    expect(body).toHaveProperty("id");
-    expect(body.title).toBe("Test Item from API");
-    expect(body.description).toBe("Created via API test");
-    expect(body.visibility).toBe("private");
-    // Should include images (empty for items without images)
-    expect(body).toHaveProperty("images");
-    expect(body.images).toBeInstanceOf(Array);
 
-    createdItemId = body.id;
+    // Validate response matches OpenAPI schema
+    const validated = ItemResponseSchema.parse(body);
+
+    expect(validated.id).toBeDefined();
+    expect(validated.title).toBe("Test Item from API");
+    expect(validated.description).toBe("Created via API test");
+    expect(validated.visibility).toBe("privateAccess");
+    expect(validated.images).toBeInstanceOf(Array);
+
+    createdItemId = validated.id;
   });
 
   test("GET /api/v1/items - should list all items", async ({ request }) => {
@@ -30,8 +37,13 @@ test.describe.serial("Items API", () => {
 
     expect(response.status()).toBe(200);
     const body = await response.json();
-    expect(body).toBeInstanceOf(Array);
-    expect(body.length).toBeGreaterThan(0);
+
+    // Validate response matches OpenAPI schema
+    const validated = PaginatedItemsResponse.parse(body);
+
+    expect(validated.data).toBeInstanceOf(Array);
+    expect(validated.data.length).toBeGreaterThan(0);
+    expect(validated.pagination).toBeDefined();
   });
 
   test("GET /api/v1/items?search=Test - should filter items by search", async ({
@@ -41,10 +53,14 @@ test.describe.serial("Items API", () => {
 
     expect(response.status()).toBe(200);
     const body = await response.json();
-    expect(body).toBeInstanceOf(Array);
+
+    // Validate response matches OpenAPI schema
+    const validated = PaginatedItemsResponse.parse(body);
+
+    expect(validated.data).toBeInstanceOf(Array);
     expect(
-      body.every(
-        (item: any) =>
+      validated.data.every(
+        (item) =>
           item.title.includes("Test") || item.description?.includes("Test"),
       ),
     ).toBeTruthy();
@@ -57,9 +73,16 @@ test.describe.serial("Items API", () => {
 
     expect(response.status()).toBe(200);
     const body = await response.json();
-    expect(body.id).toBe(createdItemId);
-    expect(body.title).toBe("Test Item from API");
-    expect(body.previewUrl).toContain(`/preview/item/${createdItemId}`);
+
+    // Validate response matches OpenAPI schema (detail includes children, contents, positions)
+    const validated = ItemDetailResponseSchema.parse(body);
+
+    expect(validated.id).toBe(createdItemId);
+    expect(validated.title).toBe("Test Item from API");
+    expect(validated.previewUrl).toContain(`/preview/item/${createdItemId}`);
+    expect(validated.children).toBeInstanceOf(Array);
+    expect(validated.contents).toBeInstanceOf(Array);
+    expect(validated.positions).toBeInstanceOf(Array);
   });
 
   test("GET /api/v1/items/999999 - should return 404 for non-existent item", async ({
@@ -77,15 +100,19 @@ test.describe.serial("Items API", () => {
       data: {
         title: "Updated Test Item",
         description: "Updated via API test",
-        visibility: "public",
+        visibility: "publicAccess",
       },
     });
 
     expect(response.status()).toBe(200);
     const body = await response.json();
-    expect(body.title).toBe("Updated Test Item");
-    expect(body.visibility).toBe("public");
-    expect(body.previewUrl).toContain(`/preview/item/${createdItemId}`);
+
+    // Validate response matches OpenAPI schema
+    const validated = ItemResponseSchema.parse(body);
+
+    expect(validated.title).toBe("Updated Test Item");
+    expect(validated.visibility).toBe("publicAccess");
+    expect(validated.previewUrl).toContain(`/preview/item/${createdItemId}`);
   });
 
   test("GET /api/v1/items/{id} - should include children in response", async ({
@@ -97,23 +124,25 @@ test.describe.serial("Items API", () => {
         title: "Child Item",
         description: "Child of test item",
         parentId: createdItemId,
-        visibility: "public",
+        visibility: "publicAccess",
       },
     });
     expect(childResponse.status()).toBe(201);
-    const childItem = await childResponse.json();
+    const childItem = ItemResponseSchema.parse(await childResponse.json());
 
     // Fetch the parent item and verify children are included
     const response = await request.get(`/api/v1/items/${createdItemId}`);
     expect(response.status()).toBe(200);
     const body = await response.json();
 
-    expect(body).toHaveProperty("children");
-    expect(body.children).toBeInstanceOf(Array);
-    expect(body.children.length).toBe(1);
-    expect(body.children[0].id).toBe(childItem.id);
-    expect(body.children[0].title).toBe("Child Item");
-    expect(body.children[0]).toHaveProperty("previewUrl");
+    // Validate response matches OpenAPI schema
+    const validated = ItemDetailResponseSchema.parse(body);
+
+    expect(validated.children).toBeInstanceOf(Array);
+    expect(validated.children.length).toBe(1);
+    expect(validated.children[0].id).toBe(childItem.id);
+    expect(validated.children[0].title).toBe("Child Item");
+    expect(validated.children[0].previewUrl).toBeDefined();
 
     // Clean up child item
     await request.delete(`/api/v1/items/${childItem.id}`);
@@ -151,7 +180,7 @@ test.describe.serial("Items API", () => {
     const response = await request.post("/api/v1/items", {
       data: {
         title: "Test Item with Invalid Images",
-        visibility: "private",
+        visibility: "privateAccess",
         images: ["https://example.com/image.jpg"],
       },
     });
@@ -168,7 +197,7 @@ test.describe.serial("Items API", () => {
     const response = await request.post("/api/v1/items", {
       data: {
         title: "Test Item with Mixed Images",
-        visibility: "private",
+        visibility: "privateAccess",
         images: ["file:1", "https://example.com/image.jpg"],
       },
     });
@@ -185,19 +214,21 @@ test.describe.serial("Items API", () => {
 
     expect(response.status()).toBe(200);
     const body = await response.json();
-    expect(body).toBeInstanceOf(Array);
 
-    // Check each item's images are in the correct format
-    for (const item of body) {
-      expect(item).toHaveProperty("images");
+    // Validate response matches OpenAPI schema (this validates images are {id, url} objects)
+    const validated = PaginatedItemsResponse.parse(body);
+
+    expect(validated.data).toBeInstanceOf(Array);
+
+    // Additional check: images should be objects with id and url per schema
+    for (const item of validated.data) {
       expect(item.images).toBeInstanceOf(Array);
-
-      // If item has images, verify they are objects with id and url
       for (const image of item.images) {
-        expect(image).toHaveProperty("id");
-        expect(image).toHaveProperty("url");
+        expect(typeof image).toBe("object");
         expect(typeof image.id).toBe("number");
         expect(typeof image.url).toBe("string");
+        // URL should be valid
+        expect(() => new URL(image.url)).not.toThrow();
       }
     }
   });
