@@ -31,6 +31,8 @@ public struct ContentSchemaService: ContentSchemaServiceProtocol {
         case .badRequest(let badRequest):
             let error = try? badRequest.body.json
             throw APIError.badRequest(error?.error ?? "Invalid request")
+        case .unauthorized:
+            throw APIError.unauthorized
         case .forbidden:
             throw APIError.forbidden
         case .notFound:

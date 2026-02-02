@@ -34,7 +34,7 @@
   "defaultResponseSet": "auth",
   "responseSets": {
     "auth": ["400", "401", "403", "404", "500"],
-    "public": ["400", "403", "404", "500"]
+    "public": ["400", "401", "403", "404", "500"]
   },
   "errorConfig": {
     "template": {

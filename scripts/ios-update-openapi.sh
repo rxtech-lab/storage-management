@@ -13,7 +13,7 @@ cd ../
 
 TARGET_FILE="./RxStorage/packages/RxStorageCore/Sources/RxStorageCore/openapi.json"
 
-ENDPOINT="${OPENAPI_DOCUMENTATION_ENDPOINT:-https://storage.rxlab.app/api/openapi}"
+ENDPOINT="${OPENAPI_DOCUMENTATION_ENDPOINT:-http://localhost:3000/api/openapi}"
 
 echo "Downloading OpenAPI spec from: $ENDPOINT"
 curl -sS -o "$TARGET_FILE" "$ENDPOINT"

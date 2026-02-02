@@ -36,14 +36,11 @@ public struct ItemService: ItemServiceProtocol {
         return response.data
     }
 
+    @APICall(.ok, transform: "transformPaginatedItems")
     public func fetchItemsPaginated(filters: ItemFilters?) async throws -> PaginatedResponse<StorageItem> {
-        let client = StorageAPIClient.shared.client
-
-        // Build query params - broken up to help compiler type-check
+        // Build query params
         let direction = filters?.direction.flatMap { Operations.getItems.Input.Query.directionPayload(rawValue: $0.rawValue) }
-        // Convert visibility type from response schema to query schema (same raw values)
         let queryVisibility = filters?.visibility.flatMap { Operations.getItems.Input.Query.visibilityPayload(rawValue: $0.rawValue) }
-        // Convert parentId Int? to OpenAPIValueContainer? (oneOf type: integer or "null" string)
         let parentIdContainer: OpenAPIValueContainer? = filters?.parentId.flatMap { id in
             try? OpenAPIValueContainer(unvalidatedValue: id)
         }
@@ -59,174 +56,45 @@ public struct ItemService: ItemServiceProtocol {
             visibility: queryVisibility
         )
 
-        let response = try await client.getItems(.init(query: query))
-
-        switch response {
-        case .ok(let okResponse):
-            let body = try okResponse.body.json
-            let pagination = PaginationState(from: body.pagination)
-            return PaginatedResponse(data: body.data, pagination: pagination)
-        case .badRequest(let badRequest):
-            let error = try? badRequest.body.json
-            throw APIError.badRequest(error?.error ?? "Invalid request")
-        case .unauthorized:
-            throw APIError.unauthorized
-        case .forbidden:
-            throw APIError.forbidden
-        case .notFound:
-            throw APIError.notFound
-        case .internalServerError:
-            throw APIError.serverError("Internal server error")
-        case .undocumented(let statusCode, _):
-            throw APIError.serverError("HTTP \(statusCode)")
-        }
+        try await StorageAPIClient.shared.client.getItems(.init(query: query))
     }
 
+    /// Transforms paginated items response to PaginatedResponse
+    private func transformPaginatedItems(_ body: Components.Schemas.PaginatedItemsResponse) -> PaginatedResponse<StorageItem> {
+        let pagination = PaginationState(from: body.pagination)
+        return PaginatedResponse(data: body.data, pagination: pagination)
+    }
+
+    @APICall(.ok)
     public func fetchItem(id: Int) async throws -> StorageItemDetail {
-        let client = StorageAPIClient.shared.client
-
-        let response = try await client.getItem(.init(path: .init(id: String(id))))
-
-        // getItem endpoint: 200, 400, 403, 404, 500 (no 401 - public items accessible without auth)
-        switch response {
-        case .ok(let okResponse):
-            return try okResponse.body.json
-        case .badRequest(let badRequest):
-            let error = try? badRequest.body.json
-            throw APIError.badRequest(error?.error ?? "Invalid request")
-        case .forbidden:
-            throw APIError.forbidden
-        case .notFound:
-            throw APIError.notFound
-        case .internalServerError:
-            throw APIError.serverError("Internal server error")
-        case .undocumented(let statusCode, _):
-            throw APIError.serverError("HTTP \(statusCode)")
-        }
+        try await StorageAPIClient.shared.client.getItem(.init(path: .init(id: String(id))))
     }
 
     /// Fetch item for preview (public access, optionally authenticated)
     /// Used by App Clips to load items - works for public items without auth
-    @CatchDecodingErrors
+    @APICall(.ok)
     public func fetchPreviewItem(id: Int) async throws -> StorageItemDetail {
-        // Use optional auth client - will work for public items without auth
-        // and for private items with valid auth
-        let client = StorageAPIClient.shared.optionalAuthClient
-
-        let response = try await client.getItem(.init(path: .init(id: String(id))))
-
-        // getItem endpoint: 200, 400, 403, 404, 500 (no 401 - public items accessible without auth)
-        switch response {
-        case .ok(let okResponse):
-            return try okResponse.body.json
-        case .badRequest(let badRequest):
-            let error = try? badRequest.body.json
-            throw APIError.badRequest(error?.error ?? "Invalid request")
-        case .forbidden:
-            throw APIError.forbidden
-        case .notFound:
-            throw APIError.notFound
-        case .internalServerError:
-            throw APIError.serverError("Internal server error")
-        case .undocumented(let statusCode, _):
-            throw APIError.serverError("HTTP \(statusCode)")
-        }
+        try await StorageAPIClient.shared.optionalAuthClient.getItem(.init(path: .init(id: String(id))))
     }
 
+    @APICall(.created)
     public func createItem(_ request: NewItemRequest) async throws -> StorageItem {
-        let client = StorageAPIClient.shared.client
-
-        let response = try await client.createItem(.init(body: .json(request)))
-
-        switch response {
-        case .created(let createdResponse):
-            return try createdResponse.body.json
-        case .badRequest(let badRequest):
-            let error = try? badRequest.body.json
-            throw APIError.badRequest(error?.error ?? "Invalid request")
-        case .unauthorized:
-            throw APIError.unauthorized
-        case .forbidden:
-            throw APIError.forbidden
-        case .notFound:
-            throw APIError.notFound
-        case .internalServerError:
-            throw APIError.serverError("Internal server error")
-        case .undocumented(let statusCode, _):
-            throw APIError.serverError("HTTP \(statusCode)")
-        }
+        try await StorageAPIClient.shared.client.createItem(.init(body: .json(request)))
     }
 
+    @APICall(.ok)
     public func updateItem(id: Int, _ request: UpdateItemRequest) async throws -> StorageItem {
-        let client = StorageAPIClient.shared.client
-
-        let response = try await client.updateItem(.init(path: .init(id: String(id)), body: .json(request)))
-
-        switch response {
-        case .ok(let okResponse):
-            return try okResponse.body.json
-        case .badRequest(let badRequest):
-            let error = try? badRequest.body.json
-            throw APIError.badRequest(error?.error ?? "Invalid request")
-        case .unauthorized:
-            throw APIError.unauthorized
-        case .forbidden:
-            throw APIError.forbidden
-        case .notFound:
-            throw APIError.notFound
-        case .internalServerError:
-            throw APIError.serverError("Internal server error")
-        case .undocumented(let statusCode, _):
-            throw APIError.serverError("HTTP \(statusCode)")
-        }
+        try await StorageAPIClient.shared.client.updateItem(.init(path: .init(id: String(id)), body: .json(request)))
     }
 
+    @APICall(.noContent)
     public func deleteItem(id: Int) async throws {
-        let client = StorageAPIClient.shared.client
-
-        let response = try await client.deleteItem(.init(path: .init(id: String(id))))
-
-        switch response {
-        case .noContent:
-            return
-        case .badRequest(let badRequest):
-            let error = try? badRequest.body.json
-            throw APIError.badRequest(error?.error ?? "Invalid request")
-        case .unauthorized:
-            throw APIError.unauthorized
-        case .forbidden:
-            throw APIError.forbidden
-        case .notFound:
-            throw APIError.notFound
-        case .internalServerError:
-            throw APIError.serverError("Internal server error")
-        case .undocumented(let statusCode, _):
-            throw APIError.serverError("HTTP \(statusCode)")
-        }
+        try await StorageAPIClient.shared.client.deleteItem(.init(path: .init(id: String(id))))
     }
 
+    @APICall(.ok)
     public func setParent(itemId: Int, parentId: Int?) async throws -> StorageItem {
-        let client = StorageAPIClient.shared.client
-
         let request = SetParentRequest(parentId: parentId)
-        let response = try await client.setItemParent(.init(path: .init(id: String(itemId)), body: .json(request)))
-
-        switch response {
-        case .ok(let okResponse):
-            return try okResponse.body.json
-        case .badRequest(let badRequest):
-            let error = try? badRequest.body.json
-            throw APIError.badRequest(error?.error ?? "Invalid request")
-        case .unauthorized:
-            throw APIError.unauthorized
-        case .forbidden:
-            throw APIError.forbidden
-        case .notFound:
-            throw APIError.notFound
-        case .internalServerError:
-            throw APIError.serverError("Internal server error")
-        case .undocumented(let statusCode, _):
-            throw APIError.serverError("HTTP \(statusCode)")
-        }
+        try await StorageAPIClient.shared.client.setItemParent(.init(path: .init(id: String(itemId)), body: .json(request)))
     }
 }

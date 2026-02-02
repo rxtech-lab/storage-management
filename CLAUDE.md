@@ -365,3 +365,8 @@ See `RxStorage/RxStorage/Config/XCCONFIG_SETUP.md` for detailed configuration gu
 ## Build and test
 
 Since you don't have access to cd, run `scripts/ios-test.sh` and `scripts/ios-build.sh` script to build and test the ios mobile app which includes testing the app and its packages.
+
+
+## OpenAPI
+
+Apis are defined in openapi format and use codegen for both frontend mobile app and backend. When updating the backend api, run `./scripts/ios-update-openapi.sh` script to regenerate clients. This will regenerate both backend and frontend code. Use this always!
