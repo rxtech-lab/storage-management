@@ -303,9 +303,11 @@ struct RecentItemRow: View {
                         .foregroundStyle(.primary)
 
                     HStack(spacing: 8) {
-                        Label(item.category.value1.name, systemImage: "folder")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
+                        if let category = item.category {
+                            Label(category.value1.name, systemImage: "folder")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
 
                         // Visibility badge
                         if item.visibility == .publicAccess {

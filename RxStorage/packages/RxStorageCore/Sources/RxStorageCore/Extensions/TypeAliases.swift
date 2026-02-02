@@ -203,9 +203,9 @@ extension Components.Schemas.ItemDetailResponseSchema {
     /// Convert to StorageItem (ItemResponseSchema) for use in list views
     public func toStorageItem() -> StorageItem {
         // Convert payload types by extracting the underlying ref schema and wrapping in new payload
-        let categoryPayload = StorageItem.categoryPayload(value1: category.value1)
-        let locationPayload = StorageItem.locationPayload(value1: location.value1)
-        let authorPayload = StorageItem.authorPayload(value1: author.value1)
+        let categoryPayload = category.map { StorageItem.categoryPayload(value1: $0.value1) }
+        let locationPayload = location.map { StorageItem.locationPayload(value1: $0.value1) }
+        let authorPayload = author.map { StorageItem.authorPayload(value1: $0.value1) }
 
         return StorageItem(
             id: id,

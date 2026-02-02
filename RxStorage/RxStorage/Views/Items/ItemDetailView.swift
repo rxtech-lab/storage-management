@@ -357,24 +357,30 @@ struct ItemDetailView: View {
 
             VStack(spacing: 12) {
                 // Category
-                LabeledContent {
-                    Text(item.category.value1.name)
-                } label: {
-                    Label("Category", systemImage: "folder")
+                if let category = item.category {
+                    LabeledContent {
+                        Text(category.value1.name)
+                    } label: {
+                        Label("Category", systemImage: "folder")
+                    }
                 }
 
                 // Location
-                LabeledContent {
-                    Text(item.location.value1.title)
-                } label: {
-                    Label("Location", systemImage: "mappin")
+                if let location = item.location {
+                    LabeledContent {
+                        Text(location.value1.title)
+                    } label: {
+                        Label("Location", systemImage: "mappin")
+                    }
                 }
 
                 // Author
-                LabeledContent {
-                    Text(item.author.value1.name)
-                } label: {
-                    Label("Author", systemImage: "person")
+                if let author = item.author {
+                    LabeledContent {
+                        Text(author.value1.name)
+                    } label: {
+                        Label("Author", systemImage: "person")
+                    }
                 }
 
                 if let price = item.price {
