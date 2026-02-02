@@ -97,29 +97,22 @@ struct LocationDetailView: View {
 
     @ViewBuilder
     private func fullScreenMapContent(_ location: Location) -> some View {
+        let coordinate = CLLocationCoordinate2D(latitude: location.latitude, longitude: location.longitude)
         ZStack {
-            if let coordinate = location.coordinate {
-                Map(position: $cameraPosition) {
-                    Marker(location.title, coordinate: coordinate)
-                        .tint(.red)
-                }
-                .mapControls {
-                    MapCompass()
-                    MapScaleView()
-                }
-                .mapStyle(.standard(elevation: .realistic))
-                .onAppear {
-                    cameraPosition = .region(MKCoordinateRegion(
-                        center: coordinate,
-                        span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)
-                    ))
-                }
-            } else {
-                ContentUnavailableView(
-                    "No Coordinates",
-                    systemImage: "mappin.slash",
-                    description: Text("This location has no coordinates set.")
-                )
+            Map(position: $cameraPosition) {
+                Marker(location.title, coordinate: coordinate)
+                    .tint(.red)
+            }
+            .mapControls {
+                MapCompass()
+                MapScaleView()
+            }
+            .mapStyle(.standard(elevation: .realistic))
+            .onAppear {
+                cameraPosition = .region(MKCoordinateRegion(
+                    center: coordinate,
+                    span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)
+                ))
             }
         }
         .ignoresSafeArea(.all)
@@ -141,49 +134,39 @@ private struct LocationInfoSheet: View {
                             .font(.title2)
                             .fontWeight(.bold)
 
-                        if let lat = location.latitude, let lon = location.longitude {
-                            Text(String(format: "%.6f, %.6f", lat, lon))
-                                .font(.subheadline)
-                                .foregroundStyle(.secondary)
-                        }
+                        Text(String(format: "%.6f, %.6f", location.latitude, location.longitude))
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
                     }
                 }
 
                 // Coordinates section
                 Section("Coordinates") {
-                    if let latitude = location.latitude {
-                        LabeledContent {
-                            Text(String(format: "%.6f", latitude))
-                        } label: {
-                            Label("Latitude", systemImage: "location")
-                        }
+                    LabeledContent {
+                        Text(String(format: "%.6f", location.latitude))
+                    } label: {
+                        Label("Latitude", systemImage: "location")
                     }
 
-                    if let longitude = location.longitude {
-                        LabeledContent {
-                            Text(String(format: "%.6f", longitude))
-                        } label: {
-                            Label("Longitude", systemImage: "location")
-                        }
+                    LabeledContent {
+                        Text(String(format: "%.6f", location.longitude))
+                    } label: {
+                        Label("Longitude", systemImage: "location")
                     }
                 }
 
                 // Metadata section
                 Section("Details") {
-                    if let createdAt = location.createdAt {
-                        LabeledContent {
-                            Text(createdAt.formatted(date: .abbreviated, time: .shortened))
-                        } label: {
-                            Label("Created", systemImage: "calendar")
-                        }
+                    LabeledContent {
+                        Text(location.createdAt.formatted(date: .abbreviated, time: .shortened))
+                    } label: {
+                        Label("Created", systemImage: "calendar")
                     }
 
-                    if let updatedAt = location.updatedAt {
-                        LabeledContent {
-                            Text(updatedAt.formatted(date: .abbreviated, time: .shortened))
-                        } label: {
-                            Label("Updated", systemImage: "clock")
-                        }
+                    LabeledContent {
+                        Text(location.updatedAt.formatted(date: .abbreviated, time: .shortened))
+                    } label: {
+                        Label("Updated", systemImage: "clock")
                     }
                 }
             }

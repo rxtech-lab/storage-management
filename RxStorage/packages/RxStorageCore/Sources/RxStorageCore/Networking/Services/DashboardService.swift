@@ -2,30 +2,30 @@
 //  DashboardService.swift
 //  RxStorageCore
 //
-//  API service for dashboard operations
+//  Dashboard service protocol and implementation using generated client
 //
 
 import Foundation
+import Logging
+import OpenAPIRuntime
+
+private let logger = Logger(label: "DashboardService")
+
+// MARK: - Protocol
 
 /// Protocol for dashboard service operations
-@MainActor
-public protocol DashboardServiceProtocol {
-    func fetchDashboardStats() async throws -> DashboardStats
+public protocol DashboardServiceProtocol: Sendable {
+    func fetchStats() async throws -> DashboardStats
 }
 
-/// Dashboard service implementation
-@MainActor
-public class DashboardService: DashboardServiceProtocol {
-    private let apiClient: APIClient
+// MARK: - Implementation
 
-    public init(apiClient: APIClient = .shared) {
-        self.apiClient = apiClient
-    }
+/// Dashboard service implementation using generated OpenAPI client
+public struct DashboardService: DashboardServiceProtocol {
+    public init() {}
 
-    public func fetchDashboardStats() async throws -> DashboardStats {
-        return try await apiClient.get(
-            .getDashboardStats,
-            responseType: DashboardStats.self
-        )
+    @APICall(.ok)
+    public func fetchStats() async throws -> DashboardStats {
+        try await StorageAPIClient.shared.client.getDashboardStats(.init())
     }
 }

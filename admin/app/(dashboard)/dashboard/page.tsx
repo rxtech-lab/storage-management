@@ -24,8 +24,8 @@ export default async function DashboardPage() {
     getAuthors(),
   ]);
 
-  const publicItems = items.filter((i) => i.visibility === "public");
-  const privateItems = items.filter((i) => i.visibility === "private");
+  const publicItems = items.filter((i) => i.visibility === "publicAccess");
+  const privateItems = items.filter((i) => i.visibility === "privateAccess");
   const recentItems = items.slice(0, 5);
 
   return (
@@ -152,7 +152,7 @@ export default async function DashboardPage() {
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
-                    {item.visibility === "public" ? (
+                    {item.visibility === "publicAccess" ? (
                       <Eye className="h-4 w-4 text-green-500" />
                     ) : (
                       <EyeOff className="h-4 w-4 text-muted-foreground" />

@@ -28,7 +28,7 @@ export function ItemDetailView({ item }: ItemDetailViewProps) {
       <div className="space-y-1">
         <div className="flex items-center gap-3">
           <h1 className="text-3xl font-bold tracking-tight">{item.title}</h1>
-          {item.visibility === "public" ? (
+          {item.visibility === "publicAccess" ? (
             <Badge variant="default" className="gap-1">
               <Eye className="h-3 w-3" />
               Public

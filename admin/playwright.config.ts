@@ -36,6 +36,7 @@ export default defineConfig({
       AUTH_ISSUER: "https://test.example.com",
       AUTH_CLIENT_ID: "test-client",
       AUTH_CLIENT_SECRET: "test-secret",
+      NEXT_PUBLIC_URL: "http://localhost:3000",
     },
   },
 });

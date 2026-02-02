@@ -1,48 +1,11 @@
 //
-//  PositionSchema.swift
+//  AnyCodable.swift
 //  RxStorageCore
 //
-//  Position schema model for dynamic forms
+//  Type-erased wrapper for JSON values - used for dynamic schemas
 //
 
 import Foundation
-
-/// Position schema defining structure for item positions
-public struct PositionSchema: Codable, Identifiable, Hashable, Sendable {
-    public let id: Int
-    public let name: String
-    public let schema: [String: AnyCodable]
-    public let createdAt: Date?  // Optional: not included when nested in Position
-    public let updatedAt: Date?  // Optional: not included when nested in Position
-
-    public init(
-        id: Int,
-        name: String,
-        schema: [String: AnyCodable],
-        createdAt: Date? = nil,
-        updatedAt: Date? = nil
-    ) {
-        self.id = id
-        self.name = name
-        self.schema = schema
-        self.createdAt = createdAt
-        self.updatedAt = updatedAt
-    }
-}
-
-/// Request body for creating a new position schema
-public struct NewPositionSchemaRequest: Codable, Sendable {
-    public let name: String
-    public let schema: [String: AnyCodable]
-
-    public init(name: String, schema: [String: AnyCodable]) {
-        self.name = name
-        self.schema = schema
-    }
-}
-
-/// Request body for updating a position schema
-public typealias UpdatePositionSchemaRequest = NewPositionSchemaRequest
 
 /// Type-erased wrapper for JSON values
 public struct AnyCodable: Codable, Hashable, @unchecked Sendable {

@@ -9,8 +9,15 @@ import {
 import type { ContentData } from "@/lib/db";
 
 /**
- * GET /api/v1/contents/:id
- * Returns a single content by ID
+ * Get content by ID
+ * @operationId getContent
+ * @description Retrieve a single content attachment by its ID
+ * @pathParams IdPathParams
+ * @response ContentResponseSchema
+ * @auth bearer
+ * @tag Contents
+ * @responseSet auth
+ * @openapi
  */
 export async function GET(
   request: NextRequest,
@@ -43,8 +50,16 @@ export async function GET(
 }
 
 /**
- * PUT /api/v1/contents/:id
- * Updates a content
+ * Update content
+ * @operationId updateContent
+ * @description Update an existing content attachment
+ * @pathParams IdPathParams
+ * @body ContentUpdateSchema
+ * @response ContentResponseSchema
+ * @auth bearer
+ * @tag Contents
+ * @responseSet auth
+ * @openapi
  */
 export async function PUT(
   request: NextRequest,
@@ -93,8 +108,15 @@ export async function PUT(
 }
 
 /**
- * DELETE /api/v1/contents/:id
- * Deletes a content
+ * Delete content
+ * @operationId deleteContent
+ * @description Delete a content attachment by ID
+ * @pathParams IdPathParams
+ * @response 200:SuccessResponse
+ * @auth bearer
+ * @tag Contents
+ * @responseSet auth
+ * @openapi
  */
 export async function DELETE(
   request: NextRequest,

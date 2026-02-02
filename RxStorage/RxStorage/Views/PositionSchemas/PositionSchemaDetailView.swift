@@ -7,6 +7,7 @@
 
 import JsonSchemaEditor
 import JSONSchema
+import OpenAPIRuntime
 import RxStorageCore
 import SwiftUI
 
@@ -35,7 +36,7 @@ struct PositionSchemaDetailView: View {
                     }
 
                     // Schema Editor (read-only)
-                    if !schema.schema.isEmpty {
+                    if !schema.schema.additionalProperties.isEmpty {
                         JsonSchemaEditorView(schema: $jsonSchema, disabled: true)
                     }
                 }
@@ -86,13 +87,21 @@ struct PositionSchemaDetailView: View {
         }
     }
 
-    /// Parse schema dictionary to JSONSchema
-    private static func parseSchema(from dict: [String: RxStorageCore.AnyCodable]) -> JSONSchema? {
-        let unwrappedDict = dict.mapValues { $0.value }
-        guard let data = try? JSONSerialization.data(withJSONObject: unwrappedDict, options: []) else {
+    /// Parse schemaPayload (additionalProperties) to JSONSchema
+    private static func parseSchema(from schemaPayload: PositionSchema.schemaPayload) -> JSONSchema? {
+        let dict = schemaPayload.additionalProperties.compactMapValues { $0.value }
+        guard let data = try? JSONSerialization.data(withJSONObject: dict) else {
             return nil
         }
         return try? JSONDecoder().decode(JSONSchema.self, from: data)
+    }
+
+    /// Count of properties in the JSON schema
+    private static func fieldCount(from schemaPayload: PositionSchema.schemaPayload) -> Int {
+        if let properties = schemaPayload.additionalProperties["properties"]?.value as? [String: Any] {
+            return properties.count
+        }
+        return 0
     }
 
     // MARK: - Schema Header
@@ -104,7 +113,7 @@ struct PositionSchemaDetailView: View {
                 .font(.title2)
                 .fontWeight(.bold)
 
-            Text("\(schema.schema.count) fields defined")
+            Text("\(Self.fieldCount(from: schema.schema)) fields defined")
                 .font(.body)
                 .foregroundStyle(.secondary)
         }
@@ -114,21 +123,17 @@ struct PositionSchemaDetailView: View {
 
     @ViewBuilder
     private func schemaDetails(_ schema: PositionSchema) -> some View {
-        if let createdAt = schema.createdAt {
-            DetailRow(
-                label: "Created",
-                value: createdAt.formatted(date: .abbreviated, time: .shortened),
-                icon: "calendar"
-            )
-        }
+        DetailRow(
+            label: "Created",
+            value: schema.createdAt.formatted(date: .abbreviated, time: .shortened),
+            icon: "calendar"
+        )
 
-        if let updatedAt = schema.updatedAt {
-            DetailRow(
-                label: "Updated",
-                value: updatedAt.formatted(date: .abbreviated, time: .shortened),
-                icon: "clock"
-            )
-        }
+        DetailRow(
+            label: "Updated",
+            value: schema.updatedAt.formatted(date: .abbreviated, time: .shortened),
+            icon: "clock"
+        )
     }
 }
 

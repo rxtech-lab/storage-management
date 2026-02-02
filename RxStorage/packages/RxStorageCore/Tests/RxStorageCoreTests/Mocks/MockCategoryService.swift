@@ -64,7 +64,7 @@ public final class MockCategoryService: CategoryServiceProtocol {
         let categories = try await fetchCategories(filters: filters)
         return PaginatedResponse(
             data: categories,
-            pagination: PaginationInfo(nextCursor: nil, prevCursor: nil, hasNextPage: false, hasPrevPage: false)
+            pagination: PaginationState(hasNextPage: false, hasPrevPage: false, nextCursor: nil, prevCursor: nil)
         )
     }
 

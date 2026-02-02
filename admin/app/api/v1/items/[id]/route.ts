@@ -10,11 +10,25 @@ import { getItemContents } from "@/lib/actions/content-actions";
 import { getItemPositions } from "@/lib/actions/position-actions";
 import { signImagesArrayWithIds } from "@/lib/actions/s3-upload-actions";
 import { isEmailWhitelisted } from "@/lib/actions/whitelist-actions";
+import {
+  ItemDetailResponseSchema,
+  ItemResponseSchema,
+} from "@/lib/schemas/items";
 
 interface RouteParams {
   params: Promise<{ id: string }>;
 }
 
+/**
+ * Get item by ID
+ * @operationId getItem
+ * @description Retrieve detailed item information including children, contents, and positions. Public items can be accessed without authentication.
+ * @pathParams IdPathParams
+ * @response ItemDetailResponseSchema
+ * @tag Items
+ * @responseSet public
+ * @openapi
+ */
 export async function GET(request: NextRequest, { params }: RouteParams) {
   const { id } = await params;
   const itemId = parseInt(id);
@@ -25,7 +39,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
   }
 
   // Public items can be accessed without authentication
-  if (item.visibility === "public") {
+  if (item.visibility === "publicAccess") {
     return buildItemResponse(item, itemId, null);
   }
 
@@ -84,16 +98,35 @@ async function buildItemResponse(
     }),
   );
 
-  return NextResponse.json({
+  const responseData = {
     ...item,
     images,
     previewUrl,
     children: childrenWithSignedImages,
     contents,
     positions,
-  });
+  };
+
+  const validated = ItemDetailResponseSchema.safeParse(responseData);
+  if (!validated.success) {
+    console.error("Validation error:", validated.error.errors);
+    return NextResponse.json({ error: "Invalid response data" }, { status: 500 });
+  }
+  return NextResponse.json(validated.data);
 }
 
+/**
+ * Update item
+ * @operationId updateItem
+ * @description Update an existing item
+ * @pathParams IdPathParams
+ * @body ItemUpdateSchema
+ * @response ItemResponseSchema
+ * @auth bearer
+ * @tag Items
+ * @responseSet auth
+ * @openapi
+ */
 export async function PUT(request: NextRequest, { params }: RouteParams) {
   const session = await getSession(request);
   if (!session) {
@@ -115,7 +148,13 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
           ? await signImagesArrayWithIds(result.data.images)
           : [];
 
-      return NextResponse.json({ ...result.data, images, previewUrl });
+      const responseData = { ...result.data, images, previewUrl };
+      const validated = ItemResponseSchema.safeParse(responseData);
+      if (!validated.success) {
+        console.error("Validation error:", validated.error.errors);
+        return NextResponse.json({ error: "Invalid response data" }, { status: 500 });
+      }
+      return NextResponse.json(validated.data);
     } else if (result.error === "Permission denied") {
       return NextResponse.json({ error: result.error }, { status: 403 });
     } else {
@@ -129,6 +168,17 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
   }
 }
 
+/**
+ * Delete item
+ * @operationId deleteItem
+ * @description Delete an item by ID
+ * @pathParams IdPathParams
+ * @response 204:NoContent
+ * @auth bearer
+ * @tag Items
+ * @responseSet auth
+ * @openapi
+ */
 export async function DELETE(request: NextRequest, { params }: RouteParams) {
   const session = await getSession(request);
   if (!session) {

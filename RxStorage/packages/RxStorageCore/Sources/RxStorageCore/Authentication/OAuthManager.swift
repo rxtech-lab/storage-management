@@ -48,7 +48,6 @@ public final class OAuthManager {
 
     private let configuration: AppConfiguration
     private let tokenStorage: TokenStorage
-    private let apiClient: APIClient
     private let logger = Logger(label: "com.rxlab.rxstorage.OAuthManager")
 
     /// Timer for periodic token refresh checks
@@ -70,12 +69,10 @@ public final class OAuthManager {
 
     public init(
         configuration: AppConfiguration = .shared,
-        tokenStorage: TokenStorage = .shared,
-        apiClient: APIClient = .shared
+        tokenStorage: TokenStorage = .shared
     ) {
         self.configuration = configuration
         self.tokenStorage = tokenStorage
-        self.apiClient = apiClient
 
         // Check if already authenticated
         Task {
@@ -353,9 +350,72 @@ public final class OAuthManager {
     /// Refresh access token if expired
     public func refreshTokenIfNeeded() async throws {
         if await tokenStorage.isTokenExpired() {
-            try await apiClient.refreshAccessToken()
+            try await performTokenRefresh()
             try await fetchUserInfo()
         }
+    }
+
+    /// Refresh access token using refresh token
+    private func performTokenRefresh() async throws {
+        guard let refreshToken = await tokenStorage.getRefreshToken() else {
+            throw OAuthError.noAccessToken
+        }
+
+        // Build token refresh request
+        var urlComponents = URLComponents(string: configuration.authIssuer)!
+        urlComponents.path = "/api/oauth/token"
+
+        guard let url = urlComponents.url else {
+            throw OAuthError.invalidURL
+        }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
+
+        let bodyParams = [
+            "grant_type": "refresh_token",
+            "refresh_token": refreshToken,
+            "client_id": configuration.authClientID,
+        ]
+
+        request.httpBody = bodyParams
+            .map { "\($0.key)=\($0.value.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "")" }
+            .joined(separator: "&")
+            .data(using: .utf8)
+
+        // Perform token refresh
+        let (data, response) = try await URLSession.shared.data(for: request)
+
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw OAuthError.tokenExchangeFailed
+        }
+
+        if httpResponse.statusCode != 200 {
+            if let errorString = String(data: data, encoding: .utf8) {
+                logger.error("Token refresh failed: \(errorString)")
+            }
+            throw OAuthError.tokenExchangeFailed
+        }
+
+        // Decode token response
+        struct TokenResponse: Codable {
+            let access_token: String
+            let refresh_token: String?
+            let expires_in: Int
+        }
+
+        let tokenResponse = try JSONDecoder().decode(TokenResponse.self, from: data)
+
+        // Save new tokens
+        try await tokenStorage.saveAccessToken(tokenResponse.access_token)
+
+        if let newRefreshToken = tokenResponse.refresh_token {
+            try await tokenStorage.saveRefreshToken(newRefreshToken)
+        }
+
+        let expiresAt = Date().addingTimeInterval(TimeInterval(tokenResponse.expires_in))
+        try await tokenStorage.saveExpiresAt(expiresAt)
     }
 
     /// Current access token
@@ -388,7 +448,7 @@ public final class OAuthManager {
 
         // Attempt to refresh the token
         do {
-            try await apiClient.refreshAccessToken()
+            try await performTokenRefresh()
             try await fetchUserInfo()
             authState = .authenticated
             startRefreshTimer()

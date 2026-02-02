@@ -28,13 +28,13 @@ test.describe.serial("Items Access Control", () => {
         data: {
           title: "Public Parent Item",
           description: "A public item for access control testing",
-          visibility: "public",
+          visibility: "publicAccess",
         },
       });
       expect(response.status()).toBe(201);
       const body = await response.json();
       publicItemId = body.id;
-      expect(body.visibility).toBe("public");
+      expect(body.visibility).toBe("publicAccess");
     });
 
     test("should create child for public item", async ({ request }) => {
@@ -46,7 +46,7 @@ test.describe.serial("Items Access Control", () => {
         data: {
           title: "Public Child Item",
           description: "A child of the public item",
-          visibility: "public",
+          visibility: "publicAccess",
           parentId: publicItemId,
         },
       });
@@ -63,13 +63,13 @@ test.describe.serial("Items Access Control", () => {
         data: {
           title: "Private Item",
           description: "A private item for access control testing",
-          visibility: "private",
+          visibility: "privateAccess",
         },
       });
       expect(response.status()).toBe(201);
       const body = await response.json();
       privateItemId = body.id;
-      expect(body.visibility).toBe("private");
+      expect(body.visibility).toBe("privateAccess");
     });
   });
 
@@ -85,7 +85,7 @@ test.describe.serial("Items Access Control", () => {
       const body = await response.json();
       expect(body.id).toBe(publicItemId);
       expect(body.title).toBe("Public Parent Item");
-      expect(body.visibility).toBe("public");
+      expect(body.visibility).toBe("publicAccess");
     });
 
     test("should return children for public item", async ({ request }) => {
@@ -146,7 +146,7 @@ test.describe.serial("Items Access Control", () => {
       const body = await response.json();
       expect(body.id).toBe(privateItemId);
       expect(body.title).toBe("Private Item");
-      expect(body.visibility).toBe("private");
+      expect(body.visibility).toBe("privateAccess");
     });
 
     test("owner gets full data including children and contents", async ({

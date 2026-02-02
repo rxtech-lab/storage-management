@@ -9,6 +9,17 @@ import {
 } from "@/lib/actions/author-actions";
 import { parsePaginationParams } from "@/lib/utils/pagination";
 
+/**
+ * List authors
+ * @operationId getAuthors
+ * @description Retrieve a paginated list of authors
+ * @params AuthorsQueryParams
+ * @response PaginatedAuthorsResponse
+ * @auth bearer
+ * @tag Authors
+ * @responseSet auth
+ * @openapi
+ */
 export async function GET(request: NextRequest) {
   const session = await getSession(request);
   if (!session) {
@@ -54,6 +65,17 @@ export async function GET(request: NextRequest) {
   return NextResponse.json(authors);
 }
 
+/**
+ * Create author
+ * @operationId createAuthor
+ * @description Create a new author
+ * @body AuthorInsertSchema
+ * @response 201:AuthorResponseSchema
+ * @auth bearer
+ * @tag Authors
+ * @responseSet auth
+ * @openapi
+ */
 export async function POST(request: NextRequest) {
   const session = await getSession(request);
   if (!session) {

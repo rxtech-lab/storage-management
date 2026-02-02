@@ -17,7 +17,7 @@ import { toolResultRenderers } from "./tool-renderers";
 // Extend BaseSearchResult with item-specific metadata
 interface ItemSearchResult extends BaseSearchResult<ItemWithRelations> {
   category?: string;
-  visibility: "public" | "private";
+  visibility: "publicAccess" | "privateAccess";
 }
 
 export function GlobalSearch() {
@@ -99,7 +99,7 @@ export function GlobalSearch() {
             </div>
           )}
         </div>
-        {result.visibility === "public" ? (
+        {result.visibility === "publicAccess" ? (
           <Eye className="size-4 text-green-500 shrink-0" />
         ) : (
           <EyeOff className="size-4 text-muted-foreground shrink-0" />

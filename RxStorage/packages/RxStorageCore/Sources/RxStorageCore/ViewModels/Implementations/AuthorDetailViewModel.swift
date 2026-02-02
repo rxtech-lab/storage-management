@@ -7,7 +7,6 @@
 
 import Foundation
 import Observation
-import RxStorageCore
 
 /// Author detail view model
 @Observable

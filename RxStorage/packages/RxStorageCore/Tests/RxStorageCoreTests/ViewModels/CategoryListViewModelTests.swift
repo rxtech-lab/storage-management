@@ -14,8 +14,8 @@ struct CategoryListViewModelTests {
     // MARK: - Test Data
 
     static let testCategories = [
-        Category(id: 1, name: "Books", description: "Book category"),
-        Category(id: 2, name: "Electronics", description: "Electronics category")
+        TestHelpers.makeCategory(id: 1, name: "Books", description: "Book category"),
+        TestHelpers.makeCategory(id: 2, name: "Electronics", description: "Electronics category")
     ]
 
     // MARK: - Fetch Tests

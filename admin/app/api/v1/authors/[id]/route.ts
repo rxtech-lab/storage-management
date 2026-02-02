@@ -6,6 +6,17 @@ interface RouteParams {
   params: Promise<{ id: string }>;
 }
 
+/**
+ * Get author by ID
+ * @operationId getAuthor
+ * @description Retrieve a single author by its ID
+ * @pathParams IdPathParams
+ * @response AuthorResponseSchema
+ * @auth bearer
+ * @tag Authors
+ * @responseSet auth
+ * @openapi
+ */
 export async function GET(request: NextRequest, { params }: RouteParams) {
   const session = await getSession(request);
   if (!session) {
@@ -27,6 +38,18 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
   return NextResponse.json(author);
 }
 
+/**
+ * Update author
+ * @operationId updateAuthor
+ * @description Update an existing author
+ * @pathParams IdPathParams
+ * @body AuthorUpdateSchema
+ * @response AuthorResponseSchema
+ * @auth bearer
+ * @tag Authors
+ * @responseSet auth
+ * @openapi
+ */
 export async function PUT(request: NextRequest, { params }: RouteParams) {
   const session = await getSession(request);
   if (!session) {
@@ -54,6 +77,17 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
   }
 }
 
+/**
+ * Delete author
+ * @operationId deleteAuthor
+ * @description Delete an author by ID
+ * @pathParams IdPathParams
+ * @response 200:SuccessResponse
+ * @auth bearer
+ * @tag Authors
+ * @responseSet auth
+ * @openapi
+ */
 export async function DELETE(request: NextRequest, { params }: RouteParams) {
   const session = await getSession(request);
   if (!session) {

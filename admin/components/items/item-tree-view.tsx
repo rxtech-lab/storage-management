@@ -96,7 +96,7 @@ function TreeNodeComponent({
         </Link>
 
         <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-          {node.visibility === "public" ? (
+          {node.visibility === "publicAccess" ? (
             <Eye className="h-4 w-4 text-green-500" />
           ) : (
             <EyeOff className="h-4 w-4 text-muted-foreground" />

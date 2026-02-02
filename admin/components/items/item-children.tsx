@@ -51,7 +51,7 @@ export function ItemChildren({ children, parentId }: ItemChildrenProps) {
                   {child.category && (
                     <Badge variant="secondary">{child.category.name}</Badge>
                   )}
-                  {child.visibility === "public" ? (
+                  {child.visibility === "publicAccess" ? (
                     <Eye className="h-4 w-4 text-green-500" />
                   ) : (
                     <EyeOff className="h-4 w-4 text-muted-foreground" />

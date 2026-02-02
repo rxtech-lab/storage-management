@@ -401,7 +401,7 @@ export function ItemSections({
                     {child.category && (
                       <Badge variant="secondary">{child.category.name}</Badge>
                     )}
-                    {child.visibility === "public" ? (
+                    {child.visibility === "publicAccess" ? (
                       <Eye className="h-4 w-4 text-green-500" />
                     ) : (
                       <EyeOff className="h-4 w-4 text-muted-foreground" />
@@ -416,7 +416,7 @@ export function ItemSections({
       </Collapsible>
 
       {/* Access Control Section (only for private items) */}
-      {item.visibility === "private" && (
+      {item.visibility === "privateAccess" && (
         <Collapsible className="border rounded-xl overflow-hidden">
           <CollapsibleTrigger className="flex items-center justify-between w-full p-4 hover:bg-muted/50 transition-colors [&[data-state=open]>svg:first-child]:rotate-90">
             <div className="flex items-center gap-3">

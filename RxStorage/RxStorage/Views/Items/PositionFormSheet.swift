@@ -7,6 +7,7 @@
 
 import JSONSchema
 import JSONSchemaForm
+import OpenAPIRuntime
 import RxStorageCore
 import SwiftUI
 
@@ -91,6 +92,15 @@ struct PositionFormSheet: View {
     }
 
     // MARK: - Helper Methods
+
+    /// Parse schema from schemaPayload (additionalProperties)
+    private func parseSchema(from schemaPayload: PositionSchema.schemaPayload) -> JSONSchema? {
+        let dict = schemaPayload.additionalProperties.compactMapValues { $0.value }
+        guard let data = try? JSONSerialization.data(withJSONObject: dict) else {
+            return nil
+        }
+        return try? JSONDecoder().decode(JSONSchema.self, from: data)
+    }
 
     /// Parse schema dictionary to JSONSchema (reused from PositionSchemaFormSheet)
     private func parseSchema(from dict: [String: RxStorageCore.AnyCodable]) -> JSONSchema? {

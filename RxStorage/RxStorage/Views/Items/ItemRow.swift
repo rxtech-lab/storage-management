@@ -26,8 +26,5 @@ struct ItemRow: View {
     }
 }
 
-#Preview {
-    List {
-        ItemRow(item: .init(id: 1, title: "Hi", description: nil, categoryId: 1, locationId: 1, authorId: 1, parentId: 1, price: 1, visibility: .public, images: [], createdAt: .now, updatedAt: .now, previewUrl: ""))
-    }
-}
+// Preview disabled - generated types have different initializers
+// TODO: Update preview to use generated StorageItem type

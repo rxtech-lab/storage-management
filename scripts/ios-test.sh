@@ -82,7 +82,7 @@ for package_dir in "$PACKAGES_DIR"/*/; do
         package_name=$(basename "$package_dir")
         echo -e "${BLUE}📦 Testing package: ${package_name}${NC}"
 
-        if swift test --package-path "$package_dir"; then
+        if swift test --package-path "$package_dir" --disable-sandbox; then
             echo -e "${GREEN}✅ ${package_name} tests passed${NC}"
         else
             echo -e "${RED}❌ ${package_name} tests failed${NC}"
@@ -109,11 +109,11 @@ xcodebuild test \
     -project "$PROJECT_PATH" \
     -scheme "$SCHEME" \
     -configuration "$CONFIGURATION" \
-    -sdk "$SDK" \
     -destination "$DESTINATION" \
     -derivedDataPath "$BUILD_DIR" \
     -resultBundlePath "$RESULT_BUNDLE_PATH" \
     -skip-testing:RxStorageUITests \
+    -skipPackagePluginValidation \
     -enableCodeCoverage YES \
     CODE_SIGN_IDENTITY="" \
     CODE_SIGNING_REQUIRED=NO \

@@ -91,11 +91,21 @@ struct AppClipRootView: View {
                         }
                 } else if let error = viewModel.error {
                     // Show fetch error
-                    ContentUnavailableView(
-                        "Error Loading Item",
-                        systemImage: "exclamationmark.triangle",
-                        description: Text(error.localizedDescription)
-                    )
+                    VStack {
+                        ContentUnavailableView(
+                            "Error Loading Item",
+                            systemImage: "exclamationmark.triangle",
+                            description: Text(error.localizedDescription)
+                        )
+
+                        Button("Retry") {
+                            Task {
+                                if let id = itemId {
+                                    await fetchItem(id)
+                                }
+                            }
+                        }
+                    }
                 } else if itemId == nil {
                     // Waiting for URL
                     ProgressView("Waiting for URL...")

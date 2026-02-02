@@ -50,7 +50,7 @@ const itemSchema = z.object({
   parentId: z.number().nullable().optional(),
   price: z.number().nullable().optional(),
   currency: z.string().optional(),
-  visibility: z.enum(["public", "private"]),
+  visibility: z.enum(["publicAccess", "privateAccess"]),
   images: z.array(z.string()).optional(),
 });
 
@@ -93,7 +93,7 @@ export function ItemForm({
       parentId: item?.parentId ?? defaultParentId ?? null,
       price: item?.price ?? null,
       currency: item?.currency ?? "USD",
-      visibility: item?.visibility ?? "private",
+      visibility: item?.visibility ?? "privateAccess",
       images: item?.images ?? [],
     },
   });
@@ -244,13 +244,13 @@ export function ItemForm({
             <Switch
               id="visibility"
               data-testid="item-visibility-switch"
-              checked={visibility === "public"}
+              checked={visibility === "publicAccess"}
               onCheckedChange={(checked) =>
-                setValue("visibility", checked ? "public" : "private")
+                setValue("visibility", checked ? "publicAccess" : "privateAccess")
               }
             />
             <Label htmlFor="visibility">
-              {visibility === "public" ? "Public" : "Private"}
+              {visibility === "publicAccess" ? "Public" : "Private"}
             </Label>
           </div>
         </CardContent>

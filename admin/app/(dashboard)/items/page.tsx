@@ -46,8 +46,8 @@ export default function ItemsPage() {
             ? parseInt(searchParams.get("authorId")!)
             : undefined,
           visibility: searchParams.get("visibility") as
-            | "public"
-            | "private"
+            | "publicAccess"
+            | "privateAccess"
             | undefined,
           search: searchParams.get("search") || undefined,
           cursor: searchParams.get("cursor") || undefined,

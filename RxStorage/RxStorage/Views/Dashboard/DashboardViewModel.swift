@@ -25,7 +25,7 @@ final class DashboardViewModel {
     // MARK: - Computed Properties
 
     /// Recent items from the stats response
-    var recentItems: [RecentItem] {
+    var recentItems: [DashboardRecentItem] {
         stats?.recentItems ?? []
     }
 
@@ -39,7 +39,7 @@ final class DashboardViewModel {
         error = nil
 
         do {
-            stats = try await dashboardService.fetchDashboardStats()
+            stats = try await dashboardService.fetchStats()
         } catch {
             self.error = error
         }

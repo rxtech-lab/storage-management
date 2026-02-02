@@ -283,7 +283,7 @@ struct StatsCardView: View {
 // MARK: - Recent Item Row
 
 struct RecentItemRow: View {
-    let item: RecentItem
+    let item: DashboardRecentItem
     let onTap: () -> Void
 
     var body: some View {
@@ -310,7 +310,7 @@ struct RecentItemRow: View {
                         }
 
                         // Visibility badge
-                        if item.visibility == .public {
+                        if item.visibility == .publicAccess {
                             Label("Public", systemImage: "globe")
                                 .font(.caption2)
                                 .foregroundStyle(.green)

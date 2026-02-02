@@ -52,7 +52,7 @@ const itemInsertSchema = z.object({
   parentId: z.number().int().positive().nullable().optional(),
   price: z.number().nullable().optional(),
   currency: z.string().optional(),
-  visibility: z.enum(["public", "private"]),
+  visibility: z.enum(["publicAccess", "privateAccess"]),
   images: z
     .array(z.string().regex(fileIdPattern, "Images must be in 'file:{id}' format"))
     .optional(),
@@ -63,7 +63,7 @@ const itemUpdateSchema = itemInsertSchema
   .partial()
   .omit({ visibility: true })
   .extend({
-    visibility: z.enum(["public", "private"]).optional(),
+    visibility: z.enum(["publicAccess", "privateAccess"]).optional(),
   });
 
 export interface ItemWithRelations extends Item {
@@ -79,7 +79,7 @@ export interface ItemFilters {
   locationId?: number;
   authorId?: number;
   parentId?: number | null; // null means get root items (no parent)
-  visibility?: "public" | "private";
+  visibility?: "publicAccess" | "privateAccess";
   search?: string;
 }
 
@@ -144,7 +144,7 @@ export async function getItems(
 
   // Show user's own items OR public items from other users
   const conditions = [
-    or(eq(items.userId, sessionUserId), eq(items.visibility, "public")),
+    or(eq(items.userId, sessionUserId), eq(items.visibility, "publicAccess")),
   ];
 
   if (filters?.categoryId) {
@@ -349,7 +349,13 @@ export async function createItemAction(
     }
 
     revalidatePath("/items");
-    return { success: true, data: result[0] };
+
+    // Fetch the full item with relations for the response
+    const createdItem = await getItem(result[0].id);
+    if (!createdItem) {
+      return { success: false, error: "Item not found after creation" };
+    }
+    return { success: true, data: createdItem };
   } catch (error) {
     return {
       success: false,
@@ -434,11 +440,10 @@ export async function updateItemAction(
       positions?: Array<{ positionSchemaId: number; data: Record<string, unknown> }>;
     };
 
-    const result = await db
+    await db
       .update(items)
       .set({ ...itemData, updatedAt: new Date() })
-      .where(eq(items.id, id))
-      .returning();
+      .where(eq(items.id, id));
 
     // Create new positions if provided
     if (positionsData && positionsData.length > 0) {
@@ -457,7 +462,13 @@ export async function updateItemAction(
 
     revalidatePath("/items");
     revalidatePath(`/items/${id}`);
-    return { success: true, data: result[0] };
+
+    // Fetch the full item with relations for the response
+    const updatedItem = await getItem(id);
+    if (!updatedItem) {
+      return { success: false, error: "Item not found after update" };
+    }
+    return { success: true, data: updatedItem };
   } catch (error) {
     return {
       success: false,
@@ -619,11 +630,11 @@ export async function searchItems(
   // Filter by userId: show user's own items OR public items
   if (resolvedUserId) {
     conditions.push(
-      or(eq(items.userId, resolvedUserId), eq(items.visibility, "public")),
+      or(eq(items.userId, resolvedUserId), eq(items.visibility, "publicAccess")),
     );
   } else {
     // No user - only show public items
-    conditions.push(eq(items.visibility, "public"));
+    conditions.push(eq(items.visibility, "publicAccess"));
   }
 
   if (query) {
@@ -690,7 +701,7 @@ export async function getItemsPaginated(
 
   // Build base conditions (same as getItems)
   const conditions = [
-    or(eq(items.userId, sessionUserId), eq(items.visibility, "public")),
+    or(eq(items.userId, sessionUserId), eq(items.visibility, "publicAccess")),
   ];
 
   if (filters?.categoryId) {

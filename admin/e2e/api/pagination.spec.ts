@@ -24,7 +24,7 @@ test.describe.serial("Items Pagination API", () => {
         data: {
           title: `Pagination Test Item ${i.toString().padStart(2, "0")}`,
           description: `Item ${i} for pagination testing`,
-          visibility: "private",
+          visibility: "privateAccess",
         },
       });
       expect(response.status()).toBe(201);
@@ -138,7 +138,7 @@ test.describe.serial("Items Pagination API", () => {
     expect(backPageIds.sort()).toEqual(firstPageIds.sort());
   });
 
-  test("GET /api/v1/items - backward compatibility (no params returns full array)", async ({
+  test("GET /api/v1/items - without params returns paginated response with all items", async ({
     request,
   }) => {
     const response = await request.get("/api/v1/items");
@@ -146,9 +146,10 @@ test.describe.serial("Items Pagination API", () => {
 
     const body = await response.json();
 
-    // Without pagination params, should return array directly (not paginated object)
-    expect(body).toBeInstanceOf(Array);
-    expect(body.length).toBeGreaterThan(0);
+    // Without pagination params, should still return paginated object format
+    expect(body.data).toBeInstanceOf(Array);
+    expect(body.pagination).toBeDefined();
+    expect(body.data.length).toBeGreaterThan(0);
   });
 
   test("GET /api/v1/items - handles invalid cursor gracefully", async ({

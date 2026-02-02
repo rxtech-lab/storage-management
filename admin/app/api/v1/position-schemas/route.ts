@@ -9,6 +9,17 @@ import {
 } from "@/lib/actions/position-schema-actions";
 import { parsePaginationParams } from "@/lib/utils/pagination";
 
+/**
+ * List position schemas
+ * @operationId getPositionSchemas
+ * @description Retrieve a paginated list of custom position schemas
+ * @params PositionSchemasQueryParams
+ * @response PaginatedPositionSchemasResponse
+ * @auth bearer
+ * @tag PositionSchemas
+ * @responseSet auth
+ * @openapi
+ */
 export async function GET(request: NextRequest) {
   const session = await getSession(request);
   if (!session) {
@@ -57,6 +68,17 @@ export async function GET(request: NextRequest) {
   return NextResponse.json(schemas);
 }
 
+/**
+ * Create position schema
+ * @operationId createPositionSchema
+ * @description Create a new custom position schema with JSON Schema definition
+ * @body PositionSchemaInsertSchema
+ * @response 201:PositionSchemaResponseSchema
+ * @auth bearer
+ * @tag PositionSchemas
+ * @responseSet auth
+ * @openapi
+ */
 export async function POST(request: NextRequest) {
   const session = await getSession(request);
   if (!session) {

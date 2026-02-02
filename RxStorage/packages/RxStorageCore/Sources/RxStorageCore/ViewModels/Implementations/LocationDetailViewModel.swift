@@ -7,7 +7,6 @@
 
 import Foundation
 import Observation
-import RxStorageCore
 
 /// Location detail view model
 @Observable

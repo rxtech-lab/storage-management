@@ -191,11 +191,9 @@ struct LocationRow: View {
             Text(location.title)
                 .font(.headline)
 
-            if let lat = location.latitude, let lon = location.longitude {
-                Text("Lat: \(lat, specifier: "%.6f"), Lon: \(lon, specifier: "%.6f")")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
+            Text("Lat: \(location.latitude, specifier: "%.6f"), Lon: \(location.longitude, specifier: "%.6f")")
+                .font(.caption)
+                .foregroundStyle(.secondary)
         }
         .padding(.vertical, 4)
     }

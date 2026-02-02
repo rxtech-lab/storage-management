@@ -21,14 +21,8 @@ public protocol ItemFormViewModelProtocol: AnyObject, Observable {
     var selectedAuthorId: Int? { get set }
     var selectedParentId: Int? { get set }
     var price: String { get set }
-    var visibility: StorageItem.Visibility { get set }
+    var visibility: Visibility { get set }
     var existingImages: [ImageReference] { get set }
-
-    /// Reference data
-    var categories: [Category] { get }
-    var locations: [Location] { get }
-    var authors: [Author] { get }
-    var parentItems: [StorageItem] { get }
 
     /// State
     var isLoading: Bool { get }
@@ -49,11 +43,6 @@ public protocol ItemFormViewModelProtocol: AnyObject, Observable {
     /// Submit form (create or update)
     @discardableResult
     func submit() async throws -> StorageItem
-
-    /// Inline entity creation
-    func createCategory(name: String, description: String?) async throws -> Category
-    func createLocation(title: String, latitude: Double, longitude: Double) async throws -> Location
-    func createAuthor(name: String, bio: String?) async throws -> Author
 
     // MARK: - Image Upload
 

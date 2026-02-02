@@ -6,6 +6,17 @@ interface RouteParams {
   params: Promise<{ id: string }>;
 }
 
+/**
+ * Get location by ID
+ * @operationId getLocation
+ * @description Retrieve a single location by its ID
+ * @pathParams IdPathParams
+ * @response LocationResponseSchema
+ * @auth bearer
+ * @tag Locations
+ * @responseSet auth
+ * @openapi
+ */
 export async function GET(request: NextRequest, { params }: RouteParams) {
   const session = await getSession(request);
   if (!session) {
@@ -27,6 +38,18 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
   return NextResponse.json(location);
 }
 
+/**
+ * Update location
+ * @operationId updateLocation
+ * @description Update an existing location
+ * @pathParams IdPathParams
+ * @body LocationUpdateSchema
+ * @response LocationResponseSchema
+ * @auth bearer
+ * @tag Locations
+ * @responseSet auth
+ * @openapi
+ */
 export async function PUT(request: NextRequest, { params }: RouteParams) {
   const session = await getSession(request);
   if (!session) {
@@ -54,6 +77,17 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
   }
 }
 
+/**
+ * Delete location
+ * @operationId deleteLocation
+ * @description Delete a location by ID
+ * @pathParams IdPathParams
+ * @response 200:SuccessResponse
+ * @auth bearer
+ * @tag Locations
+ * @responseSet auth
+ * @openapi
+ */
 export async function DELETE(request: NextRequest, { params }: RouteParams) {
   const session = await getSession(request);
   if (!session) {

@@ -51,9 +51,11 @@ struct AddChildSheet: View {
     var body: some View {
         Group {
             if viewModel.isSearching || viewModel.isLoadingDefaults {
-                Spacer()
-                ProgressView(viewModel.isSearching ? "Searching..." : "Loading...")
-                Spacer()
+                VStack {
+                    Spacer()
+                    ProgressView(viewModel.isSearching ? "Searching..." : "Loading...")
+                    Spacer()
+                }
             } else if viewModel.searchText.isEmpty {
                 // Show default items when not searching
                 if viewModel.defaultItems.isEmpty {

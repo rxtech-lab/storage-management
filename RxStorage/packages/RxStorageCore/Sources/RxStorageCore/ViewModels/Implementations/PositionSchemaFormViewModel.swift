@@ -7,6 +7,7 @@
 
 import Foundation
 import Observation
+import OpenAPIRuntime
 
 /// Position schema form view model implementation
 @Observable
@@ -92,26 +93,32 @@ public final class PositionSchemaFormViewModel: PositionSchemaFormViewModelProto
             let data = schemaJSON.data(using: .utf8)!
             let schemaDict = try JSONSerialization.jsonObject(with: data, options: []) as! [String: Any]
 
-            // Convert [String: Any] to [String: AnyCodable]
-            let anyCodableDict = schemaDict.mapValues { AnyCodable($0) }
-
-            let request = NewPositionSchemaRequest(
-                name: name,
-                schema: anyCodableDict
-            )
+            // Convert [String: Any] to [String: OpenAPIValueContainer]
+            var convertedSchema: [String: OpenAPIRuntime.OpenAPIValueContainer] = [:]
+            for (key, value) in schemaDict {
+                // Encode and decode through JSON to get OpenAPIValueContainer
+                if let jsonData = try? JSONSerialization.data(withJSONObject: value, options: []),
+                   let container = try? JSONDecoder().decode(OpenAPIRuntime.OpenAPIValueContainer.self, from: jsonData) {
+                    convertedSchema[key] = container
+                }
+            }
 
             let result: PositionSchema
             if let existingSchema = schema {
                 // Update
                 let updateRequest = UpdatePositionSchemaRequest(
                     name: name,
-                    schema: anyCodableDict
+                    schema: .init(additionalProperties: convertedSchema)
                 )
                 result = try await schemaService.updatePositionSchema(id: existingSchema.id, updateRequest)
                 eventViewModel?.emit(.positionSchemaUpdated(id: result.id))
             } else {
                 // Create
-                result = try await schemaService.createPositionSchema(request)
+                let createRequest = NewPositionSchemaRequest(
+                    name: name,
+                    schema: .init(additionalProperties: convertedSchema)
+                )
+                result = try await schemaService.createPositionSchema(createRequest)
                 eventViewModel?.emit(.positionSchemaCreated(id: result.id))
             }
 
@@ -129,8 +136,15 @@ public final class PositionSchemaFormViewModel: PositionSchemaFormViewModelProto
     private func populateForm(from schema: PositionSchema) {
         name = schema.name
 
-        // Convert AnyCodable values to their underlying values for JSONSerialization
-        let unwrappedDict = schema.schema.mapValues { $0.value }
+        // Convert OpenAPIValueContainer to JSON-serializable dictionary
+        var unwrappedDict: [String: Any] = [:]
+        for (key, container) in schema.schema.additionalProperties {
+            // Encode the container and decode back to Any
+            if let jsonData = try? JSONEncoder().encode(container),
+               let value = try? JSONSerialization.jsonObject(with: jsonData, options: []) {
+                unwrappedDict[key] = value
+            }
+        }
 
         // Convert schema dictionary to JSON string
         if let data = try? JSONSerialization.data(withJSONObject: unwrappedDict, options: .prettyPrinted),

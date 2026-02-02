@@ -64,7 +64,7 @@ public final class MockAuthorService: AuthorServiceProtocol {
         let authors = try await fetchAuthors(filters: filters)
         return PaginatedResponse(
             data: authors,
-            pagination: PaginationInfo(nextCursor: nil, prevCursor: nil, hasNextPage: false, hasPrevPage: false)
+            pagination: PaginationState(hasNextPage: false, hasPrevPage: false, nextCursor: nil, prevCursor: nil)
         )
     }
 

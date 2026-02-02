@@ -267,12 +267,21 @@ struct ItemListView: View {
             return
         }
 
+        // Extract item ID from URL path (e.g., /preview/123)
+        guard let itemIdString = url.pathComponents.last,
+              let itemId = Int(itemIdString) else {
+            qrScanError = APIError.unsupportedQRCode(code)
+            showQrScanError = true
+            return
+        }
+
+        // Fetch the item directly
         isLoadingFromQR = true
         defer { isLoadingFromQR = false }
 
         do {
-            let item = try await itemService.fetchItemFromURL(url)
-            selectedItem = item
+            let itemDetail = try await itemService.fetchItem(id: itemId)
+            selectedItem = itemDetail.toStorageItem()
         } catch {
             qrScanError = error
             showQrScanError = true
@@ -313,9 +322,9 @@ struct ItemFilterSheet: View {
                 // Visibility Section
                 Section("Visibility") {
                     Picker("Visibility", selection: $viewModel.selectedVisibility) {
-                        Text("All").tag(nil as StorageItem.Visibility?)
-                        Text("Public").tag(StorageItem.Visibility.public as StorageItem.Visibility?)
-                        Text("Private").tag(StorageItem.Visibility.private as StorageItem.Visibility?)
+                        Text("All").tag(nil as RxStorageCore.Visibility?)
+                        Text("Public").tag(RxStorageCore.Visibility.publicAccess as RxStorageCore.Visibility?)
+                        Text("Private").tag(RxStorageCore.Visibility.privateAccess as RxStorageCore.Visibility?)
                     }
                 }
 

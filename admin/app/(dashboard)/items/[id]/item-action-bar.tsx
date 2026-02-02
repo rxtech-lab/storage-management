@@ -29,7 +29,7 @@ export function ItemActionBar({
         Edit
       </Button>
       <QRCodeGenerator itemId={itemId} itemTitle={itemTitle} />
-      <Link href={`/preview/${itemId}`} target="_blank">
+      <Link href={`/preview/item/${itemId}`} target="_blank">
         <Button variant="outline" size="sm" className="gap-2">
           <ExternalLink className="h-4 w-4" />
           Preview
