@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "dev:e2e": "bash scripts/dev-e2e.sh",
     "build": "bun db:push && bun openapi:generate && next build",
     "openapi:generate": "next-openapi-gen generate",
     "start": "next start",
@@ -15,7 +16,9 @@
     "test:e2e:debug": "IS_E2E=true playwright test --debug",
     "db:generate": "drizzle-kit generate",
     "db:push": "drizzle-kit push",
-    "db:studio": "drizzle-kit studio"
+    "db:push:local": "drizzle-kit push --config=drizzle.config.local.ts",
+    "db:studio": "drizzle-kit studio",
+    "db:studio:local": "USE_LOCAL_DB=true drizzle-kit studio --config=drizzle.config.local.ts"
   },
   "dependencies": {
     "@ai-sdk/mcp": "^1.0.14",
@@ -79,10 +82,12 @@
     "@types/react": "^19.2.10",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^5.1.2",
+    "concurrently": "^9.2.1",
     "drizzle-kit": "^0.31.8",
     "eslint": "^9.39.2",
     "eslint-config-next": "16.1.6",
     "jsdom": "^27.4.0",
+    "s3rver": "^3.7.1",
     "tailwindcss": "^4.1.18",
     "typescript": "^5.9.3",
     "vitest": "^4.0.18"
