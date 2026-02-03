@@ -35,5 +35,9 @@ struct RxStorageApp: App {
                 .environment(positionSchemaDetailViewModel)
                 .environment(eventViewModel)
         }
+        #if os(macOS)
+        .defaultSize(width: 500, height: 600)
+        .windowResizability(.contentSize)
+        #endif
     }
 }

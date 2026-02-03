@@ -75,7 +75,11 @@ struct PositionFormSheet: View {
             }
         }
         .navigationTitle("Add Position")
+        #if os(iOS)
+        #if os(iOS)
         .navigationBarTitleDisplayMode(.inline)
+        #endif
+        #endif
         .toolbar {
             ToolbarItem(placement: .cancellationAction) {
                 Button("Cancel") { dismiss() }

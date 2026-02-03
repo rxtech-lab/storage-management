@@ -33,7 +33,9 @@ struct CategoryPickerSheet: View {
             }
         }
         .navigationTitle("Select Category")
+        #if os(iOS)
         .navigationBarTitleDisplayMode(.inline)
+        #endif
         .toolbar {
             ToolbarItem(placement: .cancellationAction) {
                 Button("Cancel") {
