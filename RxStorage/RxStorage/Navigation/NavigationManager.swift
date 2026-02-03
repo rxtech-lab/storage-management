@@ -128,6 +128,22 @@ final class NavigationManager {
         }
     }
 
+    /// Navigate to an item from Dashboard (stays in Dashboard context)
+    /// This avoids tab switching issues and keeps the user in their current context
+    func navigateToItemFromDashboard(_ id: Int) async {
+        isLoadingDeepLink = true
+        defer { isLoadingDeepLink = false }
+
+        do {
+            let itemDetail = try await itemService.fetchItem(id: id)
+            let item = itemDetail.toStorageItem()
+            dashboardNavigationPath.append(item)
+        } catch {
+            deepLinkError = error
+            showDeepLinkError = true
+        }
+    }
+
     /// Navigate to items tab
     func navigateToItems() {
         selectedTab = .items

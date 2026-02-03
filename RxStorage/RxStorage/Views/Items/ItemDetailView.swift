@@ -16,7 +16,7 @@ import AppKit
 private extension Color {
     static var systemGroupedBackground: Color {
         #if os(iOS)
-        Color(.systemGroupedBackground)
+        Color(UIColor.systemGroupedBackground)
         #else
         Color(nsColor: .windowBackgroundColor)
         #endif
@@ -24,7 +24,7 @@ private extension Color {
 
     static var secondarySystemGroupedBackground: Color {
         #if os(iOS)
-        Color.secondarySystemGroupedBackground
+        Color(UIColor.secondarySystemGroupedBackground)
         #else
         Color(nsColor: .controlBackgroundColor)
         #endif
@@ -32,12 +32,14 @@ private extension Color {
 
     static var systemGray6: Color {
         #if os(iOS)
-        Color.systemGray6
+        Color(UIColor.systemGray6)
         #else
         Color(nsColor: .systemGray)
         #endif
     }
 }
+
+// MARK: - Item Detail View
 
 /// Item detail view
 struct ItemDetailView: View {
@@ -81,65 +83,7 @@ struct ItemDetailView: View {
             if viewModel.isLoading && viewModel.item == nil {
                 ProgressView("Loading...")
             } else if let item = viewModel.item {
-                ScrollView {
-                    VStack(spacing: 0) {
-                        // Stretchy image carousel inside scroll
-                        if !item.images.isEmpty {
-                            stretchyImageCarousel(item.images)
-                        }
-
-                        // Card-styled sections
-                        VStack(spacing: 16) {
-                            headerCard(item)
-                            detailsCard(item)
-                            contentsCard
-                            childrenCard
-                        }
-                        .padding(.horizontal, 16)
-                        .padding(.top, item.images.isEmpty ? 16 : 8)
-                        .padding(.bottom, 32)
-                    }
-                    .frame(maxWidth: .infinity)
-                }
-                .ignoresSafeArea(edges: item.images.isEmpty ? [] : .top)
-                .background(Color.systemGroupedBackground)
-                .overlay {
-                    if isRefreshing {
-                        LoadingOverlay(title: "Refreshing...")
-                    }
-                }
-                .toolbar {
-                    if !isViewOnly {
-                        ToolbarItem(placement: .primaryAction) {
-                            Menu {
-                                Button {
-                                    showingEditSheet = true
-                                } label: {
-                                    Label("Edit", systemImage: "pencil")
-                                }
-
-                                Button {
-                                    showingQRSheet = true
-                                } label: {
-                                    Label("Show QR Code", systemImage: "qrcode")
-                                }
-
-                                #if os(iOS)
-                                Button {
-                                    Task {
-                                        await writeToNFC(previewUrl: item.previewUrl)
-                                    }
-                                } label: {
-                                    Label(isWritingNFC ? "Writing..." : "Write to NFC Tag", systemImage: "wave.3.right")
-                                }
-                                .disabled(isWritingNFC)
-                                #endif
-                            } label: {
-                                Label("More", systemImage: "ellipsis.circle")
-                            }
-                        }
-                    }
-                }
+                itemContent(item)
             } else if let error = viewModel.error {
                 ContentUnavailableView(
                     "Error Loading Item",
@@ -152,134 +96,202 @@ struct ItemDetailView: View {
         }
         .navigationTitle(viewModel.item?.title ?? "Item")
         #if os(iOS)
-        .navigationBarTitleDisplayMode(.inline)
+            .navigationBarTitleDisplayMode(.inline)
         #endif
-        .sheet(isPresented: $showingEditSheet) {
-            if let item = viewModel.item {
-                NavigationStack {
-                    ItemFormSheet(item: item.toStorageItem())
+            .sheet(isPresented: $showingEditSheet) {
+                if let item = viewModel.item {
+                    NavigationStack {
+                        ItemFormSheet(item: item.toStorageItem())
+                    }
                 }
             }
-        }
-        .sheet(isPresented: $showingQRSheet) {
-            if let item = viewModel.item {
-                NavigationStack {
-                    QRCodeView(urlString: item.previewUrl)
+            .sheet(isPresented: $showingQRSheet) {
+                if let item = viewModel.item {
+                    NavigationStack {
+                        QRCodeView(urlString: item.previewUrl)
+                    }
                 }
             }
-        }
-        .task(id: itemId) {
-            await viewModel.fetchItem(id: itemId)
-            await viewModel.fetchContentSchemas()
-        }
-        .task(id: itemId) {
-            // Listen for events related to this item
-            for await event in eventViewModel.stream {
-                switch event {
-                case .itemUpdated(let id) where id == itemId:
-                    isRefreshing = true
-                    await viewModel.refresh()
-                    isRefreshing = false
-                case .contentCreated(let iId, _), .contentDeleted(let iId, _) where iId == itemId:
-                    isRefreshing = true
-                    await viewModel.refresh()
-                    isRefreshing = false
-                case .childAdded(let pId, _), .childRemoved(let pId, _) where pId == itemId:
-                    isRefreshing = true
-                    await viewModel.refresh()
-                    isRefreshing = false
-                default:
-                    break
+            .task(id: itemId) {
+                await viewModel.fetchItem(id: itemId)
+                await viewModel.fetchContentSchemas()
+                for await event in eventViewModel.stream {
+                    guard !Task.isCancelled else { break }
+                    await handleEvent(event)
                 }
             }
-        }
         #if os(iOS)
-        .alert("NFC Write Successful", isPresented: $showNFCSuccess) {
-            Button("OK", role: .cancel) {}
-        } message: {
-            Text("The URL has been written to the NFC tag.")
-        }
-        .alert("NFC Write Error", isPresented: $showNFCError) {
-            Button("OK", role: .cancel) {}
-        } message: {
-            Text(nfcError?.localizedDescription ?? "An unknown error occurred.")
-        }
+            .alert("NFC Write Successful", isPresented: $showNFCSuccess) {
+                Button("OK", role: .cancel) {}
+            } message: {
+                Text("The URL has been written to the NFC tag.")
+            }
+            .alert("NFC Write Error", isPresented: $showNFCError) {
+                Button("OK", role: .cancel) {}
+            } message: {
+                Text(nfcError?.localizedDescription ?? "An unknown error occurred.")
+            }
         #endif
-        .sheet(isPresented: $showingAddChildSheet) {
-            if let item = viewModel.item {
-                NavigationStack {
-                    AddChildSheet(
-                        parentItemId: item.id,
-                        existingChildIds: Set(viewModel.children.map { $0.id }),
-                        isAdding: $isAddingChild,
-                        onChildSelected: { childData in
-                            if let childId = Int(childData.itemId) {
-                                Task {
-                                    await addChild(childId)
+            .sheet(isPresented: $showingAddChildSheet) {
+                if let item = viewModel.item {
+                    NavigationStack {
+                        AddChildSheet(
+                            parentItemId: item.id,
+                            existingChildIds: Set(viewModel.children.map { $0.id }),
+                            isAdding: $isAddingChild,
+                            onChildSelected: { childData in
+                                if let childId = Int(childData.itemId) {
+                                    Task { await addChild(childId) }
                                 }
                             }
+                        )
+                    }
+                }
+            }
+            .alert("Error Adding Child", isPresented: $showAddChildError) {
+                Button("OK", role: .cancel) {}
+            } message: {
+                Text(addChildError?.localizedDescription ?? "An error occurred while adding the child item.")
+            }
+            .alert("Error Removing Child", isPresented: $showRemoveChildError) {
+                Button("OK", role: .cancel) {}
+            } message: {
+                Text(removeChildError?.localizedDescription ?? "An error occurred while removing the child item.")
+            }
+            .sheet(isPresented: $showingContentSheet) {
+                NavigationStack {
+                    ContentFormSheet(
+                        contentSchemas: $viewModel.contentSchemas,
+                        onSubmit: { type, data in
+                            Task { await createContent(type: type, data: data) }
                         }
                     )
                 }
             }
-        }
-        .alert("Error Adding Child", isPresented: $showAddChildError) {
-            Button("OK", role: .cancel) {}
-        } message: {
-            Text(addChildError?.localizedDescription ?? "An error occurred while adding the child item.")
-        }
-        .alert("Error Removing Child", isPresented: $showRemoveChildError) {
-            Button("OK", role: .cancel) {}
-        } message: {
-            Text(removeChildError?.localizedDescription ?? "An error occurred while removing the child item.")
-        }
-        .sheet(isPresented: $showingContentSheet) {
-            NavigationStack {
-                ContentFormSheet(
-                    contentSchemas: $viewModel.contentSchemas,
-                    onSubmit: { type, data in
-                        Task {
-                            await createContent(type: type, data: data)
+            .alert("Content Error", isPresented: $showContentError) {
+                Button("OK", role: .cancel) {}
+            } message: {
+                Text(contentError?.localizedDescription ?? "An error occurred.")
+            }
+            .sheet(item: $selectedChildForEdit) { child in
+                NavigationStack {
+                    ItemFormSheet(item: child)
+                }
+            }
+            .sheet(item: $selectedContentForEdit) { content in
+                NavigationStack {
+                    ContentFormSheet(
+                        contentSchemas: $viewModel.contentSchemas,
+                        existingContent: content,
+                        onSubmit: { type, data in
+                            Task { await updateContent(content.id, type: type, data: data) }
                         }
-                    }
-                )
+                    )
+                }
+            }
+            .sheet(item: $selectedContentForDetail) { content in
+                NavigationStack {
+                    ContentDetailSheet(
+                        content: content,
+                        contentSchemas: $viewModel.contentSchemas,
+                        onEdit: { selectedContentForEdit = content },
+                        isViewOnly: isViewOnly
+                    )
+                }
+            }
+    }
+
+    // MARK: - Item Content
+
+    @ViewBuilder
+    private func itemContent(_ item: StorageItemDetail) -> some View {
+        ScrollView {
+            VStack(spacing: 0) {
+                if !item.images.isEmpty {
+                    stretchyImageCarousel(item.images)
+                }
+
+                VStack(spacing: 16) {
+                    headerCard(item)
+                    detailsCard(item)
+                    contentsCard
+                    childrenCard
+                }
+                .padding(.horizontal, 16)
+                .padding(.top, item.images.isEmpty ? 16 : 8)
+                .padding(.bottom, 32)
+            }
+            .frame(maxWidth: .infinity)
+        }
+        .ignoresSafeArea(edges: item.images.isEmpty ? [] : .top)
+        .background(Color.systemGroupedBackground)
+        .overlay {
+            if isRefreshing {
+                LoadingOverlay(title: "Refreshing...")
             }
         }
-        .alert("Content Error", isPresented: $showContentError) {
-            Button("OK", role: .cancel) {}
-        } message: {
-            Text(contentError?.localizedDescription ?? "An error occurred.")
-        }
-        .sheet(item: $selectedChildForEdit) { child in
-            NavigationStack {
-                ItemFormSheet(item: child)
+        .toolbar {
+            if !isViewOnly {
+                ToolbarItem(placement: .primaryAction) {
+                    toolbarMenu(item)
+                }
             }
         }
-        .sheet(item: $selectedContentForEdit) { content in
-            NavigationStack {
-                ContentFormSheet(
-                    contentSchemas: $viewModel.contentSchemas,
-                    existingContent: content,
-                    onSubmit: { type, data in
-                        Task {
-                            await updateContent(content.id, type: type, data: data)
-                        }
-                    }
-                )
+    }
+
+    // MARK: - Toolbar Menu
+
+    @ViewBuilder
+    private func toolbarMenu(_ item: StorageItemDetail) -> some View {
+        Menu {
+            Button {
+                showingEditSheet = true
+            } label: {
+                Label("Edit", systemImage: "pencil")
             }
+
+            Button {
+                showingQRSheet = true
+            } label: {
+                Label("Show QR Code", systemImage: "qrcode")
+            }
+
+            #if os(iOS)
+            Button {
+                Task { await writeToNFC(previewUrl: item.previewUrl) }
+            } label: {
+                Label(isWritingNFC ? "Writing..." : "Write to NFC Tag", systemImage: "wave.3.right")
+            }
+            .disabled(isWritingNFC)
+            #endif
+        } label: {
+            Label("More", systemImage: "ellipsis.circle")
         }
-        .sheet(item: $selectedContentForDetail) { content in
-            NavigationStack {
-                ContentDetailSheet(
-                    content: content,
-                    contentSchemas: $viewModel.contentSchemas,
-                    onEdit: {
-                        // Trigger edit sheet after detail sheet dismisses
-                        selectedContentForEdit = content
-                    },
-                    isViewOnly: isViewOnly
-                )
-            }
+    }
+
+    // MARK: - Event Handling
+
+    private func handleEvent(_ event: AppEvent) async {
+        switch event {
+        case .itemUpdated(let id) where id == itemId:
+            guard !Task.isCancelled else { return }
+            isRefreshing = true
+            await viewModel.refresh()
+            isRefreshing = false
+        case .contentCreated(let iId, _) where iId == itemId,
+             .contentDeleted(let iId, _) where iId == itemId:
+            guard !Task.isCancelled else { return }
+            isRefreshing = true
+            await viewModel.refresh()
+            isRefreshing = false
+        case .childAdded(let pId, _) where pId == itemId,
+             .childRemoved(let pId, _) where pId == itemId:
+            guard !Task.isCancelled else { return }
+            isRefreshing = true
+            await viewModel.refresh()
+            isRefreshing = false
+        default:
+            break
         }
     }
 
@@ -292,6 +304,8 @@ struct ItemDetailView: View {
         do {
             try await nfcWriter.writeToNfcChip(url: previewUrl)
             showNFCSuccess = true
+        } catch let error as NFCWriterError where error == .cancelled {
+            // User cancelled - do nothing (silent dismissal)
         } catch {
             nfcError = error
             showNFCError = true
@@ -299,7 +313,7 @@ struct ItemDetailView: View {
     }
     #endif
 
-    // MARK: - Stretchy Image Carousel
+    // MARK: - Image Carousel
 
     @ViewBuilder
     private func stretchyImageCarousel(_ images: [Components.Schemas.SignedImageSchema]) -> some View {
@@ -312,8 +326,8 @@ struct ItemDetailView: View {
                 ForEach(Array(images.enumerated()), id: \.offset) { index, image in
                     AsyncImage(url: URL(string: image.url)) { phase in
                         switch phase {
-                        case .success(let image):
-                            image
+                        case .success(let loadedImage):
+                            loadedImage
                                 .resizable()
                                 .scaledToFill()
                                 .frame(width: geometry.size.width, height: calculatedHeight)
@@ -358,6 +372,7 @@ struct ItemDetailView: View {
                 Text(item.title)
                     .font(.title2)
                     .fontWeight(.bold)
+                    .accessibilityIdentifier("item-detail-title")
                 Spacer()
                 if item.visibility == .publicAccess {
                     Label("Public", systemImage: "globe")
@@ -399,7 +414,6 @@ struct ItemDetailView: View {
             Divider()
 
             VStack(spacing: 12) {
-                // Category
                 if let category = item.category {
                     LabeledContent {
                         Text(category.value1.name)
@@ -408,7 +422,6 @@ struct ItemDetailView: View {
                     }
                 }
 
-                // Location
                 if let location = item.location {
                     LabeledContent {
                         Text(location.value1.title)
@@ -417,7 +430,6 @@ struct ItemDetailView: View {
                     }
                 }
 
-                // Author
                 if let author = item.author {
                     LabeledContent {
                         Text(author.value1.name)
@@ -462,7 +474,6 @@ struct ItemDetailView: View {
                 }
             }
 
-            // Add child button as list row
             if !isViewOnly {
                 Divider()
                 Button {
@@ -500,9 +511,7 @@ struct ItemDetailView: View {
                     .buttonStyle(.plain)
 
                     Button {
-                        Task {
-                            await removeChild(child.id)
-                        }
+                        Task { await removeChild(child.id) }
                     } label: {
                         Image(systemName: "minus.circle")
                             .foregroundStyle(.red)
@@ -521,9 +530,7 @@ struct ItemDetailView: View {
                     Label("Edit", systemImage: "pencil")
                 }
                 Button(role: .destructive) {
-                    Task {
-                        await removeChild(child.id)
-                    }
+                    Task { await removeChild(child.id) }
                 } label: {
                     Label("Remove from Parent", systemImage: "minus.circle")
                 }
@@ -597,9 +604,7 @@ struct ItemDetailView: View {
                             .swipeActions(edge: .trailing, allowsFullSwipe: false) {
                                 if !isViewOnly {
                                     Button(role: .destructive) {
-                                        Task {
-                                            await deleteContent(content.id)
-                                        }
+                                        Task { await deleteContent(content.id) }
                                     } label: {
                                         Label("Delete", systemImage: "trash")
                                     }
@@ -612,7 +617,6 @@ struct ItemDetailView: View {
                 .frame(minHeight: CGFloat(viewModel.contents.count) * 80)
             }
 
-            // Add content button as list row
             if !isViewOnly {
                 Divider()
                     .padding(.leading, 16)
@@ -691,9 +695,7 @@ struct ItemDetailView: View {
                     Label("Edit", systemImage: "pencil")
                 }
                 Button(role: .destructive) {
-                    Task {
-                        await deleteContent(content.id)
-                    }
+                    Task { await deleteContent(content.id) }
                 } label: {
                     Label("Delete", systemImage: "trash")
                 }
@@ -747,13 +749,15 @@ struct ItemDetailView: View {
 
 // MARK: - Card Style Extension
 
-extension View {
+private extension View {
     func cardStyle() -> some View {
         padding(16)
             .background(Color.secondarySystemGroupedBackground)
             .clipShape(RoundedRectangle(cornerRadius: 12))
     }
 }
+
+// MARK: - Detail Row Component
 
 /// Detail row component (shared with other views)
 struct DetailRow: View {
@@ -774,6 +778,8 @@ struct DetailRow: View {
         }
     }
 }
+
+// MARK: - Previews
 
 #Preview("Full Mode") {
     NavigationStack {

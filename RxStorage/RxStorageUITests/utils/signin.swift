@@ -12,9 +12,13 @@ private let logger = Logger(subsystem: "app.rxlab.RxStorageUITests", category: "
 
 extension XCUIApplication {
     func signInWithEmailAndPassword() throws {
-        // Read credentials from environment variables
-        let testEmail = ProcessInfo.processInfo.environment["TEST_EMAIL"] ?? "test@rxlab.app"
-        let testPassword = ProcessInfo.processInfo.environment["TEST_PASSWORD"] ?? "default_password"
+        // Load .env file and read credentials
+        let envVars = DotEnv.load()
+
+        let testEmail = DotEnv.get("TEST_EMAIL", from: envVars) ?? "test@rxlab.app"
+        guard let testPassword = DotEnv.get("TEST_PASSWORD", from: envVars) else {
+            throw NSError(domain: "SigninError", code: 1, userInfo: [NSLocalizedDescriptionKey: "TEST_PASSWORD not found in .env file or environment"])
+        }
 
         NSLog("🔐 Starting sign-in flow with email: \(testEmail)")
         logger.info("🔐 Starting sign-in flow with email: \(testEmail)")

@@ -65,6 +65,7 @@ struct ItemFormSheet: View {
                 Button("Cancel") {
                     dismiss()
                 }
+                .accessibilityIdentifier("item-form-cancel-button")
             }
 
             ToolbarItem(placement: .confirmationAction) {
@@ -74,6 +75,7 @@ struct ItemFormSheet: View {
                     }
                 }
                 .disabled(viewModel.isSubmitting)
+                .accessibilityIdentifier("item-form-submit-button")
             }
         }
         .sheet(isPresented: $showingCategorySheet) {
@@ -164,14 +166,17 @@ struct ItemFormSheet: View {
                 #if os(iOS)
                 .textInputAutocapitalization(.words)
                 #endif
+                .accessibilityIdentifier("item-form-title-field")
 
             TextField("Description", text: $viewModel.description, axis: .vertical)
                 .lineLimit(3 ... 6)
+                .accessibilityIdentifier("item-form-description-field")
 
             TextField("Price", text: $viewModel.price)
                 #if os(iOS)
                 .keyboardType(.decimalPad)
                 #endif
+                .accessibilityIdentifier("item-form-price-field")
         }
     }
 
@@ -192,12 +197,14 @@ struct ItemFormSheet: View {
                         .foregroundStyle(.secondary)
                 }
             }
+            .accessibilityIdentifier("item-form-category-picker")
 
             Button {
                 showingCategorySheet = true
             } label: {
                 Label("Create New Category", systemImage: "plus.circle")
             }
+            .accessibilityIdentifier("item-form-create-category-button")
         } header: {
             Text("Category")
         }
@@ -220,12 +227,14 @@ struct ItemFormSheet: View {
                         .foregroundStyle(.secondary)
                 }
             }
+            .accessibilityIdentifier("item-form-location-picker")
 
             Button {
                 showingLocationSheet = true
             } label: {
                 Label("Create New Location", systemImage: "plus.circle")
             }
+            .accessibilityIdentifier("item-form-create-location-button")
         } header: {
             Text("Location")
         }
@@ -248,12 +257,14 @@ struct ItemFormSheet: View {
                         .foregroundStyle(.secondary)
                 }
             }
+            .accessibilityIdentifier("item-form-author-picker")
 
             Button {
                 showingAuthorSheet = true
             } label: {
                 Label("Create New Author", systemImage: "plus.circle")
             }
+            .accessibilityIdentifier("item-form-create-author-button")
         } header: {
             Text("Author")
         }
@@ -276,6 +287,7 @@ struct ItemFormSheet: View {
                         .foregroundStyle(.secondary)
                 }
             }
+            .accessibilityIdentifier("item-form-parent-picker")
         }
     }
 
@@ -287,6 +299,7 @@ struct ItemFormSheet: View {
                 Text("Private").tag(Visibility.privateAccess)
             }
             .pickerStyle(.menu)
+            .accessibilityIdentifier("item-form-visibility-picker")
         }
     }
 
@@ -330,6 +343,7 @@ struct ItemFormSheet: View {
                 Label("Add Images", systemImage: "photo.badge.plus")
             }
             .disabled(viewModel.isUploading)
+            .accessibilityIdentifier("item-form-add-images-button")
         }
         .onChange(of: selectedPhotos) { _, newValue in
             Task {

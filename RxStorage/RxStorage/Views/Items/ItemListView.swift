@@ -63,6 +63,7 @@ struct ItemListView: View {
                 } label: {
                     Label("New Item", systemImage: "plus")
                 }
+                .accessibilityIdentifier("item-list-new-button")
             }
 
             #if os(iOS)
@@ -72,6 +73,7 @@ struct ItemListView: View {
                 } label: {
                     Label("Scan", systemImage: "qrcode.viewfinder")
                 }
+                .accessibilityIdentifier("item-list-scan-button")
             }
             #endif
 
@@ -81,6 +83,7 @@ struct ItemListView: View {
                 } label: {
                     Label("Filter", systemImage: "line.3.horizontal.decrease.circle")
                 }
+                .accessibilityIdentifier("item-list-filter-button")
             }
         }
         .searchable(text: $viewModel.searchText, prompt: "Search items")
@@ -203,6 +206,7 @@ struct ItemListView: View {
                 if horizontalSizeClass == .compact {
                     NavigationLink(value: item) {
                         ItemRow(item: item)
+                            .accessibilityIdentifier("item-row")
                     }
                     .swipeActions(edge: .trailing, allowsFullSwipe: false) {
                         Button(role: .destructive) {
@@ -220,27 +224,28 @@ struct ItemListView: View {
                         }
                     }
                 } else {
-                    Button {
-                        selectedItem = item
-                    } label: {
-                        ItemRow(item: item)
-                    }
-                    .listRowBackground(selectedItem?.id == item.id ? Color.accentColor.opacity(0.2) : nil)
-                    .swipeActions(edge: .trailing, allowsFullSwipe: false) {
-                        Button(role: .destructive) {
-                            itemToDelete = item
-                            showDeleteConfirmation = true
-                        } label: {
-                            Label("Delete", systemImage: "trash")
+                    // iPad: Use ItemRow with tap gesture instead of Button to avoid gesture conflicts with swipe actions
+                    ItemRow(item: item)
+                        .contentShape(Rectangle())
+                        .onTapGesture {
+                            selectedItem = item
                         }
-                    }
-                    .onAppear {
-                        if shouldLoadMore(for: item) {
-                            Task {
-                                await viewModel.loadMoreItems()
+                        .listRowBackground(selectedItem?.id == item.id ? Color.accentColor.opacity(0.2) : nil)
+                        .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                            Button(role: .destructive) {
+                                itemToDelete = item
+                                showDeleteConfirmation = true
+                            } label: {
+                                Label("Delete", systemImage: "trash")
                             }
                         }
-                    }
+                        .onAppear {
+                            if shouldLoadMore(for: item) {
+                                Task {
+                                    await viewModel.loadMoreItems()
+                                }
+                            }
+                        }
                 }
             }
 
@@ -267,12 +272,13 @@ struct ItemListView: View {
         // Load more when within 3 items of the end
         let threshold = 3
         return index >= viewModel.items.count - threshold &&
-               viewModel.hasNextPage &&
-               !viewModel.isLoadingMore &&
-               !viewModel.isLoading
+            viewModel.hasNextPage &&
+            !viewModel.isLoadingMore &&
+            !viewModel.isLoading
     }
 
     #if os(iOS)
+
     // MARK: - QR Code Handling
 
     private func handleScannedQRCode(_ code: String) async {
@@ -284,7 +290,8 @@ struct ItemListView: View {
 
         // Extract item ID from URL path (e.g., /preview/123)
         guard let itemIdString = url.pathComponents.last,
-              let itemId = Int(itemIdString) else {
+              let itemId = Int(itemIdString)
+        else {
             qrScanError = APIError.unsupportedQRCode(code)
             showQrScanError = true
             return
@@ -342,6 +349,7 @@ struct ItemFilterSheet: View {
                         Text("Public").tag(RxStorageCore.Visibility.publicAccess as RxStorageCore.Visibility?)
                         Text("Private").tag(RxStorageCore.Visibility.privateAccess as RxStorageCore.Visibility?)
                     }
+                    .accessibilityIdentifier("item-filter-visibility-picker")
                 }
 
                 // Category Section
@@ -404,53 +412,56 @@ struct ItemFilterSheet: View {
                         viewModel.clearFilters()
                     }
                     .disabled(!viewModel.hasActiveFilters)
+                    .accessibilityIdentifier("item-filter-clear-button")
                 }
             }
         }
         .navigationTitle("Filters")
         #if os(iOS)
-        .navigationBarTitleDisplayMode(.inline)
+            .navigationBarTitleDisplayMode(.inline)
         #endif
-        .toolbar {
-            ToolbarItem(placement: .cancellationAction) {
-                Button("Cancel") {
-                    dismiss()
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") {
+                        dismiss()
+                    }
+                    .accessibilityIdentifier("item-filter-cancel-button")
                 }
-            }
 
-            ToolbarItem(placement: .confirmationAction) {
-                Button("Apply") {
-                    filters = viewModel.buildFilters()
-                    onApply()
-                    dismiss()
-                }
-                .disabled(viewModel.isLoading)
-            }
-        }
-        .sheet(isPresented: $showingCategoryPicker) {
-            NavigationStack {
-                CategoryPickerSheet(selectedId: viewModel.selectedCategoryId) { category in
-                    viewModel.selectedCategoryId = category?.id
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Apply") {
+                        filters = viewModel.buildFilters()
+                        onApply()
+                        dismiss()
+                    }
+                    .disabled(viewModel.isLoading)
+                    .accessibilityIdentifier("item-filter-apply-button")
                 }
             }
-        }
-        .sheet(isPresented: $showingLocationPicker) {
-            NavigationStack {
-                LocationPickerSheet(selectedId: viewModel.selectedLocationId) { location in
-                    viewModel.selectedLocationId = location?.id
+            .sheet(isPresented: $showingCategoryPicker) {
+                NavigationStack {
+                    CategoryPickerSheet(selectedId: viewModel.selectedCategoryId) { category in
+                        viewModel.selectedCategoryId = category?.id
+                    }
                 }
             }
-        }
-        .sheet(isPresented: $showingAuthorPicker) {
-            NavigationStack {
-                AuthorPickerSheet(selectedId: viewModel.selectedAuthorId) { author in
-                    viewModel.selectedAuthorId = author?.id
+            .sheet(isPresented: $showingLocationPicker) {
+                NavigationStack {
+                    LocationPickerSheet(selectedId: viewModel.selectedLocationId) { location in
+                        viewModel.selectedLocationId = location?.id
+                    }
                 }
             }
-        }
-        .task {
-            await viewModel.loadFilterOptions()
-        }
+            .sheet(isPresented: $showingAuthorPicker) {
+                NavigationStack {
+                    AuthorPickerSheet(selectedId: viewModel.selectedAuthorId) { author in
+                        viewModel.selectedAuthorId = author?.id
+                    }
+                }
+            }
+            .task {
+                await viewModel.loadFilterOptions()
+            }
     }
 
     // MARK: - Computed Properties

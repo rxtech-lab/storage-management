@@ -176,7 +176,7 @@ struct DashboardView: View {
                     ForEach(viewModel.recentItems) { item in
                         RecentItemRow(item: item) {
                             Task {
-                                await navigationManager.navigateToItemById(item.id)
+                                await navigationManager.navigateToItemFromDashboard(item.id)
                             }
                         }
                     }

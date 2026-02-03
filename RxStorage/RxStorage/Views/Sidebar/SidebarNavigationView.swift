@@ -159,6 +159,7 @@ struct DetailColumn: View {
                             ItemDetailView(itemId: child.id)
                         }
                 }
+                .id(item.id)  // Forces clean NavigationStack recreation on item change
             } else {
                 ContentUnavailableView(
                     "Select an item",

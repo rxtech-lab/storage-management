@@ -20,7 +20,9 @@ struct ContentView: View {
                 AdaptiveRootView()
             case .unauthenticated:
                 LoginView()
+                #if os(macOS)
                     .frame(maxWidth: 500, maxHeight: 700)
+                #endif
             }
         }
     }

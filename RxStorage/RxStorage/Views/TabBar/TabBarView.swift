@@ -27,6 +27,7 @@ struct TabBarView: View {
                 Label(AppTab.dashboard.rawValue, systemImage: AppTab.dashboard.systemImage)
             }
             .tag(AppTab.dashboard)
+            .accessibilityIdentifier("tab-dashboard")
 
             // Items Tab
             NavigationStack(path: $nav.itemsNavigationPath) {
@@ -39,6 +40,7 @@ struct TabBarView: View {
                 Label(AppTab.items.rawValue, systemImage: AppTab.items.systemImage)
             }
             .tag(AppTab.items)
+            .accessibilityIdentifier("tab-items")
 
             // Management Tab
             NavigationStack(path: $nav.managementNavigationPath) {
@@ -63,6 +65,7 @@ struct TabBarView: View {
                 Label(AppTab.management.rawValue, systemImage: AppTab.management.systemImage)
             }
             .tag(AppTab.management)
+            .accessibilityIdentifier("tab-management")
 
             // Settings Tab
             NavigationStack {
@@ -72,6 +75,7 @@ struct TabBarView: View {
                 Label(AppTab.settings.rawValue, systemImage: AppTab.settings.systemImage)
             }
             .tag(AppTab.settings)
+            .accessibilityIdentifier("tab-settings")
         }
     }
 }

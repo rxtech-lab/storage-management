@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		DF1A77E42F320CE6000C757A /* TestPlan.xctestplan in Resources */ = {isa = PBXBuildFile; fileRef = DF1A77E32F320CE6000C757A /* TestPlan.xctestplan */; };
+		DF1A77E52F320CE6000C757A /* TestPlan.xctestplan in Resources */ = {isa = PBXBuildFile; fileRef = DF1A77E32F320CE6000C757A /* TestPlan.xctestplan */; };
 		DF6625B52F29138400333552 /* RxStorageClips.app in Embed App Clips */ = {isa = PBXBuildFile; fileRef = DF6625902F29138300333552 /* RxStorageClips.app */; platformFilter = ios; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		DF6626072F2A54C200333552 /* RxStorageCore in Frameworks */ = {isa = PBXBuildFile; productRef = DF6626062F2A54C200333552 /* RxStorageCore */; };
 		DF6626562F2B803300333552 /* JSONSchemaForm in Frameworks */ = {isa = PBXBuildFile; productRef = DF6626552F2B803300333552 /* JSONSchemaForm */; };
@@ -69,6 +71,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		DF1A77E32F320CE6000C757A /* TestPlan.xctestplan */ = {isa = PBXFileReference; lastKnownFileType = text; path = TestPlan.xctestplan; sourceTree = "<group>"; };
 		DF66255D2F29136F00333552 /* RxStorage.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = RxStorage.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		DF66256E2F29137000333552 /* RxStorageTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = RxStorageTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		DF6625782F29137000333552 /* RxStorageUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = RxStorageUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -236,6 +239,7 @@
 		DF6625542F29136F00333552 = {
 			isa = PBXGroup;
 			children = (
+				DF1A77E32F320CE6000C757A /* TestPlan.xctestplan */,
 				DF66255F2F29136F00333552 /* RxStorage */,
 				DF6625712F29137000333552 /* RxStorageTests */,
 				DF66257B2F29137000333552 /* RxStorageUITests */,
@@ -488,6 +492,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				DF1A77E42F320CE6000C757A /* TestPlan.xctestplan in Resources */,
 				DF6626D92F2CF37000333552 /* icon.icon in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -511,6 +516,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				DF6626DA2F2CF4EB00333552 /* icon.icon in Resources */,
+				DF1A77E52F320CE6000C757A /* TestPlan.xctestplan in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

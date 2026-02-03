@@ -120,6 +120,7 @@ struct MapPickerView: View {
             Button("Close") {
                 dismiss()
             }
+            .accessibilityIdentifier("map-picker-close-button")
         }
 
         #if os(iOS)
@@ -155,6 +156,7 @@ struct MapPickerView: View {
             }
         }
         .disabled(viewModel.isLocatingUser || viewModel.authorizationStatus == .denied)
+        .accessibilityIdentifier("map-picker-location-button")
     }
 
     // MARK: - Confirm Button
@@ -173,6 +175,7 @@ struct MapPickerView: View {
         }
         .disabled(viewModel.selectedCoordinate == nil)
         .buttonStyle(.borderedProminent)
+        .accessibilityIdentifier("map-picker-confirm-button")
     }
 
     // MARK: - Map View

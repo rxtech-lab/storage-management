@@ -56,13 +56,16 @@ if [ ! -f "$SECRETS_CONFIG" ]; then
     echo "This file should be created from GitHub secrets in CI or manually for local builds."
 fi
 
-# Check if test credentials are set
-if [ -z "$TEST_EMAIL" ] || [ -z "$TEST_PASSWORD" ]; then
-    echo -e "${YELLOW}⚠️  Warning: TEST_EMAIL or TEST_PASSWORD not set${NC}"
-    echo "UI tests may fail without valid test credentials."
-    echo "Set these environment variables before running UI tests:"
-    echo "  export TEST_EMAIL=your-test-email@example.com"
-    echo "  export TEST_PASSWORD=your-test-password"
+# Check if .env file exists for test credentials
+ENV_FILE="RxStorage/.env"
+if [ -f "$ENV_FILE" ]; then
+    echo -e "${GREEN}✅ Found .env file for test credentials${NC}"
+else
+    echo -e "${YELLOW}⚠️  Warning: $ENV_FILE not found${NC}"
+    echo "UI tests will read credentials from .env file."
+    echo "Create one from the example:"
+    echo "  cp RxStorage/.env.example RxStorage/.env"
+    echo "  # Then edit with your test credentials"
     echo ""
 fi
 
@@ -94,35 +97,29 @@ set +e  # Temporarily disable exit on error to capture the exit code
 
 # Use xcbeautify for pretty printing if available, otherwise raw output
 if command -v xcbeautify &> /dev/null; then
-    TEST_EMAIL="$TEST_EMAIL" TEST_PASSWORD="$TEST_PASSWORD" xcodebuild test \
+    xcodebuild test \
         -project "$PROJECT_PATH" \
         -scheme "$SCHEME" \
+        -testPlan TestPlan \
         -configuration "$CONFIGURATION" \
         -destination "$DESTINATION" \
         -derivedDataPath "$BUILD_DIR" \
         -resultBundlePath "$RESULT_BUNDLE_PATH" \
-        -only-testing:RxStorageUITests \
         -parallel-testing-enabled NO \
         -skipPackagePluginValidation \
-        CODE_SIGN_IDENTITY="" \
-        CODE_SIGNING_REQUIRED=NO \
-        CODE_SIGNING_ALLOWED=NO \
         2>&1 | tee "$LOG_FILE" | xcbeautify
     TEST_EXIT_CODE=${PIPESTATUS[0]}
 else
-    TEST_EMAIL="$TEST_EMAIL" TEST_PASSWORD="$TEST_PASSWORD" xcodebuild test \
+    xcodebuild test \
         -project "$PROJECT_PATH" \
         -scheme "$SCHEME" \
+        -testPlan TestPlan \
         -configuration "$CONFIGURATION" \
         -destination "$DESTINATION" \
         -derivedDataPath "$BUILD_DIR" \
         -resultBundlePath "$RESULT_BUNDLE_PATH" \
-        -only-testing:RxStorageUITests \
         -parallel-testing-enabled NO \
         -skipPackagePluginValidation \
-        CODE_SIGN_IDENTITY="" \
-        CODE_SIGNING_REQUIRED=NO \
-        CODE_SIGNING_ALLOWED=NO \
         2>&1 | tee "$LOG_FILE"
     TEST_EXIT_CODE=${PIPESTATUS[0]}
 fi
@@ -181,7 +178,7 @@ else
     echo "Common issues:"
     echo "1. Check test failures in the log above"
     echo "2. Verify backend server is running at http://localhost:3000"
-    echo "3. Ensure TEST_EMAIL and TEST_PASSWORD are set correctly"
+    echo "3. Ensure RxStorage/.env has TEST_EMAIL and TEST_PASSWORD set"
     echo "4. Check if simulator is booted and accessible"
     echo "5. Review OAuth configuration in Secrets.xcconfig"
     echo ""
