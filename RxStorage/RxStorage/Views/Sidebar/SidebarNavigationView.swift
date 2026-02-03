@@ -121,7 +121,7 @@ struct ContentColumn: View {
         case .dashboard:
             DashboardView()
         case .items:
-            ItemListView(selectedItem: $nav.selectedItem)
+            ItemListView(horizontalSizeClass: .regular, selectedItem: $nav.selectedItem)
         case .management:
             ManagementListView(
                 section: navigationManager.selectedManagementSection,
@@ -143,7 +143,9 @@ struct DetailColumn: View {
     @Environment(NavigationManager.self) private var navigationManager
 
     var body: some View {
-        switch navigationManager.selectedTab {
+        @Bindable var nav = navigationManager
+
+        switch nav.selectedTab {
         case .dashboard:
             // Dashboard doesn't have a detail view
             ContentUnavailableView(
@@ -152,13 +154,12 @@ struct DetailColumn: View {
                 description: Text("View your storage overview")
             )
         case .items:
-            if let item = navigationManager.selectedItem {
-                NavigationStack {
-                    ItemDetailView(itemId: item.id)
-                        .navigationDestination(for: StorageItem.self) { child in
-                            ItemDetailView(itemId: child.id)
-                        }
-                }
+            if let item = nav.selectedItem {
+                ItemDetailView(itemId: item.id)
+                    .navigationDestination(for: StorageItem.self) { child in
+                        ItemDetailView(itemId: child.id)
+                    }
+                    .id(item.id) // Forces clean NavigationStack recreation on item change
             } else {
                 ContentUnavailableView(
                     "Select an item",
@@ -169,21 +170,30 @@ struct DetailColumn: View {
         case .management:
             managementDetailView
         case .settings:
-            // Settings doesn't need a detail view
-            ContentUnavailableView(
-                "Settings",
-                systemImage: "gearshape",
-                description: Text("Configure your app settings")
-            )
+            @Bindable var nav = navigationManager
+
+            NavigationStack(path: $nav.settingsNavigationPath) {
+                ContentUnavailableView(
+                    "Settings",
+                    systemImage: "gearshape",
+                    description: Text("Configure your app settings")
+                )
+                .navigationDestination(for: WebPage.self) { webPage in
+                    WebPageView(webPage: webPage)
+                }
+            }
         }
     }
 
     @ViewBuilder
     private var managementDetailView: some View {
-        switch navigationManager.selectedManagementSection {
+        @Bindable var nav = navigationManager
+
+        switch nav.selectedManagementSection {
         case .categories:
-            if let category = navigationManager.selectedCategory {
+            if let category = nav.selectedCategory {
                 CategoryDetailView(categoryId: category.id)
+                    .id(category.id)
             } else {
                 ContentUnavailableView(
                     "Select a category",
@@ -192,8 +202,9 @@ struct DetailColumn: View {
                 )
             }
         case .locations:
-            if let location = navigationManager.selectedLocation {
+            if let location = nav.selectedLocation {
                 LocationDetailView(locationId: location.id)
+                    .id(location.id)
             } else {
                 ContentUnavailableView(
                     "Select a location",
@@ -202,8 +213,9 @@ struct DetailColumn: View {
                 )
             }
         case .authors:
-            if let author = navigationManager.selectedAuthor {
+            if let author = nav.selectedAuthor {
                 AuthorDetailView(authorId: author.id)
+                    .id(author.id)
             } else {
                 ContentUnavailableView(
                     "Select an author",
@@ -212,8 +224,9 @@ struct DetailColumn: View {
                 )
             }
         case .positionSchemas:
-            if let schema = navigationManager.selectedPositionSchema {
+            if let schema = nav.selectedPositionSchema {
                 PositionSchemaDetailView(schemaId: schema.id)
+                    .id(schema.id)
             } else {
                 ContentUnavailableView(
                     "Select a schema",
@@ -238,13 +251,13 @@ struct ManagementListView: View {
     var body: some View {
         switch section {
         case .categories:
-            CategoryListView(selectedCategory: $selectedCategory)
+            CategoryListView(horizontalSizeClass: .regular, selectedCategory: $selectedCategory)
         case .locations:
-            LocationListView(selectedLocation: $selectedLocation)
+            LocationListView(horizontalSizeClass: .regular, selectedLocation: $selectedLocation)
         case .authors:
-            AuthorListView(selectedAuthor: $selectedAuthor)
+            AuthorListView(horizontalSizeClass: .regular, selectedAuthor: $selectedAuthor)
         case .positionSchemas:
-            PositionSchemaListView(selectedSchema: $selectedPositionSchema)
+            PositionSchemaListView(horizontalSizeClass: .regular, selectedSchema: $selectedPositionSchema)
         }
     }
 }

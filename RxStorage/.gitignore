@@ -32,6 +32,10 @@ DerivedData/
 ## Xcode Configuration Files with Secrets
 **/Secrets.xcconfig
 
+## Environment files with secrets
+.env
+.env.local
+
 # Swift Package Manager
 #
 # Add this line if you want to avoid checking in source code from Swift Package Manager dependencies.

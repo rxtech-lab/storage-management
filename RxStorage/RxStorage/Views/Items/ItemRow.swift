@@ -14,6 +14,7 @@ struct ItemRow: View {
         VStack(alignment: .leading, spacing: 4) {
             Text(item.title)
                 .font(.headline)
+                .accessibilityIdentifier("item-row")
 
             if let description = item.description, !description.isEmpty {
                 Text(description)

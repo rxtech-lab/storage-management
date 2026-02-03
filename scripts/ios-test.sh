@@ -97,81 +97,14 @@ if [ $PACKAGE_TEST_FAILED -ne 0 ]; then
     exit 1
 fi
 
-echo ""
-
-# Run tests
-echo "🧪 Running xcodebuild tests..."
-echo ""
-
-# Run xcodebuild and capture exit code properly
-set +e  # Temporarily disable exit on error to capture the exit code
-
-# Use xcbeautify for pretty printing if available, otherwise raw output
-if command -v xcbeautify &> /dev/null; then
-    xcodebuild test \
-        -project "$PROJECT_PATH" \
-        -scheme "$SCHEME" \
-        -configuration "$CONFIGURATION" \
-        -destination "$DESTINATION" \
-        -derivedDataPath "$BUILD_DIR" \
-        -resultBundlePath "$RESULT_BUNDLE_PATH" \
-        -skip-testing:RxStorageUITests \
-        -skipPackagePluginValidation \
-        -enableCodeCoverage YES \
-        CODE_SIGN_IDENTITY="" \
-        CODE_SIGNING_REQUIRED=NO \
-        CODE_SIGNING_ALLOWED=NO \
-        2>&1 | tee test.log | xcbeautify
-    TEST_EXIT_CODE=${PIPESTATUS[0]}
-else
-    xcodebuild test \
-        -project "$PROJECT_PATH" \
-        -scheme "$SCHEME" \
-        -configuration "$CONFIGURATION" \
-        -destination "$DESTINATION" \
-        -derivedDataPath "$BUILD_DIR" \
-        -resultBundlePath "$RESULT_BUNDLE_PATH" \
-        -skip-testing:RxStorageUITests \
-        -skipPackagePluginValidation \
-        -enableCodeCoverage YES \
-        CODE_SIGN_IDENTITY="" \
-        CODE_SIGNING_REQUIRED=NO \
-        CODE_SIGNING_ALLOWED=NO \
-        2>&1 | tee test.log
-    TEST_EXIT_CODE=${PIPESTATUS[0]}
-fi
-
-set -e  # Re-enable exit on error
+# Swift Package tests are the primary unit tests for this project.
+# The Xcode project only contains UI tests (RxStorageUITests), not unit tests.
+# Unit tests live in the Swift packages (RxStorageCore, JsonSchemaEditor).
 
 echo ""
 echo "======================================"
-
-if [ $TEST_EXIT_CODE -eq 0 ]; then
-    echo -e "${GREEN}✅ All tests passed!${NC}"
-    echo ""
-    echo "Test log saved to: test.log"
-    echo "Result bundle saved to: $RESULT_BUNDLE_PATH"
-
-    # Display test summary if xcresult is available
-    if command -v xcrun &> /dev/null && [ -d "$RESULT_BUNDLE_PATH" ]; then
-        echo ""
-        echo "📊 Test Summary:"
-        xcrun xcresulttool get --format json --path "$RESULT_BUNDLE_PATH" > /dev/null 2>&1 || true
-    fi
-
-    exit 0
-else
-    echo -e "${RED}❌ Tests failed!${NC}"
-    echo ""
-    echo "Test log saved to: test.log"
-    echo "Result bundle saved to: $RESULT_BUNDLE_PATH"
-    echo ""
-    echo "Common issues:"
-    echo "1. Check test failures in the log above"
-    echo "2. Verify simulator is available and booted"
-    echo "3. Check if RxStorageCore package tests are failing"
-    echo "4. Ensure Secrets.xcconfig is present with valid values"
-    echo ""
-    echo "See test.log for full error details"
-    exit 1
-fi
+echo -e "${GREEN}✅ All unit tests passed!${NC}"
+echo ""
+echo "Note: Unit tests are run via Swift Package Manager (above)."
+echo "UI tests can be run separately with: ./scripts/ios-ui-test.sh"
+exit 0

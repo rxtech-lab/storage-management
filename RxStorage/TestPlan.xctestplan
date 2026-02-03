@@ -1,0 +1,24 @@
+{
+  "configurations" : [
+    {
+      "id" : "F138A4BF-D13A-4888-A748-9CC700EDCE59",
+      "name" : "Default",
+      "options" : {
+
+      }
+    }
+  ],
+  "defaultOptions" : {
+    "testTimeoutsEnabled" : true
+  },
+  "testTargets" : [
+    {
+      "target" : {
+        "containerPath" : "container:RxStorage.xcodeproj",
+        "identifier" : "DF6625772F29137000333552",
+        "name" : "RxStorageUITests"
+      }
+    }
+  ],
+  "version" : 1
+}

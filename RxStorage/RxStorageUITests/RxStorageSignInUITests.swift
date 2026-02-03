@@ -7,7 +7,7 @@
 
 import XCTest
 
-final class RxStorageUITests: XCTestCase {
+final class RxStorageSignInUITests: XCTestCase {
     override func setUpWithError() throws {
         // Put setup code here. This method is called before the invocation of each test method in the class.
 
@@ -22,8 +22,8 @@ final class RxStorageUITests: XCTestCase {
     }
 
     @MainActor
-    func testExample() throws {
+    func testBasicSignIn() throws {
         let app = launchApp()
-        try signInWithEmailAndPassword(for: app)
+        try app.signInWithEmailAndPassword()
     }
 }

@@ -43,8 +43,14 @@ struct ItemDetailViewModelTests {
     func testFetchItemSuccess() async throws {
         // Given
         let mockService = MockItemService()
+        let mockContentService = MockContentService()
+        let mockContentSchemaService = MockContentSchemaService()
         mockService.fetchItemResult = .success(Self.testItemDetail)
-        let sut = ItemDetailViewModel(itemService: mockService)
+        let sut = ItemDetailViewModel(
+            itemService: mockService,
+            contentService: mockContentService,
+            contentSchemaService: mockContentSchemaService
+        )
 
         // When
         await sut.fetchItem(id: 1)
@@ -66,8 +72,14 @@ struct ItemDetailViewModelTests {
     func testFetchItemError() async throws {
         // Given
         let mockService = MockItemService()
+        let mockContentService = MockContentService()
+        let mockContentSchemaService = MockContentSchemaService()
         mockService.fetchItemResult = .failure(APIError.notFound)
-        let sut = ItemDetailViewModel(itemService: mockService)
+        let sut = ItemDetailViewModel(
+            itemService: mockService,
+            contentService: mockContentService,
+            contentSchemaService: mockContentSchemaService
+        )
 
         // When
         await sut.fetchItem(id: 999)
@@ -86,8 +98,14 @@ struct ItemDetailViewModelTests {
     func testRefresh() async throws {
         // Given
         let mockService = MockItemService()
+        let mockContentService = MockContentService()
+        let mockContentSchemaService = MockContentSchemaService()
         mockService.fetchItemResult = .success(Self.testItemDetail)
-        let sut = ItemDetailViewModel(itemService: mockService)
+        let sut = ItemDetailViewModel(
+            itemService: mockService,
+            contentService: mockContentService,
+            contentSchemaService: mockContentSchemaService
+        )
 
         await sut.fetchItem(id: 1)
 

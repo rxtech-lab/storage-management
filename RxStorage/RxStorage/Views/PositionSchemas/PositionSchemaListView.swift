@@ -12,6 +12,7 @@ import SwiftUI
 /// Position schema list view
 struct PositionSchemaListView: View {
     @Binding var selectedSchema: PositionSchema?
+    let horizontalSizeClass: UserInterfaceSizeClass
 
     @State private var viewModel = PositionSchemaListViewModel()
     @State private var showingCreateSheet = false
@@ -23,7 +24,8 @@ struct PositionSchemaListView: View {
     @State private var showDeleteConfirmation = false
 
     /// Initialize with an optional binding (defaults to constant nil for standalone use)
-    init(selectedSchema: Binding<PositionSchema?> = .constant(nil)) {
+    init(horizontalSizeClass: UserInterfaceSizeClass, selectedSchema: Binding<PositionSchema?> = .constant(nil)) {
+        self.horizontalSizeClass = horizontalSizeClass
         _selectedSchema = selectedSchema
     }
 
@@ -107,50 +109,24 @@ struct PositionSchemaListView: View {
 
     // MARK: - Schemas List
 
-    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
-
     private var schemasList: some View {
-        List {
+        AdaptiveList(horizontalSizeClass: horizontalSizeClass, selection: $selectedSchema) {
             ForEach(viewModel.schemas) { schema in
-                if horizontalSizeClass == .compact {
-                    NavigationLink(value: schema) {
-                        PositionSchemaRow(schema: schema)
-                    }
-                    .swipeActions(edge: .trailing, allowsFullSwipe: false) {
-                        Button(role: .destructive) {
-                            schemaToDelete = schema
-                            showDeleteConfirmation = true
-                        } label: {
-                            Label("Delete", systemImage: "trash")
-                        }
-                    }
-                    .onAppear {
-                        if shouldLoadMore(for: schema) {
-                            Task {
-                                await viewModel.loadMoreSchemas()
-                            }
-                        }
-                    }
-                } else {
-                    Button {
-                        selectedSchema = schema
+                NavigationLink(value: schema) {
+                    PositionSchemaRow(schema: schema)
+                }
+                .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                    Button(role: .destructive) {
+                        schemaToDelete = schema
+                        showDeleteConfirmation = true
                     } label: {
-                        PositionSchemaRow(schema: schema)
+                        Label("Delete", systemImage: "trash")
                     }
-                    .listRowBackground(selectedSchema?.id == schema.id ? Color.accentColor.opacity(0.2) : nil)
-                    .swipeActions(edge: .trailing, allowsFullSwipe: false) {
-                        Button(role: .destructive) {
-                            schemaToDelete = schema
-                            showDeleteConfirmation = true
-                        } label: {
-                            Label("Delete", systemImage: "trash")
-                        }
-                    }
-                    .onAppear {
-                        if shouldLoadMore(for: schema) {
-                            Task {
-                                await viewModel.loadMoreSchemas()
-                            }
+                }
+                .onAppear {
+                    if shouldLoadMore(for: schema) {
+                        Task {
+                            await viewModel.loadMoreSchemas()
                         }
                     }
                 }
@@ -177,9 +153,9 @@ struct PositionSchemaListView: View {
         }
         let threshold = 3
         return index >= viewModel.schemas.count - threshold &&
-               viewModel.hasNextPage &&
-               !viewModel.isLoadingMore &&
-               !viewModel.isLoading
+            viewModel.hasNextPage &&
+            !viewModel.isLoadingMore &&
+            !viewModel.isLoading
     }
 }
 
@@ -213,6 +189,6 @@ struct PositionSchemaRow: View {
 #Preview {
     @Previewable @State var selectedSchema: PositionSchema?
     NavigationStack {
-        PositionSchemaListView(selectedSchema: $selectedSchema)
+        PositionSchemaListView(horizontalSizeClass: .compact, selectedSchema: $selectedSchema)
     }
 }
