@@ -1,4 +1,11 @@
 //
+//  RxStorageItemsTests.swift
+//  RxStorage
+//
+//  Created by Qiwei Li on 2/3/26.
+//
+
+//
 //  RxStorageUITests.swift
 //  RxStorageUITests
 //
@@ -7,7 +14,7 @@
 
 import XCTest
 
-final class RxStorageSignInUITests: XCTestCase {
+final class RxStorageItemsUITests: XCTestCase {
     override func setUpWithError() throws {
         // Put setup code here. This method is called before the invocation of each test method in the class.
 

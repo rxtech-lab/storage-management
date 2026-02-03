@@ -86,6 +86,7 @@ struct DashboardView: View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Overview")
                 .font(.headline)
+                .accessibilityIdentifier("dashboard-view-title")
 
             if viewModel.isLoading && viewModel.stats == nil {
                 HStack {
@@ -105,7 +106,7 @@ struct DashboardView: View {
                         title: "Total Items",
                         value: "\(viewModel.stats?.totalItems ?? 0)",
                         subtitle:
-                            "\(viewModel.stats?.publicItems ?? 0) public, \(viewModel.stats?.privateItems ?? 0) private",
+                        "\(viewModel.stats?.publicItems ?? 0) public, \(viewModel.stats?.privateItems ?? 0) private",
                         icon: "shippingbox",
                         color: .blue
                     )
