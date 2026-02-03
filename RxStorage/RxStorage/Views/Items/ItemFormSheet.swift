@@ -46,280 +46,20 @@ struct ItemFormSheet: View {
 
     var body: some View {
         Form {
-            // Basic Info
-            Section("Basic Information") {
-                TextField("Title", text: $viewModel.title)
-                    .textInputAutocapitalization(.words)
-
-                TextField("Description", text: $viewModel.description, axis: .vertical)
-                    .lineLimit(3 ... 6)
-
-                TextField("Price", text: $viewModel.price)
-                    .keyboardType(.decimalPad)
-            }
-
-            // Category
-            Section {
-                Button {
-                    showingCategoryPicker = true
-                } label: {
-                    HStack {
-                        Text("Category")
-                            .foregroundStyle(.primary)
-                        Spacer()
-                        Text(selectedCategoryName)
-                            .foregroundStyle(.secondary)
-                        Image(systemName: "chevron.right")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
-                }
-
-                Button {
-                    showingCategorySheet = true
-                } label: {
-                    Label("Create New Category", systemImage: "plus.circle")
-                }
-            } header: {
-                Text("Category")
-            }
-
-            // Location
-            Section {
-                Button {
-                    showingLocationPicker = true
-                } label: {
-                    HStack {
-                        Text("Location")
-                            .foregroundStyle(.primary)
-                        Spacer()
-                        Text(selectedLocationName)
-                            .foregroundStyle(.secondary)
-                        Image(systemName: "chevron.right")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
-                }
-
-                Button {
-                    showingLocationSheet = true
-                } label: {
-                    Label("Create New Location", systemImage: "plus.circle")
-                }
-            } header: {
-                Text("Location")
-            }
-
-            // Author
-            Section {
-                Button {
-                    showingAuthorPicker = true
-                } label: {
-                    HStack {
-                        Text("Author")
-                            .foregroundStyle(.primary)
-                        Spacer()
-                        Text(selectedAuthorName)
-                            .foregroundStyle(.secondary)
-                        Image(systemName: "chevron.right")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
-                }
-
-                Button {
-                    showingAuthorSheet = true
-                } label: {
-                    Label("Create New Author", systemImage: "plus.circle")
-                }
-            } header: {
-                Text("Author")
-            }
-
-            // Parent Item
-            Section("Hierarchy") {
-                Button {
-                    showingParentItemPicker = true
-                } label: {
-                    HStack {
-                        Text("Parent Item")
-                            .foregroundStyle(.primary)
-                        Spacer()
-                        Text(selectedParentItemName)
-                            .foregroundStyle(.secondary)
-                        Image(systemName: "chevron.right")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
-                }
-            }
-
-            // Visibility
-            Section("Privacy") {
-                Picker("Visibility", selection: $viewModel.visibility) {
-                    Text("Public").tag(Visibility.publicAccess)
-                    Text("Private").tag(Visibility.privateAccess)
-                }
-                .pickerStyle(.menu)
-            }
-
-            // Images
-            Section("Images") {
-                // Existing images
-                ForEach(Array(viewModel.existingImages.enumerated()), id: \.element.id) { index, imageRef in
-                    HStack {
-                        AsyncImage(url: URL(string: imageRef.url)) { image in
-                            image
-                                .resizable()
-                                .scaledToFill()
-                        } placeholder: {
-                            ProgressView()
-                        }
-                        .frame(width: 60, height: 60)
-                        .clipShape(RoundedRectangle(cornerRadius: 8))
-
-                        Text("Image \(index + 1)")
-                        Spacer()
-                        Button(role: .destructive) {
-                            viewModel.removeSavedImage(at: index)
-                        } label: {
-                            Image(systemName: "trash")
-                        }
-                    }
-                }
-
-                // Pending uploads with progress
-                ForEach(viewModel.pendingUploads) { pending in
-                    HStack {
-                        // Local preview from file URL
-                        if let image = loadImage(from: pending.localURL) {
-                            Image(uiImage: image)
-                                .resizable()
-                                .scaledToFill()
-                                .frame(width: 60, height: 60)
-                                .clipShape(RoundedRectangle(cornerRadius: 8))
-                        } else {
-                            RoundedRectangle(cornerRadius: 8)
-                                .fill(Color.gray.opacity(0.3))
-                                .frame(width: 60, height: 60)
-                        }
-
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text(pending.filename)
-                                .lineLimit(1)
-                                .font(.subheadline)
-
-                            if pending.status.isInProgress {
-                                ProgressView(value: pending.progress)
-                                    .progressViewStyle(.linear)
-                            } else if case .failed(let error) = pending.status {
-                                Text(error)
-                                    .foregroundStyle(.red)
-                                    .font(.caption)
-                            } else if pending.status.isCompleted {
-                                Text("Uploaded")
-                                    .foregroundStyle(.green)
-                                    .font(.caption)
-                            }
-                        }
-
-                        Spacer()
-
-                        if !pending.status.isCompleted {
-                            Button(role: .destructive) {
-                                viewModel.removePendingUpload(id: pending.id)
-                            } label: {
-                                Image(systemName: "xmark.circle")
-                            }
-                        }
-                    }
-                }
-
-                // PhotosPicker button
-                PhotosPicker(
-                    selection: $selectedPhotos,
-                    maxSelectionCount: 10,
-                    matching: .images
-                ) {
-                    Label("Add Images", systemImage: "photo.badge.plus")
-                }
-                .disabled(viewModel.isUploading)
-            }
-            .onChange(of: selectedPhotos) { _, newValue in
-                Task {
-                    await handleSelectedPhotos(newValue)
-                }
-            }
-
-            // Positions
-            Section {
-                // Existing positions (edit mode)
-                ForEach(viewModel.positions) { position in
-                    HStack {
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text(position.positionSchema?.name ?? "Position")
-                                .font(.headline)
-                            Text(positionDataSummary(position.data))
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                                .lineLimit(2)
-                        }
-                        Spacer()
-                        Button(role: .destructive) {
-                            Task {
-                                try? await viewModel.removePosition(id: position.id)
-                            }
-                        } label: {
-                            Image(systemName: "trash")
-                        }
-                    }
-                }
-
-                // Pending positions (new)
-                ForEach(viewModel.pendingPositions) { pending in
-                    HStack {
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text(pending.schema.name)
-                                .font(.headline)
-                            Text(positionDataSummary(pending.data))
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                                .lineLimit(2)
-                        }
-                        Spacer()
-                        Button(role: .destructive) {
-                            viewModel.removePendingPosition(id: pending.id)
-                        } label: {
-                            Image(systemName: "xmark.circle")
-                        }
-                    }
-                }
-
-                // Add position button
-                Button {
-                    showingPositionSheet = true
-                } label: {
-                    Label("Add Position", systemImage: "plus.circle")
-                }
-            } header: {
-                Text("Positions")
-            }
-
-            // Validation Errors
-            if !viewModel.validationErrors.isEmpty {
-                Section {
-                    ForEach(Array(viewModel.validationErrors.keys), id: \.self) { key in
-                        if let error = viewModel.validationErrors[key] {
-                            Text(error)
-                                .font(.caption)
-                                .foregroundStyle(.red)
-                        }
-                    }
-                }
-            }
+            basicInfoSection
+            categorySection
+            locationSection
+            authorSection
+            hierarchySection
+            privacySection
+            imagesSection
+            positionsSection
+            validationErrorsSection
         }
         .navigationTitle(item == nil ? "New Item" : "Edit Item")
+        #if os(iOS)
         .navigationBarTitleDisplayMode(.inline)
+        #endif
         .toolbar {
             ToolbarItem(placement: .cancellationAction) {
                 Button("Cancel") {
@@ -411,6 +151,315 @@ struct ItemFormSheet: View {
         .overlay {
             if viewModel.isSubmitting || viewModel.isUploading {
                 LoadingOverlay()
+            }
+        }
+    }
+
+    // MARK: - Form Sections
+
+    @ViewBuilder
+    private var basicInfoSection: some View {
+        Section("Basic Information") {
+            TextField("Title", text: $viewModel.title)
+                #if os(iOS)
+                .textInputAutocapitalization(.words)
+                #endif
+
+            TextField("Description", text: $viewModel.description, axis: .vertical)
+                .lineLimit(3 ... 6)
+
+            TextField("Price", text: $viewModel.price)
+                #if os(iOS)
+                .keyboardType(.decimalPad)
+                #endif
+        }
+    }
+
+    @ViewBuilder
+    private var categorySection: some View {
+        Section {
+            Button {
+                showingCategoryPicker = true
+            } label: {
+                HStack {
+                    Text("Category")
+                        .foregroundStyle(.primary)
+                    Spacer()
+                    Text(selectedCategoryName)
+                        .foregroundStyle(.secondary)
+                    Image(systemName: "chevron.right")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
+
+            Button {
+                showingCategorySheet = true
+            } label: {
+                Label("Create New Category", systemImage: "plus.circle")
+            }
+        } header: {
+            Text("Category")
+        }
+    }
+
+    @ViewBuilder
+    private var locationSection: some View {
+        Section {
+            Button {
+                showingLocationPicker = true
+            } label: {
+                HStack {
+                    Text("Location")
+                        .foregroundStyle(.primary)
+                    Spacer()
+                    Text(selectedLocationName)
+                        .foregroundStyle(.secondary)
+                    Image(systemName: "chevron.right")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
+
+            Button {
+                showingLocationSheet = true
+            } label: {
+                Label("Create New Location", systemImage: "plus.circle")
+            }
+        } header: {
+            Text("Location")
+        }
+    }
+
+    @ViewBuilder
+    private var authorSection: some View {
+        Section {
+            Button {
+                showingAuthorPicker = true
+            } label: {
+                HStack {
+                    Text("Author")
+                        .foregroundStyle(.primary)
+                    Spacer()
+                    Text(selectedAuthorName)
+                        .foregroundStyle(.secondary)
+                    Image(systemName: "chevron.right")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
+
+            Button {
+                showingAuthorSheet = true
+            } label: {
+                Label("Create New Author", systemImage: "plus.circle")
+            }
+        } header: {
+            Text("Author")
+        }
+    }
+
+    @ViewBuilder
+    private var hierarchySection: some View {
+        Section("Hierarchy") {
+            Button {
+                showingParentItemPicker = true
+            } label: {
+                HStack {
+                    Text("Parent Item")
+                        .foregroundStyle(.primary)
+                    Spacer()
+                    Text(selectedParentItemName)
+                        .foregroundStyle(.secondary)
+                    Image(systemName: "chevron.right")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var privacySection: some View {
+        Section("Privacy") {
+            Picker("Visibility", selection: $viewModel.visibility) {
+                Text("Public").tag(Visibility.publicAccess)
+                Text("Private").tag(Visibility.privateAccess)
+            }
+            .pickerStyle(.menu)
+        }
+    }
+
+    @ViewBuilder
+    private var imagesSection: some View {
+        Section("Images") {
+            // Existing images
+            ForEach(Array(viewModel.existingImages.enumerated()), id: \.element.id) { index, imageRef in
+                HStack {
+                    AsyncImage(url: URL(string: imageRef.url)) { image in
+                        image
+                            .resizable()
+                            .scaledToFill()
+                    } placeholder: {
+                        ProgressView()
+                    }
+                    .frame(width: 60, height: 60)
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
+
+                    Text("Image \(index + 1)")
+                    Spacer()
+                    Button(role: .destructive) {
+                        viewModel.removeSavedImage(at: index)
+                    } label: {
+                        Image(systemName: "trash")
+                    }
+                }
+            }
+
+            // Pending uploads with progress
+            ForEach(viewModel.pendingUploads) { pending in
+                pendingUploadRow(pending)
+            }
+
+            // PhotosPicker button
+            PhotosPicker(
+                selection: $selectedPhotos,
+                maxSelectionCount: 10,
+                matching: .images
+            ) {
+                Label("Add Images", systemImage: "photo.badge.plus")
+            }
+            .disabled(viewModel.isUploading)
+        }
+        .onChange(of: selectedPhotos) { _, newValue in
+            Task {
+                await handleSelectedPhotos(newValue)
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func pendingUploadRow(_ pending: PendingUpload) -> some View {
+        HStack {
+            // Local preview from file URL
+            if let image = loadImage(from: pending.localURL) {
+                #if os(iOS)
+                Image(uiImage: image)
+                    .resizable()
+                    .scaledToFill()
+                    .frame(width: 60, height: 60)
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
+                #elseif os(macOS)
+                Image(nsImage: image)
+                    .resizable()
+                    .scaledToFill()
+                    .frame(width: 60, height: 60)
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
+                #endif
+            } else {
+                RoundedRectangle(cornerRadius: 8)
+                    .fill(Color.gray.opacity(0.3))
+                    .frame(width: 60, height: 60)
+            }
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text(pending.filename)
+                    .lineLimit(1)
+                    .font(.subheadline)
+
+                if pending.status.isInProgress {
+                    ProgressView(value: pending.progress)
+                        .progressViewStyle(.linear)
+                } else if case .failed(let error) = pending.status {
+                    Text(error)
+                        .foregroundStyle(.red)
+                        .font(.caption)
+                } else if pending.status.isCompleted {
+                    Text("Uploaded")
+                        .foregroundStyle(.green)
+                        .font(.caption)
+                }
+            }
+
+            Spacer()
+
+            if !pending.status.isCompleted {
+                Button(role: .destructive) {
+                    viewModel.removePendingUpload(id: pending.id)
+                } label: {
+                    Image(systemName: "xmark.circle")
+                }
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var positionsSection: some View {
+        Section {
+            // Existing positions (edit mode)
+            ForEach(viewModel.positions) { position in
+                HStack {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(position.positionSchema?.name ?? "Position")
+                            .font(.headline)
+                        Text(positionDataSummary(position.data))
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .lineLimit(2)
+                    }
+                    Spacer()
+                    Button(role: .destructive) {
+                        Task {
+                            try? await viewModel.removePosition(id: position.id)
+                        }
+                    } label: {
+                        Image(systemName: "trash")
+                    }
+                }
+            }
+
+            // Pending positions (new)
+            ForEach(viewModel.pendingPositions) { pending in
+                HStack {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(pending.schema.name)
+                            .font(.headline)
+                        Text(positionDataSummary(pending.data))
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .lineLimit(2)
+                    }
+                    Spacer()
+                    Button(role: .destructive) {
+                        viewModel.removePendingPosition(id: pending.id)
+                    } label: {
+                        Image(systemName: "xmark.circle")
+                    }
+                }
+            }
+
+            // Add position button
+            Button {
+                showingPositionSheet = true
+            } label: {
+                Label("Add Position", systemImage: "plus.circle")
+            }
+        } header: {
+            Text("Positions")
+        }
+    }
+
+    @ViewBuilder
+    private var validationErrorsSection: some View {
+        if !viewModel.validationErrors.isEmpty {
+            Section {
+                ForEach(Array(viewModel.validationErrors.keys), id: \.self) { key in
+                    if let error = viewModel.validationErrors[key] {
+                        Text(error)
+                            .font(.caption)
+                            .foregroundStyle(.red)
+                    }
+                }
             }
         }
     }
@@ -533,10 +582,17 @@ struct ItemFormSheet: View {
 
     // MARK: - Image Helpers
 
+    #if os(iOS)
     private func loadImage(from url: URL) -> UIImage? {
         guard let data = try? Data(contentsOf: url) else { return nil }
         return UIImage(data: data)
     }
+    #elseif os(macOS)
+    private func loadImage(from url: URL) -> NSImage? {
+        guard let data = try? Data(contentsOf: url) else { return nil }
+        return NSImage(data: data)
+    }
+    #endif
 
     private func handleSelectedPhotos(_ items: [PhotosPickerItem]) async {
         for item in items {

@@ -6,7 +6,7 @@
 
 // API Configuration - Production
 // Update this to your production API URL
-API_BASE_URL = https:/$()/api.yourdomain.com
+API_BASE_URL = https:/$()/storage.rxlab.app
 
 // OAuth Configuration - Production
 AUTH_ISSUER = https:/$()/auth.rxlab.app

@@ -6,7 +6,9 @@
 //
 
 import SwiftUI
+#if os(iOS)
 import UIKit
+#endif
 
 struct PrimaryAuthButton: View {
     let title: String
@@ -28,9 +30,11 @@ struct PrimaryAuthButton: View {
 
     var body: some View {
         Button {
+            #if os(iOS)
             if !reduceMotion {
                 UIImpactFeedbackGenerator(style: .medium).impactOccurred()
             }
+            #endif
             action()
         } label: {
             HStack(spacing: 8) {
@@ -95,9 +99,11 @@ struct SecondaryAuthButton: View {
 
     var body: some View {
         Button {
+            #if os(iOS)
             if !reduceMotion {
                 UIImpactFeedbackGenerator(style: .light).impactOccurred()
             }
+            #endif
             action()
         } label: {
             HStack(spacing: 6) {

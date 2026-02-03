@@ -51,7 +51,9 @@ struct PositionSchemaDetailView: View {
             }
         }
         .navigationTitle(viewModel.positionSchema?.name ?? "Schema")
+        #if os(iOS)
         .navigationBarTitleDisplayMode(.inline)
+        #endif
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
                 Button {

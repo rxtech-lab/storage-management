@@ -5,8 +5,8 @@ on:
 
 jobs:
   test:
-    timeout-minutes: 10
-    runs-on: macos-26
+    timeout-minutes: 20
+    runs-on: blacksmith-4vcpu-ubuntu-2404
     defaults:
       run:
         working-directory: ./admin

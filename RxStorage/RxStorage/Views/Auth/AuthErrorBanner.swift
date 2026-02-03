@@ -6,7 +6,9 @@
 //
 
 import SwiftUI
+#if os(iOS)
 import UIKit
+#endif
 
 struct AuthErrorBanner: View {
     let message: String?
@@ -59,7 +61,9 @@ struct AuthErrorBanner: View {
     private func triggerShake() {
         guard !reduceMotion else { return }
 
+        #if os(iOS)
         UINotificationFeedbackGenerator().notificationOccurred(.error)
+        #endif
 
         withAnimation(.default) {
             shakeOffset = 8

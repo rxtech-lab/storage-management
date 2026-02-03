@@ -5,8 +5,8 @@
 //  Created by Qiwei Li on 1/27/26.
 //
 
-import SwiftUI
 import RxStorageCore
+import SwiftUI
 
 struct ContentView: View {
     private var authManager = OAuthManager.shared
@@ -20,6 +20,7 @@ struct ContentView: View {
                 AdaptiveRootView()
             case .unauthenticated:
                 LoginView()
+                    .frame(maxWidth: 500, maxHeight: 700)
             }
         }
     }
@@ -88,8 +89,8 @@ private struct AuthLoadingView: View {
             for index in 0..<3 {
                 withAnimation(
                     .easeOut(duration: 1.5)
-                    .repeatForever(autoreverses: false)
-                    .delay(Double(index) * 0.3)
+                        .repeatForever(autoreverses: false)
+                        .delay(Double(index) * 0.3)
                 ) {
                     ringScales[index] = 1.0 + CGFloat(index) * 0.15
                 }
@@ -98,11 +99,14 @@ private struct AuthLoadingView: View {
             // Rotation animation
             withAnimation(
                 .linear(duration: 8)
-                .repeatForever(autoreverses: false)
+                    .repeatForever(autoreverses: false)
             ) {
                 isAnimating = true
             }
         }
+        #if os(macOS)
+        .frame(width: 500, height: 600)
+        #endif
     }
 }
 
@@ -209,6 +213,9 @@ struct LoginView: View {
                     .frame(height: 32)
             }
         }
+        #if os(macOS)
+        .frame(width: 500, height: 600)
+        #endif
         .onAppear {
             triggerEntranceAnimations()
         }

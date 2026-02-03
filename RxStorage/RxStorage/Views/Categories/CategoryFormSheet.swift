@@ -27,7 +27,9 @@ struct CategoryFormSheet: View {
         Form {
             Section("Information") {
                 TextField("Name", text: $viewModel.name)
+                    #if os(iOS)
                     .textInputAutocapitalization(.words)
+                    #endif
 
                 TextField("Description", text: $viewModel.description, axis: .vertical)
                     .lineLimit(3 ... 6)
@@ -47,7 +49,9 @@ struct CategoryFormSheet: View {
             }
         }
         .navigationTitle(category == nil ? "New Category" : "Edit Category")
+        #if os(iOS)
         .navigationBarTitleDisplayMode(.inline)
+        #endif
         .toolbar {
             ToolbarItem(placement: .cancellationAction) {
                 Button("Cancel") {

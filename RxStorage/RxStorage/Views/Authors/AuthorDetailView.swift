@@ -43,7 +43,9 @@ struct AuthorDetailView: View {
             }
         }
         .navigationTitle(viewModel.author?.name ?? "Author")
+        #if os(iOS)
         .navigationBarTitleDisplayMode(.inline)
+        #endif
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
                 Button {

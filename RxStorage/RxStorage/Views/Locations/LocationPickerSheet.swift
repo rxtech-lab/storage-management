@@ -33,7 +33,11 @@ struct LocationPickerSheet: View {
             }
         }
         .navigationTitle("Select Location")
+        #if os(iOS)
+        #if os(iOS)
         .navigationBarTitleDisplayMode(.inline)
+        #endif
+        #endif
         .toolbar {
             ToolbarItem(placement: .cancellationAction) {
                 Button("Cancel") {

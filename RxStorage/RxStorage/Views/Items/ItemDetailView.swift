@@ -7,6 +7,37 @@
 
 import RxStorageCore
 import SwiftUI
+#if os(macOS)
+import AppKit
+#endif
+
+// MARK: - Platform Colors
+
+private extension Color {
+    static var systemGroupedBackground: Color {
+        #if os(iOS)
+        Color(.systemGroupedBackground)
+        #else
+        Color(nsColor: .windowBackgroundColor)
+        #endif
+    }
+
+    static var secondarySystemGroupedBackground: Color {
+        #if os(iOS)
+        Color.secondarySystemGroupedBackground
+        #else
+        Color(nsColor: .controlBackgroundColor)
+        #endif
+    }
+
+    static var systemGray6: Color {
+        #if os(iOS)
+        Color.systemGray6
+        #else
+        Color(nsColor: .systemGray)
+        #endif
+    }
+}
 
 /// Item detail view
 struct ItemDetailView: View {
@@ -17,11 +48,13 @@ struct ItemDetailView: View {
     @Environment(EventViewModel.self) private var eventViewModel
     @State private var showingEditSheet = false
     @State private var showingQRSheet = false
+    #if os(iOS)
     @State private var nfcWriter = NFCWriter()
     @State private var isWritingNFC = false
     @State private var showNFCError = false
     @State private var nfcError: Error?
     @State private var showNFCSuccess = false
+    #endif
     @State private var showingAddChildSheet = false
     @State private var isAddingChild = false
     @State private var addChildError: Error?
@@ -69,7 +102,7 @@ struct ItemDetailView: View {
                     .frame(maxWidth: .infinity)
                 }
                 .ignoresSafeArea(edges: item.images.isEmpty ? [] : .top)
-                .background(Color(.systemGroupedBackground))
+                .background(Color.systemGroupedBackground)
                 .overlay {
                     if isRefreshing {
                         LoadingOverlay(title: "Refreshing...")
@@ -91,6 +124,7 @@ struct ItemDetailView: View {
                                     Label("Show QR Code", systemImage: "qrcode")
                                 }
 
+                                #if os(iOS)
                                 Button {
                                     Task {
                                         await writeToNFC(previewUrl: item.previewUrl)
@@ -99,6 +133,7 @@ struct ItemDetailView: View {
                                     Label(isWritingNFC ? "Writing..." : "Write to NFC Tag", systemImage: "wave.3.right")
                                 }
                                 .disabled(isWritingNFC)
+                                #endif
                             } label: {
                                 Label("More", systemImage: "ellipsis.circle")
                             }
@@ -116,7 +151,9 @@ struct ItemDetailView: View {
             }
         }
         .navigationTitle(viewModel.item?.title ?? "Item")
+        #if os(iOS)
         .navigationBarTitleDisplayMode(.inline)
+        #endif
         .sheet(isPresented: $showingEditSheet) {
             if let item = viewModel.item {
                 NavigationStack {
@@ -156,6 +193,7 @@ struct ItemDetailView: View {
                 }
             }
         }
+        #if os(iOS)
         .alert("NFC Write Successful", isPresented: $showNFCSuccess) {
             Button("OK", role: .cancel) {}
         } message: {
@@ -166,6 +204,7 @@ struct ItemDetailView: View {
         } message: {
             Text(nfcError?.localizedDescription ?? "An unknown error occurred.")
         }
+        #endif
         .sheet(isPresented: $showingAddChildSheet) {
             if let item = viewModel.item {
                 NavigationStack {
@@ -246,6 +285,7 @@ struct ItemDetailView: View {
 
     // MARK: - NFC Writing
 
+    #if os(iOS)
     private func writeToNFC(previewUrl: String) async {
         isWritingNFC = true
         defer { isWritingNFC = false }
@@ -257,6 +297,7 @@ struct ItemDetailView: View {
             showNFCError = true
         }
     }
+    #endif
 
     // MARK: - Stretchy Image Carousel
 
@@ -287,11 +328,11 @@ struct ItemDetailView: View {
                                     .foregroundStyle(.secondary)
                             }
                             .frame(width: geometry.size.width, height: calculatedHeight)
-                            .background(Color(.systemGray6))
+                            .background(Color.systemGray6)
                         case .empty:
                             ProgressView()
                                 .frame(width: geometry.size.width, height: calculatedHeight)
-                                .background(Color(.systemGray6))
+                                .background(Color.systemGray6)
                         @unknown default:
                             EmptyView()
                         }
@@ -299,7 +340,9 @@ struct ItemDetailView: View {
                     .tag(index)
                 }
             }
+            #if os(iOS)
             .tabViewStyle(.page(indexDisplayMode: .automatic))
+            #endif
             .frame(width: geometry.size.width, height: calculatedHeight)
             .offset(y: minY > 0 ? -minY : 0)
         }
@@ -587,7 +630,7 @@ struct ItemDetailView: View {
                 .padding(.vertical, 12)
             }
         }
-        .background(Color(.secondarySystemGroupedBackground))
+        .background(Color.secondarySystemGroupedBackground)
         .clipShape(RoundedRectangle(cornerRadius: 12))
     }
 
@@ -707,7 +750,7 @@ struct ItemDetailView: View {
 extension View {
     func cardStyle() -> some View {
         padding(16)
-            .background(Color(.secondarySystemGroupedBackground))
+            .background(Color.secondarySystemGroupedBackground)
             .clipShape(RoundedRectangle(cornerRadius: 12))
     }
 }

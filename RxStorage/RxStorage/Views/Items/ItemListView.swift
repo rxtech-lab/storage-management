@@ -22,13 +22,15 @@ struct ItemListView: View {
     @State private var showingCreateSheet = false
     @State private var showingFilterSheet = false
     @State private var showingError = false
-    @State private var showQrCodeScanner = false
 
+    #if os(iOS)
+    @State private var showQrCodeScanner = false
     // QR scan state
     @State private var isLoadingFromQR = false
     @State private var qrScanError: Error?
     @State private var showQrScanError = false
     private let itemService = ItemService()
+    #endif
 
     // Refresh state
     @State private var isRefreshing = false
@@ -63,6 +65,7 @@ struct ItemListView: View {
                 }
             }
 
+            #if os(iOS)
             ToolbarItem(placement: .primaryAction) {
                 Button {
                     showQrCodeScanner = true
@@ -70,6 +73,7 @@ struct ItemListView: View {
                     Label("Scan", systemImage: "qrcode.viewfinder")
                 }
             }
+            #endif
 
             ToolbarItem(placement: .secondaryAction) {
                 Button {
@@ -86,6 +90,7 @@ struct ItemListView: View {
         .refreshable {
             await viewModel.refreshItems()
         }
+        #if os(iOS)
         .sheet(isPresented: $showQrCodeScanner) {
             NavigationStack {
                 QRCodeScannerView { code in
@@ -96,6 +101,7 @@ struct ItemListView: View {
                 }
             }
         }
+        #endif
         .sheet(isPresented: $showingCreateSheet) {
             NavigationStack {
                 ItemFormSheet()
@@ -145,12 +151,19 @@ struct ItemListView: View {
             }
         }
         .overlay {
+            #if os(iOS)
             if isLoadingFromQR {
                 LoadingOverlay(title: "Loading item from QR code..")
             } else if isRefreshing {
                 LoadingOverlay(title: "Refreshing...")
             }
+            #else
+            if isRefreshing {
+                LoadingOverlay(title: "Refreshing...")
+            }
+            #endif
         }
+        #if os(iOS)
         .alert("QR Code Error", isPresented: $showQrScanError) {
             Button("OK", role: .cancel) {}
         } message: {
@@ -158,6 +171,7 @@ struct ItemListView: View {
                 Text(error.localizedDescription)
             }
         }
+        #endif
         .confirmationDialog(
             title: "Delete Item",
             message: "Are you sure you want to delete \"\(itemToDelete?.title ?? "")\"? This action cannot be undone.",
@@ -258,6 +272,7 @@ struct ItemListView: View {
                !viewModel.isLoading
     }
 
+    #if os(iOS)
     // MARK: - QR Code Handling
 
     private func handleScannedQRCode(_ code: String) async {
@@ -287,6 +302,7 @@ struct ItemListView: View {
             showQrScanError = true
         }
     }
+    #endif
 }
 
 /// Item filter sheet
@@ -392,7 +408,9 @@ struct ItemFilterSheet: View {
             }
         }
         .navigationTitle("Filters")
+        #if os(iOS)
         .navigationBarTitleDisplayMode(.inline)
+        #endif
         .toolbar {
             ToolbarItem(placement: .cancellationAction) {
                 Button("Cancel") {
