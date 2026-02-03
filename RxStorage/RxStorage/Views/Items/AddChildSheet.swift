@@ -81,7 +81,9 @@ struct AddChildSheet: View {
             await viewModel.loadDefaultItems()
         }
         .navigationTitle("Add Child Item")
+        #if os(iOS)
         .navigationBarTitleDisplayMode(.inline)
+        #endif
         .toolbar {
             ToolbarItem(placement: .cancellationAction) {
                 Button("Cancel") {

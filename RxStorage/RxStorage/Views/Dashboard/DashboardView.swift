@@ -183,7 +183,13 @@ struct DashboardView: View {
             }
         }
         .padding()
-        .background(Color(.secondarySystemBackground))
+        .background {
+            #if os(iOS)
+            Color(.secondarySystemBackground)
+            #elseif os(macOS)
+            Color(nsColor: .controlBackgroundColor)
+            #endif
+        }
         .cornerRadius(12)
     }
 
@@ -275,7 +281,13 @@ struct StatsCardView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .padding()
-        .background(Color(.secondarySystemBackground))
+        .background {
+            #if os(iOS)
+            Color(.secondarySystemBackground)
+            #elseif os(macOS)
+            Color(nsColor: .controlBackgroundColor)
+            #endif
+        }
         .cornerRadius(12)
     }
 }
@@ -357,7 +369,13 @@ struct QuickActionButton: View {
             }
             .frame(maxWidth: .infinity)
             .padding()
-            .background(Color(.secondarySystemBackground))
+            .background {
+                #if os(iOS)
+                Color(.secondarySystemBackground)
+                #elseif os(macOS)
+                Color(nsColor: .controlBackgroundColor)
+                #endif
+            }
             .cornerRadius(12)
         }
         .buttonStyle(.plain)

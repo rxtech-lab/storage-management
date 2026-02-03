@@ -27,7 +27,9 @@ struct AuthorFormSheet: View {
         Form {
             Section("Information") {
                 TextField("Name", text: $viewModel.name)
+                    #if os(iOS)
                     .textInputAutocapitalization(.words)
+                    #endif
 
                 TextField("Bio", text: $viewModel.bio, axis: .vertical)
                     .lineLimit(3...6)
@@ -47,7 +49,9 @@ struct AuthorFormSheet: View {
             }
         }
         .navigationTitle(author == nil ? "New Author" : "Edit Author")
+        #if os(iOS)
         .navigationBarTitleDisplayMode(.inline)
+        #endif
         .toolbar {
             ToolbarItem(placement: .cancellationAction) {
                 Button("Cancel") {
@@ -69,7 +73,13 @@ struct AuthorFormSheet: View {
                 ProgressView()
                     .progressViewStyle(.circular)
                     .padding()
-                    .background(Color(uiColor: .systemBackground))
+                    .background {
+                        #if os(iOS)
+                        Color(uiColor: .systemBackground)
+                        #elseif os(macOS)
+                        Color(nsColor: .windowBackgroundColor)
+                        #endif
+                    }
                     .cornerRadius(10)
                     .shadow(radius: 10)
             }

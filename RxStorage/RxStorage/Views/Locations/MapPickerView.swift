@@ -8,7 +8,6 @@
 import MapKit
 import RxStorageCore
 import SwiftUI
-import UIKit
 
 /// Full-screen map picker view
 struct MapPickerView: View {
@@ -35,11 +34,18 @@ struct MapPickerView: View {
         NavigationStack {
             mainContent
         }
+        #if os(iOS)
         .searchable(
             text: $viewModel.searchText,
             placement: .navigationBarDrawer(displayMode: .always),
             prompt: "Search location"
         )
+        #elseif os(macOS)
+        .searchable(
+            text: $viewModel.searchText,
+            prompt: "Search location"
+        )
+        #endif
         .onSubmit(of: .search) {
             viewModel.search(viewModel.searchText)
         }
@@ -78,7 +84,9 @@ struct MapPickerView: View {
             errorOverlay
         }
         .navigationTitle("Select Location")
+        #if os(iOS)
         .navigationBarTitleDisplayMode(.inline)
+        #endif
         .toolbar { toolbarContent }
         .sheet(isPresented: $showSearchResults) {
             searchResultsSheet
@@ -114,11 +122,20 @@ struct MapPickerView: View {
             }
         }
 
+        #if os(iOS)
         ToolbarItemGroup(placement: .bottomBar) {
             locationButton
             Spacer()
             confirmButton
         }
+        #elseif os(macOS)
+        ToolbarItem(placement: .automatic) {
+            locationButton
+        }
+        ToolbarItem(placement: .confirmationAction) {
+            confirmButton
+        }
+        #endif
     }
 
     // MARK: - Location Button
@@ -214,7 +231,9 @@ struct MapPickerView: View {
                 }
             }
             .navigationTitle("Search Results")
+            #if os(iOS)
             .navigationBarTitleDisplayMode(.inline)
+            #endif
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Done") {

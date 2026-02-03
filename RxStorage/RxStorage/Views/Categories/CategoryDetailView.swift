@@ -43,7 +43,9 @@ struct CategoryDetailView: View {
             }
         }
         .navigationTitle(viewModel.category?.name ?? "Category")
+        #if os(iOS)
         .navigationBarTitleDisplayMode(.inline)
+        #endif
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
                 Button {

@@ -66,7 +66,13 @@ struct ContentDetailSheet: View {
                             .font(.caption)
                             .padding(.horizontal, 8)
                             .padding(.vertical, 4)
-                            .background(Color(.systemGray5))
+                            .background {
+                                #if os(iOS)
+                                    Color(.systemGray5)
+                                #elseif os(macOS)
+                                    Color(nsColor: .controlBackgroundColor)
+                                #endif
+                            }
                             .cornerRadius(4)
                     }
                 }
@@ -114,23 +120,25 @@ struct ContentDetailSheet: View {
         }
         .formStyle(.grouped)
         .navigationTitle(content.contentData.title ?? "Content Details")
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .cancellationAction) {
-                Button("Done") { dismiss() }
-            }
-            if !isViewOnly {
-                ToolbarItem(placement: .primaryAction) {
-                    Button("Edit") {
-                        dismiss()
-                        onEdit()
+        #if os(iOS)
+            .navigationBarTitleDisplayMode(.inline)
+        #endif
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Done") { dismiss() }
+                }
+                if !isViewOnly {
+                    ToolbarItem(placement: .primaryAction) {
+                        Button("Edit") {
+                            dismiss()
+                            onEdit()
+                        }
                     }
                 }
             }
-        }
-        .onAppear {
-            formData = contentDataToFormData(content.contentData)
-        }
+            .onAppear {
+                formData = contentDataToFormData(content.contentData)
+            }
     }
 
     // MARK: - Helper Methods

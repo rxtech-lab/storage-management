@@ -12,6 +12,8 @@ import Observation
 
 #if canImport(UIKit)
 import UIKit
+#elseif canImport(AppKit)
+import AppKit
 #endif
 
 /// Authentication state representing the current auth status
@@ -52,6 +54,9 @@ public final class OAuthManager {
 
     /// Timer for periodic token refresh checks
     private var refreshTimer: Timer?
+
+    /// Presentation context provider - must be retained during auth session
+    private var presentationContextProvider: WebAuthenticationPresentationContextProvider?
 
     /// Interval between token refresh checks (5 minutes)
     private let refreshCheckInterval: TimeInterval = 300
@@ -144,9 +149,12 @@ public final class OAuthManager {
     /// Initiate OAuth authentication flow
     /// This method waits for the entire authentication flow to complete before returning
     public func authenticate() async throws {
+        logger.info("Starting authentication flow, isMainThread: \(Thread.isMainThread)")
+
         // Generate PKCE parameters
         let codeVerifier = generateCodeVerifier()
         let codeChallenge = generateCodeChallenge(from: codeVerifier)
+        logger.debug("PKCE parameters generated")
 
         // Build authorization URL
         var urlComponents = URLComponents(string: configuration.authIssuer)!
@@ -164,23 +172,35 @@ public final class OAuthManager {
             throw OAuthError.invalidURL
         }
 
-        // Present authentication session
-        let callbackURLScheme = configuration.authRedirectURI.components(separatedBy: "://").first
+        let callbackURLScheme = configuration.authRedirectURI.components(separatedBy: "://").first ?? "rxstorage"
+        logger.info("Auth URL: \(authURL), callback scheme: \(callbackURLScheme)")
 
-        // Use withCheckedThrowingContinuation to wait for the callback
+        // Use ASWebAuthenticationSession on both iOS and macOS
+        logger.debug("Creating presentation context provider")
+        self.presentationContextProvider = WebAuthenticationPresentationContextProvider()
+        logger.debug("Presentation context provider created")
+
+        logger.debug("Entering continuation")
         try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
+            logger.info("Inside continuation, isMainThread: \(Thread.isMainThread)")
+
             let session = ASWebAuthenticationSession(
                 url: authURL,
                 callbackURLScheme: callbackURLScheme
             ) { [weak self] callbackURL, error in
+                self?.logger.info("Callback received, isMainThread: \(Thread.isMainThread)")
+
                 guard let self = self else {
                     continuation.resume(throwing: OAuthError.authenticationFailed(NSError(domain: "OAuthManager", code: -1, userInfo: [NSLocalizedDescriptionKey: "Self was deallocated"])))
                     return
                 }
 
                 Task { @MainActor in
+                    // Don't clean up presentation context provider - let it persist
+                    // to avoid potential crash on window close
                     do {
                         if let error = error {
+                            self.logger.error("Auth error: \(error.localizedDescription)")
                             if (error as? ASWebAuthenticationSessionError)?.code == .canceledLogin {
                                 continuation.resume(throwing: OAuthError.userCancelled)
                                 return
@@ -190,30 +210,33 @@ public final class OAuthManager {
                         }
 
                         guard let callbackURL = callbackURL else {
+                            self.logger.error("No callback URL received")
                             continuation.resume(throwing: OAuthError.invalidCallback)
                             return
                         }
 
+                        self.logger.info("Callback URL: \(callbackURL)")
                         try await self.handleCallback(url: callbackURL, codeVerifier: codeVerifier)
+                        self.logger.info("Authentication complete")
                         continuation.resume()
                     } catch {
+                        self.logger.error("Callback handling error: \(error.localizedDescription)")
                         continuation.resume(throwing: error)
                     }
                 }
             }
 
-            // Set presentation context provider
-            #if canImport(UIKit)
-            let contextProvider = WebAuthenticationPresentationContextProvider()
-            session.presentationContextProvider = contextProvider
-            #endif
-
-            // Use ephemeral session by default to prevent Safari from caching credentials
-            // This provides better privacy and ensures fresh login experience
+            logger.debug("Setting presentation context provider")
+            session.presentationContextProvider = self.presentationContextProvider
+            logger.debug("Setting ephemeral session")
             session.prefersEphemeralWebBrowserSession = true
 
+            logger.info("Starting ASWebAuthenticationSession")
             if !session.start() {
+                logger.error("Session failed to start")
                 continuation.resume(throwing: OAuthError.sessionStartFailed)
+            } else {
+                logger.info("Session started successfully")
             }
         }
     }
@@ -527,20 +550,19 @@ public enum OAuthError: LocalizedError, @unchecked Sendable {
     }
 }
 
-// MARK: - Presentation Context Provider
+// MARK: - Presentation Context Provider (iOS only)
 
-#if canImport(UIKit)
+#if os(iOS)
 /// Presentation context provider for ASWebAuthenticationSession
+/// Simply returns a new ASPresentationAnchor - the framework handles platform-specific details
 private class WebAuthenticationPresentationContextProvider: NSObject, ASWebAuthenticationPresentationContextProviding {
-    func presentationAnchor(for session: ASWebAuthenticationSession) -> ASPresentationAnchor {
-        // Return the key window
-        if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
-           let window = windowScene.windows.first(where: { $0.isKeyWindow }) {
-            return window
-        }
+    private let logger = Logger(label: "com.rxlab.rxstorage.WebAuthContextProvider")
 
-        // Fallback to any window
-        return UIApplication.shared.windows.first ?? ASPresentationAnchor()
+    func presentationAnchor(for session: ASWebAuthenticationSession) -> ASPresentationAnchor {
+        logger.info("presentationAnchor called, isMainThread: \(Thread.isMainThread)")
+        // Simply return a new ASPresentationAnchor - the framework will use an appropriate
+        // presentation anchor for the current platform automatically
+        return ASPresentationAnchor()
     }
 }
 #endif

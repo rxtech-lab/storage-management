@@ -8,6 +8,7 @@
 import AVFoundation
 import PhotosUI
 import SwiftUI
+#if os(iOS)
 import UIKit
 import Vision
 
@@ -83,7 +84,9 @@ struct QRCodeScannerView: View {
             }
         }
         .navigationTitle("Scan QR Code")
+        #if os(iOS)
         .navigationBarTitleDisplayMode(.inline)
+        #endif
         .toolbar {
             ToolbarItem(placement: .confirmationAction) {
                 Button {
@@ -399,3 +402,4 @@ struct CameraPreview: UIViewRepresentable {
         }
     }
 }
+#endif

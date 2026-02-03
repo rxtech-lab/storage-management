@@ -33,7 +33,9 @@ struct AuthorPickerSheet: View {
             }
         }
         .navigationTitle("Select Author")
+        #if os(iOS)
         .navigationBarTitleDisplayMode(.inline)
+        #endif
         .toolbar {
             ToolbarItem(placement: .cancellationAction) {
                 Button("Cancel") {

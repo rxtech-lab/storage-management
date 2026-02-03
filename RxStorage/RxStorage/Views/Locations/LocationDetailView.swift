@@ -64,7 +64,9 @@ struct LocationDetailView: View {
             }
         }
         .navigationTitle(viewModel.location?.title ?? "Location")
+        #if os(iOS)
         .navigationBarTitleDisplayMode(.inline)
+        #endif
         .sheet(item: $activeSheet) { sheet in
             switch sheet {
             case .info(let location):
@@ -170,7 +172,11 @@ private struct LocationInfoSheet: View {
                     }
                 }
             }
-            .listStyle(.insetGrouped)
+            #if os(iOS)
+.listStyle(.insetGrouped)
+#elseif os(macOS)
+.listStyle(.inset)
+#endif
         }
     }
 }

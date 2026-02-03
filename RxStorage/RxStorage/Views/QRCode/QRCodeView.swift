@@ -7,18 +7,27 @@
 
 import CoreImage.CIFilterBuiltins
 import SwiftUI
+#if os(iOS)
 import UIKit
+#elseif os(macOS)
+import AppKit
+#endif
 
 /// Simple QR code view that displays a QR code from a URL string
 struct QRCodeView: View {
     let urlString: String
 
+    #if os(iOS)
     @State private var qrImage: UIImage?
+    #elseif os(macOS)
+    @State private var qrImage: NSImage?
+    #endif
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
         VStack(spacing: 20) {
             if let image = qrImage {
+                #if os(iOS)
                 Image(uiImage: image)
                     .interpolation(.none)
                     .resizable()
@@ -27,6 +36,16 @@ struct QRCodeView: View {
                     .padding()
                     .background(Color.primary)
                     .cornerRadius(12)
+                #elseif os(macOS)
+                Image(nsImage: image)
+                    .interpolation(.none)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 250, height: 250)
+                    .padding()
+                    .background(Color.primary)
+                    .cornerRadius(12)
+                #endif
 
                 Text(urlString)
                     .font(.caption)
@@ -39,7 +58,9 @@ struct QRCodeView: View {
             }
         }
         .navigationTitle("QR Code")
+        #if os(iOS)
         .navigationBarTitleDisplayMode(.inline)
+        #endif
         .toolbar {
             ToolbarItem(placement: .cancellationAction) {
                 Button("Done") {
@@ -47,6 +68,7 @@ struct QRCodeView: View {
                 }
             }
 
+            #if os(iOS)
             if let image = qrImage {
                 ToolbarItemGroup(placement: .bottomBar) {
                     Button {
@@ -68,6 +90,15 @@ struct QRCodeView: View {
                     }
                 }
             }
+            #elseif os(macOS)
+            if let image = qrImage {
+                ToolbarItem(placement: .primaryAction) {
+                    ShareLink(item: Image(nsImage: image), preview: SharePreview("QR Code", image: Image(nsImage: image))) {
+                        Label("Share QR Code", systemImage: "square.and.arrow.up")
+                    }
+                }
+            }
+            #endif
         }
         .task {
             qrImage = generateQRCode(from: urlString)
@@ -76,6 +107,7 @@ struct QRCodeView: View {
 
     // MARK: - QR Code Generation
 
+    #if os(iOS)
     private func generateQRCode(from string: String) -> UIImage? {
         let context = CIContext()
         let filter = CIFilter.qrCodeGenerator()
@@ -112,6 +144,26 @@ struct QRCodeView: View {
     private func saveToPhotos(_ image: UIImage) {
         UIImageWriteToSavedPhotosAlbum(image, nil, nil, nil)
     }
+    #elseif os(macOS)
+    private func generateQRCode(from string: String) -> NSImage? {
+        let context = CIContext()
+        let filter = CIFilter.qrCodeGenerator()
+
+        filter.message = Data(string.utf8)
+        filter.correctionLevel = "M"
+
+        if let outputImage = filter.outputImage {
+            let transform = CGAffineTransform(scaleX: 10, y: 10)
+            let scaledImage = outputImage.transformed(by: transform)
+
+            if let cgImage = context.createCGImage(scaledImage, from: scaledImage.extent) {
+                return NSImage(cgImage: cgImage, size: NSSize(width: cgImage.width, height: cgImage.height))
+            }
+        }
+
+        return nil
+    }
+    #endif
 }
 
 #Preview {

@@ -29,15 +29,21 @@ struct LocationFormSheet: View {
         Form {
             Section("Information") {
                 TextField("Title", text: $viewModel.title)
+                    #if os(iOS)
                     .textInputAutocapitalization(.words)
+                    #endif
             }
 
             Section("Coordinates") {
                 TextField("Latitude", text: $viewModel.latitude)
+                    #if os(iOS)
                     .keyboardType(.decimalPad)
+                    #endif
 
                 TextField("Longitude", text: $viewModel.longitude)
+                    #if os(iOS)
                     .keyboardType(.decimalPad)
+                    #endif
 
                 Button {
                     showingMapPicker = true
@@ -60,7 +66,9 @@ struct LocationFormSheet: View {
             }
         }
         .navigationTitle(location == nil ? "New Location" : "Edit Location")
+        #if os(iOS)
         .navigationBarTitleDisplayMode(.inline)
+        #endif
         .toolbar {
             ToolbarItem(placement: .cancellationAction) {
                 Button("Cancel") {
@@ -77,6 +85,7 @@ struct LocationFormSheet: View {
                 .disabled(viewModel.isSubmitting)
             }
         }
+        #if os(iOS)
         .fullScreenCover(isPresented: $showingMapPicker) {
             MapPickerView(
                 initialCoordinate: parseCurrentCoordinate()
@@ -85,6 +94,17 @@ struct LocationFormSheet: View {
                 showingMapPicker = false
             }
         }
+        #elseif os(macOS)
+        .sheet(isPresented: $showingMapPicker) {
+            MapPickerView(
+                initialCoordinate: parseCurrentCoordinate()
+            ) { coordinate in
+                viewModel.updateCoordinates(coordinate)
+                showingMapPicker = false
+            }
+            .frame(minWidth: 600, minHeight: 500)
+        }
+        #endif
         .overlay {
             if viewModel.isSubmitting {
                 LoadingOverlay()

@@ -65,6 +65,9 @@ struct AuthenticationView: View {
             Spacer()
         }
         .padding()
+        #if os(macOS)
+        .frame(maxWidth: 500)
+        #endif
     }
 
     // MARK: - Actions

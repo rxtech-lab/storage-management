@@ -32,7 +32,9 @@ struct ParentItemPickerSheet: View {
                     .foregroundStyle(.secondary)
                 TextField("Search items...", text: $viewModel.searchText)
                     .textFieldStyle(.plain)
+                    #if os(iOS)
                     .autocorrectionDisabled()
+                    #endif
                 if !viewModel.searchText.isEmpty {
                     Button {
                         viewModel.searchText = ""
@@ -44,7 +46,11 @@ struct ParentItemPickerSheet: View {
                 }
             }
             .padding()
+            #if os(iOS)
             .background(Color(.systemGray6))
+            #elseif os(macOS)
+            .background(Color(nsColor: .quaternaryLabelColor))
+            #endif
 
             Divider()
 
@@ -68,7 +74,11 @@ struct ParentItemPickerSheet: View {
             }
         }
         .navigationTitle("Select Parent Item")
+        #if os(iOS)
+        #if os(iOS)
         .navigationBarTitleDisplayMode(.inline)
+        #endif
+        #endif
         .toolbar {
             ToolbarItem(placement: .cancellationAction) {
                 Button("Cancel") {

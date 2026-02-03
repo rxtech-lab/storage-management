@@ -76,7 +76,9 @@ struct PositionSchemaFormSheet: View {
         Form {
             Section {
                 TextField("Name", text: $viewModel.name)
+                    #if os(iOS)
                     .textInputAutocapitalization(.words)
+                    #endif
             } header: {
                 Text("Information")
             }
@@ -97,7 +99,9 @@ struct PositionSchemaFormSheet: View {
             }
         }
         .navigationTitle(schema == nil ? "New Schema" : "Edit Schema")
+        #if os(iOS)
         .navigationBarTitleDisplayMode(.inline)
+        #endif
         .toolbar {
             ToolbarItem(placement: .cancellationAction) {
                 Button("Cancel") {
@@ -119,7 +123,13 @@ struct PositionSchemaFormSheet: View {
                 ProgressView()
                     .progressViewStyle(.circular)
                     .padding()
-                    .background(Color(uiColor: .systemBackground))
+                    .background {
+                        #if os(iOS)
+                        Color(uiColor: .systemBackground)
+                        #elseif os(macOS)
+                        Color(nsColor: .windowBackgroundColor)
+                        #endif
+                    }
                     .cornerRadius(10)
                     .shadow(radius: 10)
             }

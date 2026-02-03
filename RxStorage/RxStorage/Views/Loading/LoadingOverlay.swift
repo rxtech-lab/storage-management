@@ -23,7 +23,11 @@ struct LoadingOverlay: View {
 
             ProgressView(title ?? "Loading") // The spinner and text
                 .padding()
+                #if os(iOS)
                 .background(Color(.systemBackground))
+                #elseif os(macOS)
+                .background(Color(nsColor: .windowBackgroundColor))
+                #endif
                 .cornerRadius(12)
         }
     }
