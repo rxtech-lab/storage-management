@@ -55,8 +55,15 @@ public final class OAuthManager {
     /// Timer for periodic token refresh checks
     private var refreshTimer: Timer?
 
-    /// Presentation context provider - must be retained during auth session
+    /// Presentation context provider - must be retained during auth session (iOS only)
+    #if os(iOS)
     private var presentationContextProvider: WebAuthenticationPresentationContextProvider?
+    #endif
+
+    /// Web auth window controller for macOS
+    #if os(macOS)
+    private var webAuthController: WebAuthWindowController?
+    #endif
 
     /// Interval between token refresh checks (5 minutes)
     private let refreshCheckInterval: TimeInterval = 300
@@ -175,7 +182,25 @@ public final class OAuthManager {
         let callbackURLScheme = configuration.authRedirectURI.components(separatedBy: "://").first ?? "rxstorage"
         logger.info("Auth URL: \(authURL), callback scheme: \(callbackURLScheme)")
 
-        // Use ASWebAuthenticationSession on both iOS and macOS
+        // Platform-specific authentication
+        #if os(macOS)
+        // Use WKWebView-based authentication on macOS
+        logger.info("Using WKWebView authentication for macOS")
+        let controller = WebAuthWindowController(authURL: authURL, callbackScheme: callbackURLScheme)
+        self.webAuthController = controller
+
+        do {
+            let callbackURL = try await controller.start()
+            self.webAuthController = nil
+            logger.info("Callback URL: \(callbackURL)")
+            try await handleCallback(url: callbackURL, codeVerifier: codeVerifier)
+            logger.info("Authentication complete")
+        } catch {
+            self.webAuthController = nil
+            throw error
+        }
+        #else
+        // Use ASWebAuthenticationSession on iOS (supports passkeys)
         logger.debug("Creating presentation context provider")
         self.presentationContextProvider = WebAuthenticationPresentationContextProvider()
         logger.debug("Presentation context provider created")
@@ -196,8 +221,8 @@ public final class OAuthManager {
                 }
 
                 Task { @MainActor in
-                    // Don't clean up presentation context provider - let it persist
-                    // to avoid potential crash on window close
+                    defer { self.presentationContextProvider = nil }
+
                     do {
                         if let error = error {
                             self.logger.error("Auth error: \(error.localizedDescription)")
@@ -239,6 +264,7 @@ public final class OAuthManager {
                 logger.info("Session started successfully")
             }
         }
+        #endif
     }
 
     /// Handle OAuth callback URL

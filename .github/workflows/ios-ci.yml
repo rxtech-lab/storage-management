@@ -2,360 +2,80 @@ name: iOS CI
 
 on:
   push
-  
-env:
-  SCHEME: RxStorage
-  CONFIGURATION: Debug
-  SDK: iphonesimulator
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  build:
+  build-ios:
     name: Build iOS App
-    runs-on: macos-latest
-    timeout-minutes: 30
+    uses: ./.github/workflows/ios-setup.yml
+    with:
+      job-name: Build iOS App
+      script: ios-build.sh
+      scheme: RxStorage
+      configuration: Debug
+      sdk: iphonesimulator
+      artifact-name: ios-build-logs
+      artifact-path: build.log
+    secrets: inherit
 
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v6
-
-      - uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: latest
-
-      - uses: maxim-lobanov/setup-xcode@v1
-        with:
-          xcode-version: latest-stable
-
-      - name: Setup Secrets.xcconfig from GitHub Secrets
-        env:
-          SECRETS_XCCONFIG_BASE64: ${{ secrets.SECRETS_XCCONFIG_BASE64 }}
-        run: |
-          if [ -z "$SECRETS_XCCONFIG_BASE64" ]; then
-            echo "⚠️ Warning: SECRETS_XCCONFIG_BASE64 secret is not set"
-            echo "Creating a default Secrets.xcconfig for CI build"
-            cat > RxStorage/RxStorage/Config/Secrets.xcconfig << 'EOF'
-          // Secrets.xcconfig - CI Generated
-          // This file is auto-generated in CI from GitHub secrets
-
-          // Development OAuth Client ID
-          AUTH_CLIENT_ID_DEV = client_ci_placeholder
-
-          // Production OAuth Client ID
-          AUTH_CLIENT_ID_PROD = client_ci_placeholder
-          EOF
-          else
-            echo "✅ Decoding Secrets.xcconfig from GitHub secrets"
-            echo "$SECRETS_XCCONFIG_BASE64" | base64 --decode > RxStorage/RxStorage/Config/Secrets.xcconfig
-          fi
-
-          echo "Contents of Secrets.xcconfig (with secrets masked):"
-          sed 's/\(AUTH_CLIENT_ID.*=\).*/\1 ***/' RxStorage/RxStorage/Config/Secrets.xcconfig
-
-      - name: Install xcbeautify
-        run: brew install xcbeautify
-
-      - name: Cache Xcode Build
-        uses: irgaly/xcode-cache@v1
-        with:
-          key: xcode-${{ runner.os }}-${{ hashFiles('RxStorage/RxStorageCore/Package.swift') }}
-          restore-keys: xcode-${{ runner.os }}-
-
-      - name: Start Backend Server
-        run: bun install && bun dev &
-        working-directory: admin
-      - name: Wait for Backend Server
-        run: |
-          echo "Waiting for backend server to start..."
-          for i in {1..30}; do
-            if curl -s http://localhost:3000; then
-              echo "Backend server is up!"
-              exit 0
-            fi
-            sleep 2
-          done
-          echo "Backend server did not start in time."
-          exit 1
-      
-      - name: Generate openapi documentation
-        run: ./scripts/ios-update-openapi.sh
-
-      - name: Build iOS App
-        run: ./scripts/ios-build.sh
-        env:
-          SCHEME: ${{ env.SCHEME }}
-          CONFIGURATION: ${{ env.CONFIGURATION }}
-          SDK: ${{ env.SDK }}
-
-      - name: Upload Build Logs
-        if: failure()
-        uses: actions/upload-artifact@v6
-        with:
-          name: build-logs
-          path: build.log
-          retention-days: 7
+  build-macos:
+    name: Build macOS App
+    uses: ./.github/workflows/ios-setup.yml
+    with:
+      job-name: Build macOS App
+      script: macos-build.sh
+      scheme: RxStorage
+      configuration: Debug
+      sdk: macosx
+      runs-on: macos-26
+      artifact-name: macos-build-logs
+      artifact-path: build-macos.log
+    secrets: inherit
 
   test:
     name: Run Tests
-    runs-on: macos-26
-    timeout-minutes: 30
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v6
-
-      - uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: latest
-
-      - uses: maxim-lobanov/setup-xcode@v1
-        with:
-          xcode-version: latest-stable
-
-      - name: Setup Secrets.xcconfig from GitHub Secrets
-        env:
-          SECRETS_XCCONFIG_BASE64: ${{ secrets.SECRETS_XCCONFIG_BASE64 }}
-        run: |
-          if [ -z "$SECRETS_XCCONFIG_BASE64" ]; then
-            echo "⚠️ Warning: SECRETS_XCCONFIG_BASE64 secret is not set"
-            cat > RxStorage/RxStorage/Config/Secrets.xcconfig << 'EOF'
-          // Secrets.xcconfig - CI Generated
-          AUTH_CLIENT_ID_DEV = client_ci_placeholder
-          AUTH_CLIENT_ID_PROD = client_ci_placeholder
-          EOF
-          else
-            echo "✅ Decoding Secrets.xcconfig from GitHub secrets"
-            echo "$SECRETS_XCCONFIG_BASE64" | base64 --decode > RxStorage/RxStorage/Config/Secrets.xcconfig
-          fi
-
-      - name: Install xcbeautify
-        run: brew install xcbeautify
-
-      - name: Cache Xcode Build
-        uses: irgaly/xcode-cache@v1
-        with:
-          key: xcode-${{ runner.os }}-${{ hashFiles('RxStorage/RxStorageCore/Package.swift') }}
-          restore-keys: xcode-${{ runner.os }}-
-
-      - name: Start Backend Server
-        run: bun install && bun dev &
-        working-directory: admin
-      - name: Wait for Backend Server
-        run: |
-          echo "Waiting for backend server to start..."
-          for i in {1..30}; do
-            if curl -s http://localhost:3000; then
-              echo "Backend server is up!"
-              exit 0
-            fi
-            sleep 2
-          done
-          echo "Backend server did not start in time."
-          exit 1
-      
-      - name: Generate openapi documentation
-        run: ./scripts/ios-update-openapi.sh
-
-      - name: Run Tests
-        run: ./scripts/ios-test.sh
-        env:
-          SCHEME: ${{ env.SCHEME }}
-          CONFIGURATION: ${{ env.CONFIGURATION }}
-          SDK: ${{ env.SDK }}
-
-      - name: Upload Test Logs
-        if: failure()
-        uses: actions/upload-artifact@v6
-        with:
-          name: test-logs
-          path: test.log
-          retention-days: 7
-
-      - name: Upload Test Results
-        if: always()
-        uses: actions/upload-artifact@v6
-        with:
-          name: test-results
-          path: test-results.xcresult
-          retention-days: 7
-
-      - name: Generate Test Report
-        if: always()
-        run: |
-          if [ -d "test-results.xcresult" ]; then
-            echo "## Test Results" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "Test results bundle available in artifacts." >> $GITHUB_STEP_SUMMARY
-          fi
-
-  # ui-tests:
-  #   name: Run UI Tests
-  #   runs-on: macos-latest
-  #   timeout-minutes: 30
-
-  #   steps:
-  #     - name: Checkout code
-  #       uses: actions/checkout@v6
-
-  #     - uses: oven-sh/setup-bun@v2
-  #       with:
-  #         bun-version: latest
-
-  #     - uses: maxim-lobanov/setup-xcode@v1
-  #       with:
-  #         xcode-version: latest-stable
-
-  #     - name: Setup Secrets.xcconfig from GitHub Secrets
-  #       env:
-  #         SECRETS_XCCONFIG_BASE64: ${{ secrets.SECRETS_XCCONFIG_BASE64 }}
-  #       run: |
-  #         if [ -z "$SECRETS_XCCONFIG_BASE64" ]; then
-  #           echo "⚠️ Warning: SECRETS_XCCONFIG_BASE64 secret is not set"
-  #           cat > RxStorage/RxStorage/Config/Secrets.xcconfig << 'EOF'
-  #         // Secrets.xcconfig - CI Generated
-  #         AUTH_CLIENT_ID_DEV = client_ci_placeholder
-  #         AUTH_CLIENT_ID_PROD = client_ci_placeholder
-  #         EOF
-  #         else
-  #           echo "✅ Decoding Secrets.xcconfig from GitHub secrets"
-  #           echo "$SECRETS_XCCONFIG_BASE64" | base64 --decode > RxStorage/RxStorage/Config/Secrets.xcconfig
-  #         fi
-
-  #     - name: Install xcbeautify
-  #       run: brew install xcbeautify
-
-  #     - name: Cache Xcode Build
-  #       uses: irgaly/xcode-cache@v1
-  #       with:
-  #         key: xcode-${{ runner.os }}-${{ hashFiles('RxStorage/RxStorageCore/Package.swift') }}
-  #         restore-keys: xcode-${{ runner.os }}-
-
-  #     - name: Start Backend Server
-  #       run: bun install && bun dev:e2e &
-  #       working-directory: admin
-
-  #     - name: Wait for Backend Server
-  #       run: |
-  #         echo "Waiting for backend server to start..."
-  #         for i in {1..30}; do
-  #           if curl -s http://localhost:3000; then
-  #             echo "Backend server is up!"
-  #             exit 0
-  #           fi
-  #           sleep 2
-  #         done
-  #         echo "Backend server did not start in time."
-  #         exit 1
-
-  #     - name: Generate openapi documentation
-  #       run: ./scripts/ios-update-openapi.sh
-
-  #     - name: Run UI Tests
-  #       env:
-  #         TEST_EMAIL: ${{ secrets.TEST_EMAIL }}
-  #         TEST_PASSWORD: ${{ secrets.TEST_PASSWORD }}
-  #         SCHEME: ${{ env.SCHEME }}
-  #         CONFIGURATION: ${{ env.CONFIGURATION }}
-  #         SDK: ${{ env.SDK }}
-  #       run: ./scripts/ios-ui-test.sh
-
-  #     - name: Upload UI Test Logs
-  #       if: always()
-  #       uses: actions/upload-artifact@v6
-  #       with:
-  #         name: ui-test-logs
-  #         path: ui-test.log
-  #         retention-days: 7
-
-  #     - name: Upload UI Test Results
-  #       if: always()
-  #       uses: actions/upload-artifact@v6
-  #       with:
-  #         name: ui-test-results
-  #         path: ui-test-results.xcresult
-  #         retention-days: 7
-
-  #     - name: Generate UI Test Report
-  #       if: always()
-  #       run: |
-  #         if [ -d "ui-test-results.xcresult" ]; then
-  #           echo "## UI Test Results" >> $GITHUB_STEP_SUMMARY
-  #           echo "" >> $GITHUB_STEP_SUMMARY
-  #           echo "UI test results bundle available in artifacts." >> $GITHUB_STEP_SUMMARY
-  #         fi
+    uses: ./.github/workflows/ios-setup.yml
+    with:
+      runs-on: macos-26
+      job-name: Run Tests
+      script: ios-test.sh
+      scheme: RxStorage
+      configuration: Debug
+      sdk: iphonesimulator
+      artifact-name: test-logs
+      artifact-path: test.log
+      upload-test-results: true
+    secrets: inherit
 
   build-app-clips:
     name: Build App Clips
-    runs-on: macos-latest
-    timeout-minutes: 30
+    uses: ./.github/workflows/ios-setup.yml
+    with:
+      job-name: Build App Clips
+      script: ios-build.sh
+      scheme: RxStorageClips
+      configuration: Debug
+      sdk: iphonesimulator
+      artifact-name: app-clips-build-logs
+      artifact-path: build.log
+    secrets: inherit
 
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v6
-
-      - uses: maxim-lobanov/setup-xcode@v1
-        with:
-          xcode-version: latest-stable
-
-      - uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: latest
-
-      - name: Setup Secrets.xcconfig from GitHub Secrets
-        env:
-          SECRETS_XCCONFIG_BASE64: ${{ secrets.SECRETS_XCCONFIG_BASE64 }}
-        run: |
-          if [ -z "$SECRETS_XCCONFIG_BASE64" ]; then
-            echo "⚠️ Warning: SECRETS_XCCONFIG_BASE64 secret is not set"
-            cat > RxStorage/RxStorage/Config/Secrets.xcconfig << 'EOF'
-          // Secrets.xcconfig - CI Generated
-          AUTH_CLIENT_ID_DEV = client_ci_placeholder
-          AUTH_CLIENT_ID_PROD = client_ci_placeholder
-          EOF
-          else
-            echo "✅ Decoding Secrets.xcconfig from GitHub secrets"
-            echo "$SECRETS_XCCONFIG_BASE64" | base64 --decode > RxStorage/RxStorage/Config/Secrets.xcconfig
-          fi
-
-      - name: Install xcbeautify
-        run: brew install xcbeautify
-
-      - name: Cache Xcode Build
-        uses: irgaly/xcode-cache@v1
-        with:
-          key: xcode-${{ runner.os }}-${{ hashFiles('RxStorage/RxStorageCore/Package.swift') }}
-          restore-keys: xcode-${{ runner.os }}-
-
-      - name: Start Backend Server
-        run: bun install && bun dev &
-        working-directory: admin
-
-      - name: Wait for Backend Server
-        run: |
-          echo "Waiting for backend server to start..."
-          for i in {1..30}; do
-            if curl -s http://localhost:3000; then
-              echo "Backend server is up!"
-              exit 0
-            fi
-            sleep 2
-          done
-          echo "Backend server did not start in time."
-          exit 1
-
-      - name: Generate openapi documentation
-        run: ./scripts/ios-update-openapi.sh
-
-      - name: Build App Clips
-        run: ./scripts/ios-build.sh
-        env:
-          SCHEME: RxStorageClips
-          CONFIGURATION: ${{ env.CONFIGURATION }}
-          SDK: ${{ env.SDK }}
-
-      - name: Upload Build Logs
-        if: failure()
-        uses: actions/upload-artifact@v6
-        with:
-          name: app-clips-build-logs
-          path: build.log
-          retention-days: 7
+  # UI tests - currently skipped
+  ui-tests:
+    if: false
+    name: Run UI Tests
+    uses: ./.github/workflows/ios-setup.yml
+    with:
+      runs-on: macos-latest
+      job-name: Run UI Tests
+      script: ios-ui-test.sh
+      scheme: RxStorage
+      configuration: Debug
+      sdk: iphonesimulator
+      artifact-name: ui-test-logs
+      artifact-path: ui-test.log
+      upload-test-results: true
+    secrets: inherit
