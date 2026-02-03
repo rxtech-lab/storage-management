@@ -35,13 +35,13 @@ struct ManagementSectionListView: View {
     var body: some View {
         switch section {
         case .categories:
-            CategoryListView()
+            CategoryListView(horizontalSizeClass: .compact)
         case .locations:
-            LocationListView()
+            LocationListView(horizontalSizeClass: .compact)
         case .authors:
-            AuthorListView()
+            AuthorListView(horizontalSizeClass: .compact)
         case .positionSchemas:
-            PositionSchemaListView()
+            PositionSchemaListView(horizontalSizeClass: .compact)
         }
     }
 }

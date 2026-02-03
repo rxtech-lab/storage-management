@@ -87,6 +87,9 @@ final class NavigationManager {
     /// Navigation path for Dashboard tab
     var dashboardNavigationPath = NavigationPath()
 
+    /// Navigation path for Settings tab
+    var settingsNavigationPath = NavigationPath()
+
     // MARK: - Deep Link State
 
     var isLoadingDeepLink = false
@@ -169,6 +172,7 @@ final class NavigationManager {
         itemsNavigationPath = NavigationPath()
         managementNavigationPath = NavigationPath()
         dashboardNavigationPath = NavigationPath()
+        settingsNavigationPath = NavigationPath()
     }
 
     // MARK: - Deep Link Handling

@@ -304,7 +304,7 @@ struct ItemDetailView: View {
         do {
             try await nfcWriter.writeToNfcChip(url: previewUrl)
             showNFCSuccess = true
-        } catch let error as NFCWriterError where error == .cancelled {
+        } catch NFCWriterError.cancelled {
             // User cancelled - do nothing (silent dismissal)
         } catch {
             nfcError = error

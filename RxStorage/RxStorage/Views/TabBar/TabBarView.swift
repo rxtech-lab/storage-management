@@ -31,7 +31,7 @@ struct TabBarView: View {
 
             // Items Tab
             NavigationStack(path: $nav.itemsNavigationPath) {
-                ItemListView()
+                ItemListView(horizontalSizeClass: .compact)
                     .navigationDestination(for: StorageItem.self) { item in
                         ItemDetailView(itemId: item.id)
                     }
@@ -68,8 +68,11 @@ struct TabBarView: View {
             .accessibilityIdentifier("tab-management")
 
             // Settings Tab
-            NavigationStack {
+            NavigationStack(path: $nav.settingsNavigationPath) {
                 SettingsView()
+                    .navigationDestination(for: WebPage.self) { webPage in
+                        WebPageView(webPage: webPage)
+                    }
             }
             .tabItem {
                 Label(AppTab.settings.rawValue, systemImage: AppTab.settings.systemImage)

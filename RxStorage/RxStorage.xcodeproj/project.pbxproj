@@ -119,6 +119,7 @@
 				Views/Items/ContentFormSheet.swift,
 				Views/Items/ContentSectionView.swift,
 				Views/Items/ItemDetailView.swift,
+				Views/Items/ItemFilterSheet.swift,
 				Views/Items/ItemFormSheet.swift,
 				Views/Items/ItemListView.swift,
 				Views/Items/ItemRow.swift,
@@ -134,6 +135,7 @@
 				Views/PositionSchemas/PositionSchemaFormSheet.swift,
 				Views/QRCode/QRCodeScannerView.swift,
 				Views/QRCode/QRCodeView.swift,
+				Views/Shared/AdaptiveList.swift,
 			);
 			target = DF66258F2F29138300333552 /* RxStorageClips */;
 		};

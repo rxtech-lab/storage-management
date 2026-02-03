@@ -29,17 +29,27 @@ LOG_FILE="${LOG_FILE:-ui-test.log}"
 
 # Find an available iOS simulator if DESTINATION is not set
 if [ -z "$DESTINATION" ]; then
-    echo "🔍 Finding available iOS simulator..."
-    SIMULATOR_NAME=$(xcrun simctl list devices available --json | jq -r '.devices | to_entries | .[] | select(.key | contains("iOS")) | .value[] | select(.isAvailable == true) | .name' | head -1)
+    # First, check if there's already a booted simulator we can reuse
+    echo "🔍 Checking for running simulators..."
+    BOOTED_UDID=$(xcrun simctl list devices booted --json | jq -r '.devices | to_entries | .[] | .value[] | .udid' | head -1)
 
-    if [ -z "$SIMULATOR_NAME" ]; then
-        echo -e "${RED}❌ Error: No available iOS simulator found${NC}"
-        echo "Please install an iOS simulator via Xcode > Settings > Platforms"
-        exit 1
+    if [ -n "$BOOTED_UDID" ]; then
+        DESTINATION="platform=iOS Simulator,id=$BOOTED_UDID"
+        BOOTED_NAME=$(xcrun simctl list devices booted --json | jq -r '.devices | to_entries | .[] | .value[] | .name' | head -1)
+        echo -e "${GREEN}📱 Reusing running simulator: $BOOTED_NAME ($BOOTED_UDID)${NC}"
+    else
+        echo "🔍 No running simulator found, finding available one..."
+        SIMULATOR_NAME=$(xcrun simctl list devices available --json | jq -r '.devices | to_entries | .[] | select(.key | contains("iOS")) | .value[] | select(.isAvailable == true) | .name' | head -1)
+
+        if [ -z "$SIMULATOR_NAME" ]; then
+            echo -e "${RED}❌ Error: No available iOS simulator found${NC}"
+            echo "Please install an iOS simulator via Xcode > Settings > Platforms"
+            exit 1
+        fi
+
+        DESTINATION="platform=iOS Simulator,name=$SIMULATOR_NAME,OS=latest"
+        echo "📱 Auto-detected simulator: $SIMULATOR_NAME"
     fi
-
-    DESTINATION="platform=iOS Simulator,name=$SIMULATOR_NAME,OS=latest"
-    echo "📱 Auto-detected simulator: $SIMULATOR_NAME"
 fi
 
 # Check if project exists
