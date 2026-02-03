@@ -84,12 +84,14 @@ struct ParentItemPickerSheet: View {
                 Button("Cancel") {
                     dismiss()
                 }
+                .accessibilityIdentifier("parent-picker-cancel-button")
             }
             ToolbarItem(placement: .confirmationAction) {
                 Button("Clear") {
                     onSelect(nil)
                     dismiss()
                 }
+                .accessibilityIdentifier("parent-picker-clear-button")
             }
         }
         .task {
@@ -125,6 +127,7 @@ struct ParentItemPickerSheet: View {
                         }
                     }
                 }
+                .accessibilityIdentifier("parent-picker-row-\(item.id)")
                 .onAppear {
                     if viewModel.shouldLoadMore(for: item) {
                         Task {

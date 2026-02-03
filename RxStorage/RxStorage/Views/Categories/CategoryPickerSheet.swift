@@ -41,12 +41,14 @@ struct CategoryPickerSheet: View {
                 Button("Cancel") {
                     dismiss()
                 }
+                .accessibilityIdentifier("category-picker-cancel-button")
             }
             ToolbarItem(placement: .confirmationAction) {
                 Button("Clear") {
                     onSelect(nil)
                     dismiss()
                 }
+                .accessibilityIdentifier("category-picker-clear-button")
             }
         }
         .searchable(text: $viewModel.searchText, prompt: "Search categories")
@@ -83,6 +85,7 @@ struct CategoryPickerSheet: View {
                         }
                     }
                 }
+                .accessibilityIdentifier("category-picker-row-\(category.id)")
                 .onAppear {
                     if viewModel.shouldLoadMore(for: category) {
                         Task {

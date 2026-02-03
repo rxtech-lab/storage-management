@@ -30,9 +30,11 @@ struct CategoryFormSheet: View {
                     #if os(iOS)
                     .textInputAutocapitalization(.words)
                     #endif
+                    .accessibilityIdentifier("category-form-name-field")
 
                 TextField("Description", text: $viewModel.description, axis: .vertical)
                     .lineLimit(3 ... 6)
+                    .accessibilityIdentifier("category-form-description-field")
             }
 
             // Validation Errors
@@ -57,6 +59,7 @@ struct CategoryFormSheet: View {
                 Button("Cancel") {
                     dismiss()
                 }
+                .accessibilityIdentifier("category-form-cancel-button")
             }
 
             ToolbarItem(placement: .confirmationAction) {
@@ -66,6 +69,7 @@ struct CategoryFormSheet: View {
                     }
                 }
                 .disabled(viewModel.isSubmitting)
+                .accessibilityIdentifier("category-form-submit-button")
             }
         }
         .overlay {

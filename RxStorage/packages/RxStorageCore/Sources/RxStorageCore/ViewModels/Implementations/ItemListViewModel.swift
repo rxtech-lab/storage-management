@@ -274,4 +274,13 @@ extension ItemFilters {
         visibility == nil &&
         search == nil
     }
+
+    /// Check if there are active filters (excluding search)
+    public var hasActiveFilters: Bool {
+        categoryId != nil ||
+        locationId != nil ||
+        authorId != nil ||
+        parentId != nil ||
+        visibility != nil
+    }
 }

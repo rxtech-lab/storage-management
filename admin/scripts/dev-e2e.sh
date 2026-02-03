@@ -21,14 +21,16 @@ export AWS_ACCESS_KEY_ID="S3RVER"
 export AWS_SECRET_ACCESS_KEY="S3RVER"
 export AWS_REGION="us-east-1"
 
-# Check if database exists, if not run migrations
-if [ ! -f "$LOCAL_DB_PATH" ]; then
-  echo "📦 Database not found. Running migrations..."
-  drizzle-kit push --config=drizzle.config.local.ts
-  echo "✅ Database initialized"
-else
-  echo "✅ Using existing database at $LOCAL_DB_PATH"
+# Remove existing database to start fresh
+if [ -f "$LOCAL_DB_PATH" ]; then
+  echo "🗑️  Removing existing database for fresh start..."
+  rm -f "$LOCAL_DB_PATH"
 fi
+
+# Run migrations to initialize database
+echo "📦 Running migrations..."
+drizzle-kit push --config=drizzle.config.local.ts
+echo "✅ Database initialized"
 
 echo "📦 Starting local S3 server on port $LOCAL_S3_PORT..."
 echo "📦 Starting Next.js dev server..."

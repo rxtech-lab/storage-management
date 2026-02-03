@@ -30,9 +30,11 @@ struct AuthorFormSheet: View {
                     #if os(iOS)
                     .textInputAutocapitalization(.words)
                     #endif
+                    .accessibilityIdentifier("author-form-name-field")
 
                 TextField("Bio", text: $viewModel.bio, axis: .vertical)
                     .lineLimit(3...6)
+                    .accessibilityIdentifier("author-form-bio-field")
             }
 
             // Validation Errors
@@ -57,6 +59,7 @@ struct AuthorFormSheet: View {
                 Button("Cancel") {
                     dismiss()
                 }
+                .accessibilityIdentifier("author-form-cancel-button")
             }
 
             ToolbarItem(placement: .confirmationAction) {
@@ -66,6 +69,7 @@ struct AuthorFormSheet: View {
                     }
                 }
                 .disabled(viewModel.isSubmitting)
+                .accessibilityIdentifier("author-form-submit-button")
             }
         }
         .overlay {

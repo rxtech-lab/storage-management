@@ -10,6 +10,7 @@ import SwiftUI
 
 /// Settings view with account info and sign out
 struct SettingsView: View {
+    @Environment(NavigationManager.self) private var navigationManager
     private var authManager = OAuthManager.shared
     @State private var showingSignOutConfirmation = false
 
@@ -84,17 +85,47 @@ struct SettingsView: View {
 
             // Support Section
             Section("Support") {
-                Link(destination: URL(string: "https://storage.rxlab.app/support")!) {
-                    Label("Help & Support", systemImage: "questionmark.circle")
+                Button {
+                    navigationManager.settingsNavigationPath.append(WebPage.helpAndSupport)
+                } label: {
+                    HStack {
+                        Label("Help & Support", systemImage: "questionmark.circle")
+                        Spacer()
+                        Image(systemName: "chevron.right")
+                            .font(.caption)
+                            .foregroundStyle(.tertiary)
+                    }
+                    .contentShape(Rectangle())
                 }
+                .buttonStyle(.plain)
 
-                Link(destination: URL(string: "https://storage.rxlab.app/privacy")!) {
-                    Label("Privacy Policy", systemImage: "hand.raised")
+                Button {
+                    navigationManager.settingsNavigationPath.append(WebPage.privacyPolicy)
+                } label: {
+                    HStack {
+                        Label("Privacy Policy", systemImage: "hand.raised")
+                        Spacer()
+                        Image(systemName: "chevron.right")
+                            .font(.caption)
+                            .foregroundStyle(.tertiary)
+                    }
+                    .contentShape(Rectangle())
                 }
+                .buttonStyle(.plain)
 
-                Link(destination: URL(string: "https://storage.rxlab.app/terms")!) {
-                    Label("Terms of Service", systemImage: "doc.text")
+                Button {
+                    navigationManager.settingsNavigationPath.append(WebPage.termsOfService)
+                } label: {
+                    HStack {
+                        Label("Terms of Service", systemImage: "doc.text")
+                        Spacer()
+                        Image(systemName: "chevron.right")
+                            .font(.caption)
+                            .foregroundStyle(.tertiary)
+                    }
+                    .contentShape(Rectangle())
                 }
+                .buttonStyle(.plain)
             }
 
             // Sign Out Section

@@ -1,0 +1,29 @@
+//
+//  item.swift
+//  RxStorage
+//
+//  Created by Qiwei Li on 2/3/26.
+//
+import XCTest
+
+extension XCUIApplication {
+    // MARK: - Navigation
+
+    var itemsTab: XCUIElement { self.buttons["Items"].firstMatch }
+
+    // MARK: - Item List
+
+    var newItemButton: XCUIElement { self.buttons["item-list-new-button"].firstMatch }
+    var itemRow: XCUIElement { self.staticTexts["item-row"] }
+
+    // MARK: - Item Form
+
+    var itemTitleField: XCUIElement { self.textFields["item-form-title-field"].firstMatch }
+    var itemDescriptionField: XCUIElement { self.textFields["item-form-description-field"].firstMatch }
+    var itemPriceField: XCUIElement { self.textFields["item-form-price-field"].firstMatch }
+    var itemFormSubmitButton: XCUIElement { self.buttons["item-form-submit-button"].firstMatch }
+
+    // MARK: - Item Detail
+
+    var itemDetailTitle: XCUIElement { self.staticTexts["item-detail-title"].firstMatch }
+}

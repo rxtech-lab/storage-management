@@ -11,6 +11,7 @@ import RxStorageCore
 /// Category list view
 struct CategoryListView: View {
     @Binding var selectedCategory: RxStorageCore.Category?
+    let horizontalSizeClass: UserInterfaceSizeClass
 
     @State private var viewModel = CategoryListViewModel()
     @State private var showingCreateSheet = false
@@ -22,7 +23,8 @@ struct CategoryListView: View {
     @State private var showDeleteConfirmation = false
 
     /// Initialize with an optional binding (defaults to constant nil for standalone use)
-    init(selectedCategory: Binding<RxStorageCore.Category?> = .constant(nil)) {
+    init(horizontalSizeClass: UserInterfaceSizeClass, selectedCategory: Binding<RxStorageCore.Category?> = .constant(nil)) {
+        self.horizontalSizeClass = horizontalSizeClass
         _selectedCategory = selectedCategory
     }
 
@@ -106,50 +108,24 @@ struct CategoryListView: View {
 
     // MARK: - Categories List
 
-    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
-
     private var categoriesList: some View {
-        List {
+        AdaptiveList(horizontalSizeClass: horizontalSizeClass, selection: $selectedCategory) {
             ForEach(viewModel.categories) { category in
-                if horizontalSizeClass == .compact {
-                    NavigationLink(value: category) {
-                        CategoryRow(category: category)
-                    }
-                    .swipeActions(edge: .trailing, allowsFullSwipe: false) {
-                        Button(role: .destructive) {
-                            categoryToDelete = category
-                            showDeleteConfirmation = true
-                        } label: {
-                            Label("Delete", systemImage: "trash")
-                        }
-                    }
-                    .onAppear {
-                        if shouldLoadMore(for: category) {
-                            Task {
-                                await viewModel.loadMoreCategories()
-                            }
-                        }
-                    }
-                } else {
-                    Button {
-                        selectedCategory = category
+                NavigationLink(value: category) {
+                    CategoryRow(category: category)
+                }
+                .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                    Button(role: .destructive) {
+                        categoryToDelete = category
+                        showDeleteConfirmation = true
                     } label: {
-                        CategoryRow(category: category)
+                        Label("Delete", systemImage: "trash")
                     }
-                    .listRowBackground(selectedCategory?.id == category.id ? Color.accentColor.opacity(0.2) : nil)
-                    .swipeActions(edge: .trailing, allowsFullSwipe: false) {
-                        Button(role: .destructive) {
-                            categoryToDelete = category
-                            showDeleteConfirmation = true
-                        } label: {
-                            Label("Delete", systemImage: "trash")
-                        }
-                    }
-                    .onAppear {
-                        if shouldLoadMore(for: category) {
-                            Task {
-                                await viewModel.loadMoreCategories()
-                            }
+                }
+                .onAppear {
+                    if shouldLoadMore(for: category) {
+                        Task {
+                            await viewModel.loadMoreCategories()
                         }
                     }
                 }
@@ -205,6 +181,6 @@ struct CategoryRow: View {
 #Preview {
     @Previewable @State var selectedCategory: RxStorageCore.Category?
     NavigationStack {
-        CategoryListView(selectedCategory: $selectedCategory)
+        CategoryListView(horizontalSizeClass: .compact, selectedCategory: $selectedCategory)
     }
 }

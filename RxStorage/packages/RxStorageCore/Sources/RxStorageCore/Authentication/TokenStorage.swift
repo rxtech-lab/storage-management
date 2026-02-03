@@ -8,8 +8,23 @@
 import Foundation
 import Security
 
+/// Protocol for token storage to enable testing without Keychain access
+public protocol TokenStorageProtocol: Actor, Sendable {
+    func saveAccessToken(_ token: String) throws
+    func getAccessToken() -> String?
+    func deleteAccessToken() throws
+    func saveRefreshToken(_ token: String) throws
+    func getRefreshToken() -> String?
+    func deleteRefreshToken() throws
+    func saveExpiresAt(_ date: Date) throws
+    func getExpiresAt() -> Date?
+    func deleteExpiresAt() throws
+    func isTokenExpired() -> Bool
+    func clearAll() throws
+}
+
 /// Secure storage for OAuth tokens using Keychain
-public actor TokenStorage {
+public actor TokenStorage: TokenStorageProtocol {
     /// Shared singleton instance
     public static let shared = TokenStorage()
 

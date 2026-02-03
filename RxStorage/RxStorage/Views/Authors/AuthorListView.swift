@@ -5,12 +5,13 @@
 //  Author list view
 //
 
-import SwiftUI
 import RxStorageCore
+import SwiftUI
 
 /// Author list view
 struct AuthorListView: View {
     @Binding var selectedAuthor: Author?
+    let horizontalSizeClass: UserInterfaceSizeClass
 
     @State private var viewModel = AuthorListViewModel()
     @State private var showingCreateSheet = false
@@ -22,7 +23,8 @@ struct AuthorListView: View {
     @State private var showDeleteConfirmation = false
 
     /// Initialize with an optional binding (defaults to constant nil for standalone use)
-    init(selectedAuthor: Binding<Author?> = .constant(nil)) {
+    init(horizontalSizeClass: UserInterfaceSizeClass, selectedAuthor: Binding<Author?> = .constant(nil)) {
+        self.horizontalSizeClass = horizontalSizeClass
         _selectedAuthor = selectedAuthor
     }
 
@@ -106,50 +108,24 @@ struct AuthorListView: View {
 
     // MARK: - Authors List
 
-    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
-
     private var authorsList: some View {
-        List {
+        AdaptiveList(horizontalSizeClass: horizontalSizeClass, selection: $selectedAuthor) {
             ForEach(viewModel.authors) { author in
-                if horizontalSizeClass == .compact {
-                    NavigationLink(value: author) {
-                        AuthorRow(author: author)
-                    }
-                    .swipeActions(edge: .trailing, allowsFullSwipe: false) {
-                        Button(role: .destructive) {
-                            authorToDelete = author
-                            showDeleteConfirmation = true
-                        } label: {
-                            Label("Delete", systemImage: "trash")
-                        }
-                    }
-                    .onAppear {
-                        if shouldLoadMore(for: author) {
-                            Task {
-                                await viewModel.loadMoreAuthors()
-                            }
-                        }
-                    }
-                } else {
-                    Button {
-                        selectedAuthor = author
+                NavigationLink(value: author) {
+                    AuthorRow(author: author)
+                }
+                .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                    Button(role: .destructive) {
+                        authorToDelete = author
+                        showDeleteConfirmation = true
                     } label: {
-                        AuthorRow(author: author)
+                        Label("Delete", systemImage: "trash")
                     }
-                    .listRowBackground(selectedAuthor?.id == author.id ? Color.accentColor.opacity(0.2) : nil)
-                    .swipeActions(edge: .trailing, allowsFullSwipe: false) {
-                        Button(role: .destructive) {
-                            authorToDelete = author
-                            showDeleteConfirmation = true
-                        } label: {
-                            Label("Delete", systemImage: "trash")
-                        }
-                    }
-                    .onAppear {
-                        if shouldLoadMore(for: author) {
-                            Task {
-                                await viewModel.loadMoreAuthors()
-                            }
+                }
+                .onAppear {
+                    if shouldLoadMore(for: author) {
+                        Task {
+                            await viewModel.loadMoreAuthors()
                         }
                     }
                 }
@@ -176,9 +152,9 @@ struct AuthorListView: View {
         }
         let threshold = 3
         return index >= viewModel.authors.count - threshold &&
-               viewModel.hasNextPage &&
-               !viewModel.isLoadingMore &&
-               !viewModel.isLoading
+            viewModel.hasNextPage &&
+            !viewModel.isLoadingMore &&
+            !viewModel.isLoading
     }
 }
 
@@ -205,6 +181,6 @@ struct AuthorRow: View {
 #Preview {
     @Previewable @State var selectedAuthor: Author?
     NavigationStack {
-        AuthorListView(selectedAuthor: $selectedAuthor)
+        AuthorListView(horizontalSizeClass: .compact, selectedAuthor: $selectedAuthor)
     }
 }

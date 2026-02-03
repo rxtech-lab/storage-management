@@ -32,6 +32,7 @@ struct LocationFormSheet: View {
                     #if os(iOS)
                     .textInputAutocapitalization(.words)
                     #endif
+                    .accessibilityIdentifier("location-form-title-field")
             }
 
             Section("Coordinates") {
@@ -39,17 +40,20 @@ struct LocationFormSheet: View {
                     #if os(iOS)
                     .keyboardType(.decimalPad)
                     #endif
+                    .accessibilityIdentifier("location-form-latitude-field")
 
                 TextField("Longitude", text: $viewModel.longitude)
                     #if os(iOS)
                     .keyboardType(.decimalPad)
                     #endif
+                    .accessibilityIdentifier("location-form-longitude-field")
 
                 Button {
                     showingMapPicker = true
                 } label: {
                     Label("Pick from Map", systemImage: "map")
                 }
+                .accessibilityIdentifier("location-form-map-picker-button")
             }
 
             // Validation Errors
@@ -74,6 +78,7 @@ struct LocationFormSheet: View {
                 Button("Cancel") {
                     dismiss()
                 }
+                .accessibilityIdentifier("location-form-cancel-button")
             }
 
             ToolbarItem(placement: .confirmationAction) {
@@ -83,6 +88,7 @@ struct LocationFormSheet: View {
                     }
                 }
                 .disabled(viewModel.isSubmitting)
+                .accessibilityIdentifier("location-form-submit-button")
             }
         }
         #if os(iOS)

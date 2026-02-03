@@ -87,6 +87,9 @@ final class NavigationManager {
     /// Navigation path for Dashboard tab
     var dashboardNavigationPath = NavigationPath()
 
+    /// Navigation path for Settings tab
+    var settingsNavigationPath = NavigationPath()
+
     // MARK: - Deep Link State
 
     var isLoadingDeepLink = false
@@ -128,6 +131,22 @@ final class NavigationManager {
         }
     }
 
+    /// Navigate to an item from Dashboard (stays in Dashboard context)
+    /// This avoids tab switching issues and keeps the user in their current context
+    func navigateToItemFromDashboard(_ id: Int) async {
+        isLoadingDeepLink = true
+        defer { isLoadingDeepLink = false }
+
+        do {
+            let itemDetail = try await itemService.fetchItem(id: id)
+            let item = itemDetail.toStorageItem()
+            dashboardNavigationPath.append(item)
+        } catch {
+            deepLinkError = error
+            showDeepLinkError = true
+        }
+    }
+
     /// Navigate to items tab
     func navigateToItems() {
         selectedTab = .items
@@ -153,6 +172,7 @@ final class NavigationManager {
         itemsNavigationPath = NavigationPath()
         managementNavigationPath = NavigationPath()
         dashboardNavigationPath = NavigationPath()
+        settingsNavigationPath = NavigationPath()
     }
 
     // MARK: - Deep Link Handling
