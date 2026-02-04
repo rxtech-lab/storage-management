@@ -107,6 +107,7 @@ final class NavigationManager {
     // MARK: - Services
 
     private let itemService = ItemService()
+    private let qrCodeService = QrCodeService()
 
     // MARK: - Navigation Methods
 
@@ -181,18 +182,26 @@ final class NavigationManager {
 
     // MARK: - Deep Link Handling
 
-    /// Handle deep link URL
+    /// Handle deep link URL by resolving via backend QR code service
     func handleDeepLink(_ url: URL) async {
-        // Extract item ID from URL path (e.g., /preview/123)
-        guard let itemIdString = url.pathComponents.last,
-              let itemId = Int(itemIdString)
-        else {
-            deepLinkError = APIError.unsupportedQRCode(url.absoluteString)
-            showDeepLinkError = true
-            return
-        }
+        isLoadingDeepLink = true
+        defer { isLoadingDeepLink = false }
 
-        // Navigate to the item by ID
-        await navigateToItemById(itemId)
+        do {
+            // Step 1: Resolve URL via QR code scan endpoint
+            let scanResponse = try await qrCodeService.scanQrCode(qrcontent: url.absoluteString)
+
+            // Step 2: Fetch item using resolved URL (auth included if signed in)
+            let itemDetail = try await itemService.fetchItemUsingUrl(url: scanResponse.url)
+            let item = itemDetail.toStorageItem()
+
+            // Step 3: Navigate to item
+            selectedTab = .items
+            selectedItem = item
+            itemsNavigationPath.append(item)
+        } catch {
+            deepLinkError = error
+            showDeepLinkError = true
+        }
     }
 }

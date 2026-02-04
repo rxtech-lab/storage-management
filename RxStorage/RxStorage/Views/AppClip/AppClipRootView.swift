@@ -9,7 +9,7 @@ import RxStorageCore
 import SwiftUI
 
 /// Root view for App Clips
-/// Parses the incoming URL and navigates directly to ItemDetailView in view-only mode
+/// Handles incoming URLs via backend QR code resolution and navigates to ItemDetailView in view-only mode
 /// Implements proper auth flow:
 /// 1. First try to fetch item without auth (works for public items)
 /// 2. If 401, show sign-in button
@@ -20,6 +20,15 @@ struct AppClipRootView: View {
     @State private var parseError: String?
     @State private var viewModel = ItemDetailViewModel()
     @State private var oauthManager = OAuthManager()
+
+    /// Service for QR code resolution
+    private let qrCodeService = QrCodeService()
+
+    /// Store resolved URL for retry after authentication
+    @State private var resolvedItemUrl: String?
+
+    /// Store original QR content for retry after authentication (when QR scan itself returns 401)
+    @State private var originalQrContent: String?
 
     // Auth flow states
     @State private var needsAuth = false
@@ -71,7 +80,7 @@ struct AppClipRootView: View {
             handleUserActivity(userActivity)
         }
         .onOpenURL { url in
-            parseItemId(from: url)
+            handleUrl(url)
         }
         .onAppear {
             // Support launch argument for UI testing
@@ -79,7 +88,7 @@ struct AppClipRootView: View {
             if let urlString = UserDefaults.standard.string(forKey: "AppClipURLKey"),
                let url = URL(string: urlString)
             {
-                parseItemId(from: url)
+                handleUrl(url)
             }
         }
     }
@@ -117,7 +126,10 @@ struct AppClipRootView: View {
                 Task {
                     try? await TokenStorage.shared.clearAll()
                     await oauthManager.logout()
-                    await fetchItem(id)
+                    // After sign out, retry fetching (no auth since user signed out)
+                    if let url = resolvedItemUrl {
+                        await fetchItemUsingUrl(url: url)
+                    }
                 }
             }
     }
@@ -132,8 +144,8 @@ struct AppClipRootView: View {
 
             Button("Retry") {
                 Task {
-                    if let id = itemId {
-                        await fetchItem(id)
+                    if let url = resolvedItemUrl {
+                        await fetchItemUsingUrl(url: url)
                     }
                 }
             }
@@ -147,41 +159,66 @@ struct AppClipRootView: View {
             parseError = "No URL provided"
             return
         }
-        parseItemId(from: url)
+        handleUrl(url)
     }
 
-    private func parseItemId(from url: URL) {
-        // QR codes use: https://storage.rxlab.app/preview/item/{id}
-        let pathComponents = url.pathComponents
-
-        // Path format: ["", "preview", "item", "123"]
-        if pathComponents.count >= 4,
-           pathComponents[1] == "preview",
-           pathComponents[2] == "item",
-           let id = Int(pathComponents[3])
-        {
-            itemId = id
-            Task {
-                await fetchItem(id)
-            }
-            return
+    private func handleUrl(_ url: URL) {
+        // Send the full URL to backend for resolution
+        let qrcontent = url.absoluteString
+        Task {
+            await fetchItemFromQrCode(qrcontent)
         }
-
-        parseError = "Could not extract item ID from URL"
     }
 
-    // MARK: - Fetch Item
+    // MARK: - Fetch Item via QR Code
 
-    private func fetchItem(_ id: Int) async {
+    private func fetchItemFromQrCode(_ qrcontent: String) async {
         // Reset states
         needsAuth = false
         accessDenied = false
         authError = nil
+        parseError = nil
 
-        // Use the preview endpoint which supports public access
-        await viewModel.fetchPreviewItem(id: id)
+        // Store the original QR content for retry after auth
+        originalQrContent = qrcontent
 
-        // Check for auth-related errors
+        do {
+            // Step 1: Resolve QR code to URL via backend
+            let scanResponse = try await qrCodeService.scanQrCode(qrcontent: qrcontent)
+            resolvedItemUrl = scanResponse.url
+
+            // Step 2: Fetch item using the URL (auth included if user is signed in)
+            await fetchItemUsingUrl(url: scanResponse.url)
+
+        } catch let error as APIError {
+            switch error {
+            case .unauthorized:
+                // QR code scan requires authentication
+                needsAuth = true
+            case .forbidden:
+                // User doesn't have permission to access this item
+                accessDenied = true
+            case let .unsupportedQRCode(message):
+                parseError = message
+            default:
+                parseError = error.localizedDescription
+            }
+        } catch {
+            parseError = error.localizedDescription
+        }
+    }
+
+    // MARK: - Fetch Item Using URL
+
+    private func fetchItemUsingUrl(url: String) async {
+        // Reset auth states
+        needsAuth = false
+        accessDenied = false
+
+        // Use ViewModel's method to fetch item (auth included if user is signed in)
+        await viewModel.fetchItemUsingUrl(url: url)
+
+        // Check for auth-related errors and update state accordingly
         if let error = viewModel.error as? APIError {
             switch error {
             case .unauthorized:
@@ -191,6 +228,11 @@ struct AppClipRootView: View {
             default:
                 break
             }
+        }
+
+        // Update itemId if item was successfully loaded
+        if let item = viewModel.item {
+            itemId = item.id
         }
     }
 
@@ -203,9 +245,13 @@ struct AppClipRootView: View {
         do {
             try await oauthManager.authenticate()
 
-            // After successful authentication, retry fetching the item
-            if let id = itemId {
-                await fetchItem(id)
+            // After successful authentication, retry the appropriate step
+            if let url = resolvedItemUrl {
+                // We already have the resolved URL, just fetch the item (auth included automatically)
+                await fetchItemUsingUrl(url: url)
+            } else if let qrcontent = originalQrContent {
+                // QR scan itself returned 401, retry the entire flow with auth
+                await fetchItemFromQrCode(qrcontent)
             }
         } catch {
             authError = error.localizedDescription
@@ -219,10 +265,8 @@ struct AppClipRootView: View {
         try? await TokenStorage.shared.clearAll()
         await oauthManager.logout()
 
-        // Retry fetching the item (will show sign-in view again)
-        if let id = itemId {
-            await fetchItem(id)
-        }
+        // Show sign-in view again
+        needsAuth = true
     }
 }
 

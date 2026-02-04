@@ -31,6 +31,7 @@ struct ItemListView: View {
         // QR scan state
         @State private var isLoadingFromQR = false
         private let itemService = ItemService()
+        private let qrCodeService = QrCodeService()
     #endif
 
     /// Refresh state
@@ -266,25 +267,15 @@ struct ItemListView: View {
         // MARK: - QR Code Handling
 
         private func handleScannedQRCode(_ code: String) async {
-            guard let url = URL(string: code) else {
-                errorViewModel.showError(APIError.unsupportedQRCode(code))
-                return
-            }
-
-            // Extract item ID from URL path (e.g., /preview/123)
-            guard let itemIdString = url.pathComponents.last,
-                  let itemId = Int(itemIdString)
-            else {
-                errorViewModel.showError(APIError.unsupportedQRCode(code))
-                return
-            }
-
-            // Fetch the item directly
             isLoadingFromQR = true
             defer { isLoadingFromQR = false }
 
             do {
-                let itemDetail = try await itemService.fetchItem(id: itemId)
+                // Step 1: Call backend to resolve QR code to URL
+                let scanResponse = try await qrCodeService.scanQrCode(qrcontent: code)
+
+                // Step 2: Fetch the item using the resolved URL (auth included if signed in)
+                let itemDetail = try await itemService.fetchItemUsingUrl(url: scanResponse.url)
                 selectedItem = itemDetail.toStorageItem()
             } catch {
                 errorViewModel.showError(error)

@@ -260,6 +260,23 @@ export async function getItemChildren(
   return getItems(userId, { parentId });
 }
 
+/**
+ * Find an item by its originalQrCode field
+ * @param qrCode The raw QR code value to search for
+ * @returns The item if found, null otherwise
+ */
+export async function findItemByOriginalQrCode(
+  qrCode: string,
+): Promise<Item | null> {
+  await ensureSchemaInitialized();
+  const result = await db
+    .select()
+    .from(items)
+    .where(eq(items.originalQrCode, qrCode))
+    .limit(1);
+  return result[0] || null;
+}
+
 export async function createItemAction(
   data: Omit<NewItem, "id" | "userId" | "createdAt" | "updatedAt">,
   userId?: string,
