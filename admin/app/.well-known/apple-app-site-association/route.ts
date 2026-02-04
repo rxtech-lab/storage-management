@@ -1,8 +1,9 @@
 export async function GET() {
-  const appClipBundleId = process.env.APPLE_APP_CLIP_BUNDLE_ID;
+  const teamId = process.env.APPLE_TEAM_ID;
   const appBundleId = process.env.APPLE_APP_BUNDLE_ID;
+  const appClipBundleId = process.env.APPLE_APP_CLIP_BUNDLE_ID;
 
-  if (!appClipBundleId || !appBundleId) {
+  if (!teamId || !appBundleId || !appClipBundleId) {
     return new Response(
       JSON.stringify({ error: "Apple bundle IDs not configured" }),
       {
@@ -12,12 +13,28 @@ export async function GET() {
     );
   }
 
+  const fullAppId = `${teamId}.${appBundleId}`;
+  const fullAppClipId = `${teamId}.${appClipBundleId}`;
+
   const appSiteAssociation = {
+    applinks: {
+      details: [
+        {
+          appIDs: [fullAppClipId, fullAppId],
+          components: [
+            {
+              "/": "/preview/*",
+              comment: "Item preview pages trigger App Clip",
+            },
+          ],
+        },
+      ],
+    },
     appclips: {
-      apps: [appClipBundleId],
+      apps: [fullAppClipId],
     },
     webcredentials: {
-      apps: [appBundleId],
+      apps: [fullAppId],
     },
   };
 

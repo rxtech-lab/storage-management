@@ -12,13 +12,15 @@ private let logger = Logger(subsystem: "app.rxlab.RxStorageUITests", category: "
 
 extension XCUIApplication {
     func signInWithEmailAndPassword(isAppclips: Bool = false) throws {
-        // Load .env file and read credentials
-        let envVars = DotEnv.load()
+        // Load .env file and read credentials (with fallback to process environment for CI)
+        let envVars = DotEnv.loadWithFallback()
 
         let testEmail = DotEnv.get("TEST_EMAIL", from: envVars) ?? "test@rxlab.app"
+        NSLog("🔐 Using test email: \(testEmail)")
         guard let testPassword = DotEnv.get("TEST_PASSWORD", from: envVars) else {
             throw NSError(domain: "SigninError", code: 1, userInfo: [NSLocalizedDescriptionKey: "TEST_PASSWORD not found in .env file or environment"])
         }
+        NSLog("🔐 Using test password: \(testPassword)")
 
         NSLog("🔐 Starting sign-in flow with email: \(testEmail)")
         logger.info("🔐 Starting sign-in flow with email: \(testEmail)")
@@ -51,10 +53,21 @@ extension XCUIApplication {
             logger.info("✅ Email field found, entering credentials...")
 
             // Fill in credentials from environment
+            // WebView elements need extra handling for keyboard focus in CI
             emailField.tap()
+            sleep(1) // Give WebView time to establish keyboard focus
+
+            // Double-tap to ensure focus and select any existing text
+            emailField.doubleTap()
+            sleep(1)
+
+            // Type the email
             emailField.typeText(testEmail)
             NSLog("✅ Email entered")
             logger.info("✅ Email entered")
+
+            // Small delay before pressing Enter
+            sleep(1)
             emailField.typeText("\n") // Press Enter to move to next field
         #elseif os(macOS)
 
@@ -67,10 +80,16 @@ extension XCUIApplication {
             emailField.click()
             emailField.typeText(testEmail)
         #endif
+        // WebView password field also needs focus handling
         passwordField.tap()
+        sleep(1) // Give WebView time to establish keyboard focus
+        passwordField.doubleTap()
+        sleep(1)
+
         passwordField.typeText(testPassword)
         NSLog("✅ Password entered, submitting...")
         logger.info("✅ Password entered, submitting...")
+        sleep(1)
         passwordField.typeText("\n") // Press Enter to submit
 
         NSLog("✅ Sign-in form submitted, waiting for callback...")

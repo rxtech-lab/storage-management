@@ -101,6 +101,29 @@ enum DotEnv {
         }
 
         // Fall back to process environment (for CI/CD or scheme-based config)
-        return ProcessInfo.processInfo.environment[key]
+        if let envValue = ProcessInfo.processInfo.environment[key] {
+            NSLog("✅ DotEnv: Found \(key) in process environment")
+            return envValue
+        }
+
+        NSLog("⚠️ DotEnv: \(key) not found in .env file or process environment")
+        return nil
+    }
+
+    /// Loads environment variables, preferring .env file but falling back to process environment
+    /// This is useful for CI environments where .env file path resolution may fail
+    static func loadWithFallback() -> [String: String] {
+        var result = load()
+
+        // If .env file loading returned empty, try to get known keys from environment
+        let knownKeys = ["TEST_EMAIL", "TEST_PASSWORD"]
+        for key in knownKeys {
+            if result[key] == nil, let envValue = ProcessInfo.processInfo.environment[key] {
+                result[key] = envValue
+                NSLog("✅ DotEnv: Loaded \(key) from process environment (fallback)")
+            }
+        }
+
+        return result
     }
 }
