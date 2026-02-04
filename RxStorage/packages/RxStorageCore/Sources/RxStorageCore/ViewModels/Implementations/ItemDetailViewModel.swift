@@ -88,6 +88,31 @@ public final class ItemDetailViewModel: ItemDetailViewModelProtocol {
         }
     }
 
+    /// Fetch item using a full API URL (for QR code scanning flow).
+    /// This method fetches the item directly from the resolved URL.
+    /// Always includes auth token if user is signed in.
+    /// - Parameter url: Full API URL to the item
+    public func fetchItemUsingUrl(url: String) async {
+        isLoading = true
+        error = nil
+
+        do {
+            item = try await itemService.fetchItemUsingUrl(url: url)
+            isLoading = false
+
+            // Use children from item response
+            children = item?.children ?? []
+
+            // Use contents from item response (no separate API call needed)
+            if let item = item {
+                contents = item.contents.map { $0.toContent(itemId: item.id) }
+            }
+        } catch {
+            self.error = error
+            isLoading = false
+        }
+    }
+
     public func fetchContents() async {
         guard let itemId = item?.id else { return }
 
