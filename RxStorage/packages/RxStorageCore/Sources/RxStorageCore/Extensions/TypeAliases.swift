@@ -240,6 +240,31 @@ public extension Components.Schemas.ItemDetailResponseSchema {
     }
 }
 
+// MARK: - ContentRef to Content Conversion
+
+public extension Components.Schemas.ContentRefSchema {
+    /// Convert ContentRefSchema to ContentResponseSchema for display in views
+    /// - Parameter itemId: The parent item ID (not included in ContentRefSchema)
+    func toContent(itemId: Int) -> Content {
+        // Map type payload
+        let contentType: Content._typePayload
+        switch _type {
+        case .file: contentType = .file
+        case .image: contentType = .image
+        case .video: contentType = .video
+        }
+
+        return Content(
+            id: id,
+            itemId: itemId,
+            _type: contentType,
+            data: Content.dataPayload(additionalProperties: data.additionalProperties),
+            createdAt: createdAt,
+            updatedAt: updatedAt
+        )
+    }
+}
+
 // MARK: - ContentType Convenience Extensions
 
 public extension Components.Schemas.ContentResponseSchema._typePayload {

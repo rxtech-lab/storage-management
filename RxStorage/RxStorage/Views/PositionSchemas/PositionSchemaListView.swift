@@ -17,6 +17,7 @@ struct PositionSchemaListView: View {
     @State private var viewModel = PositionSchemaListViewModel()
     @State private var showingCreateSheet = false
     @State private var isRefreshing = false
+    @State private var errorViewModel = ErrorViewModel()
     @Environment(EventViewModel.self) private var eventViewModel
 
     // Delete confirmation state
@@ -96,8 +97,11 @@ struct PositionSchemaListView: View {
             onConfirm: {
                 if let schema = schemaToDelete {
                     Task {
-                        if let deletedId = try? await viewModel.deleteSchema(schema) {
+                        do {
+                            let deletedId = try await viewModel.deleteSchema(schema)
                             eventViewModel.emit(.positionSchemaDeleted(id: deletedId))
+                        } catch {
+                            errorViewModel.showError(error)
                         }
                         schemaToDelete = nil
                     }
@@ -105,6 +109,12 @@ struct PositionSchemaListView: View {
             },
             onCancel: { schemaToDelete = nil }
         )
+        .onChange(of: viewModel.error != nil) { _, hasError in
+            if hasError, let error = viewModel.error {
+                errorViewModel.showError(error)
+            }
+        }
+        .showViewModelError(errorViewModel)
     }
 
     // MARK: - Schemas List

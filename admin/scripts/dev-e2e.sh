@@ -32,6 +32,11 @@ echo "📦 Running migrations..."
 drizzle-kit push --config=drizzle.config.local.ts
 echo "✅ Database initialized"
 
+# Seed test data
+echo "🌱 Seeding test data..."
+bun run scripts/seed-e2e.ts
+echo "✅ Database seeded"
+
 echo "📦 Starting local S3 server on port $LOCAL_S3_PORT..."
 echo "📦 Starting Next.js dev server..."
 echo "================================================"

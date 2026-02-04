@@ -35,12 +35,7 @@ public actor AuthenticationMiddleware: ClientMiddleware {
         operationID: String,
         next: @Sendable (HTTPRequest, HTTPBody?, URL) async throws -> (HTTPResponse, HTTPBody?)
     ) async throws -> (HTTPResponse, HTTPBody?) {
-        // Check if token needs refresh before making request
-        if await tokenStorage.isTokenExpired() {
-            try await ensureValidToken()
-        }
-
-        // Inject Bearer token
+        // Inject Bearer token if available (don't proactively refresh - let server reject with 401)
         var modifiedRequest = request
         if let accessToken = await tokenStorage.getAccessToken() {
             modifiedRequest.headerFields[.authorization] = "Bearer \(accessToken)"
@@ -49,9 +44,19 @@ public actor AuthenticationMiddleware: ClientMiddleware {
         // Make request
         let (response, responseBody) = try await next(modifiedRequest, body, baseURL)
 
-        // Handle 401 - attempt token refresh and retry once
+        // Only refresh on 401 response
         if response.status == .unauthorized {
             logger.info("Received 401, attempting token refresh", metadata: ["operationID": "\(operationID)"])
+
+            // Check if refresh is possible
+            guard await tokenStorage.getRefreshToken() != nil else {
+                logger.error("No refresh token available for 401 retry")
+                await MainActor.run {
+                    NotificationCenter.default.post(name: .authSessionExpired, object: nil)
+                }
+                // Return original 401 - let caller handle it
+                return (response, responseBody)
+            }
 
             do {
                 try await ensureValidToken()
@@ -64,11 +69,11 @@ public actor AuthenticationMiddleware: ClientMiddleware {
                 return try await next(retryRequest, body, baseURL)
             } catch {
                 logger.error("Token refresh failed during 401 retry", metadata: ["error": "\(error)"])
-                // Post notification for UI to handle logout
                 await MainActor.run {
                     NotificationCenter.default.post(name: .authSessionExpired, object: nil)
                 }
-                throw AuthenticationError.refreshFailed
+                // Return original 401 - let caller handle it
+                return (response, responseBody)
             }
         }
 

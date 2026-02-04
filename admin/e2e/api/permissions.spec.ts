@@ -247,7 +247,7 @@ test.describe.serial("Permission Tests", () => {
       const response = await request.delete(`/api/v1/items/${user1ItemId}`, {
         headers: { "X-Test-User-Id": USER_1 },
       });
-      expect(response.status()).toBe(200);
+      expect(response.status()).toBe(204);
     });
 
     test("should delete category", async ({ request }) => {
@@ -269,6 +269,312 @@ test.describe.serial("Permission Tests", () => {
         headers: { "X-Test-User-Id": USER_1 },
       });
       expect(response.status()).toBe(200);
+    });
+  });
+});
+
+/**
+ * Multi-user item isolation tests.
+ * Verifies that users can only see their own private items and all public items.
+ */
+test.describe.serial("Multi-User Item Isolation", () => {
+  const USER_A = "isolation-user-a";
+  const USER_A_EMAIL = "user-a@example.com";
+  const USER_B = "isolation-user-b";
+  const USER_B_EMAIL = "user-b@example.com";
+  const USER_C = "isolation-user-c";
+  const USER_C_EMAIL = "user-c@example.com";
+
+  // Track created item IDs
+  let userAPrivateItem1Id: number;
+  let userAPrivateItem2Id: number;
+  let userAPublicItemId: number;
+  let userBPrivateItemId: number;
+  let userBPublicItemId: number;
+  let userCPrivateItemId: number;
+
+  test.describe("Setup - Create items for multiple users", () => {
+    test("User A creates 2 private items and 1 public item", async ({ request }) => {
+      // Create private item 1
+      const response1 = await request.post("/api/v1/items", {
+        headers: { "X-Test-User-Id": USER_A, "X-Test-User-Email": USER_A_EMAIL },
+        data: {
+          title: "User A Private Item 1",
+          description: "First private item belonging to User A",
+          visibility: "privateAccess",
+        },
+      });
+      expect(response1.status()).toBe(201);
+      userAPrivateItem1Id = (await response1.json()).id;
+
+      // Create private item 2
+      const response2 = await request.post("/api/v1/items", {
+        headers: { "X-Test-User-Id": USER_A, "X-Test-User-Email": USER_A_EMAIL },
+        data: {
+          title: "User A Private Item 2",
+          description: "Second private item belonging to User A",
+          visibility: "privateAccess",
+        },
+      });
+      expect(response2.status()).toBe(201);
+      userAPrivateItem2Id = (await response2.json()).id;
+
+      // Create public item
+      const response3 = await request.post("/api/v1/items", {
+        headers: { "X-Test-User-Id": USER_A, "X-Test-User-Email": USER_A_EMAIL },
+        data: {
+          title: "User A Public Item",
+          description: "Public item belonging to User A",
+          visibility: "publicAccess",
+        },
+      });
+      expect(response3.status()).toBe(201);
+      userAPublicItemId = (await response3.json()).id;
+    });
+
+    test("User B creates 1 private item and 1 public item", async ({ request }) => {
+      // Create private item
+      const response1 = await request.post("/api/v1/items", {
+        headers: { "X-Test-User-Id": USER_B, "X-Test-User-Email": USER_B_EMAIL },
+        data: {
+          title: "User B Private Item",
+          description: "Private item belonging to User B",
+          visibility: "privateAccess",
+        },
+      });
+      expect(response1.status()).toBe(201);
+      userBPrivateItemId = (await response1.json()).id;
+
+      // Create public item
+      const response2 = await request.post("/api/v1/items", {
+        headers: { "X-Test-User-Id": USER_B, "X-Test-User-Email": USER_B_EMAIL },
+        data: {
+          title: "User B Public Item",
+          description: "Public item belonging to User B",
+          visibility: "publicAccess",
+        },
+      });
+      expect(response2.status()).toBe(201);
+      userBPublicItemId = (await response2.json()).id;
+    });
+
+    test("User C creates 1 private item", async ({ request }) => {
+      const response = await request.post("/api/v1/items", {
+        headers: { "X-Test-User-Id": USER_C, "X-Test-User-Email": USER_C_EMAIL },
+        data: {
+          title: "User C Private Item",
+          description: "Private item belonging to User C",
+          visibility: "privateAccess",
+        },
+      });
+      expect(response.status()).toBe(201);
+      userCPrivateItemId = (await response.json()).id;
+    });
+  });
+
+  test.describe("List isolation verification", () => {
+    test("User A sees only their own private items plus public items from others", async ({ request }) => {
+      const response = await request.get("/api/v1/items", {
+        headers: { "X-Test-User-Id": USER_A, "X-Test-User-Email": USER_A_EMAIL },
+      });
+      expect(response.status()).toBe(200);
+      const body = await response.json();
+      const itemTitles = body.data.map((item: any) => item.title);
+
+      // User A should see their own items (3 total)
+      expect(itemTitles).toContain("User A Private Item 1");
+      expect(itemTitles).toContain("User A Private Item 2");
+      expect(itemTitles).toContain("User A Public Item");
+
+      // User A should see other users' public items
+      expect(itemTitles).toContain("User B Public Item");
+
+      // User A should NOT see other users' private items
+      expect(itemTitles).not.toContain("User B Private Item");
+      expect(itemTitles).not.toContain("User C Private Item");
+    });
+
+    test("User B sees only their own private items plus public items from others", async ({ request }) => {
+      const response = await request.get("/api/v1/items", {
+        headers: { "X-Test-User-Id": USER_B, "X-Test-User-Email": USER_B_EMAIL },
+      });
+      expect(response.status()).toBe(200);
+      const body = await response.json();
+      const itemTitles = body.data.map((item: any) => item.title);
+
+      // User B should see their own items (2 total)
+      expect(itemTitles).toContain("User B Private Item");
+      expect(itemTitles).toContain("User B Public Item");
+
+      // User B should see other users' public items
+      expect(itemTitles).toContain("User A Public Item");
+
+      // User B should NOT see other users' private items
+      expect(itemTitles).not.toContain("User A Private Item 1");
+      expect(itemTitles).not.toContain("User A Private Item 2");
+      expect(itemTitles).not.toContain("User C Private Item");
+    });
+
+    test("User C sees only their own private item plus public items from others", async ({ request }) => {
+      const response = await request.get("/api/v1/items", {
+        headers: { "X-Test-User-Id": USER_C, "X-Test-User-Email": USER_C_EMAIL },
+      });
+      expect(response.status()).toBe(200);
+      const body = await response.json();
+      const itemTitles = body.data.map((item: any) => item.title);
+
+      // User C should see their own item
+      expect(itemTitles).toContain("User C Private Item");
+
+      // User C should see all public items
+      expect(itemTitles).toContain("User A Public Item");
+      expect(itemTitles).toContain("User B Public Item");
+
+      // User C should NOT see other users' private items
+      expect(itemTitles).not.toContain("User A Private Item 1");
+      expect(itemTitles).not.toContain("User A Private Item 2");
+      expect(itemTitles).not.toContain("User B Private Item");
+    });
+  });
+
+  test.describe("Direct access denial verification", () => {
+    test("User B cannot access User A's private items by ID", async ({ request }) => {
+      const response1 = await request.get(`/api/v1/items/${userAPrivateItem1Id}`, {
+        headers: { "X-Test-User-Id": USER_B, "X-Test-User-Email": USER_B_EMAIL },
+      });
+      expect(response1.status()).toBe(403);
+      const body1 = await response1.json();
+      expect(body1.error).toBe("Permission denied");
+
+      const response2 = await request.get(`/api/v1/items/${userAPrivateItem2Id}`, {
+        headers: { "X-Test-User-Id": USER_B, "X-Test-User-Email": USER_B_EMAIL },
+      });
+      expect(response2.status()).toBe(403);
+    });
+
+    test("User C cannot access User A's or User B's private items", async ({ request }) => {
+      const responseA1 = await request.get(`/api/v1/items/${userAPrivateItem1Id}`, {
+        headers: { "X-Test-User-Id": USER_C, "X-Test-User-Email": USER_C_EMAIL },
+      });
+      expect(responseA1.status()).toBe(403);
+
+      const responseA2 = await request.get(`/api/v1/items/${userAPrivateItem2Id}`, {
+        headers: { "X-Test-User-Id": USER_C, "X-Test-User-Email": USER_C_EMAIL },
+      });
+      expect(responseA2.status()).toBe(403);
+
+      const responseB = await request.get(`/api/v1/items/${userBPrivateItemId}`, {
+        headers: { "X-Test-User-Id": USER_C, "X-Test-User-Email": USER_C_EMAIL },
+      });
+      expect(responseB.status()).toBe(403);
+    });
+
+    test("User A cannot access User B's or User C's private items", async ({ request }) => {
+      const responseB = await request.get(`/api/v1/items/${userBPrivateItemId}`, {
+        headers: { "X-Test-User-Id": USER_A, "X-Test-User-Email": USER_A_EMAIL },
+      });
+      expect(responseB.status()).toBe(403);
+
+      const responseC = await request.get(`/api/v1/items/${userCPrivateItemId}`, {
+        headers: { "X-Test-User-Id": USER_A, "X-Test-User-Email": USER_A_EMAIL },
+      });
+      expect(responseC.status()).toBe(403);
+    });
+  });
+
+  test.describe("Ownership verification in list response", () => {
+    test("All items in User A's list have correct ownership metadata", async ({ request }) => {
+      const response = await request.get("/api/v1/items", {
+        headers: { "X-Test-User-Id": USER_A, "X-Test-User-Email": USER_A_EMAIL },
+      });
+      expect(response.status()).toBe(200);
+      const body = await response.json();
+
+      // Filter to only our test items by title prefix
+      const testItems = body.data.filter((item: any) =>
+        item.title.startsWith("User A ") || item.title.startsWith("User B Public")
+      );
+
+      // Verify each item has userId field and correct ownership
+      for (const item of testItems) {
+        expect(item.userId).toBeDefined();
+
+        if (item.title.startsWith("User A ")) {
+          expect(item.userId).toBe(USER_A);
+        }
+
+        if (item.title === "User B Public Item") {
+          expect(item.userId).toBe(USER_B);
+        }
+      }
+    });
+
+    test("Private items in list always belong to requesting user", async ({ request }) => {
+      const response = await request.get("/api/v1/items", {
+        headers: { "X-Test-User-Id": USER_B, "X-Test-User-Email": USER_B_EMAIL },
+      });
+      expect(response.status()).toBe(200);
+      const body = await response.json();
+
+      // Filter to private items only
+      const privateItems = body.data.filter((item: any) => item.visibility === "privateAccess");
+
+      // All private items should belong to User B
+      for (const item of privateItems) {
+        expect(item.userId).toBe(USER_B);
+      }
+    });
+  });
+
+  test.describe("Visibility filter verification", () => {
+    test("Filtering by visibility=privateAccess returns only own private items", async ({ request }) => {
+      const response = await request.get("/api/v1/items?visibility=privateAccess", {
+        headers: { "X-Test-User-Id": USER_A, "X-Test-User-Email": USER_A_EMAIL },
+      });
+      expect(response.status()).toBe(200);
+      const body = await response.json();
+      const itemTitles = body.data.map((item: any) => item.title);
+
+      // Should see User A's private items
+      expect(itemTitles).toContain("User A Private Item 1");
+      expect(itemTitles).toContain("User A Private Item 2");
+
+      // Verify none of other users' private items appear
+      expect(itemTitles).not.toContain("User B Private Item");
+      expect(itemTitles).not.toContain("User C Private Item");
+
+      // All returned items should be User A's private items
+      const userAPrivateItems = body.data.filter((item: any) =>
+        item.title.startsWith("User A Private")
+      );
+      expect(userAPrivateItems.length).toBe(2);
+    });
+  });
+
+  test.describe("Cleanup - Delete all test items", () => {
+    test("User A deletes their items", async ({ request }) => {
+      for (const id of [userAPrivateItem1Id, userAPrivateItem2Id, userAPublicItemId]) {
+        const response = await request.delete(`/api/v1/items/${id}`, {
+          headers: { "X-Test-User-Id": USER_A, "X-Test-User-Email": USER_A_EMAIL },
+        });
+        expect(response.status()).toBe(204);
+      }
+    });
+
+    test("User B deletes their items", async ({ request }) => {
+      for (const id of [userBPrivateItemId, userBPublicItemId]) {
+        const response = await request.delete(`/api/v1/items/${id}`, {
+          headers: { "X-Test-User-Id": USER_B, "X-Test-User-Email": USER_B_EMAIL },
+        });
+        expect(response.status()).toBe(204);
+      }
+    });
+
+    test("User C deletes their item", async ({ request }) => {
+      const response = await request.delete(`/api/v1/items/${userCPrivateItemId}`, {
+        headers: { "X-Test-User-Id": USER_C, "X-Test-User-Email": USER_C_EMAIL },
+      });
+      expect(response.status()).toBe(204);
     });
   });
 });

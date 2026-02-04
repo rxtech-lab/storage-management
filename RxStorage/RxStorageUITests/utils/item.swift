@@ -46,4 +46,12 @@ extension XCUIApplication {
     var itemDetailTitle: XCUIElement {
         staticTexts["item-detail-title"].firstMatch
     }
+
+    var appClipsSignInRequired: XCUIElement {
+        staticTexts["app-clips-sign-in-required"].firstMatch
+    }
+
+    var appClipsAccessDenined: XCUIElement {
+        staticTexts["app-clips-access-denied"].firstMatch
+    }
 }

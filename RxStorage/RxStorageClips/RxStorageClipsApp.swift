@@ -17,6 +17,15 @@ struct RxStorageClipsApp: App {
     @State private var positionSchemaDetailViewModel = PositionSchemaDetailViewModel()
     @State private var eventViewModel = EventViewModel()
 
+    init() {
+        // Clear tokens if running UI tests with --reset-auth flag
+        if CommandLine.arguments.contains("--reset-auth") {
+            Task {
+                try? await TokenStorage.shared.clearAll()
+            }
+        }
+    }
+
     var body: some Scene {
         WindowGroup {
             AppClipRootView()

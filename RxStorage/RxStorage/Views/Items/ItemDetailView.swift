@@ -47,25 +47,18 @@ struct ItemDetailView: View {
     let isViewOnly: Bool
 
     @State private var viewModel = ItemDetailViewModel()
+    @State private var errorViewModel = ErrorViewModel()
     @Environment(EventViewModel.self) private var eventViewModel
     @State private var showingEditSheet = false
     @State private var showingQRSheet = false
     #if os(iOS)
         @State private var nfcWriter = NFCWriter()
         @State private var isWritingNFC = false
-        @State private var showNFCError = false
-        @State private var nfcError: Error?
         @State private var showNFCSuccess = false
     #endif
     @State private var showingAddChildSheet = false
     @State private var isAddingChild = false
-    @State private var addChildError: Error?
-    @State private var showAddChildError = false
-    @State private var removeChildError: Error?
-    @State private var showRemoveChildError = false
     @State private var showingContentSheet = false
-    @State private var contentError: Error?
-    @State private var showContentError = false
     @State private var selectedImageIndex = 0
     @State private var selectedChildForEdit: StorageItem?
     @State private var selectedContentForEdit: Content?
@@ -113,11 +106,21 @@ struct ItemDetailView: View {
                 }
             }
             .task(id: itemId) {
-                await viewModel.fetchItem(id: itemId)
-                await viewModel.fetchContentSchemas()
-                for await event in eventViewModel.stream {
-                    guard !Task.isCancelled else { break }
-                    await handleEvent(event)
+                if isViewOnly {
+                    // Use preview endpoint with optional auth (works for public items without token)
+                    await viewModel.fetchPreviewItem(id: itemId)
+                    // Skip content schemas - only needed for editing
+                } else {
+                    await viewModel.fetchItem(id: itemId)
+                    await viewModel.fetchContentSchemas()
+                }
+
+                // Only listen for events in edit mode
+                if !isViewOnly {
+                    for await event in eventViewModel.stream {
+                        guard !Task.isCancelled else { break }
+                        await handleEvent(event)
+                    }
                 }
             }
         #if os(iOS)
@@ -125,11 +128,6 @@ struct ItemDetailView: View {
                 Button("OK", role: .cancel) {}
             } message: {
                 Text("The URL has been written to the NFC tag.")
-            }
-            .alert("NFC Write Error", isPresented: $showNFCError) {
-                Button("OK", role: .cancel) {}
-            } message: {
-                Text(nfcError?.localizedDescription ?? "An unknown error occurred.")
             }
         #endif
             .sheet(isPresented: $showingAddChildSheet) {
@@ -148,16 +146,6 @@ struct ItemDetailView: View {
                     }
                 }
             }
-            .alert("Error Adding Child", isPresented: $showAddChildError) {
-                Button("OK", role: .cancel) {}
-            } message: {
-                Text(addChildError?.localizedDescription ?? "An error occurred while adding the child item.")
-            }
-            .alert("Error Removing Child", isPresented: $showRemoveChildError) {
-                Button("OK", role: .cancel) {}
-            } message: {
-                Text(removeChildError?.localizedDescription ?? "An error occurred while removing the child item.")
-            }
             .sheet(isPresented: $showingContentSheet) {
                 NavigationStack {
                     ContentFormSheet(
@@ -167,11 +155,6 @@ struct ItemDetailView: View {
                         }
                     )
                 }
-            }
-            .alert("Content Error", isPresented: $showContentError) {
-                Button("OK", role: .cancel) {}
-            } message: {
-                Text(contentError?.localizedDescription ?? "An error occurred.")
             }
             .sheet(item: $selectedChildForEdit) { child in
                 NavigationStack {
@@ -199,6 +182,7 @@ struct ItemDetailView: View {
                     )
                 }
             }
+            .showViewModelError(errorViewModel)
     }
 
     // MARK: - Item Content
@@ -305,8 +289,7 @@ struct ItemDetailView: View {
             } catch NFCWriterError.cancelled {
                 // User cancelled - do nothing (silent dismissal)
             } catch {
-                nfcError = error
-                showNFCError = true
+                errorViewModel.showError(error)
             }
         }
     #endif
@@ -541,8 +524,7 @@ struct ItemDetailView: View {
             let (parentId, childId) = try await viewModel.addChildById(childId)
             eventViewModel.emit(.childAdded(parentId: parentId, childId: childId))
         } catch {
-            addChildError = error
-            showAddChildError = true
+            errorViewModel.showError(error)
         }
     }
 
@@ -551,8 +533,7 @@ struct ItemDetailView: View {
             let (parentId, childId) = try await viewModel.removeChildById(childId)
             eventViewModel.emit(.childRemoved(parentId: parentId, childId: childId))
         } catch {
-            removeChildError = error
-            showRemoveChildError = true
+            errorViewModel.showError(error)
         }
     }
 
@@ -714,8 +695,7 @@ struct ItemDetailView: View {
             let (itemId, contentId) = try await viewModel.createContent(type: type, formData: data)
             eventViewModel.emit(.contentCreated(itemId: itemId, contentId: contentId))
         } catch {
-            contentError = error
-            showContentError = true
+            errorViewModel.showError(error)
         }
     }
 
@@ -724,8 +704,7 @@ struct ItemDetailView: View {
             let (itemId, contentId) = try await viewModel.deleteContent(id: id)
             eventViewModel.emit(.contentDeleted(itemId: itemId, contentId: contentId))
         } catch {
-            contentError = error
-            showContentError = true
+            errorViewModel.showError(error)
         }
     }
 
@@ -734,8 +713,7 @@ struct ItemDetailView: View {
             try await viewModel.updateContent(id: id, type: type, formData: data)
             await viewModel.refresh()
         } catch {
-            contentError = error
-            showContentError = true
+            errorViewModel.showError(error)
         }
     }
 }

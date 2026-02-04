@@ -16,6 +16,7 @@ struct CategoryListView: View {
     @State private var viewModel = CategoryListViewModel()
     @State private var showingCreateSheet = false
     @State private var isRefreshing = false
+    @State private var errorViewModel = ErrorViewModel()
     @Environment(EventViewModel.self) private var eventViewModel
 
     // Delete confirmation state
@@ -95,8 +96,11 @@ struct CategoryListView: View {
             onConfirm: {
                 if let category = categoryToDelete {
                     Task {
-                        if let deletedId = try? await viewModel.deleteCategory(category) {
+                        do {
+                            let deletedId = try await viewModel.deleteCategory(category)
                             eventViewModel.emit(.categoryDeleted(id: deletedId))
+                        } catch {
+                            errorViewModel.showError(error)
                         }
                         categoryToDelete = nil
                     }
@@ -104,6 +108,12 @@ struct CategoryListView: View {
             },
             onCancel: { categoryToDelete = nil }
         )
+        .onChange(of: viewModel.error != nil) { _, hasError in
+            if hasError, let error = viewModel.error {
+                errorViewModel.showError(error)
+            }
+        }
+        .showViewModelError(errorViewModel)
     }
 
     // MARK: - Categories List

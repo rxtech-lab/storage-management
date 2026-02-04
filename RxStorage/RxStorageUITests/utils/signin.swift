@@ -11,7 +11,7 @@ import XCTest
 private let logger = Logger(subsystem: "app.rxlab.RxStorageUITests", category: "signin")
 
 extension XCUIApplication {
-    func signInWithEmailAndPassword() throws {
+    func signInWithEmailAndPassword(isAppclips: Bool = false) throws {
         // Load .env file and read credentials
         let envVars = DotEnv.load()
 
@@ -77,7 +77,9 @@ extension XCUIApplication {
         logger.info("✅ Sign-in form submitted, waiting for callback...")
 
         // find dashboard-view
-        let exist = staticTexts["dashboard-view-title"].waitForExistence(timeout: 30)
-        XCTAssertTrue(exist, "Failed to sign in and reach dashboard")
+        if !isAppclips {
+            let exist = staticTexts["dashboard-view-title"].waitForExistence(timeout: 30)
+            XCTAssertTrue(exist, "Failed to sign in and reach dashboard")
+        }
     }
 }

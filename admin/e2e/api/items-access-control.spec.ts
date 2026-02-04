@@ -346,7 +346,7 @@ test.describe.serial("Items Access Control", () => {
           "X-Test-User-Email": OWNER_EMAIL,
         },
       });
-      expect(response.status()).toBe(200);
+      expect(response.status()).toBe(204);
     });
 
     test("should delete public item", async ({ request }) => {
@@ -356,7 +356,7 @@ test.describe.serial("Items Access Control", () => {
           "X-Test-User-Email": OWNER_EMAIL,
         },
       });
-      expect(response.status()).toBe(200);
+      expect(response.status()).toBe(204);
     });
 
     test("should delete private item", async ({ request }) => {
@@ -366,7 +366,7 @@ test.describe.serial("Items Access Control", () => {
           "X-Test-User-Email": OWNER_EMAIL,
         },
       });
-      expect(response.status()).toBe(200);
+      expect(response.status()).toBe(204);
     });
   });
 });

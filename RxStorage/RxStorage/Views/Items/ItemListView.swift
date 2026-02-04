@@ -24,14 +24,12 @@ struct ItemListView: View {
 
     @State private var showingCreateSheet = false
     @State private var showingFilterSheet = false
-    @State private var showingError = false
+    @State private var errorViewModel = ErrorViewModel()
 
     #if os(iOS)
         @State private var showQrCodeScanner = false
         // QR scan state
         @State private var isLoadingFromQR = false
-        @State private var qrScanError: Error?
-        @State private var showQrScanError = false
         private let itemService = ItemService()
     #endif
 
@@ -129,20 +127,9 @@ struct ItemListView: View {
                 }
             }
             .onChange(of: viewModel.error != nil) { _, hasError in
-                showingError = hasError
-            }
-            .alert("Error", isPresented: $showingError) {
-                Button("OK") {
+                if hasError, let error = viewModel.error {
+                    errorViewModel.showError(error)
                     viewModel.clearError()
-                }
-                Button("Retry") {
-                    Task {
-                        await viewModel.fetchItems()
-                    }
-                }
-            } message: {
-                if let error = viewModel.error {
-                    Text(error.localizedDescription)
                 }
             }
             .overlay {
@@ -158,15 +145,6 @@ struct ItemListView: View {
                     }
                 #endif
             }
-        #if os(iOS)
-            .alert("QR Code Error", isPresented: $showQrScanError) {
-                Button("OK", role: .cancel) {}
-            } message: {
-                if let error = qrScanError {
-                    Text(error.localizedDescription)
-                }
-            }
-        #endif
             .confirmationDialog(
                 title: "Delete Item",
                 message: "Are you sure you want to delete \"\(itemToDelete?.title ?? "")\"? This action cannot be undone.",
@@ -175,8 +153,11 @@ struct ItemListView: View {
                 onConfirm: {
                     if let item = itemToDelete {
                         Task {
-                            if let deletedId = try? await viewModel.deleteItem(item) {
+                            do {
+                                let deletedId = try await viewModel.deleteItem(item)
                                 eventViewModel.emit(.itemDeleted(id: deletedId))
+                            } catch {
+                                errorViewModel.showError(error)
                             }
                             itemToDelete = nil
                         }
@@ -184,6 +165,7 @@ struct ItemListView: View {
                 },
                 onCancel: { itemToDelete = nil }
             )
+            .showViewModelError(errorViewModel)
     }
 
     // MARK: - Items List
@@ -285,8 +267,7 @@ struct ItemListView: View {
 
         private func handleScannedQRCode(_ code: String) async {
             guard let url = URL(string: code) else {
-                qrScanError = APIError.unsupportedQRCode(code)
-                showQrScanError = true
+                errorViewModel.showError(APIError.unsupportedQRCode(code))
                 return
             }
 
@@ -294,8 +275,7 @@ struct ItemListView: View {
             guard let itemIdString = url.pathComponents.last,
                   let itemId = Int(itemIdString)
             else {
-                qrScanError = APIError.unsupportedQRCode(code)
-                showQrScanError = true
+                errorViewModel.showError(APIError.unsupportedQRCode(code))
                 return
             }
 
@@ -307,8 +287,7 @@ struct ItemListView: View {
                 let itemDetail = try await itemService.fetchItem(id: itemId)
                 selectedItem = itemDetail.toStorageItem()
             } catch {
-                qrScanError = error
-                showQrScanError = true
+                errorViewModel.showError(error)
             }
         }
     #endif
