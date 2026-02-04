@@ -90,6 +90,11 @@ jobs:
           echo "Contents of Secrets.xcconfig (with secrets masked):"
           sed 's/\(AUTH_CLIENT_ID.*=\).*/\1 ***/' RxStorage/RxStorage/Config/Secrets.xcconfig
 
+      - name: Setup .env from GitHub Secrets
+        env:
+          RXSTORAGE_TESTING_SECRETS: ${{ secrets.RXSTORAGE_TESTING_SECRETS }}
+        run: ./scripts/decode-env-secrets.sh
+
       - name: Install xcbeautify
         run: brew install xcbeautify
 
