@@ -5,18 +5,16 @@
 //  Tests for the APICall macro expansion
 //
 
+@testable import RxStorageCoreMacros
 import SwiftSyntax
 import SwiftSyntaxMacros
 import SwiftSyntaxMacrosTestSupport
 import Testing
 
-@testable import RxStorageCoreMacros
-
 @Suite("APICall Macro Expansion Tests")
 struct APICallMacroTests {
-
     @Test("APICall(.ok) macro wraps single API call")
-    func testOkMacroExpansion() {
+    func okMacroExpansion() {
         assertMacroExpansion(
             """
             @APICall(.ok)
@@ -66,7 +64,7 @@ struct APICallMacroTests {
     }
 
     @Test("APICall(.created) macro handles created response")
-    func testCreatedMacroExpansion() {
+    func createdMacroExpansion() {
         assertMacroExpansion(
             """
             @APICall(.created)
@@ -116,7 +114,7 @@ struct APICallMacroTests {
     }
 
     @Test("APICall(.noContent) macro handles void response")
-    func testNoContentMacroExpansion() {
+    func noContentMacroExpansion() {
         assertMacroExpansion(
             """
             @APICall(.noContent)
@@ -166,7 +164,7 @@ struct APICallMacroTests {
     }
 
     @Test("APICall macro preserves setup code before API call")
-    func testMacroWithSetupCode() {
+    func macroWithSetupCode() {
         assertMacroExpansion(
             """
             @APICall(.ok)

@@ -5,12 +5,11 @@
 //  Tests for ItemFormViewModel
 //
 
-import Testing
 @testable import RxStorageCore
+import Testing
 
 @Suite("ItemFormViewModel Tests")
 struct ItemFormViewModelTests {
-
     // MARK: - Test Data
 
     static let testItem = TestHelpers.makeStorageItem(
@@ -29,7 +28,7 @@ struct ItemFormViewModelTests {
 
     @Test("Initialization with existing item populates form")
     @MainActor
-    func testInitializationWithItem() async throws {
+    func initializationWithItem() {
         // Given/When
         let sut = ItemFormViewModel(item: Self.testItem)
 
@@ -49,7 +48,7 @@ struct ItemFormViewModelTests {
 
     @Test("Validation succeeds with valid data")
     @MainActor
-    func testValidationSuccess() async throws {
+    func validationSuccess() {
         // Given
         let sut = ItemFormViewModel()
         sut.title = "Valid Title"
@@ -65,7 +64,7 @@ struct ItemFormViewModelTests {
 
     @Test("Validation fails with empty title")
     @MainActor
-    func testValidationFailsEmptyTitle() async throws {
+    func validationFailsEmptyTitle() {
         // Given
         let sut = ItemFormViewModel()
         sut.title = ""
@@ -80,7 +79,7 @@ struct ItemFormViewModelTests {
 
     @Test("Validation fails with invalid price")
     @MainActor
-    func testValidationFailsInvalidPrice() async throws {
+    func validationFailsInvalidPrice() {
         // Given
         let sut = ItemFormViewModel()
         sut.title = "Valid Title"
@@ -98,7 +97,7 @@ struct ItemFormViewModelTests {
 
     @Test("Submit creates new item successfully")
     @MainActor
-    func testSubmitCreateSuccess() async throws {
+    func submitCreateSuccess() async throws {
         // Given
         let mockItemService = MockItemService()
         let createdItem = Self.testItem
@@ -124,7 +123,7 @@ struct ItemFormViewModelTests {
 
     @Test("Submit updates existing item successfully")
     @MainActor
-    func testSubmitUpdateSuccess() async throws {
+    func submitUpdateSuccess() async throws {
         // Given
         let mockItemService = MockItemService()
         let updatedItem = Self.testItem
@@ -149,7 +148,7 @@ struct ItemFormViewModelTests {
 
     @Test("Submit fails validation")
     @MainActor
-    func testSubmitFailsValidation() async throws {
+    func submitFailsValidation() async throws {
         // Given
         let mockItemService = MockItemService()
         let sut = ItemFormViewModel(itemService: mockItemService)

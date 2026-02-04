@@ -32,7 +32,7 @@ enum DotEnv {
                     .deletingLastPathComponent() // utils
                     .deletingLastPathComponent() // RxStorageUITests
                     .appendingPathComponent(".env")
-                    .path
+                    .path,
             ]
 
             for path in possiblePaths {
@@ -82,7 +82,8 @@ enum DotEnv {
 
             // Remove surrounding quotes if present
             if (value.hasPrefix("\"") && value.hasSuffix("\"")) ||
-               (value.hasPrefix("'") && value.hasSuffix("'")) {
+                (value.hasPrefix("'") && value.hasSuffix("'"))
+            {
                 value = String(value.dropFirst().dropLast())
             }
 

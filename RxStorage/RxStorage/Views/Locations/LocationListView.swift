@@ -16,6 +16,7 @@ struct LocationListView: View {
     @State private var viewModel = LocationListViewModel()
     @State private var showingCreateSheet = false
     @State private var isRefreshing = false
+    @State private var errorViewModel = ErrorViewModel()
     @Environment(EventViewModel.self) private var eventViewModel
 
     // Delete confirmation state
@@ -95,8 +96,11 @@ struct LocationListView: View {
             onConfirm: {
                 if let location = locationToDelete {
                     Task {
-                        if let deletedId = try? await viewModel.deleteLocation(location) {
+                        do {
+                            let deletedId = try await viewModel.deleteLocation(location)
                             eventViewModel.emit(.locationDeleted(id: deletedId))
+                        } catch {
+                            errorViewModel.showError(error)
                         }
                         locationToDelete = nil
                     }
@@ -104,6 +108,12 @@ struct LocationListView: View {
             },
             onCancel: { locationToDelete = nil }
         )
+        .onChange(of: viewModel.error != nil) { _, hasError in
+            if hasError, let error = viewModel.error {
+                errorViewModel.showError(error)
+            }
+        }
+        .showViewModelError(errorViewModel)
     }
 
     // MARK: - Locations List

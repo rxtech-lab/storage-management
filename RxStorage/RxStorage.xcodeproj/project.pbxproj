@@ -82,6 +82,16 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		DF1A7A542F3326BD000C757A /* Exceptions for "RxStorageUITests" folder in "RxStorageClipsUITests" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				utils/DotEnv.swift,
+				utils/item.swift,
+				utils/launch.swift,
+				utils/signin.swift,
+			);
+			target = DF6625AA2F29138400333552 /* RxStorageClipsUITests */;
+		};
 		DF6625802F29137000333552 /* Exceptions for "RxStorage" folder in "RxStorage" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
@@ -100,7 +110,9 @@
 		DF66282F2F2E325B00333552 /* Exceptions for "RxStorage" folder in "RxStorageClips" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
+				Views/AppClip/AppClipAccessDeniedView.swift,
 				Views/AppClip/AppClipRootView.swift,
+				Views/AppClip/AppClipSignInView.swift,
 				Views/Auth/AnimatedAppLogo.swift,
 				Views/Auth/AnimatedGradientBackground.swift,
 				Views/Auth/AnimatedSecurityIcon.swift,
@@ -158,6 +170,9 @@
 		};
 		DF66257B2F29137000333552 /* RxStorageUITests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				DF1A7A542F3326BD000C757A /* Exceptions for "RxStorageUITests" folder in "RxStorageClipsUITests" target */,
+			);
 			path = RxStorageUITests;
 			sourceTree = "<group>";
 		};

@@ -15,7 +15,7 @@ public final class MockContentSchemaService: ContentSchemaServiceProtocol, @unch
 
     public var fetchContentSchemasResult: Result<[ContentSchema], Error> = .success([])
 
-    // Call tracking
+    /// Call tracking
     public var fetchContentSchemasCalled = false
 
     // MARK: - Initialization
@@ -27,9 +27,9 @@ public final class MockContentSchemaService: ContentSchemaServiceProtocol, @unch
     public func fetchContentSchemas() async throws -> [ContentSchema] {
         fetchContentSchemasCalled = true
         switch fetchContentSchemasResult {
-        case .success(let schemas):
+        case let .success(schemas):
             return schemas
-        case .failure(let error):
+        case let .failure(error):
             throw error
         }
     }

@@ -160,9 +160,9 @@ public struct PaginationState: Sendable {
 
     /// Create from generated PaginationInfo
     public init(from info: PaginationInfo) {
-        self.hasNextPage = info.hasNextPage
-        self.hasPrevPage = info.hasPrevPage
-        self.nextCursor = info.nextCursor
-        self.prevCursor = info.prevCursor
+        hasNextPage = info.hasNextPage
+        hasPrevPage = info.hasPrevPage
+        nextCursor = info.nextCursor
+        prevCursor = info.prevCursor
     }
 }

@@ -43,7 +43,7 @@ private struct AuthLoadingView: View {
             VStack(spacing: 32) {
                 ZStack {
                     // Concentric pulsing rings
-                    ForEach(0..<3, id: \.self) { index in
+                    ForEach(0 ..< 3, id: \.self) { index in
                         Circle()
                             .stroke(
                                 Color.blue.opacity(0.3 - Double(index) * 0.08),
@@ -88,7 +88,7 @@ private struct AuthLoadingView: View {
             guard !reduceMotion else { return }
 
             // Staggered ring animations
-            for index in 0..<3 {
+            for index in 0 ..< 3 {
                 withAnimation(
                     .easeOut(duration: 1.5)
                         .repeatForever(autoreverses: false)
@@ -120,7 +120,7 @@ private struct LoadingDots: View {
 
     var body: some View {
         HStack(spacing: 2) {
-            ForEach(0..<3, id: \.self) { index in
+            ForEach(0 ..< 3, id: \.self) { index in
                 Circle()
                     .fill(Color.secondary)
                     .frame(width: 4, height: 4)

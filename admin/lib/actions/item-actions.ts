@@ -54,7 +54,9 @@ const itemInsertSchema = z.object({
   currency: z.string().optional(),
   visibility: z.enum(["publicAccess", "privateAccess"]),
   images: z
-    .array(z.string().regex(fileIdPattern, "Images must be in 'file:{id}' format"))
+    .array(
+      z.string().regex(fileIdPattern, "Images must be in 'file:{id}' format"),
+    )
     .optional(),
   positions: z.array(positionDataSchema).optional(),
 });
@@ -68,7 +70,12 @@ const itemUpdateSchema = itemInsertSchema
 
 export interface ItemWithRelations extends Item {
   category?: { id: number; name: string; description: string | null } | null;
-  location?: { id: number; title: string; latitude: number | null; longitude: number | null } | null;
+  location?: {
+    id: number;
+    title: string;
+    latitude: number | null;
+    longitude: number | null;
+  } | null;
   author?: { id: number; name: string; bio: string | null } | null;
   parent?: { id: number; title: string } | null;
 }
@@ -437,7 +444,10 @@ export async function updateItemAction(
 
     // Extract positions from data before updating item
     const { positions: positionsData, ...itemData } = data as typeof data & {
-      positions?: Array<{ positionSchemaId: number; data: Record<string, unknown> }>;
+      positions?: Array<{
+        positionSchemaId: number;
+        data: Record<string, unknown>;
+      }>;
     };
 
     await db
@@ -501,6 +511,10 @@ export async function deleteItemAction(
       .where(eq(items.id, id))
       .limit(1);
 
+    if (!existing[0]) {
+      return { success: false, error: "Item not found" };
+    }
+
     if (!existing[0] || existing[0].userId !== resolvedUserId) {
       return { success: false, error: "Permission denied" };
     }
@@ -551,7 +565,7 @@ export async function deleteItemFormAction(
 export async function setItemParent(
   childId: number,
   parentId: number | null,
-  userId?: string
+  userId?: string,
 ): Promise<{ success: boolean; data?: Item; error?: string }> {
   try {
     await ensureSchemaInitialized();
@@ -586,7 +600,10 @@ export async function setItemParent(
         .limit(1);
 
       if (!parent[0] || parent[0].userId !== resolvedUserId) {
-        return { success: false, error: "Parent item not found or permission denied" };
+        return {
+          success: false,
+          error: "Parent item not found or permission denied",
+        };
       }
     }
 
@@ -630,7 +647,10 @@ export async function searchItems(
   // Filter by userId: show user's own items OR public items
   if (resolvedUserId) {
     conditions.push(
-      or(eq(items.userId, resolvedUserId), eq(items.visibility, "publicAccess")),
+      or(
+        eq(items.userId, resolvedUserId),
+        eq(items.visibility, "publicAccess"),
+      ),
     );
   } else {
     // No user - only show public items
@@ -665,24 +685,14 @@ export async function searchItems(
 
 export async function getItemsPaginated(
   userId?: string,
-  filters?: PaginatedItemFilters
+  filters?: PaginatedItemFilters,
 ): Promise<PaginatedResult<ItemWithRelations>> {
   await ensureSchemaInitialized();
 
-  // Get userId from session
+  // Prefer explicitly passed userId (from authenticated route handlers) over session
+  // This ensures E2E tests work correctly with X-Test-User-Id headers
   const session = await getSession();
-  if (!session?.user?.id && !userId) {
-    return {
-      data: [],
-      pagination: {
-        nextCursor: null,
-        prevCursor: null,
-        hasNextPage: false,
-        hasPrevPage: false,
-      },
-    };
-  }
-  const sessionUserId = session?.user.id ?? userId;
+  const sessionUserId = userId ?? session?.user?.id;
   if (!sessionUserId) {
     return {
       data: [],
@@ -700,9 +710,7 @@ export async function getItemsPaginated(
   const cursor = filters?.cursor ? decodeCursor(filters.cursor) : null;
 
   // Build base conditions (same as getItems)
-  const conditions = [
-    or(eq(items.userId, sessionUserId), eq(items.visibility, "publicAccess")),
-  ];
+  const conditions = [eq(items.userId, sessionUserId)];
 
   if (filters?.categoryId) {
     conditions.push(eq(items.categoryId, filters.categoryId));
@@ -726,7 +734,7 @@ export async function getItemsPaginated(
   if (filters?.search) {
     const searchCondition = or(
       like(items.title, `%${filters.search}%`),
-      like(items.description, `%${filters.search}%`)
+      like(items.description, `%${filters.search}%`),
     );
     if (searchCondition) {
       conditions.push(searchCondition);
@@ -744,7 +752,7 @@ export async function getItemsPaginated(
       // WHERE (updatedAt < cursorDate) OR (updatedAt = cursorDate AND id < cursorId)
       const cursorCondition = or(
         lt(items.updatedAt, cursorDate),
-        and(eq(items.updatedAt, cursorDate), lt(items.id, cursorId))
+        and(eq(items.updatedAt, cursorDate), lt(items.id, cursorId)),
       );
       if (cursorCondition) conditions.push(cursorCondition);
     } else {
@@ -752,7 +760,7 @@ export async function getItemsPaginated(
       // WHERE (updatedAt > cursorDate) OR (updatedAt = cursorDate AND id > cursorId)
       const cursorCondition = or(
         gt(items.updatedAt, cursorDate),
-        and(eq(items.updatedAt, cursorDate), gt(items.id, cursorId))
+        and(eq(items.updatedAt, cursorDate), gt(items.id, cursorId)),
       );
       if (cursorCondition) conditions.push(cursorCondition);
     }
@@ -830,6 +838,6 @@ export async function getItemsPaginated(
     limit,
     direction,
     (item) => item.updatedAt.toISOString(),
-    !!cursor
+    !!cursor,
   );
 }

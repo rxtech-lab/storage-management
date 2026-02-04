@@ -85,12 +85,12 @@ struct MapPickerView: View {
         }
         .navigationTitle("Select Location")
         #if os(iOS)
-        .navigationBarTitleDisplayMode(.inline)
+            .navigationBarTitleDisplayMode(.inline)
         #endif
-        .toolbar { toolbarContent }
-        .sheet(isPresented: $showSearchResults) {
-            searchResultsSheet
-        }
+            .toolbar { toolbarContent }
+            .sheet(isPresented: $showSearchResults) {
+                searchResultsSheet
+            }
     }
 
     // MARK: - Error Overlay
@@ -124,18 +124,18 @@ struct MapPickerView: View {
         }
 
         #if os(iOS)
-        ToolbarItemGroup(placement: .bottomBar) {
-            locationButton
-            Spacer()
-            confirmButton
-        }
+            ToolbarItemGroup(placement: .bottomBar) {
+                locationButton
+                Spacer()
+                confirmButton
+            }
         #elseif os(macOS)
-        ToolbarItem(placement: .automatic) {
-            locationButton
-        }
-        ToolbarItem(placement: .confirmationAction) {
-            confirmButton
-        }
+            ToolbarItem(placement: .automatic) {
+                locationButton
+            }
+            ToolbarItem(placement: .confirmationAction) {
+                confirmButton
+            }
         #endif
     }
 
@@ -180,7 +180,6 @@ struct MapPickerView: View {
 
     // MARK: - Map View
 
-    @ViewBuilder
     private var mapView: some View {
         MapReader { proxy in
             Map(position: $cameraPosition, interactionModes: .all) {
@@ -216,7 +215,6 @@ struct MapPickerView: View {
 
     // MARK: - Search Results Sheet
 
-    @ViewBuilder
     private var searchResultsSheet: some View {
         NavigationStack {
             Group {
@@ -235,15 +233,15 @@ struct MapPickerView: View {
             }
             .navigationTitle("Search Results")
             #if os(iOS)
-            .navigationBarTitleDisplayMode(.inline)
+                .navigationBarTitleDisplayMode(.inline)
             #endif
-            .toolbar {
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Done") {
-                        showSearchResults = false
+                .toolbar {
+                    ToolbarItem(placement: .confirmationAction) {
+                        Button("Done") {
+                            showSearchResults = false
+                        }
                     }
                 }
-            }
         }
         .presentationDetents([.medium, .large])
         .presentationDragIndicator(.visible)
@@ -252,7 +250,6 @@ struct MapPickerView: View {
 
     // MARK: - Search Results List
 
-    @ViewBuilder
     private var searchResultsList: some View {
         List(viewModel.searchResults) { result in
             Button {

@@ -27,9 +27,9 @@ struct CategoryFormSheet: View {
         Form {
             Section("Information") {
                 TextField("Name", text: $viewModel.name)
-                    #if os(iOS)
+                #if os(iOS)
                     .textInputAutocapitalization(.words)
-                    #endif
+                #endif
                     .accessibilityIdentifier("category-form-name-field")
 
                 TextField("Description", text: $viewModel.description, axis: .vertical)
@@ -52,31 +52,31 @@ struct CategoryFormSheet: View {
         }
         .navigationTitle(category == nil ? "New Category" : "Edit Category")
         #if os(iOS)
-        .navigationBarTitleDisplayMode(.inline)
+            .navigationBarTitleDisplayMode(.inline)
         #endif
-        .toolbar {
-            ToolbarItem(placement: .cancellationAction) {
-                Button("Cancel") {
-                    dismiss()
-                }
-                .accessibilityIdentifier("category-form-cancel-button")
-            }
-
-            ToolbarItem(placement: .confirmationAction) {
-                Button(category == nil ? "Create" : "Save") {
-                    Task {
-                        await submitForm()
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") {
+                        dismiss()
                     }
+                    .accessibilityIdentifier("category-form-cancel-button")
                 }
-                .disabled(viewModel.isSubmitting)
-                .accessibilityIdentifier("category-form-submit-button")
+
+                ToolbarItem(placement: .confirmationAction) {
+                    Button(category == nil ? "Create" : "Save") {
+                        Task {
+                            await submitForm()
+                        }
+                    }
+                    .disabled(viewModel.isSubmitting)
+                    .accessibilityIdentifier("category-form-submit-button")
+                }
             }
-        }
-        .overlay {
-            if viewModel.isSubmitting {
-                LoadingOverlay()
+            .overlay {
+                if viewModel.isSubmitting {
+                    LoadingOverlay()
+                }
             }
-        }
     }
 
     // MARK: - Actions

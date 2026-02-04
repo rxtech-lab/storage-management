@@ -52,8 +52,10 @@ public final class ItemDetailViewModel: ItemDetailViewModelProtocol {
             // Use children from item response
             children = item?.children ?? []
 
-            // Fetch contents separately (item detail only includes ContentRef, not full Content)
-            await fetchContents()
+            // Use contents from item response (no separate API call needed)
+            if let item = item {
+                contents = item.contents.map { $0.toContent(itemId: item.id) }
+            }
         } catch {
             self.error = error
             isLoading = false
@@ -76,8 +78,10 @@ public final class ItemDetailViewModel: ItemDetailViewModelProtocol {
             // Use children from item response
             children = item?.children ?? []
 
-            // Fetch contents separately (item detail only includes ContentRef, not full Content)
-            await fetchContents()
+            // Use contents from item response (no separate API call needed)
+            if let item = item {
+                contents = item.contents.map { $0.toContent(itemId: item.id) }
+            }
         } catch {
             self.error = error
             isLoading = false
@@ -133,7 +137,7 @@ public final class ItemDetailViewModel: ItemDetailViewModelProtocol {
             parentId: currentItemId,
             price: childItem.price,
             visibility: updateVisibility,
-            images: []  // Don't modify images - they contain signed URLs, not file IDs
+            images: [] // Don't modify images - they contain signed URLs, not file IDs
         )
 
         let updatedChild = try await itemService.updateItem(id: childId, request)
@@ -169,7 +173,7 @@ public final class ItemDetailViewModel: ItemDetailViewModelProtocol {
             parentId: nil,
             price: childItem.price,
             visibility: updateVisibility,
-            images: []  // Don't modify images - they contain signed URLs, not file IDs
+            images: [] // Don't modify images - they contain signed URLs, not file IDs
         )
 
         _ = try await itemService.updateItem(id: childId, request)

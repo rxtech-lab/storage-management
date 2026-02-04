@@ -3,8 +3,8 @@
 //  JsonSchemaEditor
 //
 
-import SwiftUI
 import JSONSchema
+import SwiftUI
 
 /// Main JSON Schema Editor view
 public struct JsonSchemaEditorView: View {
@@ -16,8 +16,8 @@ public struct JsonSchemaEditorView: View {
         schema: Binding<JSONSchema?>,
         disabled: Bool = false
     ) {
-        self._schema = schema
-        self._viewModel = State(initialValue: JsonSchemaEditorViewModel(schema: schema.wrappedValue))
+        _schema = schema
+        _viewModel = State(initialValue: JsonSchemaEditorViewModel(schema: schema.wrappedValue))
         self.disabled = disabled
     }
 

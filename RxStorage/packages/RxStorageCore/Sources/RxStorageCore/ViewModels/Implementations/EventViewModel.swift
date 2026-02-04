@@ -47,7 +47,7 @@ public enum AppEvent: Sendable {
     case positionCreated(itemId: Int, positionId: Int)
     case positionDeleted(itemId: Int, positionId: Int)
 
-    // Error event
+    /// Error event
     case error(message: String)
 }
 

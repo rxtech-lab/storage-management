@@ -5,8 +5,8 @@
 //  OAuth authentication view
 //
 
-import SwiftUI
 import RxStorageCore
+import SwiftUI
 
 /// Authentication view with OAuth login
 struct AuthenticationView: View {
@@ -66,7 +66,7 @@ struct AuthenticationView: View {
         }
         .padding()
         #if os(macOS)
-        .frame(maxWidth: 500)
+            .frame(maxWidth: 500)
         #endif
     }
 

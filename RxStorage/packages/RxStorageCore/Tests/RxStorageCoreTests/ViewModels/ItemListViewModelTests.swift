@@ -5,12 +5,11 @@
 //  Tests for ItemListViewModel
 //
 
-import Testing
 @testable import RxStorageCore
+import Testing
 
 @Suite("ItemListViewModel Tests")
 struct ItemListViewModelTests {
-
     // MARK: - Test Data
 
     static let testItems = [
@@ -26,14 +25,14 @@ struct ItemListViewModelTests {
             description: "Description 2",
             price: 99.99,
             visibility: .privateAccess
-        )
+        ),
     ]
 
     // MARK: - Fetch Items Tests
 
     @Test("Fetch items successfully")
     @MainActor
-    func testFetchItemsSuccess() async throws {
+    func fetchItemsSuccess() async {
         // Given
         let mockService = MockItemService()
         mockService.fetchItemsResult = .success(Self.testItems)
@@ -53,7 +52,7 @@ struct ItemListViewModelTests {
 
     @Test("Fetch items with error")
     @MainActor
-    func testFetchItemsError() async throws {
+    func fetchItemsError() async {
         // Given
         let mockService = MockItemService()
         mockService.fetchItemsResult = .failure(APIError.serverError("Test error"))
@@ -73,7 +72,7 @@ struct ItemListViewModelTests {
 
     @Test("Search text updates filters")
     @MainActor
-    func testSearchTextUpdatesFilters() async throws {
+    func searchTextUpdatesFilters() {
         // Given
         let mockService = MockItemService()
         let sut = ItemListViewModel(itemService: mockService)
@@ -88,7 +87,7 @@ struct ItemListViewModelTests {
 
     @Test("Empty search text clears search filter")
     @MainActor
-    func testEmptySearchTextClearsFilter() async throws {
+    func emptySearchTextClearsFilter() {
         // Given
         let mockService = MockItemService()
         let sut = ItemListViewModel(itemService: mockService)
@@ -105,7 +104,7 @@ struct ItemListViewModelTests {
 
     @Test("Delete item successfully")
     @MainActor
-    func testDeleteItemSuccess() async throws {
+    func deleteItemSuccess() async throws {
         // Given
         let mockService = MockItemService()
         mockService.fetchItemsResult = .success(Self.testItems)
@@ -129,7 +128,7 @@ struct ItemListViewModelTests {
 
     @Test("Clear filters resets all filters")
     @MainActor
-    func testClearFilters() async throws {
+    func testClearFilters() {
         // Given
         let mockService = MockItemService()
         let sut = ItemListViewModel(itemService: mockService)

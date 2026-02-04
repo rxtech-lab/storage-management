@@ -19,19 +19,19 @@ public struct AnyCodable: Codable, Hashable, @unchecked Sendable {
         let container = try decoder.singleValueContainer()
 
         if container.decodeNil() {
-            self.value = NSNull()
+            value = NSNull()
         } else if let bool = try? container.decode(Bool.self) {
-            self.value = bool
+            value = bool
         } else if let int = try? container.decode(Int.self) {
-            self.value = int
+            value = int
         } else if let double = try? container.decode(Double.self) {
-            self.value = double
+            value = double
         } else if let string = try? container.decode(String.self) {
-            self.value = string
+            value = string
         } else if let array = try? container.decode([AnyCodable].self) {
-            self.value = array.map { $0.value }
+            value = array.map { $0.value }
         } else if let dictionary = try? container.decode([String: AnyCodable].self) {
-            self.value = dictionary.mapValues { $0.value }
+            value = dictionary.mapValues { $0.value }
         } else {
             throw DecodingError.dataCorruptedError(
                 in: container,

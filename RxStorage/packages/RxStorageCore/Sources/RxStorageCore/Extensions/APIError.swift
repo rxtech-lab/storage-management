@@ -30,13 +30,13 @@ public enum APIError: LocalizedError, Sendable {
             return "You don't have permission to access this resource."
         case .notFound:
             return "The requested resource was not found."
-        case .badRequest(let message):
+        case let .badRequest(message):
             return message
-        case .serverError(let message):
+        case let .serverError(message):
             return "Server error: \(message)"
-        case .networkError(let error):
+        case let .networkError(error):
             return "Network error: \(error.localizedDescription)"
-        case .decodingError(let error):
+        case let .decodingError(error):
             return "Failed to process response: \(error.localizedDescription)"
         case .invalidURL:
             return "Invalid URL"
@@ -46,7 +46,7 @@ public enum APIError: LocalizedError, Sendable {
             return "Your session has expired. Please log in again."
         case .refreshTokenError:
             return "Failed to refresh authentication. Please log in again."
-        case .unsupportedQRCode(let url):
+        case let .unsupportedQRCode(url):
             return "This QR code points to an unsupported URL: \(url)"
         }
     }
@@ -63,7 +63,7 @@ public enum APIError: LocalizedError, Sendable {
 
     /// Check if this is a cancelled request (should be ignored in UI)
     public var isCancellation: Bool {
-        if case .networkError(let error) = self {
+        if case let .networkError(error) = self {
             let nsError = error as NSError
             return nsError.domain == NSURLErrorDomain && nsError.code == NSURLErrorCancelled
         }

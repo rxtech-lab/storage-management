@@ -98,7 +98,8 @@ public final class PositionSchemaFormViewModel: PositionSchemaFormViewModelProto
             for (key, value) in schemaDict {
                 // Encode and decode through JSON to get OpenAPIValueContainer
                 if let jsonData = try? JSONSerialization.data(withJSONObject: value, options: []),
-                   let container = try? JSONDecoder().decode(OpenAPIRuntime.OpenAPIValueContainer.self, from: jsonData) {
+                   let container = try? JSONDecoder().decode(OpenAPIRuntime.OpenAPIValueContainer.self, from: jsonData)
+                {
                     convertedSchema[key] = container
                 }
             }
@@ -141,14 +142,16 @@ public final class PositionSchemaFormViewModel: PositionSchemaFormViewModelProto
         for (key, container) in schema.schema.additionalProperties {
             // Encode the container and decode back to Any
             if let jsonData = try? JSONEncoder().encode(container),
-               let value = try? JSONSerialization.jsonObject(with: jsonData, options: []) {
+               let value = try? JSONSerialization.jsonObject(with: jsonData, options: [])
+            {
                 unwrappedDict[key] = value
             }
         }
 
         // Convert schema dictionary to JSON string
         if let data = try? JSONSerialization.data(withJSONObject: unwrappedDict, options: .prettyPrinted),
-           let jsonString = String(data: data, encoding: .utf8) {
+           let jsonString = String(data: data, encoding: .utf8)
+        {
             schemaJSON = jsonString
         }
     }

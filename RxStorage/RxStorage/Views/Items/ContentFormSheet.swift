@@ -31,7 +31,7 @@ struct ContentFormSheet: View {
         existingContent: Content? = nil,
         onSubmit: @escaping (ContentType, [String: RxStorageCore.AnyCodable]) -> Void
     ) {
-        self._contentSchemas = contentSchemas
+        _contentSchemas = contentSchemas
         self.existingContent = existingContent
         self.onSubmit = onSubmit
     }
@@ -43,7 +43,7 @@ struct ContentFormSheet: View {
 
     /// Check if form has data
     private var hasFormData: Bool {
-        if case .object(let properties) = formData {
+        if case let .object(properties) = formData {
             return !properties.isEmpty
         }
         return false
@@ -95,19 +95,19 @@ struct ContentFormSheet: View {
         .formStyle(.grouped)
         .navigationTitle(isEditing ? "Edit Content" : "Add Content")
         #if os(iOS)
-        .navigationBarTitleDisplayMode(.inline)
+            .navigationBarTitleDisplayMode(.inline)
         #endif
-        .toolbar {
-            ToolbarItem(placement: .cancellationAction) {
-                Button("Cancel") { dismiss() }
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { dismiss() }
+                }
             }
-        }
-        .onAppear {
-            if let content = existingContent {
-                selectedType = content.type
-                formData = contentDataToFormData(content.contentData)
+            .onAppear {
+                if let content = existingContent {
+                    selectedType = content.type
+                    formData = contentDataToFormData(content.contentData)
+                }
             }
-        }
     }
 
     // MARK: - Helper Methods

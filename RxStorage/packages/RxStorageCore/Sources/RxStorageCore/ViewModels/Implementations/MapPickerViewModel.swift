@@ -82,7 +82,7 @@ public final class MapPickerViewModel: NSObject {
     private var cancellables = Set<AnyCancellable>()
     private var currentSearchTask: Task<Void, Never>?
 
-    // Default region (San Francisco)
+    /// Default region (San Francisco)
     private let defaultCoordinate = CLLocationCoordinate2D(
         latitude: 37.7749,
         longitude: -122.4194
@@ -90,7 +90,7 @@ public final class MapPickerViewModel: NSObject {
 
     // MARK: - Initialization
 
-    public override init() {
+    override public init() {
         mapRegion = MKCoordinateRegion(
             center: CLLocationCoordinate2D(latitude: 37.7749, longitude: -122.4194),
             span: MKCoordinateSpan(latitudeDelta: 0.1, longitudeDelta: 0.1)
@@ -282,8 +282,8 @@ public final class MapPickerViewModel: NSObject {
 // MARK: - CLLocationManagerDelegate
 
 extension MapPickerViewModel: CLLocationManagerDelegate {
-    nonisolated public func locationManager(
-        _ manager: CLLocationManager,
+    public nonisolated func locationManager(
+        _: CLLocationManager,
         didUpdateLocations locations: [CLLocation]
     ) {
         guard let location = locations.last else { return }
@@ -299,8 +299,8 @@ extension MapPickerViewModel: CLLocationManagerDelegate {
         }
     }
 
-    nonisolated public func locationManager(
-        _ manager: CLLocationManager,
+    public nonisolated func locationManager(
+        _: CLLocationManager,
         didFailWithError error: Error
     ) {
         Task { @MainActor in
@@ -309,7 +309,7 @@ extension MapPickerViewModel: CLLocationManagerDelegate {
         }
     }
 
-    nonisolated public func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
+    public nonisolated func locationManagerDidChangeAuthorization(_: CLLocationManager) {
         Task { @MainActor in
             updateAuthorizationStatus()
 

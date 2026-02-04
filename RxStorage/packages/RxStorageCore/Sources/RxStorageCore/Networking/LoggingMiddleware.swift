@@ -15,7 +15,7 @@ public actor LoggingMiddleware: ClientMiddleware {
     private let logger: Logger
 
     public init(label: String = "com.rxlab.rxstorage.APIClient") {
-        self.logger = Logger(label: label)
+        logger = Logger(label: label)
     }
 
     public func intercept(
@@ -30,7 +30,7 @@ public actor LoggingMiddleware: ClientMiddleware {
 
             // Buffer the response body so we can log it and return a new body
             var returnBody: HTTPBody?
-            var bodyPreview: String = "N/A"
+            var bodyPreview = "N/A"
 
             if let responseBody {
                 let (data, preview) = try await bufferBody(responseBody)
@@ -48,7 +48,8 @@ public actor LoggingMiddleware: ClientMiddleware {
                         "path": "\(request.path ?? "")",
                         "method": "\(request.method)",
                         "body": "\(bodyPreview)",
-                    ])
+                    ]
+                )
             } else {
                 // Log successful responses at debug level
                 logger.info(
@@ -59,7 +60,8 @@ public actor LoggingMiddleware: ClientMiddleware {
                         "path": "\(request.path ?? "")",
                         "method": "\(request.method)",
                         "body": "\(bodyPreview)",
-                    ])
+                    ]
+                )
             }
 
             return (response, returnBody)
@@ -72,7 +74,8 @@ public actor LoggingMiddleware: ClientMiddleware {
                     "path": "\(request.path ?? "")",
                     "method": "\(request.method)",
                     "error": "\(describeDecodingError(error))",
-                ])
+                ]
+            )
             throw error
         } catch {
             logger.error(
@@ -82,7 +85,8 @@ public actor LoggingMiddleware: ClientMiddleware {
                     "path": "\(request.path ?? "")",
                     "method": "\(request.method)",
                     "error": "\(error)",
-                ])
+                ]
+            )
             throw error
         }
     }

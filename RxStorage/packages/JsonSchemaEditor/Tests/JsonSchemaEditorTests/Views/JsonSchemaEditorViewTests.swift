@@ -3,18 +3,17 @@
 //  JsonSchemaEditorTests
 //
 
-import Testing
-import SwiftUI
-import ViewInspector
 import JSONSchema
 @testable import JsonSchemaEditor
+import SwiftUI
+import Testing
+import ViewInspector
 
 @Suite("JsonSchemaEditorView Tests")
 @MainActor
 struct JsonSchemaEditorViewTests {
-
     @Test("View renders with empty state")
-    func testRendersWithEmptyState() throws {
+    func rendersWithEmptyState() throws {
         let sut = JsonSchemaEditorView(schema: .constant(nil))
 
         // Verify the view can be inspected
@@ -23,11 +22,11 @@ struct JsonSchemaEditorViewTests {
     }
 
     @Test("View renders with object schema")
-    func testRendersWithObjectSchema() throws {
+    func rendersWithObjectSchema() throws {
         let schema: JSONSchema? = JSONSchema.object(
             title: "Test",
             properties: [
-                "name": JSONSchema.string()
+                "name": JSONSchema.string(),
             ]
         )
 
@@ -41,9 +40,8 @@ struct JsonSchemaEditorViewTests {
 @Suite("PropertyEditorView Tests")
 @MainActor
 struct PropertyEditorViewTests {
-
     @Test("Property editor renders")
-    func testPropertyEditorRenders() throws {
+    func propertyEditorRenders() throws {
         let item = PropertyItem(key: "testProperty", property: JSONSchema.string())
 
         let sut = PropertyEditorView(
@@ -61,7 +59,7 @@ struct PropertyEditorViewTests {
     }
 
     @Test("Property editor shows property name")
-    func testShowsPropertyName() throws {
+    func showsPropertyName() throws {
         let item = PropertyItem(key: "myProperty", property: JSONSchema.string())
 
         let sut = PropertyEditorView(
@@ -79,12 +77,12 @@ struct PropertyEditorViewTests {
     }
 
     @Test("Delete button exists")
-    func testDeleteButtonExists() throws {
+    func deleteButtonExists() throws {
         let item = PropertyItem(key: "test", property: JSONSchema.string())
 
         let sut = PropertyEditorView(
             item: .constant(item),
-            onDelete: { },
+            onDelete: {},
             isFirst: true,
             isLast: true,
             disabled: false
@@ -97,7 +95,7 @@ struct PropertyEditorViewTests {
     }
 
     @Test("Required property shows toggle")
-    func testRequiredPropertyShowsToggle() throws {
+    func requiredPropertyShowsToggle() throws {
         let item = PropertyItem(
             key: "required_field",
             property: JSONSchema.string(),
@@ -119,7 +117,7 @@ struct PropertyEditorViewTests {
     }
 
     @Test("Disabled state affects controls")
-    func testDisabledState() throws {
+    func disabledState() throws {
         let item = PropertyItem(key: "test", property: JSONSchema.string())
 
         let sut = PropertyEditorView(
@@ -138,9 +136,8 @@ struct PropertyEditorViewTests {
 @Suite("VisualEditorView Tests", .serialized)
 @MainActor
 struct VisualEditorViewTests {
-
     @Test("Visual editor renders")
-    func testVisualEditorRenders() throws {
+    func visualEditorRenders() throws {
         let viewModel = JsonSchemaEditorViewModel(schema: nil)
 
         let sut = VisualEditorView(viewModel: viewModel, disabled: false)
@@ -150,7 +147,7 @@ struct VisualEditorViewTests {
     }
 
     @Test("Visual editor shows schema type picker")
-    func testShowsSchemaTypePicker() throws {
+    func showsSchemaTypePicker() throws {
         let viewModel = JsonSchemaEditorViewModel(schema: nil)
 
         let sut = VisualEditorView(viewModel: viewModel, disabled: false)
@@ -165,9 +162,8 @@ struct VisualEditorViewTests {
 @Suite("PropertyListView Tests", .serialized)
 @MainActor
 struct PropertyListViewTests {
-
     @Test("Property list renders empty state")
-    func testRendersEmptyState() throws {
+    func rendersEmptyState() throws {
         let viewModel = JsonSchemaEditorViewModel(schema: nil)
 
         let sut = PropertyListView(viewModel: viewModel, disabled: false)
@@ -181,7 +177,7 @@ struct PropertyListViewTests {
     }
 
     @Test("Property list shows add button")
-    func testShowsAddButton() throws {
+    func showsAddButton() throws {
         let viewModel = JsonSchemaEditorViewModel(schema: nil)
 
         let sut = PropertyListView(viewModel: viewModel, disabled: false)
@@ -192,11 +188,11 @@ struct PropertyListViewTests {
     }
 
     @Test("Property list with items")
-    func testPropertyListWithItems() throws {
+    func propertyListWithItems() throws {
         let schema = JSONSchema.object(
             properties: [
                 "name": JSONSchema.string(),
-                "age": JSONSchema.integer()
+                "age": JSONSchema.integer(),
             ]
         )
         let viewModel = JsonSchemaEditorViewModel(schema: schema)
@@ -207,4 +203,3 @@ struct PropertyListViewTests {
         _ = inspection
     }
 }
-

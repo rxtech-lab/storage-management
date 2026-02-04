@@ -8,8 +8,8 @@
 import SwiftUI
 
 enum SecurityIconStyle {
-    case lock       // For "Sign In Required" - orange/amber, pulsing
-    case denied     // For "Access Denied" - red, shake on appear
+    case lock // For "Sign In Required" - orange/amber, pulsing
+    case denied // For "Access Denied" - red, shake on appear
 }
 
 struct AnimatedSecurityIcon: View {
@@ -58,7 +58,7 @@ struct AnimatedSecurityIcon: View {
                         LinearGradient(
                             colors: [
                                 Color.white.opacity(colorScheme == .dark ? 0.2 : 0.5),
-                                Color.white.opacity(colorScheme == .dark ? 0.05 : 0.1)
+                                Color.white.opacity(colorScheme == .dark ? 0.05 : 0.1),
                             ],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
@@ -77,7 +77,7 @@ struct AnimatedSecurityIcon: View {
                         colors: [
                             primaryColor.opacity(glowPulse ? 0.4 : 0.25),
                             secondaryColor.opacity(glowPulse ? 0.2 : 0.1),
-                            Color.clear
+                            Color.clear,
                         ],
                         center: .center,
                         startRadius: 20,
@@ -104,7 +104,7 @@ struct AnimatedSecurityIcon: View {
                     LinearGradient(
                         colors: [
                             primaryColor,
-                            secondaryColor
+                            secondaryColor,
                         ],
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
@@ -137,14 +137,14 @@ struct AnimatedSecurityIcon: View {
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
                     withAnimation(
                         .easeInOut(duration: 1.8)
-                        .repeatForever(autoreverses: true)
+                            .repeatForever(autoreverses: true)
                     ) {
                         isPulsing = true
                     }
 
                     withAnimation(
                         .easeInOut(duration: 2.5)
-                        .repeatForever(autoreverses: true)
+                            .repeatForever(autoreverses: true)
                     ) {
                         glowPulse = true
                     }

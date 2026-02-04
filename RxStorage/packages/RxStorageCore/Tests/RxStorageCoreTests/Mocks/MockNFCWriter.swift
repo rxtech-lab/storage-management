@@ -10,37 +10,37 @@ import Foundation
 
 #if canImport(CoreNFC)
 
-/// Mock NFC writer for testing
-@MainActor
-public final class MockNFCWriter: NFCWriterProtocol, @unchecked Sendable {
-    // MARK: - Properties
+    /// Mock NFC writer for testing
+    @MainActor
+    public final class MockNFCWriter: NFCWriterProtocol, @unchecked Sendable {
+        // MARK: - Properties
 
-    public var writeResult: Result<Void, Error> = .success(())
-    public var writeCalled = false
-    public var lastWrittenUrl: String?
-    public var delay: Duration?
+        public var writeResult: Result<Void, Error> = .success(())
+        public var writeCalled = false
+        public var lastWrittenUrl: String?
+        public var delay: Duration?
 
-    // MARK: - Initialization
+        // MARK: - Initialization
 
-    public init() {}
+        public init() {}
 
-    // MARK: - NFCWriterProtocol
+        // MARK: - NFCWriterProtocol
 
-    public func writeToNfcChip(url: String) async throws {
-        writeCalled = true
-        lastWrittenUrl = url
+        public func writeToNfcChip(url: String) async throws {
+            writeCalled = true
+            lastWrittenUrl = url
 
-        if let delay = delay {
-            try await Task.sleep(for: delay)
-        }
+            if let delay = delay {
+                try await Task.sleep(for: delay)
+            }
 
-        switch writeResult {
-        case .success:
-            return
-        case .failure(let error):
-            throw error
+            switch writeResult {
+            case .success:
+                return
+            case let .failure(error):
+                throw error
+            }
         }
     }
-}
 
 #endif

@@ -184,12 +184,14 @@ extension Components.Schemas.PositionRefSchema: Identifiable {}
 
 // MARK: - Content Convenience Extensions
 
-extension Components.Schemas.ContentResponseSchema {
+public extension Components.Schemas.ContentResponseSchema {
     /// Convenience property to access _type as type
-    public var type: _typePayload { _type }
+    var type: _typePayload {
+        _type
+    }
 
     /// Convert data payload to ContentData helper type
-    public var contentData: ContentData {
+    var contentData: ContentData {
         let props = data.additionalProperties
         return ContentData(
             title: props["title"]?.value as? String,
@@ -206,9 +208,9 @@ extension Components.Schemas.ContentResponseSchema {
 
 // MARK: - StorageItemDetail to StorageItem Conversion
 
-extension Components.Schemas.ItemDetailResponseSchema {
+public extension Components.Schemas.ItemDetailResponseSchema {
     /// Convert to StorageItem (ItemResponseSchema) for use in list views
-    public func toStorageItem() -> StorageItem {
+    func toStorageItem() -> StorageItem {
         // Convert payload types by extracting the underlying ref schema and wrapping in new payload
         let categoryPayload = category.map { StorageItem.categoryPayload(value1: $0.value1) }
         let locationPayload = location.map { StorageItem.locationPayload(value1: $0.value1) }
@@ -238,11 +240,36 @@ extension Components.Schemas.ItemDetailResponseSchema {
     }
 }
 
+// MARK: - ContentRef to Content Conversion
+
+public extension Components.Schemas.ContentRefSchema {
+    /// Convert ContentRefSchema to ContentResponseSchema for display in views
+    /// - Parameter itemId: The parent item ID (not included in ContentRefSchema)
+    func toContent(itemId: Int) -> Content {
+        // Map type payload
+        let contentType: Content._typePayload
+        switch _type {
+        case .file: contentType = .file
+        case .image: contentType = .image
+        case .video: contentType = .video
+        }
+
+        return Content(
+            id: id,
+            itemId: itemId,
+            _type: contentType,
+            data: Content.dataPayload(additionalProperties: data.additionalProperties),
+            createdAt: createdAt,
+            updatedAt: updatedAt
+        )
+    }
+}
+
 // MARK: - ContentType Convenience Extensions
 
-extension Components.Schemas.ContentResponseSchema._typePayload {
+public extension Components.Schemas.ContentResponseSchema._typePayload {
     /// Display name for the content type
-    public var displayName: String {
+    var displayName: String {
         switch self {
         case .file: return "File"
         case .image: return "Image"
@@ -251,7 +278,7 @@ extension Components.Schemas.ContentResponseSchema._typePayload {
     }
 
     /// Icon name for the content type
-    public var icon: String {
+    var icon: String {
         switch self {
         case .file: return "doc.fill"
         case .image: return "photo.fill"

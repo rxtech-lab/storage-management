@@ -24,18 +24,16 @@ struct ItemListView: View {
 
     @State private var showingCreateSheet = false
     @State private var showingFilterSheet = false
-    @State private var showingError = false
+    @State private var errorViewModel = ErrorViewModel()
 
     #if os(iOS)
-    @State private var showQrCodeScanner = false
-    // QR scan state
-    @State private var isLoadingFromQR = false
-    @State private var qrScanError: Error?
-    @State private var showQrScanError = false
-    private let itemService = ItemService()
+        @State private var showQrCodeScanner = false
+        // QR scan state
+        @State private var isLoadingFromQR = false
+        private let itemService = ItemService()
     #endif
 
-    // Refresh state
+    /// Refresh state
     @State private var isRefreshing = false
 
     // Delete confirmation state
@@ -56,14 +54,14 @@ struct ItemListView: View {
                 }
 
                 #if os(iOS)
-                ToolbarItem(placement: .primaryAction) {
-                    Button {
-                        showQrCodeScanner = true
-                    } label: {
-                        Label("Scan", systemImage: "qrcode.viewfinder")
+                    ToolbarItem(placement: .primaryAction) {
+                        Button {
+                            showQrCodeScanner = true
+                        } label: {
+                            Label("Scan", systemImage: "qrcode.viewfinder")
+                        }
+                        .accessibilityIdentifier("item-list-scan-button")
                     }
-                    .accessibilityIdentifier("item-list-scan-button")
-                }
                 #endif
 
                 ToolbarItem(placement: .secondaryAction) {
@@ -129,44 +127,24 @@ struct ItemListView: View {
                 }
             }
             .onChange(of: viewModel.error != nil) { _, hasError in
-                showingError = hasError
-            }
-            .alert("Error", isPresented: $showingError) {
-                Button("OK") {
+                if hasError, let error = viewModel.error {
+                    errorViewModel.showError(error)
                     viewModel.clearError()
-                }
-                Button("Retry") {
-                    Task {
-                        await viewModel.fetchItems()
-                    }
-                }
-            } message: {
-                if let error = viewModel.error {
-                    Text(error.localizedDescription)
                 }
             }
             .overlay {
                 #if os(iOS)
-                if isLoadingFromQR {
-                    LoadingOverlay(title: "Loading item from QR code..")
-                } else if isRefreshing {
-                    LoadingOverlay(title: "Refreshing...")
-                }
+                    if isLoadingFromQR {
+                        LoadingOverlay(title: "Loading item from QR code..")
+                    } else if isRefreshing {
+                        LoadingOverlay(title: "Refreshing...")
+                    }
                 #else
-                if isRefreshing {
-                    LoadingOverlay(title: "Refreshing...")
-                }
+                    if isRefreshing {
+                        LoadingOverlay(title: "Refreshing...")
+                    }
                 #endif
             }
-        #if os(iOS)
-            .alert("QR Code Error", isPresented: $showQrScanError) {
-                Button("OK", role: .cancel) {}
-            } message: {
-                if let error = qrScanError {
-                    Text(error.localizedDescription)
-                }
-            }
-        #endif
             .confirmationDialog(
                 title: "Delete Item",
                 message: "Are you sure you want to delete \"\(itemToDelete?.title ?? "")\"? This action cannot be undone.",
@@ -175,8 +153,11 @@ struct ItemListView: View {
                 onConfirm: {
                     if let item = itemToDelete {
                         Task {
-                            if let deletedId = try? await viewModel.deleteItem(item) {
+                            do {
+                                let deletedId = try await viewModel.deleteItem(item)
                                 eventViewModel.emit(.itemDeleted(id: deletedId))
+                            } catch {
+                                errorViewModel.showError(error)
                             }
                             itemToDelete = nil
                         }
@@ -184,11 +165,11 @@ struct ItemListView: View {
                 },
                 onCancel: { itemToDelete = nil }
             )
+            .showViewModelError(errorViewModel)
     }
 
     // MARK: - Items List
 
-    @ViewBuilder
     private var itemsList: some View {
         AdaptiveList(horizontalSizeClass: horizontalSizeClass, selection: $selectedItem) {
             ForEach(viewModel.items) { item in
@@ -282,36 +263,33 @@ struct ItemListView: View {
 
     #if os(iOS)
 
-    // MARK: - QR Code Handling
+        // MARK: - QR Code Handling
 
-    private func handleScannedQRCode(_ code: String) async {
-        guard let url = URL(string: code) else {
-            qrScanError = APIError.unsupportedQRCode(code)
-            showQrScanError = true
-            return
+        private func handleScannedQRCode(_ code: String) async {
+            guard let url = URL(string: code) else {
+                errorViewModel.showError(APIError.unsupportedQRCode(code))
+                return
+            }
+
+            // Extract item ID from URL path (e.g., /preview/123)
+            guard let itemIdString = url.pathComponents.last,
+                  let itemId = Int(itemIdString)
+            else {
+                errorViewModel.showError(APIError.unsupportedQRCode(code))
+                return
+            }
+
+            // Fetch the item directly
+            isLoadingFromQR = true
+            defer { isLoadingFromQR = false }
+
+            do {
+                let itemDetail = try await itemService.fetchItem(id: itemId)
+                selectedItem = itemDetail.toStorageItem()
+            } catch {
+                errorViewModel.showError(error)
+            }
         }
-
-        // Extract item ID from URL path (e.g., /preview/123)
-        guard let itemIdString = url.pathComponents.last,
-              let itemId = Int(itemIdString)
-        else {
-            qrScanError = APIError.unsupportedQRCode(code)
-            showQrScanError = true
-            return
-        }
-
-        // Fetch the item directly
-        isLoadingFromQR = true
-        defer { isLoadingFromQR = false }
-
-        do {
-            let itemDetail = try await itemService.fetchItem(id: itemId)
-            selectedItem = itemDetail.toStorageItem()
-        } catch {
-            qrScanError = error
-            showQrScanError = true
-        }
-    }
     #endif
 }
 
