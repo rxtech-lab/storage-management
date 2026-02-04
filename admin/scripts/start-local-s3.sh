@@ -20,7 +20,7 @@ mkdir -p "$S3_DATA_DIR"
 # --directory: Where to store S3 data
 # --port: Port to listen on (default 4569)
 # --address: Bind to localhost
-exec npx s3rver \
+exec bunx s3rver \
   --directory "$S3_DATA_DIR" \
   --port "$S3_PORT" \
   --address localhost \

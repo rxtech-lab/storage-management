@@ -65,7 +65,7 @@ jobs:
 
   # UI tests - currently skipped
   ui-tests:
-    # if: false
+    if: false
     name: Run UI Tests
     uses: ./.github/workflows/ios-setup.yml
     with:
