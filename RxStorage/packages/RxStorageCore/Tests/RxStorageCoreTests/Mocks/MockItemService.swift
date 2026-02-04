@@ -17,6 +17,7 @@ public final class MockItemService: ItemServiceProtocol {
     public var fetchItemsPaginatedResult: Result<PaginatedResponse<StorageItem>, Error>?
     public var fetchItemResult: Result<StorageItemDetail, Error>?
     public var fetchPreviewItemResult: Result<StorageItemDetail, Error>?
+    public var fetchItemUsingUrlResult: Result<StorageItemDetail, Error>?
     public var createItemResult: Result<StorageItem, Error>?
     public var updateItemResult: Result<StorageItem, Error>?
     public var setParentResult: Result<StorageItem, Error>?
@@ -27,6 +28,7 @@ public final class MockItemService: ItemServiceProtocol {
     public var fetchItemsPaginatedCalled = false
     public var fetchItemCalled = false
     public var fetchPreviewItemCalled = false
+    public var fetchItemUsingUrlCalled = false
     public var createItemCalled = false
     public var updateItemCalled = false
     public var setParentCalled = false
@@ -34,6 +36,7 @@ public final class MockItemService: ItemServiceProtocol {
 
     public var lastFetchItemId: Int?
     public var lastFetchPreviewItemId: Int?
+    public var lastFetchItemUsingUrl: String?
     public var lastCreateItemRequest: NewItemRequest?
     public var lastUpdateItemId: Int?
     public var lastUpdateItemRequest: UpdateItemRequest?
@@ -96,6 +99,22 @@ public final class MockItemService: ItemServiceProtocol {
         lastFetchPreviewItemId = id
 
         if let result = fetchPreviewItemResult {
+            switch result {
+            case let .success(item):
+                return item
+            case let .failure(error):
+                throw error
+            }
+        }
+
+        throw APIError.notFound
+    }
+
+    public func fetchItemUsingUrl(url: String) async throws -> StorageItemDetail {
+        fetchItemUsingUrlCalled = true
+        lastFetchItemUsingUrl = url
+
+        if let result = fetchItemUsingUrlResult {
             switch result {
             case let .success(item):
                 return item

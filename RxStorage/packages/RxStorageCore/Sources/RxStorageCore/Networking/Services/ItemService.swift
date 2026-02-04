@@ -19,6 +19,7 @@ public protocol ItemServiceProtocol: Sendable {
     func fetchItemsPaginated(filters: ItemFilters?) async throws -> PaginatedResponse<StorageItem>
     func fetchItem(id: Int) async throws -> StorageItemDetail
     func fetchPreviewItem(id: Int) async throws -> StorageItemDetail
+    func fetchItemUsingUrl(url: String) async throws -> StorageItemDetail
     func createItem(_ request: NewItemRequest) async throws -> StorageItem
     func updateItem(id: Int, _ request: UpdateItemRequest) async throws -> StorageItem
     func deleteItem(id: Int) async throws
@@ -77,6 +78,92 @@ public struct ItemService: ItemServiceProtocol {
         try await StorageAPIClient.shared.optionalAuthClient.getItem(.init(path: .init(id: String(id))))
     }
 
+    /// Fetch item directly using a full URL (not the generated OpenAPI client)
+    /// This is used after QR code scanning to fetch from the resolved URL
+    /// Always includes auth token if user is signed in
+    /// - Parameter url: The full API URL to the item (e.g., "https://storage.rxlab.app/api/v1/items/123")
+    /// - Returns: StorageItemDetail
+    public func fetchItemUsingUrl(url: String) async throws -> StorageItemDetail {
+        guard let requestUrl = URL(string: url) else {
+            logger.error("Invalid URL for item fetch: \(url)")
+            throw APIError.invalidURL
+        }
+
+        var request = URLRequest(url: requestUrl)
+        request.httpMethod = "GET"
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
+
+        // Always add auth token if user is signed in
+        if let accessToken = await TokenStorage.shared.getAccessToken() {
+            request.setValue("Bearer \(accessToken)", forHTTPHeaderField: "Authorization")
+        }
+
+        logger.info("Fetching item from URL: \(url)")
+
+        let (data, response) = try await URLSession.shared.data(for: request)
+
+        guard let httpResponse = response as? HTTPURLResponse else {
+            logger.error("Invalid response type")
+            throw APIError.invalidResponse
+        }
+
+        logger.debug("Item fetch response status: \(httpResponse.statusCode)")
+
+        switch httpResponse.statusCode {
+        case 200:
+            let decoder = JSONDecoder()
+            // Configure date decoding to handle ISO8601 with fractional seconds
+            decoder.dateDecodingStrategy = .custom { decoder in
+                let container = try decoder.singleValueContainer()
+                let dateString = try container.decode(String.self)
+
+                // Try ISO8601 with fractional seconds first
+                let formatter = ISO8601DateFormatter()
+                formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+                if let date = formatter.date(from: dateString) {
+                    return date
+                }
+
+                // Fall back to standard ISO8601
+                formatter.formatOptions = [.withInternetDateTime]
+                if let date = formatter.date(from: dateString) {
+                    return date
+                }
+
+                throw DecodingError.dataCorruptedError(
+                    in: container,
+                    debugDescription: "Cannot decode date: \(dateString)"
+                )
+            }
+
+            do {
+                let item = try decoder.decode(StorageItemDetail.self, from: data)
+                logger.info("Successfully fetched item: \(item.id)")
+                return item
+            } catch {
+                logger.error("Failed to decode item response: \(error)")
+                throw APIError.decodingError(error)
+            }
+        case 400:
+            if let errorResponse = try? JSONDecoder().decode(ItemErrorResponse.self, from: data) {
+                throw APIError.badRequest(errorResponse.error)
+            }
+            throw APIError.badRequest("Invalid request")
+        case 401:
+            logger.warning("Item fetch unauthorized")
+            throw APIError.unauthorized
+        case 403:
+            logger.warning("Item fetch forbidden")
+            throw APIError.forbidden
+        case 404:
+            logger.warning("Item not found")
+            throw APIError.notFound
+        default:
+            logger.error("Item fetch failed with status: \(httpResponse.statusCode)")
+            throw APIError.serverError("HTTP \(httpResponse.statusCode)")
+        }
+    }
+
     @APICall(.created)
     public func createItem(_ request: NewItemRequest) async throws -> StorageItem {
         try await StorageAPIClient.shared.client.createItem(.init(body: .json(request)))
@@ -97,4 +184,11 @@ public struct ItemService: ItemServiceProtocol {
         let request = SetParentRequest(parentId: parentId)
         try await StorageAPIClient.shared.client.setItemParent(.init(path: .init(id: String(itemId)), body: .json(request)))
     }
+}
+
+// MARK: - Helper Types
+
+/// Simple error response structure for decoding API errors
+private struct ItemErrorResponse: Decodable {
+    let error: String
 }
