@@ -36,7 +36,8 @@ public enum SchemaValidation {
         }
 
         guard let regex = try? NSRegularExpression(pattern: propertyKeyPattern),
-              regex.firstMatch(in: key, range: NSRange(key.startIndex..., in: key)) != nil else {
+              regex.firstMatch(in: key, range: NSRange(key.startIndex..., in: key)) != nil
+        else {
             return .invalid("Must start with a letter or underscore, and contain only letters, numbers, and underscores")
         }
 
@@ -61,7 +62,8 @@ public enum SchemaValidation {
         }
 
         guard let objectSchema = schema.objectSchema,
-              let properties = objectSchema.properties else {
+              let properties = objectSchema.properties
+        else {
             return .valid
         }
 

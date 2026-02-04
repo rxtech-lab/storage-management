@@ -5,24 +5,23 @@
 //  Tests for CategoryListViewModel
 //
 
-import Testing
 @testable import RxStorageCore
+import Testing
 
 @Suite("CategoryListViewModel Tests")
 struct CategoryListViewModelTests {
-
     // MARK: - Test Data
 
     static let testCategories = [
         TestHelpers.makeCategory(id: 1, name: "Books", description: "Book category"),
-        TestHelpers.makeCategory(id: 2, name: "Electronics", description: "Electronics category")
+        TestHelpers.makeCategory(id: 2, name: "Electronics", description: "Electronics category"),
     ]
 
     // MARK: - Fetch Tests
 
     @Test("Fetch categories successfully")
     @MainActor
-    func testFetchCategoriesSuccess() async throws {
+    func fetchCategoriesSuccess() async {
         // Given
         let mockService = MockCategoryService()
         mockService.fetchCategoriesResult = .success(Self.testCategories)
@@ -42,7 +41,7 @@ struct CategoryListViewModelTests {
 
     @Test("Fetch categories with error")
     @MainActor
-    func testFetchCategoriesError() async throws {
+    func fetchCategoriesError() async {
         // Given
         let mockService = MockCategoryService()
         mockService.fetchCategoriesResult = .failure(APIError.serverError("Test error"))
@@ -61,7 +60,7 @@ struct CategoryListViewModelTests {
 
     @Test("Search updates searchText and triggers search")
     @MainActor
-    func testSearch() async throws {
+    func testSearch() {
         // Given
         let mockService = MockCategoryService()
         mockService.fetchCategoriesResult = .success(Self.testCategories)
@@ -79,7 +78,7 @@ struct CategoryListViewModelTests {
 
     @Test("Delete category successfully")
     @MainActor
-    func testDeleteCategorySuccess() async throws {
+    func deleteCategorySuccess() async throws {
         // Given
         let mockService = MockCategoryService()
         mockService.fetchCategoriesResult = .success(Self.testCategories)

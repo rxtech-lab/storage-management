@@ -5,8 +5,8 @@
 //  Position schema detail view
 //
 
-import JsonSchemaEditor
 import JSONSchema
+import JsonSchemaEditor
 import OpenAPIRuntime
 import RxStorageCore
 import SwiftUI
@@ -52,41 +52,41 @@ struct PositionSchemaDetailView: View {
         }
         .navigationTitle(viewModel.positionSchema?.name ?? "Schema")
         #if os(iOS)
-        .navigationBarTitleDisplayMode(.inline)
+            .navigationBarTitleDisplayMode(.inline)
         #endif
-        .toolbar {
-            ToolbarItem(placement: .primaryAction) {
-                Button {
-                    showingEditSheet = true
-                } label: {
-                    Label("Edit", systemImage: "pencil")
+            .toolbar {
+                ToolbarItem(placement: .primaryAction) {
+                    Button {
+                        showingEditSheet = true
+                    } label: {
+                        Label("Edit", systemImage: "pencil")
+                    }
                 }
             }
-        }
-        .sheet(isPresented: $showingEditSheet, onDismiss: {
-            // Refresh data after editing
-            Task {
-                await viewModel.refresh()
-            }
-        }) {
-            if let schema = viewModel.positionSchema {
-                NavigationStack {
-                    PositionSchemaFormSheet(schema: schema)
+            .sheet(isPresented: $showingEditSheet, onDismiss: {
+                // Refresh data after editing
+                Task {
+                    await viewModel.refresh()
+                }
+            }) {
+                if let schema = viewModel.positionSchema {
+                    NavigationStack {
+                        PositionSchemaFormSheet(schema: schema)
+                    }
                 }
             }
-        }
-        .task(id: schemaId) {
-            await viewModel.fetchPositionSchema(id: schemaId)
-            // Set jsonSchema after fetch completes
-            if let schema = viewModel.positionSchema {
-                jsonSchema = Self.parseSchema(from: schema.schema)
+            .task(id: schemaId) {
+                await viewModel.fetchPositionSchema(id: schemaId)
+                // Set jsonSchema after fetch completes
+                if let schema = viewModel.positionSchema {
+                    jsonSchema = Self.parseSchema(from: schema.schema)
+                }
             }
-        }
-        .onChange(of: viewModel.positionSchema) { _, newSchema in
-            if let schema = newSchema {
-                jsonSchema = Self.parseSchema(from: schema.schema)
+            .onChange(of: viewModel.positionSchema) { _, newSchema in
+                if let schema = newSchema {
+                    jsonSchema = Self.parseSchema(from: schema.schema)
+                }
             }
-        }
     }
 
     /// Parse schemaPayload (additionalProperties) to JSONSchema
@@ -108,7 +108,6 @@ struct PositionSchemaDetailView: View {
 
     // MARK: - Schema Header
 
-    @ViewBuilder
     private func schemaHeader(_ schema: PositionSchema) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             Text(schema.name)

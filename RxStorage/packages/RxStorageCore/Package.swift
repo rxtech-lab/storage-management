@@ -14,7 +14,7 @@ let package = Package(
         .library(
             name: "RxStorageCore",
             targets: ["RxStorageCore"]
-        )
+        ),
     ],
     dependencies: [
         .package(url: "https://github.com/apple/swift-log.git", from: "1.5.0"),
@@ -48,7 +48,7 @@ let package = Package(
             ],
             path: "Sources/RxStorageCore",
             plugins: [
-                .plugin(name: "OpenAPIGenerator", package: "swift-openapi-generator")
+                .plugin(name: "OpenAPIGenerator", package: "swift-openapi-generator"),
             ]
         ),
         .testTarget(

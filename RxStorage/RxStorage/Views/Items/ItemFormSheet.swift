@@ -36,7 +36,7 @@ struct ItemFormSheet: View {
     @State private var selectedAuthor: RxStorageCore.Author?
     @State private var selectedParentItem: RxStorageCore.StorageItem?
 
-    // Photo picker
+    /// Photo picker
     @State private var selectedPhotos: [PhotosPickerItem] = []
 
     init(item: StorageItem? = nil) {
@@ -58,114 +58,113 @@ struct ItemFormSheet: View {
         }
         .navigationTitle(item == nil ? "New Item" : "Edit Item")
         #if os(iOS)
-        .navigationBarTitleDisplayMode(.inline)
+            .navigationBarTitleDisplayMode(.inline)
         #endif
-        .toolbar {
-            ToolbarItem(placement: .cancellationAction) {
-                Button("Cancel") {
-                    dismiss()
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") {
+                        dismiss()
+                    }
+                    .accessibilityIdentifier("item-form-cancel-button")
                 }
-                .accessibilityIdentifier("item-form-cancel-button")
-            }
 
-            ToolbarItem(placement: .confirmationAction) {
-                Button(item == nil ? "Create" : "Save") {
-                    Task {
-                        await submitForm()
+                ToolbarItem(placement: .confirmationAction) {
+                    Button(item == nil ? "Create" : "Save") {
+                        Task {
+                            await submitForm()
+                        }
+                    }
+                    .disabled(viewModel.isSubmitting)
+                    .accessibilityIdentifier("item-form-submit-button")
+                }
+            }
+            .sheet(isPresented: $showingCategorySheet) {
+                NavigationStack {
+                    CategoryFormSheet { newCategory in
+                        viewModel.selectedCategoryId = newCategory.id
+                        selectedCategory = newCategory
                     }
                 }
-                .disabled(viewModel.isSubmitting)
-                .accessibilityIdentifier("item-form-submit-button")
             }
-        }
-        .sheet(isPresented: $showingCategorySheet) {
-            NavigationStack {
-                CategoryFormSheet { newCategory in
-                    viewModel.selectedCategoryId = newCategory.id
-                    selectedCategory = newCategory
-                }
-            }
-        }
-        .sheet(isPresented: $showingLocationSheet) {
-            NavigationStack {
-                LocationFormSheet { newLocation in
-                    viewModel.selectedLocationId = newLocation.id
-                    selectedLocation = newLocation
-                }
-            }
-        }
-        .sheet(isPresented: $showingAuthorSheet) {
-            NavigationStack {
-                AuthorFormSheet { newAuthor in
-                    viewModel.selectedAuthorId = newAuthor.id
-                    selectedAuthor = newAuthor
-                }
-            }
-        }
-        .sheet(isPresented: $showingPositionSheet) {
-            NavigationStack {
-                PositionFormSheet(
-                    positionSchemas: $viewModel.positionSchemas,
-                    onSubmit: { schema, data in
-                        viewModel.addPendingPosition(schema: schema, data: data)
+            .sheet(isPresented: $showingLocationSheet) {
+                NavigationStack {
+                    LocationFormSheet { newLocation in
+                        viewModel.selectedLocationId = newLocation.id
+                        selectedLocation = newLocation
                     }
-                )
-            }
-        }
-        .sheet(isPresented: $showingCategoryPicker) {
-            NavigationStack {
-                CategoryPickerSheet(selectedId: viewModel.selectedCategoryId) { category in
-                    viewModel.selectedCategoryId = category?.id
-                    selectedCategory = category
                 }
             }
-        }
-        .sheet(isPresented: $showingLocationPicker) {
-            NavigationStack {
-                LocationPickerSheet(selectedId: viewModel.selectedLocationId) { location in
-                    viewModel.selectedLocationId = location?.id
-                    selectedLocation = location
+            .sheet(isPresented: $showingAuthorSheet) {
+                NavigationStack {
+                    AuthorFormSheet { newAuthor in
+                        viewModel.selectedAuthorId = newAuthor.id
+                        selectedAuthor = newAuthor
+                    }
                 }
             }
-        }
-        .sheet(isPresented: $showingAuthorPicker) {
-            NavigationStack {
-                AuthorPickerSheet(selectedId: viewModel.selectedAuthorId) { author in
-                    viewModel.selectedAuthorId = author?.id
-                    selectedAuthor = author
+            .sheet(isPresented: $showingPositionSheet) {
+                NavigationStack {
+                    PositionFormSheet(
+                        positionSchemas: $viewModel.positionSchemas,
+                        onSubmit: { schema, data in
+                            viewModel.addPendingPosition(schema: schema, data: data)
+                        }
+                    )
                 }
             }
-        }
-        .sheet(isPresented: $showingParentItemPicker) {
-            NavigationStack {
-                ParentItemPickerSheet(
-                    selectedId: viewModel.selectedParentId,
-                    excludeItemId: item?.id
-                ) { parentItem in
-                    viewModel.selectedParentId = parentItem?.id
-                    selectedParentItem = parentItem
+            .sheet(isPresented: $showingCategoryPicker) {
+                NavigationStack {
+                    CategoryPickerSheet(selectedId: viewModel.selectedCategoryId) { category in
+                        viewModel.selectedCategoryId = category?.id
+                        selectedCategory = category
+                    }
                 }
             }
-        }
-        .task {
-            await viewModel.loadReferenceData()
-        }
-        .overlay {
-            if viewModel.isSubmitting || viewModel.isUploading {
-                LoadingOverlay()
+            .sheet(isPresented: $showingLocationPicker) {
+                NavigationStack {
+                    LocationPickerSheet(selectedId: viewModel.selectedLocationId) { location in
+                        viewModel.selectedLocationId = location?.id
+                        selectedLocation = location
+                    }
+                }
             }
-        }
+            .sheet(isPresented: $showingAuthorPicker) {
+                NavigationStack {
+                    AuthorPickerSheet(selectedId: viewModel.selectedAuthorId) { author in
+                        viewModel.selectedAuthorId = author?.id
+                        selectedAuthor = author
+                    }
+                }
+            }
+            .sheet(isPresented: $showingParentItemPicker) {
+                NavigationStack {
+                    ParentItemPickerSheet(
+                        selectedId: viewModel.selectedParentId,
+                        excludeItemId: item?.id
+                    ) { parentItem in
+                        viewModel.selectedParentId = parentItem?.id
+                        selectedParentItem = parentItem
+                    }
+                }
+            }
+            .task {
+                await viewModel.loadReferenceData()
+            }
+            .overlay {
+                if viewModel.isSubmitting || viewModel.isUploading {
+                    LoadingOverlay()
+                }
+            }
     }
 
     // MARK: - Form Sections
 
-    @ViewBuilder
     private var basicInfoSection: some View {
         Section("Basic Information") {
             TextField("Title", text: $viewModel.title)
-                #if os(iOS)
+            #if os(iOS)
                 .textInputAutocapitalization(.words)
-                #endif
+            #endif
                 .accessibilityIdentifier("item-form-title-field")
 
             TextField("Description", text: $viewModel.description, axis: .vertical)
@@ -173,14 +172,13 @@ struct ItemFormSheet: View {
                 .accessibilityIdentifier("item-form-description-field")
 
             TextField("Price", text: $viewModel.price)
-                #if os(iOS)
+            #if os(iOS)
                 .keyboardType(.decimalPad)
-                #endif
+            #endif
                 .accessibilityIdentifier("item-form-price-field")
         }
     }
 
-    @ViewBuilder
     private var categorySection: some View {
         Section {
             Button {
@@ -210,7 +208,6 @@ struct ItemFormSheet: View {
         }
     }
 
-    @ViewBuilder
     private var locationSection: some View {
         Section {
             Button {
@@ -240,7 +237,6 @@ struct ItemFormSheet: View {
         }
     }
 
-    @ViewBuilder
     private var authorSection: some View {
         Section {
             Button {
@@ -270,7 +266,6 @@ struct ItemFormSheet: View {
         }
     }
 
-    @ViewBuilder
     private var hierarchySection: some View {
         Section("Hierarchy") {
             Button {
@@ -291,7 +286,6 @@ struct ItemFormSheet: View {
         }
     }
 
-    @ViewBuilder
     private var privacySection: some View {
         Section("Privacy") {
             Picker("Visibility", selection: $viewModel.visibility) {
@@ -303,7 +297,6 @@ struct ItemFormSheet: View {
         }
     }
 
-    @ViewBuilder
     private var imagesSection: some View {
         Section("Images") {
             // Existing images
@@ -352,23 +345,22 @@ struct ItemFormSheet: View {
         }
     }
 
-    @ViewBuilder
     private func pendingUploadRow(_ pending: PendingUpload) -> some View {
         HStack {
             // Local preview from file URL
             if let image = loadImage(from: pending.localURL) {
                 #if os(iOS)
-                Image(uiImage: image)
-                    .resizable()
-                    .scaledToFill()
-                    .frame(width: 60, height: 60)
-                    .clipShape(RoundedRectangle(cornerRadius: 8))
+                    Image(uiImage: image)
+                        .resizable()
+                        .scaledToFill()
+                        .frame(width: 60, height: 60)
+                        .clipShape(RoundedRectangle(cornerRadius: 8))
                 #elseif os(macOS)
-                Image(nsImage: image)
-                    .resizable()
-                    .scaledToFill()
-                    .frame(width: 60, height: 60)
-                    .clipShape(RoundedRectangle(cornerRadius: 8))
+                    Image(nsImage: image)
+                        .resizable()
+                        .scaledToFill()
+                        .frame(width: 60, height: 60)
+                        .clipShape(RoundedRectangle(cornerRadius: 8))
                 #endif
             } else {
                 RoundedRectangle(cornerRadius: 8)
@@ -384,7 +376,7 @@ struct ItemFormSheet: View {
                 if pending.status.isInProgress {
                     ProgressView(value: pending.progress)
                         .progressViewStyle(.linear)
-                } else if case .failed(let error) = pending.status {
+                } else if case let .failed(error) = pending.status {
                     Text(error)
                         .foregroundStyle(.red)
                         .font(.caption)
@@ -407,7 +399,6 @@ struct ItemFormSheet: View {
         }
     }
 
-    @ViewBuilder
     private var positionsSection: some View {
         Section {
             // Existing positions (edit mode)
@@ -597,15 +588,16 @@ struct ItemFormSheet: View {
     // MARK: - Image Helpers
 
     #if os(iOS)
-    private func loadImage(from url: URL) -> UIImage? {
-        guard let data = try? Data(contentsOf: url) else { return nil }
-        return UIImage(data: data)
-    }
+        private func loadImage(from url: URL) -> UIImage? {
+            guard let data = try? Data(contentsOf: url) else { return nil }
+            return UIImage(data: data)
+        }
+
     #elseif os(macOS)
-    private func loadImage(from url: URL) -> NSImage? {
-        guard let data = try? Data(contentsOf: url) else { return nil }
-        return NSImage(data: data)
-    }
+        private func loadImage(from url: URL) -> NSImage? {
+            guard let data = try? Data(contentsOf: url) else { return nil }
+            return NSImage(data: data)
+        }
     #endif
 
     private func handleSelectedPhotos(_ items: [PhotosPickerItem]) async {

@@ -5,8 +5,8 @@
 //  App Clips entry point
 //
 
-import SwiftUI
 import RxStorageCore
+import SwiftUI
 
 @main
 struct RxStorageClipApp: App {

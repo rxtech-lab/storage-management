@@ -5,15 +5,15 @@
 //  OAuth 2.0 authentication manager with PKCE flow
 //
 
-import Foundation
 import AuthenticationServices
+import Foundation
 import Logging
 import Observation
 
 #if canImport(UIKit)
-import UIKit
+    import UIKit
 #elseif canImport(AppKit)
-import AppKit
+    import AppKit
 #endif
 
 /// Authentication state representing the current auth status
@@ -55,14 +55,14 @@ public final class OAuthManager {
     /// Timer for periodic token refresh checks
     private var refreshTimer: Timer?
 
-    /// Presentation context provider - must be retained during auth session (iOS only)
+    // Presentation context provider - must be retained during auth session (iOS only)
     #if os(iOS)
-    private var presentationContextProvider: WebAuthenticationPresentationContextProvider?
+        private var presentationContextProvider: WebAuthenticationPresentationContextProvider?
     #endif
 
-    /// Web auth window controller for macOS
+    // Web auth window controller for macOS
     #if os(macOS)
-    private var webAuthController: WebAuthWindowController?
+        private var webAuthController: WebAuthWindowController?
     #endif
 
     /// Interval between token refresh checks (5 minutes)
@@ -172,7 +172,7 @@ public final class OAuthManager {
             URLQueryItem(name: "response_type", value: "code"),
             URLQueryItem(name: "scope", value: configuration.authScopes.joined(separator: " ")),
             URLQueryItem(name: "code_challenge", value: codeChallenge),
-            URLQueryItem(name: "code_challenge_method", value: "S256")
+            URLQueryItem(name: "code_challenge_method", value: "S256"),
         ]
 
         guard let authURL = urlComponents.url else {
@@ -184,86 +184,86 @@ public final class OAuthManager {
 
         // Platform-specific authentication
         #if os(macOS)
-        // Use WKWebView-based authentication on macOS
-        logger.info("Using WKWebView authentication for macOS")
-        let controller = WebAuthWindowController(authURL: authURL, callbackScheme: callbackURLScheme)
-        self.webAuthController = controller
+            // Use WKWebView-based authentication on macOS
+            logger.info("Using WKWebView authentication for macOS")
+            let controller = WebAuthWindowController(authURL: authURL, callbackScheme: callbackURLScheme)
+            webAuthController = controller
 
-        do {
-            let callbackURL = try await controller.start()
-            self.webAuthController = nil
-            logger.info("Callback URL: \(callbackURL)")
-            try await handleCallback(url: callbackURL, codeVerifier: codeVerifier)
-            logger.info("Authentication complete")
-        } catch {
-            self.webAuthController = nil
-            throw error
-        }
+            do {
+                let callbackURL = try await controller.start()
+                webAuthController = nil
+                logger.info("Callback URL: \(callbackURL)")
+                try await handleCallback(url: callbackURL, codeVerifier: codeVerifier)
+                logger.info("Authentication complete")
+            } catch {
+                webAuthController = nil
+                throw error
+            }
         #else
-        // Use ASWebAuthenticationSession on iOS (supports passkeys)
-        logger.debug("Creating presentation context provider")
-        self.presentationContextProvider = WebAuthenticationPresentationContextProvider()
-        logger.debug("Presentation context provider created")
+            // Use ASWebAuthenticationSession on iOS (supports passkeys)
+            logger.debug("Creating presentation context provider")
+            presentationContextProvider = WebAuthenticationPresentationContextProvider()
+            logger.debug("Presentation context provider created")
 
-        logger.debug("Entering continuation")
-        try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
-            logger.info("Inside continuation, isMainThread: \(Thread.isMainThread)")
+            logger.debug("Entering continuation")
+            try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
+                logger.info("Inside continuation, isMainThread: \(Thread.isMainThread)")
 
-            let session = ASWebAuthenticationSession(
-                url: authURL,
-                callbackURLScheme: callbackURLScheme
-            ) { [weak self] callbackURL, error in
-                self?.logger.info("Callback received, isMainThread: \(Thread.isMainThread)")
+                let session = ASWebAuthenticationSession(
+                    url: authURL,
+                    callbackURLScheme: callbackURLScheme
+                ) { [weak self] callbackURL, error in
+                    self?.logger.info("Callback received, isMainThread: \(Thread.isMainThread)")
 
-                guard let self = self else {
-                    continuation.resume(throwing: OAuthError.authenticationFailed(NSError(domain: "OAuthManager", code: -1, userInfo: [NSLocalizedDescriptionKey: "Self was deallocated"])))
-                    return
-                }
+                    guard let self = self else {
+                        continuation.resume(throwing: OAuthError.authenticationFailed(NSError(domain: "OAuthManager", code: -1, userInfo: [NSLocalizedDescriptionKey: "Self was deallocated"])))
+                        return
+                    }
 
-                Task { @MainActor in
-                    defer { self.presentationContextProvider = nil }
+                    Task { @MainActor in
+                        defer { self.presentationContextProvider = nil }
 
-                    do {
-                        if let error = error {
-                            self.logger.error("Auth error: \(error.localizedDescription)")
-                            if (error as? ASWebAuthenticationSessionError)?.code == .canceledLogin {
-                                continuation.resume(throwing: OAuthError.userCancelled)
+                        do {
+                            if let error = error {
+                                self.logger.error("Auth error: \(error.localizedDescription)")
+                                if (error as? ASWebAuthenticationSessionError)?.code == .canceledLogin {
+                                    continuation.resume(throwing: OAuthError.userCancelled)
+                                    return
+                                }
+                                continuation.resume(throwing: OAuthError.authenticationFailed(error))
                                 return
                             }
-                            continuation.resume(throwing: OAuthError.authenticationFailed(error))
-                            return
-                        }
 
-                        guard let callbackURL = callbackURL else {
-                            self.logger.error("No callback URL received")
-                            continuation.resume(throwing: OAuthError.invalidCallback)
-                            return
-                        }
+                            guard let callbackURL = callbackURL else {
+                                self.logger.error("No callback URL received")
+                                continuation.resume(throwing: OAuthError.invalidCallback)
+                                return
+                            }
 
-                        self.logger.info("Callback URL: \(callbackURL)")
-                        try await self.handleCallback(url: callbackURL, codeVerifier: codeVerifier)
-                        self.logger.info("Authentication complete")
-                        continuation.resume()
-                    } catch {
-                        self.logger.error("Callback handling error: \(error.localizedDescription)")
-                        continuation.resume(throwing: error)
+                            self.logger.info("Callback URL: \(callbackURL)")
+                            try await self.handleCallback(url: callbackURL, codeVerifier: codeVerifier)
+                            self.logger.info("Authentication complete")
+                            continuation.resume()
+                        } catch {
+                            self.logger.error("Callback handling error: \(error.localizedDescription)")
+                            continuation.resume(throwing: error)
+                        }
                     }
                 }
-            }
 
-            logger.debug("Setting presentation context provider")
-            session.presentationContextProvider = self.presentationContextProvider
-            logger.debug("Setting ephemeral session")
-            session.prefersEphemeralWebBrowserSession = true
+                logger.debug("Setting presentation context provider")
+                session.presentationContextProvider = self.presentationContextProvider
+                logger.debug("Setting ephemeral session")
+                session.prefersEphemeralWebBrowserSession = true
 
-            logger.info("Starting ASWebAuthenticationSession")
-            if !session.start() {
-                logger.error("Session failed to start")
-                continuation.resume(throwing: OAuthError.sessionStartFailed)
-            } else {
-                logger.info("Session started successfully")
+                logger.info("Starting ASWebAuthenticationSession")
+                if !session.start() {
+                    logger.error("Session failed to start")
+                    continuation.resume(throwing: OAuthError.sessionStartFailed)
+                } else {
+                    logger.info("Session started successfully")
+                }
             }
-        }
         #endif
     }
 
@@ -271,7 +271,8 @@ public final class OAuthManager {
     private func handleCallback(url: URL, codeVerifier: String) async throws {
         // Extract authorization code from callback URL
         guard let components = URLComponents(url: url, resolvingAgainstBaseURL: false),
-              let code = components.queryItems?.first(where: { $0.name == "code" })?.value else {
+              let code = components.queryItems?.first(where: { $0.name == "code" })?.value
+        else {
             throw OAuthError.invalidCallback
         }
 
@@ -301,7 +302,7 @@ public final class OAuthManager {
             "code": code,
             "redirect_uri": configuration.authRedirectURI,
             "client_id": configuration.authClientID,
-            "code_verifier": codeVerifier
+            "code_verifier": codeVerifier,
         ]
 
         request.httpBody = bodyParams
@@ -369,7 +370,8 @@ public final class OAuthManager {
         let (data, response) = try await URLSession.shared.data(for: request)
 
         guard let httpResponse = response as? HTTPURLResponse,
-              httpResponse.statusCode == 200 else {
+              httpResponse.statusCode == 200
+        else {
             throw OAuthError.userInfoFetchFailed
         }
 
@@ -513,7 +515,7 @@ public final class OAuthManager {
 
     // MARK: - PKCE Helpers
 
-    nonisolated private func generateCodeVerifier() -> String {
+    private nonisolated func generateCodeVerifier() -> String {
         var buffer = [UInt8](repeating: 0, count: 32)
         _ = SecRandomCopyBytes(kSecRandomDefault, buffer.count, &buffer)
         return Data(buffer).base64EncodedString()
@@ -522,7 +524,7 @@ public final class OAuthManager {
             .replacingOccurrences(of: "=", with: "")
     }
 
-    nonisolated private func generateCodeChallenge(from verifier: String) -> String {
+    private nonisolated func generateCodeChallenge(from verifier: String) -> String {
         guard let data = verifier.data(using: .utf8) else {
             fatalError("Failed to encode code verifier")
         }
@@ -560,7 +562,7 @@ public enum OAuthError: LocalizedError, @unchecked Sendable {
             return "Invalid authentication URL"
         case .userCancelled:
             return "Authentication cancelled by user"
-        case .authenticationFailed(let error):
+        case let .authenticationFailed(error):
             return "Authentication failed: \(error.localizedDescription)"
         case .invalidCallback:
             return "Invalid authentication callback"
@@ -579,16 +581,16 @@ public enum OAuthError: LocalizedError, @unchecked Sendable {
 // MARK: - Presentation Context Provider (iOS only)
 
 #if os(iOS)
-/// Presentation context provider for ASWebAuthenticationSession
-/// Simply returns a new ASPresentationAnchor - the framework handles platform-specific details
-private class WebAuthenticationPresentationContextProvider: NSObject, ASWebAuthenticationPresentationContextProviding {
-    private let logger = Logger(label: "com.rxlab.rxstorage.WebAuthContextProvider")
+    /// Presentation context provider for ASWebAuthenticationSession
+    /// Simply returns a new ASPresentationAnchor - the framework handles platform-specific details
+    private class WebAuthenticationPresentationContextProvider: NSObject, ASWebAuthenticationPresentationContextProviding {
+        private let logger = Logger(label: "com.rxlab.rxstorage.WebAuthContextProvider")
 
-    func presentationAnchor(for session: ASWebAuthenticationSession) -> ASPresentationAnchor {
-        logger.info("presentationAnchor called, isMainThread: \(Thread.isMainThread)")
-        // Simply return a new ASPresentationAnchor - the framework will use an appropriate
-        // presentation anchor for the current platform automatically
-        return ASPresentationAnchor()
+        func presentationAnchor(for _: ASWebAuthenticationSession) -> ASPresentationAnchor {
+            logger.info("presentationAnchor called, isMainThread: \(Thread.isMainThread)")
+            // Simply return a new ASPresentationAnchor - the framework will use an appropriate
+            // presentation anchor for the current platform automatically
+            return ASPresentationAnchor()
+        }
     }
-}
 #endif

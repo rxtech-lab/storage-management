@@ -16,6 +16,7 @@ struct AuthorListView: View {
     @State private var viewModel = AuthorListViewModel()
     @State private var showingCreateSheet = false
     @State private var isRefreshing = false
+    @State private var errorViewModel = ErrorViewModel()
     @Environment(EventViewModel.self) private var eventViewModel
 
     // Delete confirmation state
@@ -95,8 +96,11 @@ struct AuthorListView: View {
             onConfirm: {
                 if let author = authorToDelete {
                     Task {
-                        if let deletedId = try? await viewModel.deleteAuthor(author) {
+                        do {
+                            let deletedId = try await viewModel.deleteAuthor(author)
                             eventViewModel.emit(.authorDeleted(id: deletedId))
+                        } catch {
+                            errorViewModel.showError(error)
                         }
                         authorToDelete = nil
                     }
@@ -104,6 +108,12 @@ struct AuthorListView: View {
             },
             onCancel: { authorToDelete = nil }
         )
+        .onChange(of: viewModel.error != nil) { _, hasError in
+            if hasError, let error = viewModel.error {
+                errorViewModel.showError(error)
+            }
+        }
+        .showViewModelError(errorViewModel)
     }
 
     // MARK: - Authors List

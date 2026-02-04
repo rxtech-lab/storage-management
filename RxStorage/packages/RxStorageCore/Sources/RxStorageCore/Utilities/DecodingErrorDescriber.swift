@@ -23,19 +23,19 @@ import Foundation
 /// - Returns: A human-readable description of the error with context
 public func describeDecodingError(_ error: DecodingError) -> String {
     switch error {
-    case .typeMismatch(let type, let context):
+    case let .typeMismatch(type, context):
         let path = context.codingPath.map(\.stringValue).joined(separator: ".")
         return "Type mismatch: expected \(type) at \(path.isEmpty ? "root" : path), \(context.debugDescription)"
 
-    case .valueNotFound(let type, let context):
+    case let .valueNotFound(type, context):
         let path = context.codingPath.map(\.stringValue).joined(separator: ".")
         return "Value not found: expected \(type) at \(path.isEmpty ? "root" : path), \(context.debugDescription)"
 
-    case .keyNotFound(let key, let context):
+    case let .keyNotFound(key, context):
         let path = context.codingPath.map(\.stringValue).joined(separator: ".")
         return "Key not found: '\(key.stringValue)' at \(path.isEmpty ? "root" : path), \(context.debugDescription)"
 
-    case .dataCorrupted(let context):
+    case let .dataCorrupted(context):
         let path = context.codingPath.map(\.stringValue).joined(separator: ".")
         return "Data corrupted at \(path.isEmpty ? "root" : path): \(context.debugDescription)"
 

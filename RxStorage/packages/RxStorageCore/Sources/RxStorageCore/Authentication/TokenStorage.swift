@@ -80,7 +80,8 @@ public actor TokenStorage: TokenStorageProtocol {
     /// Retrieve token expiration date
     public func getExpiresAt() -> Date? {
         guard let timestampString = getFromKeychain(key: expiresAtKey),
-              let timestamp = TimeInterval(timestampString) else {
+              let timestamp = TimeInterval(timestampString)
+        else {
             return nil
         }
         return Date(timeIntervalSince1970: timestamp)
@@ -123,7 +124,7 @@ public actor TokenStorage: TokenStorageProtocol {
             kSecAttrService as String: serviceName,
             kSecAttrAccount as String: key,
             kSecValueData as String: data,
-            kSecAttrAccessible as String: kSecAttrAccessibleAfterFirstUnlock
+            kSecAttrAccessible as String: kSecAttrAccessibleAfterFirstUnlock,
         ]
 
         // Delete existing item first
@@ -143,7 +144,7 @@ public actor TokenStorage: TokenStorageProtocol {
             kSecAttrService as String: serviceName,
             kSecAttrAccount as String: key,
             kSecReturnData as String: true,
-            kSecMatchLimit as String: kSecMatchLimitOne
+            kSecMatchLimit as String: kSecMatchLimitOne,
         ]
 
         var result: AnyObject?
@@ -151,7 +152,8 @@ public actor TokenStorage: TokenStorageProtocol {
 
         guard status == errSecSuccess,
               let data = result as? Data,
-              let string = String(data: data, encoding: .utf8) else {
+              let string = String(data: data, encoding: .utf8)
+        else {
             return nil
         }
 
@@ -162,7 +164,7 @@ public actor TokenStorage: TokenStorageProtocol {
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: serviceName,
-            kSecAttrAccount as String: key
+            kSecAttrAccount as String: key,
         ]
 
         let status = SecItemDelete(query as CFDictionary)
@@ -184,9 +186,9 @@ public enum KeychainError: LocalizedError, Sendable {
         switch self {
         case .encodingFailed:
             return "Failed to encode data for Keychain"
-        case .saveFailed(let status):
+        case let .saveFailed(status):
             return "Failed to save to Keychain (status: \(status))"
-        case .deleteFailed(let status):
+        case let .deleteFailed(status):
             return "Failed to delete from Keychain (status: \(status))"
         }
     }

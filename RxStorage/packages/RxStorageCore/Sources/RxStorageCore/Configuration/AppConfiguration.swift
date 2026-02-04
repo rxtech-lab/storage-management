@@ -35,35 +35,35 @@ public class AppConfiguration: @unchecked Sendable {
         // This handles SPM test environments where Info.plist is not available
         if let baseURL = infoPlist?["API_BASE_URL"] as? String, !baseURL.isEmpty {
             // Production/development environment with proper Info.plist
-            self.apiBaseURL = baseURL
+            apiBaseURL = baseURL
 
             guard let issuer = infoPlist?["AUTH_ISSUER"] as? String, !issuer.isEmpty else {
                 fatalError("AUTH_ISSUER not configured in Info.plist")
             }
-            self.authIssuer = issuer
+            authIssuer = issuer
 
             guard let clientID = infoPlist?["AUTH_CLIENT_ID"] as? String, !clientID.isEmpty else {
                 fatalError("AUTH_CLIENT_ID not configured in Info.plist")
             }
-            self.authClientID = clientID
+            authClientID = clientID
 
             guard let redirectURI = infoPlist?["AUTH_REDIRECT_URI"] as? String, !redirectURI.isEmpty else {
                 fatalError("AUTH_REDIRECT_URI not configured in Info.plist")
             }
-            self.authRedirectURI = redirectURI
+            authRedirectURI = redirectURI
 
             if let scopesString = infoPlist?["AUTH_SCOPES"] as? String {
-                self.authScopes = scopesString.split(separator: " ").map(String.init)
+                authScopes = scopesString.split(separator: " ").map(String.init)
             } else {
-                self.authScopes = ["openid", "email", "profile", "offline_access"]
+                authScopes = ["openid", "email", "profile", "offline_access"]
             }
         } else {
             // Test environment - use placeholder values
-            self.apiBaseURL = "http://localhost:3000"
-            self.authIssuer = "https://auth.test.local"
-            self.authClientID = "test_client_id"
-            self.authRedirectURI = "rxstorage://oauth-callback"
-            self.authScopes = ["openid", "email", "profile", "offline_access"]
+            apiBaseURL = "http://localhost:3000"
+            authIssuer = "https://auth.test.local"
+            authClientID = "test_client_id"
+            authRedirectURI = "rxstorage://oauth-callback"
+            authScopes = ["openid", "email", "profile", "offline_access"]
         }
     }
 

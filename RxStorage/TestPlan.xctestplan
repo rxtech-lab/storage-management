@@ -18,6 +18,13 @@
         "identifier" : "DF6625772F29137000333552",
         "name" : "RxStorageUITests"
       }
+    },
+    {
+      "target" : {
+        "containerPath" : "container:RxStorage.xcodeproj",
+        "identifier" : "DF6625AA2F29138400333552",
+        "name" : "RxStorageClipsUITests"
+      }
     }
   ],
   "version" : 1

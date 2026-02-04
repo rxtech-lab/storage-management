@@ -7,8 +7,8 @@
 
 // Re-export all public types
 @_exported import Foundation
-@_exported import SwiftUI
 @_exported import JSONSchema
+@_exported import SwiftUI
 
 // Models
 public typealias JSPropertyType = PropertyType
@@ -16,7 +16,7 @@ public typealias JSRootSchemaType = RootSchemaType
 public typealias JSJsonSchema = JsonSchema
 public typealias JSPropertyItem = PropertyItem
 
-// Views
+/// Views
 public typealias JSSchemaEditorView = JsonSchemaEditorView
 
 // MARK: - Preview

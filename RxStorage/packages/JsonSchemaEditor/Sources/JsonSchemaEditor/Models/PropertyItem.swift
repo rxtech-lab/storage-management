@@ -27,11 +27,11 @@ public struct PropertyItem: Identifiable, Equatable, Sendable {
 
     public static func == (lhs: PropertyItem, rhs: PropertyItem) -> Bool {
         lhs.id == rhs.id &&
-        lhs.key == rhs.key &&
-        lhs.isRequired == rhs.isRequired &&
-        lhs.property.title == rhs.property.title &&
-        lhs.property.type == rhs.property.type &&
-        lhs.property.description == rhs.property.description
+            lhs.key == rhs.key &&
+            lhs.isRequired == rhs.isRequired &&
+            lhs.property.title == rhs.property.title &&
+            lhs.property.type == rhs.property.type &&
+            lhs.property.description == rhs.property.description
     }
 
     // MARK: - Mutable Accessors (create new JSONSchema when setting)
@@ -57,7 +57,8 @@ public struct PropertyItem: Identifiable, Equatable, Sendable {
     public var arrayItemsType: PropertyType {
         get {
             guard property.type == .array,
-                  let items = property.arraySchema?.items else {
+                  let items = property.arraySchema?.items
+            else {
                 return .string
             }
             return PropertyType(schemaType: items.type) ?? .string

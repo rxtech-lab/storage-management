@@ -16,7 +16,9 @@ enum AppTab: String, CaseIterable, Identifiable {
     case management = "Management"
     case settings = "Settings"
 
-    var id: String { rawValue }
+    var id: String {
+        rawValue
+    }
 
     var systemImage: String {
         switch self {
@@ -35,7 +37,9 @@ enum ManagementSection: String, CaseIterable, Identifiable {
     case authors = "Authors"
     case positionSchemas = "Position Schemas"
 
-    var id: String { rawValue }
+    var id: String {
+        rawValue
+    }
 
     var systemImage: String {
         switch self {
@@ -181,7 +185,8 @@ final class NavigationManager {
     func handleDeepLink(_ url: URL) async {
         // Extract item ID from URL path (e.g., /preview/123)
         guard let itemIdString = url.pathComponents.last,
-              let itemId = Int(itemIdString) else {
+              let itemId = Int(itemIdString)
+        else {
             deepLinkError = APIError.unsupportedQRCode(url.absoluteString)
             showDeepLinkError = true
             return

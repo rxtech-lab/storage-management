@@ -12,7 +12,12 @@
 		<key>RxStorageClips.xcscheme_^#shared#^_</key>
 		<dict>
 			<key>orderHint</key>
-			<integer>0</integer>
+			<integer>4</integer>
+		</dict>
+		<key>RxStorageClipsTests.xcscheme_^#shared#^_</key>
+		<dict>
+			<key>orderHint</key>
+			<integer>5</integer>
 		</dict>
 		<key>RxStorageTests.xcscheme_^#shared#^_</key>
 		<dict>

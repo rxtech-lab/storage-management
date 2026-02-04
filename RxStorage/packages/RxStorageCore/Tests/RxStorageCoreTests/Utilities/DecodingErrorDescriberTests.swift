@@ -6,9 +6,8 @@
 //
 
 import Foundation
-import Testing
-
 @testable import RxStorageCore
+import Testing
 
 /// Helper CodingKey for constructing test coding paths
 struct TestCodingKey: CodingKey {
@@ -16,28 +15,27 @@ struct TestCodingKey: CodingKey {
     var intValue: Int?
 
     init(_ string: String) {
-        self.stringValue = string
-        self.intValue = nil
+        stringValue = string
+        intValue = nil
     }
 
     init(intValue: Int) {
-        self.stringValue = String(intValue)
+        stringValue = String(intValue)
         self.intValue = intValue
     }
 
     init?(stringValue: String) {
         self.stringValue = stringValue
-        self.intValue = nil
+        intValue = nil
     }
 }
 
 @Suite("DecodingErrorDescriber Tests")
 struct DecodingErrorDescriberTests {
-
     // MARK: - Type Mismatch Tests
 
     @Test("Describes typeMismatch with coding path")
-    func testTypeMismatchWithPath() {
+    func typeMismatchWithPath() {
         let error = DecodingError.typeMismatch(
             Int.self,
             DecodingError.Context(
@@ -55,9 +53,9 @@ struct DecodingErrorDescriberTests {
     }
 
     @Test("Describes typeMismatch at root level")
-    func testTypeMismatchAtRoot() {
+    func typeMismatchAtRoot() {
         let error = DecodingError.typeMismatch(
-            Array<Int>.self,
+            [Int].self,
             DecodingError.Context(
                 codingPath: [],
                 debugDescription: "Expected array but found object"
@@ -74,7 +72,7 @@ struct DecodingErrorDescriberTests {
     // MARK: - Value Not Found Tests
 
     @Test("Describes valueNotFound with coding path")
-    func testValueNotFoundWithPath() {
+    func valueNotFoundWithPath() {
         let error = DecodingError.valueNotFound(
             String.self,
             DecodingError.Context(
@@ -92,7 +90,7 @@ struct DecodingErrorDescriberTests {
     }
 
     @Test("Describes valueNotFound at root level")
-    func testValueNotFoundAtRoot() {
+    func valueNotFoundAtRoot() {
         let error = DecodingError.valueNotFound(
             Int.self,
             DecodingError.Context(
@@ -110,7 +108,7 @@ struct DecodingErrorDescriberTests {
     // MARK: - Key Not Found Tests
 
     @Test("Describes keyNotFound with coding path")
-    func testKeyNotFoundWithPath() {
+    func keyNotFoundWithPath() {
         let error = DecodingError.keyNotFound(
             TestCodingKey("title"),
             DecodingError.Context(
@@ -128,7 +126,7 @@ struct DecodingErrorDescriberTests {
     }
 
     @Test("Describes keyNotFound at root level")
-    func testKeyNotFoundAtRoot() {
+    func keyNotFoundAtRoot() {
         let error = DecodingError.keyNotFound(
             TestCodingKey("id"),
             DecodingError.Context(
@@ -147,7 +145,7 @@ struct DecodingErrorDescriberTests {
     // MARK: - Data Corrupted Tests
 
     @Test("Describes dataCorrupted with coding path")
-    func testDataCorruptedWithPath() {
+    func dataCorruptedWithPath() {
         let error = DecodingError.dataCorrupted(
             DecodingError.Context(
                 codingPath: [TestCodingKey("response"), TestCodingKey("data")],
@@ -163,7 +161,7 @@ struct DecodingErrorDescriberTests {
     }
 
     @Test("Describes dataCorrupted at root level")
-    func testDataCorruptedAtRoot() {
+    func dataCorruptedAtRoot() {
         let error = DecodingError.dataCorrupted(
             DecodingError.Context(
                 codingPath: [],
@@ -181,7 +179,7 @@ struct DecodingErrorDescriberTests {
     // MARK: - Coding Path Format Tests
 
     @Test("Formats deeply nested coding path correctly")
-    func testDeeplyNestedPath() {
+    func deeplyNestedPath() {
         let error = DecodingError.typeMismatch(
             Bool.self,
             DecodingError.Context(
@@ -203,7 +201,7 @@ struct DecodingErrorDescriberTests {
     }
 
     @Test("Handles integer index keys in path")
-    func testIntegerIndexKeys() {
+    func integerIndexKeys() {
         let error = DecodingError.valueNotFound(
             String.self,
             DecodingError.Context(

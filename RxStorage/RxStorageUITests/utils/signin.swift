@@ -7,11 +7,11 @@
 import os.log
 import XCTest
 
-// Use OSLog for better visibility in test output
+/// Use OSLog for better visibility in test output
 private let logger = Logger(subsystem: "app.rxlab.RxStorageUITests", category: "signin")
 
 extension XCUIApplication {
-    func signInWithEmailAndPassword() throws {
+    func signInWithEmailAndPassword(isAppclips: Bool = false) throws {
         // Load .env file and read credentials
         let envVars = DotEnv.load()
 
@@ -24,7 +24,7 @@ extension XCUIApplication {
         logger.info("🔐 Starting sign-in flow with email: \(testEmail)")
 
         // Tap sign in button (by accessibility identifier)
-        let signInButton = self.buttons["sign-in-button"].firstMatch
+        let signInButton = buttons["sign-in-button"].firstMatch
         NSLog("⏱️  Waiting for sign-in button...")
         logger.info("⏱️  Waiting for sign-in button...")
         XCTAssertTrue(signInButton.waitForExistence(timeout: 10), "Sign-in button did not appear")
@@ -37,35 +37,35 @@ extension XCUIApplication {
 
         // Wait for Safari OAuth page to appear
         #if os(iOS)
-        let safariViewServiceApp = XCUIApplication(bundleIdentifier: "com.apple.SafariViewService")
-        NSLog("⏱️  Waiting for Safari OAuth page to load...")
-        logger.info("⏱️  Waiting for Safari OAuth page to load...")
+            let safariViewServiceApp = XCUIApplication(bundleIdentifier: "com.apple.SafariViewService")
+            NSLog("⏱️  Waiting for Safari OAuth page to load...")
+            logger.info("⏱️  Waiting for Safari OAuth page to load...")
 
-        // Wait for email field to appear (OAuth page loaded)
-        let emailField = safariViewServiceApp.textFields["you@example.com"].firstMatch
-        let passwordField = safariViewServiceApp.secureTextFields["Enter your password"].firstMatch
+            // Wait for email field to appear (OAuth page loaded)
+            let emailField = safariViewServiceApp.textFields["you@example.com"].firstMatch
+            let passwordField = safariViewServiceApp.secureTextFields["Enter your password"].firstMatch
 
-        // Use a longer timeout and provide better error message
-        let emailFieldExists = emailField.waitForExistence(timeout: 30)
-        NSLog("✅ Email field found, entering credentials...")
-        logger.info("✅ Email field found, entering credentials...")
+            // Use a longer timeout and provide better error message
+            let emailFieldExists = emailField.waitForExistence(timeout: 30)
+            NSLog("✅ Email field found, entering credentials...")
+            logger.info("✅ Email field found, entering credentials...")
 
-        // Fill in credentials from environment
-        emailField.tap()
-        emailField.typeText(testEmail)
-        NSLog("✅ Email entered")
-        logger.info("✅ Email entered")
-        emailField.typeText("\n") // Press Enter to move to next field
+            // Fill in credentials from environment
+            emailField.tap()
+            emailField.typeText(testEmail)
+            NSLog("✅ Email entered")
+            logger.info("✅ Email entered")
+            emailField.typeText("\n") // Press Enter to move to next field
         #elseif os(macOS)
 
-        let emailField = self.textFields["you@example.com"].firstMatch
-        let emailFieldExists = emailField.waitForExistence(timeout: 30)
-        XCTAssertTrue(emailFieldExists, "Failed to sign in and reach dashboard")
+            let emailField = textFields["you@example.com"].firstMatch
+            let emailFieldExists = emailField.waitForExistence(timeout: 30)
+            XCTAssertTrue(emailFieldExists, "Failed to sign in and reach dashboard")
 
-        let passwordField = self/*@START_MENU_TOKEN@*/ .secureTextFields["Enter your password"].firstMatch/*[[".groups",".secureTextFields[\"Password\"].firstMatch",".secureTextFields[\"Enter your password\"].firstMatch",".secureTextFields",".containing(.group, identifier: nil).firstMatch",".firstMatch"],[[[-1,2],[-1,1],[-1,3,2],[-1,0,1]],[[-1,2],[-1,1]],[[-1,5],[-1,4]]],[0]]@END_MENU_TOKEN@*/
+            let passwordField = self/*@START_MENU_TOKEN@*/ .secureTextFields["Enter your password"].firstMatch/*[[".groups",".secureTextFields[\"Password\"].firstMatch",".secureTextFields[\"Enter your password\"].firstMatch",".secureTextFields",".containing(.group, identifier: nil).firstMatch",".firstMatch"],[[[-1,2],[-1,1],[-1,3,2],[-1,0,1]],[[-1,2],[-1,1]],[[-1,5],[-1,4]]],[0]]@END_MENU_TOKEN@*/
 
-        emailField.click()
-        emailField.typeText(testEmail)
+            emailField.click()
+            emailField.typeText(testEmail)
         #endif
         passwordField.tap()
         passwordField.typeText(testPassword)
@@ -77,7 +77,9 @@ extension XCUIApplication {
         logger.info("✅ Sign-in form submitted, waiting for callback...")
 
         // find dashboard-view
-        let exist = self.staticTexts["dashboard-view-title"].waitForExistence(timeout: 30)
-        XCTAssertTrue(exist, "Failed to sign in and reach dashboard")
+        if !isAppclips {
+            let exist = staticTexts["dashboard-view-title"].waitForExistence(timeout: 30)
+            XCTAssertTrue(exist, "Failed to sign in and reach dashboard")
+        }
     }
 }

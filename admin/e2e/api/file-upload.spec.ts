@@ -189,7 +189,7 @@ test.describe.serial("File Upload API", () => {
   }) => {
     // Delete the item
     const response = await request.delete(`/api/v1/items/${itemId}`);
-    expect(response.status()).toBe(200);
+    expect(response.status()).toBe(204);
 
     // Verify item is deleted
     const getResponse = await request.get(`/api/v1/items/${itemId}`);

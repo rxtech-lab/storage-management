@@ -5,8 +5,8 @@
 //  Location form view model protocol
 //
 
-import Foundation
 import CoreLocation
+import Foundation
 import Observation
 
 /// Protocol for location form view model

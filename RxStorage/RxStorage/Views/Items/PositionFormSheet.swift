@@ -27,7 +27,7 @@ struct PositionFormSheet: View {
 
     /// Check if form has data
     private var hasFormData: Bool {
-        if case .object(let properties) = formData {
+        if case let .object(properties) = formData {
             return !properties.isEmpty
         }
         return false
@@ -76,23 +76,23 @@ struct PositionFormSheet: View {
         }
         .navigationTitle("Add Position")
         #if os(iOS)
-        #if os(iOS)
-        .navigationBarTitleDisplayMode(.inline)
+            #if os(iOS)
+                .navigationBarTitleDisplayMode(.inline)
+            #endif
         #endif
-        #endif
-        .toolbar {
-            ToolbarItem(placement: .cancellationAction) {
-                Button("Cancel") { dismiss() }
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { dismiss() }
+                }
             }
-        }
-        .sheet(isPresented: $showingSchemaSheet) {
-            NavigationStack {
-                PositionSchemaFormSheet(onCreated: { newSchema in
-                    positionSchemas.append(newSchema)
-                    selectedSchemaId = newSchema.id
-                })
+            .sheet(isPresented: $showingSchemaSheet) {
+                NavigationStack {
+                    PositionSchemaFormSheet(onCreated: { newSchema in
+                        positionSchemas.append(newSchema)
+                        selectedSchemaId = newSchema.id
+                    })
+                }
             }
-        }
     }
 
     // MARK: - Helper Methods

@@ -13,24 +13,24 @@ import Foundation
 public typealias JsonSchema = JSONSchema
 
 /// Extension to add convenience methods to JSONSchema
-extension JSONSchema {
+public extension JSONSchema {
     /// Get the root schema type for visual editor UI
-    public var rootSchemaType: RootSchemaType? {
+    var rootSchemaType: RootSchemaType? {
         RootSchemaType(schemaType: type)
     }
 
     /// Create an empty object schema
-    public static func emptyObject() -> JSONSchema {
+    static func emptyObject() -> JSONSchema {
         .object()
     }
 
     /// Create an empty string schema
-    public static func emptyString() -> JSONSchema {
+    static func emptyString() -> JSONSchema {
         .string()
     }
 
     /// Create a schema from a root type
-    public static func create(type rootType: RootSchemaType, title: String? = nil, schemaDescription: String? = nil) -> JSONSchema {
+    static func create(type rootType: RootSchemaType, title: String? = nil, schemaDescription: String? = nil) -> JSONSchema {
         switch rootType {
         case .object:
             return JSONSchema.object(title: title, description: schemaDescription)

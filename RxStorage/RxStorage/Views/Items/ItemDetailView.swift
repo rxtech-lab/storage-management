@@ -8,7 +8,7 @@
 import RxStorageCore
 import SwiftUI
 #if os(macOS)
-import AppKit
+    import AppKit
 #endif
 
 // MARK: - Platform Colors
@@ -16,25 +16,25 @@ import AppKit
 private extension Color {
     static var systemGroupedBackground: Color {
         #if os(iOS)
-        Color(UIColor.systemGroupedBackground)
+            Color(UIColor.systemGroupedBackground)
         #else
-        Color(nsColor: .windowBackgroundColor)
+            Color(nsColor: .windowBackgroundColor)
         #endif
     }
 
     static var secondarySystemGroupedBackground: Color {
         #if os(iOS)
-        Color(UIColor.secondarySystemGroupedBackground)
+            Color(UIColor.secondarySystemGroupedBackground)
         #else
-        Color(nsColor: .controlBackgroundColor)
+            Color(nsColor: .controlBackgroundColor)
         #endif
     }
 
     static var systemGray6: Color {
         #if os(iOS)
-        Color(UIColor.systemGray6)
+            Color(UIColor.systemGray6)
         #else
-        Color(nsColor: .systemGray)
+            Color(nsColor: .systemGray)
         #endif
     }
 }
@@ -47,25 +47,18 @@ struct ItemDetailView: View {
     let isViewOnly: Bool
 
     @State private var viewModel = ItemDetailViewModel()
+    @State private var errorViewModel = ErrorViewModel()
     @Environment(EventViewModel.self) private var eventViewModel
     @State private var showingEditSheet = false
     @State private var showingQRSheet = false
     #if os(iOS)
-    @State private var nfcWriter = NFCWriter()
-    @State private var isWritingNFC = false
-    @State private var showNFCError = false
-    @State private var nfcError: Error?
-    @State private var showNFCSuccess = false
+        @State private var nfcWriter = NFCWriter()
+        @State private var isWritingNFC = false
+        @State private var showNFCSuccess = false
     #endif
     @State private var showingAddChildSheet = false
     @State private var isAddingChild = false
-    @State private var addChildError: Error?
-    @State private var showAddChildError = false
-    @State private var removeChildError: Error?
-    @State private var showRemoveChildError = false
     @State private var showingContentSheet = false
-    @State private var contentError: Error?
-    @State private var showContentError = false
     @State private var selectedImageIndex = 0
     @State private var selectedChildForEdit: StorageItem?
     @State private var selectedContentForEdit: Content?
@@ -113,11 +106,21 @@ struct ItemDetailView: View {
                 }
             }
             .task(id: itemId) {
-                await viewModel.fetchItem(id: itemId)
-                await viewModel.fetchContentSchemas()
-                for await event in eventViewModel.stream {
-                    guard !Task.isCancelled else { break }
-                    await handleEvent(event)
+                if isViewOnly {
+                    // Use preview endpoint with optional auth (works for public items without token)
+                    await viewModel.fetchPreviewItem(id: itemId)
+                    // Skip content schemas - only needed for editing
+                } else {
+                    await viewModel.fetchItem(id: itemId)
+                    await viewModel.fetchContentSchemas()
+                }
+
+                // Only listen for events in edit mode
+                if !isViewOnly {
+                    for await event in eventViewModel.stream {
+                        guard !Task.isCancelled else { break }
+                        await handleEvent(event)
+                    }
                 }
             }
         #if os(iOS)
@@ -125,11 +128,6 @@ struct ItemDetailView: View {
                 Button("OK", role: .cancel) {}
             } message: {
                 Text("The URL has been written to the NFC tag.")
-            }
-            .alert("NFC Write Error", isPresented: $showNFCError) {
-                Button("OK", role: .cancel) {}
-            } message: {
-                Text(nfcError?.localizedDescription ?? "An unknown error occurred.")
             }
         #endif
             .sheet(isPresented: $showingAddChildSheet) {
@@ -148,16 +146,6 @@ struct ItemDetailView: View {
                     }
                 }
             }
-            .alert("Error Adding Child", isPresented: $showAddChildError) {
-                Button("OK", role: .cancel) {}
-            } message: {
-                Text(addChildError?.localizedDescription ?? "An error occurred while adding the child item.")
-            }
-            .alert("Error Removing Child", isPresented: $showRemoveChildError) {
-                Button("OK", role: .cancel) {}
-            } message: {
-                Text(removeChildError?.localizedDescription ?? "An error occurred while removing the child item.")
-            }
             .sheet(isPresented: $showingContentSheet) {
                 NavigationStack {
                     ContentFormSheet(
@@ -167,11 +155,6 @@ struct ItemDetailView: View {
                         }
                     )
                 }
-            }
-            .alert("Content Error", isPresented: $showContentError) {
-                Button("OK", role: .cancel) {}
-            } message: {
-                Text(contentError?.localizedDescription ?? "An error occurred.")
             }
             .sheet(item: $selectedChildForEdit) { child in
                 NavigationStack {
@@ -199,11 +182,11 @@ struct ItemDetailView: View {
                     )
                 }
             }
+            .showViewModelError(errorViewModel)
     }
 
     // MARK: - Item Content
 
-    @ViewBuilder
     private func itemContent(_ item: StorageItemDetail) -> some View {
         ScrollView {
             VStack(spacing: 0) {
@@ -241,7 +224,6 @@ struct ItemDetailView: View {
 
     // MARK: - Toolbar Menu
 
-    @ViewBuilder
     private func toolbarMenu(_ item: StorageItemDetail) -> some View {
         Menu {
             Button {
@@ -257,12 +239,12 @@ struct ItemDetailView: View {
             }
 
             #if os(iOS)
-            Button {
-                Task { await writeToNFC(previewUrl: item.previewUrl) }
-            } label: {
-                Label(isWritingNFC ? "Writing..." : "Write to NFC Tag", systemImage: "wave.3.right")
-            }
-            .disabled(isWritingNFC)
+                Button {
+                    Task { await writeToNFC(previewUrl: item.previewUrl) }
+                } label: {
+                    Label(isWritingNFC ? "Writing..." : "Write to NFC Tag", systemImage: "wave.3.right")
+                }
+                .disabled(isWritingNFC)
             #endif
         } label: {
             Label("More", systemImage: "ellipsis.circle")
@@ -273,18 +255,18 @@ struct ItemDetailView: View {
 
     private func handleEvent(_ event: AppEvent) async {
         switch event {
-        case .itemUpdated(let id) where id == itemId:
+        case let .itemUpdated(id) where id == itemId:
             guard !Task.isCancelled else { return }
             isRefreshing = true
             await viewModel.refresh()
             isRefreshing = false
-        case .contentCreated(let iId, _) where iId == itemId,
+        case let .contentCreated(iId, _) where iId == itemId,
              .contentDeleted(let iId, _) where iId == itemId:
             guard !Task.isCancelled else { return }
             isRefreshing = true
             await viewModel.refresh()
             isRefreshing = false
-        case .childAdded(let pId, _) where pId == itemId,
+        case let .childAdded(pId, _) where pId == itemId,
              .childRemoved(let pId, _) where pId == itemId:
             guard !Task.isCancelled else { return }
             isRefreshing = true
@@ -298,24 +280,22 @@ struct ItemDetailView: View {
     // MARK: - NFC Writing
 
     #if os(iOS)
-    private func writeToNFC(previewUrl: String) async {
-        isWritingNFC = true
-        defer { isWritingNFC = false }
-        do {
-            try await nfcWriter.writeToNfcChip(url: previewUrl)
-            showNFCSuccess = true
-        } catch NFCWriterError.cancelled {
-            // User cancelled - do nothing (silent dismissal)
-        } catch {
-            nfcError = error
-            showNFCError = true
+        private func writeToNFC(previewUrl: String) async {
+            isWritingNFC = true
+            defer { isWritingNFC = false }
+            do {
+                try await nfcWriter.writeToNfcChip(url: previewUrl)
+                showNFCSuccess = true
+            } catch NFCWriterError.cancelled {
+                // User cancelled - do nothing (silent dismissal)
+            } catch {
+                errorViewModel.showError(error)
+            }
         }
-    }
     #endif
 
     // MARK: - Image Carousel
 
-    @ViewBuilder
     private func stretchyImageCarousel(_ images: [Components.Schemas.SignedImageSchema]) -> some View {
         GeometryReader { geometry in
             let minY = geometry.frame(in: .global).minY
@@ -326,7 +306,7 @@ struct ItemDetailView: View {
                 ForEach(Array(images.enumerated()), id: \.offset) { index, image in
                     AsyncImage(url: URL(string: image.url)) { phase in
                         switch phase {
-                        case .success(let loadedImage):
+                        case let .success(loadedImage):
                             loadedImage
                                 .resizable()
                                 .scaledToFill()
@@ -365,7 +345,6 @@ struct ItemDetailView: View {
 
     // MARK: - Header Card
 
-    @ViewBuilder
     private func headerCard(_ item: StorageItemDetail) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
@@ -404,7 +383,6 @@ struct ItemDetailView: View {
 
     // MARK: - Details Card
 
-    @ViewBuilder
     private func detailsCard(_ item: StorageItemDetail) -> some View {
         VStack(alignment: .leading, spacing: 12) {
             Label("Details", systemImage: "info.circle")
@@ -492,7 +470,6 @@ struct ItemDetailView: View {
         .cardStyle()
     }
 
-    @ViewBuilder
     private func childRowWithActions(_ child: StorageItem) -> some View {
         HStack {
             NavigationLink(value: child) {
@@ -547,8 +524,7 @@ struct ItemDetailView: View {
             let (parentId, childId) = try await viewModel.addChildById(childId)
             eventViewModel.emit(.childAdded(parentId: parentId, childId: childId))
         } catch {
-            addChildError = error
-            showAddChildError = true
+            errorViewModel.showError(error)
         }
     }
 
@@ -557,8 +533,7 @@ struct ItemDetailView: View {
             let (parentId, childId) = try await viewModel.removeChildById(childId)
             eventViewModel.emit(.childRemoved(parentId: parentId, childId: childId))
         } catch {
-            removeChildError = error
-            showRemoveChildError = true
+            errorViewModel.showError(error)
         }
     }
 
@@ -640,7 +615,6 @@ struct ItemDetailView: View {
 
     // MARK: - Content Row
 
-    @ViewBuilder
     private func contentRow(_ content: Content) -> some View {
         HStack(alignment: .top, spacing: 12) {
             Image(systemName: content.type.icon)
@@ -721,8 +695,7 @@ struct ItemDetailView: View {
             let (itemId, contentId) = try await viewModel.createContent(type: type, formData: data)
             eventViewModel.emit(.contentCreated(itemId: itemId, contentId: contentId))
         } catch {
-            contentError = error
-            showContentError = true
+            errorViewModel.showError(error)
         }
     }
 
@@ -731,8 +704,7 @@ struct ItemDetailView: View {
             let (itemId, contentId) = try await viewModel.deleteContent(id: id)
             eventViewModel.emit(.contentDeleted(itemId: itemId, contentId: contentId))
         } catch {
-            contentError = error
-            showContentError = true
+            errorViewModel.showError(error)
         }
     }
 
@@ -741,8 +713,7 @@ struct ItemDetailView: View {
             try await viewModel.updateContent(id: id, type: type, formData: data)
             await viewModel.refresh()
         } catch {
-            contentError = error
-            showContentError = true
+            errorViewModel.showError(error)
         }
     }
 }

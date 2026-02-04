@@ -5,8 +5,8 @@
 //  Author detail view
 //
 
-import SwiftUI
 import RxStorageCore
+import SwiftUI
 
 /// Author detail view
 struct AuthorDetailView: View {
@@ -44,32 +44,31 @@ struct AuthorDetailView: View {
         }
         .navigationTitle(viewModel.author?.name ?? "Author")
         #if os(iOS)
-        .navigationBarTitleDisplayMode(.inline)
+            .navigationBarTitleDisplayMode(.inline)
         #endif
-        .toolbar {
-            ToolbarItem(placement: .primaryAction) {
-                Button {
-                    showingEditSheet = true
-                } label: {
-                    Label("Edit", systemImage: "pencil")
+            .toolbar {
+                ToolbarItem(placement: .primaryAction) {
+                    Button {
+                        showingEditSheet = true
+                    } label: {
+                        Label("Edit", systemImage: "pencil")
+                    }
                 }
             }
-        }
-        .sheet(isPresented: $showingEditSheet) {
-            if let author = viewModel.author {
-                NavigationStack {
-                    AuthorFormSheet(author: author)
+            .sheet(isPresented: $showingEditSheet) {
+                if let author = viewModel.author {
+                    NavigationStack {
+                        AuthorFormSheet(author: author)
+                    }
                 }
             }
-        }
-        .task(id: authorId) {
-            await viewModel.fetchAuthor(id: authorId)
-        }
+            .task(id: authorId) {
+                await viewModel.fetchAuthor(id: authorId)
+            }
     }
 
     // MARK: - Author Header
 
-    @ViewBuilder
     private func authorHeader(_ author: Author) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             Text(author.name)
@@ -86,7 +85,6 @@ struct AuthorDetailView: View {
 
     // MARK: - Author Details
 
-    @ViewBuilder
     private func authorDetails(_ author: Author) -> some View {
         VStack(alignment: .leading, spacing: 12) {
             DetailRow(

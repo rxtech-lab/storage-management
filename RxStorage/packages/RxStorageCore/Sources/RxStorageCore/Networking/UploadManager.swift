@@ -25,8 +25,8 @@ public actor UploadManager: NSObject {
     /// URLSession for uploads with delegate
     private lazy var uploadSession: URLSession = {
         let config = URLSessionConfiguration.default
-        config.timeoutIntervalForRequest = 300  // 5 minutes
-        config.timeoutIntervalForResource = 600  // 10 minutes
+        config.timeoutIntervalForRequest = 300 // 5 minutes
+        config.timeoutIntervalForResource = 600 // 10 minutes
         return URLSession(configuration: config, delegate: self, delegateQueue: nil)
     }()
 
@@ -41,7 +41,7 @@ public actor UploadManager: NSObject {
 
     // MARK: - Initialization
 
-    private override init() {
+    override private init() {
         super.init()
     }
 
@@ -90,9 +90,9 @@ public actor UploadManager: NSObject {
             )
             let response = try await client.getPresignedUploadUrl(.init(body: .json(request)))
             switch response {
-            case .created(let createdResponse):
+            case let .created(createdResponse):
                 presignedResponse = try createdResponse.body.json
-            case .badRequest(let badRequest):
+            case let .badRequest(badRequest):
                 let error = try? badRequest.body.json
                 throw APIError.badRequest(error?.error ?? "Invalid request")
             case .unauthorized:
@@ -103,7 +103,7 @@ public actor UploadManager: NSObject {
                 throw APIError.notFound
             case .internalServerError:
                 throw APIError.serverError("Internal server error")
-            case .undocumented(let statusCode, _):
+            case let .undocumented(statusCode, _):
                 throw APIError.serverError("HTTP \(statusCode)")
             }
         } catch let error as APIError {
@@ -200,10 +200,10 @@ public actor UploadManager: NSObject {
 
 extension UploadManager: URLSessionTaskDelegate {
     /// Called when upload progress is made
-    nonisolated public func urlSession(
-        _ session: URLSession,
+    public nonisolated func urlSession(
+        _: URLSession,
         task: URLSessionTask,
-        didSendBodyData bytesSent: Int64,
+        didSendBodyData _: Int64,
         totalBytesSent: Int64,
         totalBytesExpectedToSend: Int64
     ) {
@@ -217,8 +217,8 @@ extension UploadManager: URLSessionTaskDelegate {
     }
 
     /// Called when task completes (success or failure)
-    nonisolated public func urlSession(
-        _ session: URLSession,
+    public nonisolated func urlSession(
+        _: URLSession,
         task: URLSessionTask,
         didCompleteWithError error: Error?
     ) {
@@ -252,7 +252,7 @@ extension UploadManager: URLSessionTaskDelegate {
         // Handle cancellation
         if let error = error {
             let nsError = error as NSError
-            if nsError.domain == NSURLErrorDomain && nsError.code == NSURLErrorCancelled {
+            if nsError.domain == NSURLErrorDomain, nsError.code == NSURLErrorCancelled {
                 // Cancellation is handled in cancel() method
                 logger.info("Upload task was cancelled", metadata: [
                     "taskIdentifier": "\(taskIdentifier)",
@@ -269,7 +269,7 @@ extension UploadManager: URLSessionTaskDelegate {
 
         // Check HTTP response
         if let httpResponse = response as? HTTPURLResponse {
-            if httpResponse.statusCode >= 200 && httpResponse.statusCode < 300 {
+            if httpResponse.statusCode >= 200, httpResponse.statusCode < 300 {
                 let result = UploadResult(
                     fileId: taskInfo.presignedResponse.fileId,
                     publicUrl: taskInfo.presignedResponse.publicUrl,

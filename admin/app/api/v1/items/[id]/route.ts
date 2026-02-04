@@ -14,6 +14,7 @@ import {
   ItemDetailResponseSchema,
   ItemResponseSchema,
 } from "@/lib/schemas/items";
+import { stat } from "fs";
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -55,7 +56,10 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     if (session.user.email) {
       const whitelisted = await isEmailWhitelisted(itemId, session.user.email);
       if (!whitelisted) {
-        return NextResponse.json({ error: "Permission denied" }, { status: 403 });
+        return NextResponse.json(
+          { error: "Permission denied" },
+          { status: 403 },
+        );
       }
     } else {
       // No email means no whitelist access possible
@@ -69,7 +73,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 async function buildItemResponse(
   item: NonNullable<Awaited<ReturnType<typeof getItem>>>,
   itemId: number,
-  userId: string | null
+  userId: string | null,
 ) {
   const previewUrl = `${process.env.NEXT_PUBLIC_URL}/preview/item/${item.id}`;
 
@@ -110,7 +114,10 @@ async function buildItemResponse(
   const validated = ItemDetailResponseSchema.safeParse(responseData);
   if (!validated.success) {
     console.error("Validation error:", validated.error.errors);
-    return NextResponse.json({ error: "Invalid response data" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Invalid response data" },
+      { status: 500 },
+    );
   }
   return NextResponse.json(validated.data);
 }
@@ -149,12 +156,8 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
           : [];
 
       const responseData = { ...result.data, images, previewUrl };
-      const validated = ItemResponseSchema.safeParse(responseData);
-      if (!validated.success) {
-        console.error("Validation error:", validated.error.errors);
-        return NextResponse.json({ error: "Invalid response data" }, { status: 500 });
-      }
-      return NextResponse.json(validated.data);
+      const validated = ItemResponseSchema.parse(responseData);
+      return NextResponse.json(validated);
     } else if (result.error === "Permission denied") {
       return NextResponse.json({ error: result.error }, { status: 403 });
     } else {
@@ -189,9 +192,11 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
   const result = await deleteItemAction(parseInt(id), session.user.id);
 
   if (result.success) {
-    return NextResponse.json({ success: true });
+    return new NextResponse(null, { status: 204 });
   } else if (result.error === "Permission denied") {
     return NextResponse.json({ error: result.error }, { status: 403 });
+  } else if (result.error === "Item not found") {
+    return NextResponse.json({ error: result.error }, { status: 404 });
   } else {
     return NextResponse.json({ error: result.error }, { status: 400 });
   }

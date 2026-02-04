@@ -27,90 +27,39 @@ struct AppClipRootView: View {
     @State private var isAuthenticating = false
     @State private var authError: String?
 
-    // Animation states for sign-in view
-    @State private var showSignInTitle = false
-    @State private var showSignInButton = false
-
-    // Animation states for access denied view
-    @State private var showDeniedTitle = false
-    @State private var showDeniedButton = false
-
-    // Sign out confirmation state
+    /// Sign out confirmation state
     @State private var showSignOutConfirmation = false
-    @State private var showTryDifferentAccountConfirmation = false
 
     var body: some View {
         NavigationStack {
             Group {
                 if needsAuth {
-                    // Show sign-in view when authentication is required
-                    signInView
+                    AppClipSignInView(
+                        authError: authError,
+                        isAuthenticating: isAuthenticating,
+                        onSignIn: { Task { await signIn() } }
+                    )
                 } else if accessDenied {
-                    // Show access denied error
-                    accessDeniedView
+                    AppClipAccessDeniedView(
+                        userEmail: oauthManager.currentUser?.email,
+                        onTryDifferentAccount: { Task { await tryDifferentAccount() } }
+                    )
                 } else if let error = parseError {
-                    // Show error if URL parsing failed
                     ContentUnavailableView(
                         "Invalid URL",
                         systemImage: "exclamationmark.triangle",
                         description: Text(error)
                     )
+                    .accessibilityIdentifier("invalid-url")
                 } else if viewModel.isLoading {
-                    // Loading state
-                    ZStack {
-                        AnimatedGradientBackground()
-                        ProgressView("Loading...")
-                    }
+                    loadingView
                 } else if let id = itemId, viewModel.item != nil {
-                    // Show item detail using shared view
-                    ItemDetailView(itemId: id, isViewOnly: true)
-                        .toolbar {
-                            ToolbarItem(placement: .navigationBarTrailing) {
-                                Menu {
-                                    Button(role: .destructive) {
-                                        showSignOutConfirmation = true
-                                    } label: {
-                                        Label("Sign Out", systemImage: "rectangle.portrait.and.arrow.right")
-                                    }
-                                } label: {
-                                    Image(systemName: "ellipsis.circle")
-                                }
-                            }
-                        }
-                        .confirmationDialog(
-                            title: "Sign Out",
-                            message: "Are you sure you want to sign out?",
-                            confirmButtonTitle: "Sign Out",
-                            isPresented: $showSignOutConfirmation
-                        ) {
-                            Task {
-                                try? await TokenStorage.shared.clearAll()
-                                await oauthManager.logout()
-                                await fetchItem(id)
-                            }
-                        }
+                    itemDetailView(id: id)
                 } else if let error = viewModel.error {
-                    // Show fetch error
-                    VStack {
-                        ContentUnavailableView(
-                            "Error Loading Item",
-                            systemImage: "exclamationmark.triangle",
-                            description: Text(error.localizedDescription)
-                        )
-
-                        Button("Retry") {
-                            Task {
-                                if let id = itemId {
-                                    await fetchItem(id)
-                                }
-                            }
-                        }
-                    }
+                    errorView(error: error)
                 } else if itemId == nil {
-                    // Waiting for URL
                     ProgressView("Waiting for URL...")
                 } else {
-                    // Loading state while fetching
                     ProgressView("Loading...")
                 }
             }
@@ -124,182 +73,70 @@ struct AppClipRootView: View {
         .onOpenURL { url in
             parseItemId(from: url)
         }
+        .onAppear {
+            // Support launch argument for UI testing
+            // Launch arguments with format "-key value" are accessible via UserDefaults
+            if let urlString = UserDefaults.standard.string(forKey: "AppClipURLKey"),
+               let url = URL(string: urlString)
+            {
+                parseItemId(from: url)
+            }
+        }
     }
 
-    // MARK: - Sign In View
+    // MARK: - Subviews
 
-    private var signInView: some View {
+    private var loadingView: some View {
         ZStack {
             AnimatedGradientBackground()
+            ProgressView("Loading...")
+        }
+    }
 
-            VStack(spacing: 0) {
-                Spacer(minLength: 80)
-
-                AnimatedSecurityIcon(style: .lock)
-
-                Spacer()
-                    .frame(height: 24)
-
-                // Title with animation
-                Text("Sign In Required")
-                    .font(.title2)
-                    .fontWeight(.bold)
-                    .opacity(showSignInTitle ? 1 : 0)
-                    .offset(y: showSignInTitle ? 0 : 15)
-
-                Spacer()
-                    .frame(height: 12)
-
-                // Description
-                Text("This item is private. Please sign in to view it.")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal, 32)
-                    .opacity(showSignInTitle ? 1 : 0)
-                    .offset(y: showSignInTitle ? 0 : 10)
-
-                Spacer()
-
-                // Error and button section
-                VStack(spacing: 16) {
-                    AuthErrorBanner(message: authError)
-                        .padding(.horizontal, 32)
-
-                    PrimaryAuthButton(
-                        "Sign In with RxLab",
-                        isLoading: isAuthenticating
-                    ) {
-                        Task {
-                            await signIn()
+    private func itemDetailView(id: Int) -> some View {
+        ItemDetailView(itemId: id, isViewOnly: true)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Menu {
+                        Button(role: .destructive) {
+                            showSignOutConfirmation = true
+                        } label: {
+                            Label("Sign Out", systemImage: "rectangle.portrait.and.arrow.right")
                         }
+                    } label: {
+                        Image(systemName: "ellipsis.circle")
                     }
-                    .padding(.horizontal, 90)
-                    .opacity(showSignInButton ? 1 : 0)
-                    .scaleEffect(showSignInButton ? 1 : 0.95)
                 }
-
-                Spacer()
-                    .frame(height: 60)
             }
-        }
-        .onAppear {
-            triggerSignInAnimations()
-        }
-    }
-
-    private func triggerSignInAnimations() {
-        withAnimation(.easeOut(duration: 0.5).delay(0.2)) {
-            showSignInTitle = true
-        }
-
-        withAnimation(.spring(response: 0.5, dampingFraction: 0.7).delay(0.5)) {
-            showSignInButton = true
-        }
-    }
-
-    // MARK: - Access Denied View
-
-    private var accessDeniedView: some View {
-        ZStack {
-            AnimatedGradientBackground()
-
-            VStack(spacing: 0) {
-                Spacer(minLength: 80)
-
-                AnimatedSecurityIcon(style: .denied)
-
-                Spacer()
-                    .frame(height: 24)
-
-                // Title with animation
-                Text("Access Denied")
-                    .font(.title2)
-                    .fontWeight(.bold)
-                    .opacity(showDeniedTitle ? 1 : 0)
-                    .offset(y: showDeniedTitle ? 0 : 15)
-
-                Spacer()
-                    .frame(height: 12)
-
-                // Description
-                Text("You don't have permission to view this item. Contact the owner to request access.")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal, 32)
-                    .opacity(showDeniedTitle ? 1 : 0)
-                    .offset(y: showDeniedTitle ? 0 : 10)
-
-                Spacer()
-                    .frame(height: 24)
-
-                // Signed in as indicator
-                if let user = oauthManager.currentUser, let email = user.email {
-                    HStack(spacing: 6) {
-                        Image(systemName: "person.circle.fill")
-                            .font(.caption)
-                        Text("Signed in as \(email)")
-                            .font(.caption)
-                    }
-                    .foregroundStyle(.tertiary)
-                    .opacity(showDeniedTitle ? 1 : 0)
+            .confirmationDialog(
+                title: "Sign Out",
+                message: "Are you sure you want to sign out?",
+                confirmButtonTitle: "Sign Out",
+                isPresented: $showSignOutConfirmation
+            ) {
+                Task {
+                    try? await TokenStorage.shared.clearAll()
+                    await oauthManager.logout()
+                    await fetchItem(id)
                 }
-
-                Spacer()
-
-                // Try different account button
-                SecondaryAuthButton(
-                    "Try Different Account",
-                    icon: "arrow.triangle.2.circlepath"
-                ) {
-                    showTryDifferentAccountConfirmation = true
-                }
-                .opacity(showDeniedButton ? 1 : 0)
-                .confirmationDialog(
-                    title: "Sign Out",
-                    message: "Are you sure you want to sign out and try a different account?",
-                    confirmButtonTitle: "Sign Out",
-                    isPresented: $showTryDifferentAccountConfirmation
-                ) {
-                    Task {
-                        await tryDifferentAccount()
-                    }
-                }
-
-                Spacer()
-                    .frame(height: 60)
             }
-        }
-        .onAppear {
-            triggerDeniedAnimations()
-        }
     }
 
-    private func triggerDeniedAnimations() {
-        withAnimation(.easeOut(duration: 0.5).delay(0.2)) {
-            showDeniedTitle = true
-        }
+    private func errorView(error: Error) -> some View {
+        VStack {
+            ContentUnavailableView(
+                "Error Loading Item",
+                systemImage: "exclamationmark.triangle",
+                description: Text(error.localizedDescription)
+            )
 
-        withAnimation(.spring(response: 0.5, dampingFraction: 0.7).delay(0.6)) {
-            showDeniedButton = true
-        }
-    }
-
-    private func tryDifferentAccount() async {
-        // Clear tokens and sign out
-        try? await TokenStorage.shared.clearAll()
-        await oauthManager.logout()
-
-        // Reset animation states
-        showSignInTitle = false
-        showSignInButton = false
-        showDeniedTitle = false
-        showDeniedButton = false
-
-        // Retry fetching the item (will show sign-in view again)
-        if let id = itemId {
-            await fetchItem(id)
+            Button("Retry") {
+                Task {
+                    if let id = itemId {
+                        await fetchItem(id)
+                    }
+                }
+            }
         }
     }
 
@@ -324,7 +161,6 @@ struct AppClipRootView: View {
            let id = Int(pathComponents[3])
         {
             itemId = id
-            // Start fetching the item
             Task {
                 await fetchItem(id)
             }
@@ -349,10 +185,8 @@ struct AppClipRootView: View {
         if let error = viewModel.error as? APIError {
             switch error {
             case .unauthorized:
-                // Private item - need to sign in
                 needsAuth = true
             case .forbidden:
-                // Signed in but not whitelisted
                 accessDenied = true
             default:
                 break
@@ -360,7 +194,7 @@ struct AppClipRootView: View {
         }
     }
 
-    // MARK: - Sign In
+    // MARK: - Authentication
 
     private func signIn() async {
         isAuthenticating = true
@@ -378,6 +212,17 @@ struct AppClipRootView: View {
         }
 
         isAuthenticating = false
+    }
+
+    private func tryDifferentAccount() async {
+        // Clear tokens and sign out
+        try? await TokenStorage.shared.clearAll()
+        await oauthManager.logout()
+
+        // Retry fetching the item (will show sign-in view again)
+        if let id = itemId {
+            await fetchItem(id)
+        }
     }
 }
 

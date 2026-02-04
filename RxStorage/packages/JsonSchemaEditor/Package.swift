@@ -12,7 +12,7 @@ let package = Package(
         .library(
             name: "JsonSchemaEditor",
             targets: ["JsonSchemaEditor"]
-        )
+        ),
     ],
     dependencies: [
         .package(url: "https://github.com/nalexn/ViewInspector.git", from: "0.10.0"),

@@ -3,15 +3,14 @@
 //  JsonSchemaEditorTests
 //
 
-import Testing
 import JSONSchema
 @testable import JsonSchemaEditor
+import Testing
 
 @Suite("JsonSchema Model Tests")
 struct JsonSchemaTests {
-
     @Test("PropertyType has all expected cases")
-    func testPropertyTypeCases() {
+    func propertyTypeCases() {
         let allCases = PropertyType.allCases
         #expect(allCases.count == 5)
         #expect(allCases.contains(.string))
@@ -22,7 +21,7 @@ struct JsonSchemaTests {
     }
 
     @Test("RootSchemaType has all expected cases")
-    func testRootSchemaTypeCases() {
+    func rootSchemaTypeCases() {
         let allCases = RootSchemaType.allCases
         #expect(allCases.count == 6)
         #expect(allCases.contains(.object))
@@ -31,19 +30,19 @@ struct JsonSchemaTests {
     }
 
     @Test("PropertyType displayLabel is capitalized")
-    func testPropertyTypeDisplayLabel() {
+    func propertyTypeDisplayLabel() {
         #expect(PropertyType.string.displayLabel == "String")
         #expect(PropertyType.integer.displayLabel == "Integer")
     }
 
     @Test("RootSchemaType typeDescription is meaningful")
-    func testRootSchemaTypeDescription() {
+    func rootSchemaTypeDescription() {
         #expect(RootSchemaType.object.typeDescription.contains("properties"))
         #expect(RootSchemaType.array.typeDescription.contains("List") || RootSchemaType.array.typeDescription.contains("items"))
     }
 
     @Test("PropertyType schemaType conversion")
-    func testPropertyTypeSchemaTypeConversion() {
+    func propertyTypeSchemaTypeConversion() {
         #expect(PropertyType.string.schemaType == .string)
         #expect(PropertyType.number.schemaType == .number)
         #expect(PropertyType.integer.schemaType == .integer)
@@ -52,14 +51,14 @@ struct JsonSchemaTests {
     }
 
     @Test("PropertyType init from schemaType")
-    func testPropertyTypeFromSchemaType() {
+    func propertyTypeFromSchemaType() {
         #expect(PropertyType(schemaType: .string) == .string)
         #expect(PropertyType(schemaType: .number) == .number)
         #expect(PropertyType(schemaType: .object) == nil)
     }
 
     @Test("JSONSchema object factory method")
-    func testJsonSchemaObjectFactory() {
+    func jsonSchemaObjectFactory() {
         let schema = JSONSchema.object(
             title: "Person",
             description: "A person object",
@@ -75,31 +74,31 @@ struct JsonSchemaTests {
     }
 
     @Test("JSONSchema rootSchemaType for object")
-    func testJsonSchemaObjectRootType() {
+    func jsonSchemaObjectRootType() {
         let schema = JSONSchema.object()
         #expect(schema.rootSchemaType == .object)
     }
 
     @Test("JSONSchema rootSchemaType for array")
-    func testJsonSchemaArrayRootType() {
+    func jsonSchemaArrayRootType() {
         let schema = JSONSchema.array()
         #expect(schema.rootSchemaType == .array)
     }
 
     @Test("JSONSchema rootSchemaType for string")
-    func testJsonSchemaStringRootType() {
+    func jsonSchemaStringRootType() {
         let schema = JSONSchema.string()
         #expect(schema.rootSchemaType == .string)
     }
 
     @Test("JSONSchema emptyObject creates object schema")
-    func testJsonSchemaEmptyObject() {
+    func jsonSchemaEmptyObject() {
         let schema = JSONSchema.emptyObject()
         #expect(schema.type == .object)
     }
 
     @Test("JSONSchema create method")
-    func testJsonSchemaCreate() {
+    func jsonSchemaCreate() {
         let objectSchema = JSONSchema.create(type: .object)
         #expect(objectSchema.type == .object)
 
@@ -108,7 +107,7 @@ struct JsonSchemaTests {
     }
 
     @Test("PropertyItem initialization")
-    func testPropertyItemInit() {
+    func propertyItemInit() {
         let item = PropertyItem(
             key: "testKey",
             property: JSONSchema.boolean(),
@@ -122,7 +121,7 @@ struct JsonSchemaTests {
     }
 
     @Test("PropertyItem default values")
-    func testPropertyItemDefaults() {
+    func propertyItemDefaults() {
         let item = PropertyItem()
         #expect(item.key == "")
         #expect(item.property.type == .string)
@@ -130,7 +129,7 @@ struct JsonSchemaTests {
     }
 
     @Test("PropertyItem propertyType accessor")
-    func testPropertyItemPropertyType() {
+    func propertyItemPropertyType() {
         var item = PropertyItem(property: JSONSchema.integer())
         #expect(item.propertyType == .integer)
 
@@ -139,7 +138,7 @@ struct JsonSchemaTests {
     }
 
     @Test("PropertyItem propertyDescription accessor")
-    func testPropertyItemPropertyDescription() {
+    func propertyItemPropertyDescription() {
         var item = PropertyItem(property: JSONSchema.string(description: "Test"))
         #expect(item.propertyDescription == "Test")
 

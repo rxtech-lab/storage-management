@@ -10,11 +10,8 @@ import Foundation
 
 /// Helper methods for creating test data
 enum TestHelpers {
-
     /// Default test date (2024-01-01 00:00:00 UTC)
-    static let defaultDate: Date = {
-        ISO8601DateFormatter().date(from: "2024-01-01T00:00:00Z")!
-    }()
+    static let defaultDate: Date = ISO8601DateFormatter().date(from: "2024-01-01T00:00:00Z")!
 
     /// Default test user ID
     static let defaultUserId = "test-user-id"

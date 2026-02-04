@@ -9,21 +9,49 @@ import XCTest
 extension XCUIApplication {
     // MARK: - Navigation
 
-    var itemsTab: XCUIElement { self.buttons["Items"].firstMatch }
+    var itemsTab: XCUIElement {
+        buttons["Items"].firstMatch
+    }
 
     // MARK: - Item List
 
-    var newItemButton: XCUIElement { self.buttons["item-list-new-button"].firstMatch }
-    var itemRow: XCUIElement { self.staticTexts["item-row"] }
+    var newItemButton: XCUIElement {
+        buttons["item-list-new-button"].firstMatch
+    }
+
+    var itemRow: XCUIElement {
+        staticTexts["item-row"]
+    }
 
     // MARK: - Item Form
 
-    var itemTitleField: XCUIElement { self.textFields["item-form-title-field"].firstMatch }
-    var itemDescriptionField: XCUIElement { self.textFields["item-form-description-field"].firstMatch }
-    var itemPriceField: XCUIElement { self.textFields["item-form-price-field"].firstMatch }
-    var itemFormSubmitButton: XCUIElement { self.buttons["item-form-submit-button"].firstMatch }
+    var itemTitleField: XCUIElement {
+        textFields["item-form-title-field"].firstMatch
+    }
+
+    var itemDescriptionField: XCUIElement {
+        textFields["item-form-description-field"].firstMatch
+    }
+
+    var itemPriceField: XCUIElement {
+        textFields["item-form-price-field"].firstMatch
+    }
+
+    var itemFormSubmitButton: XCUIElement {
+        buttons["item-form-submit-button"].firstMatch
+    }
 
     // MARK: - Item Detail
 
-    var itemDetailTitle: XCUIElement { self.staticTexts["item-detail-title"].firstMatch }
+    var itemDetailTitle: XCUIElement {
+        staticTexts["item-detail-title"].firstMatch
+    }
+
+    var appClipsSignInRequired: XCUIElement {
+        staticTexts["app-clips-sign-in-required"].firstMatch
+    }
+
+    var appClipsAccessDenined: XCUIElement {
+        staticTexts["app-clips-access-denied"].firstMatch
+    }
 }

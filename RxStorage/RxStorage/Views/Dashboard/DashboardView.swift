@@ -186,9 +186,9 @@ struct DashboardView: View {
         .padding()
         .background {
             #if os(iOS)
-            Color(.secondarySystemBackground)
+                Color(.secondarySystemBackground)
             #elseif os(macOS)
-            Color(nsColor: .controlBackgroundColor)
+                Color(nsColor: .controlBackgroundColor)
             #endif
         }
         .cornerRadius(12)
@@ -284,9 +284,9 @@ struct StatsCardView: View {
         .padding()
         .background {
             #if os(iOS)
-            Color(.secondarySystemBackground)
+                Color(.secondarySystemBackground)
             #elseif os(macOS)
-            Color(nsColor: .controlBackgroundColor)
+                Color(nsColor: .controlBackgroundColor)
             #endif
         }
         .cornerRadius(12)
@@ -372,9 +372,9 @@ struct QuickActionButton: View {
             .padding()
             .background {
                 #if os(iOS)
-                Color(.secondarySystemBackground)
+                    Color(.secondarySystemBackground)
                 #elseif os(macOS)
-                Color(nsColor: .controlBackgroundColor)
+                    Color(nsColor: .controlBackgroundColor)
                 #endif
             }
             .cornerRadius(12)

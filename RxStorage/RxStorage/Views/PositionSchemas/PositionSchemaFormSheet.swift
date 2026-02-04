@@ -76,9 +76,9 @@ struct PositionSchemaFormSheet: View {
         Form {
             Section {
                 TextField("Name", text: $viewModel.name)
-                    #if os(iOS)
+                #if os(iOS)
                     .textInputAutocapitalization(.words)
-                    #endif
+                #endif
             } header: {
                 Text("Information")
             }
@@ -100,40 +100,40 @@ struct PositionSchemaFormSheet: View {
         }
         .navigationTitle(schema == nil ? "New Schema" : "Edit Schema")
         #if os(iOS)
-        .navigationBarTitleDisplayMode(.inline)
+            .navigationBarTitleDisplayMode(.inline)
         #endif
-        .toolbar {
-            ToolbarItem(placement: .cancellationAction) {
-                Button("Cancel") {
-                    dismiss()
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") {
+                        dismiss()
+                    }
                 }
-            }
 
-            ToolbarItem(placement: .confirmationAction) {
-                Button(schema == nil ? "Create" : "Save") {
-                    Task {
-                        await submitForm()
+                ToolbarItem(placement: .confirmationAction) {
+                    Button(schema == nil ? "Create" : "Save") {
+                        Task {
+                            await submitForm()
+                        }
                     }
+                    .disabled(viewModel.isSubmitting)
                 }
-                .disabled(viewModel.isSubmitting)
             }
-        }
-        .overlay {
-            if viewModel.isSubmitting {
-                ProgressView()
-                    .progressViewStyle(.circular)
-                    .padding()
-                    .background {
-                        #if os(iOS)
-                        Color(uiColor: .systemBackground)
-                        #elseif os(macOS)
-                        Color(nsColor: .windowBackgroundColor)
-                        #endif
-                    }
-                    .cornerRadius(10)
-                    .shadow(radius: 10)
+            .overlay {
+                if viewModel.isSubmitting {
+                    ProgressView()
+                        .progressViewStyle(.circular)
+                        .padding()
+                        .background {
+                            #if os(iOS)
+                                Color(uiColor: .systemBackground)
+                            #elseif os(macOS)
+                                Color(nsColor: .windowBackgroundColor)
+                            #endif
+                        }
+                        .cornerRadius(10)
+                        .shadow(radius: 10)
+                }
             }
-        }
     }
 
     // MARK: - Actions

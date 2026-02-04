@@ -3,8 +3,8 @@
 //  JsonSchemaEditor
 //
 
-import SwiftUI
 import JSONSchema
+import SwiftUI
 
 /// Single property editor
 public struct PropertyEditorView: View {
@@ -27,7 +27,7 @@ public struct PropertyEditorView: View {
         isLast: Bool = true,
         disabled: Bool = false
     ) {
-        self._item = item
+        _item = item
         self.onDelete = onDelete
         self.onMoveUp = onMoveUp
         self.onMoveDown = onMoveDown

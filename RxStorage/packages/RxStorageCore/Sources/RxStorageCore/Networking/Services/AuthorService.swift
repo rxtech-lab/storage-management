@@ -9,7 +9,7 @@ import Foundation
 import Logging
 import OpenAPIRuntime
 
-fileprivate let logger = Logger(label: "AuthorService")
+private let logger = Logger(label: "AuthorService")
 
 // MARK: - Protocol
 
@@ -74,7 +74,7 @@ public struct AuthorService: AuthorServiceProtocol {
         switch response {
         case .ok:
             return
-        case .badRequest(let badRequest):
+        case let .badRequest(badRequest):
             let error = try? badRequest.body.json
             throw APIError.badRequest(error?.error ?? "Invalid request")
         case .unauthorized:
@@ -85,7 +85,7 @@ public struct AuthorService: AuthorServiceProtocol {
             throw APIError.notFound
         case .internalServerError:
             throw APIError.serverError("Internal server error")
-        case .undocumented(let statusCode, _):
+        case let .undocumented(statusCode, _):
             throw APIError.serverError("HTTP \(statusCode)")
         }
     }

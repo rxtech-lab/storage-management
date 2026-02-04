@@ -153,7 +153,7 @@ test.describe.serial("Items API", () => {
   }) => {
     const response = await request.delete(`/api/v1/items/${createdItemId}`);
 
-    expect(response.status()).toBe(200);
+    expect(response.status()).toBe(204);
 
     // Verify item is deleted
     const getResponse = await request.get(`/api/v1/items/${createdItemId}`);

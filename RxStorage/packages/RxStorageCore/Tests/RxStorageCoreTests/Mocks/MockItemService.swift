@@ -47,12 +47,12 @@ public final class MockItemService: ItemServiceProtocol {
 
     // MARK: - ItemServiceProtocol
 
-    public func fetchItems(filters: ItemFilters?) async throws -> [StorageItem] {
+    public func fetchItems(filters _: ItemFilters?) async throws -> [StorageItem] {
         fetchItemsCalled = true
         switch fetchItemsResult {
-        case .success(let items):
+        case let .success(items):
             return items
-        case .failure(let error):
+        case let .failure(error):
             throw error
         }
     }
@@ -61,9 +61,9 @@ public final class MockItemService: ItemServiceProtocol {
         fetchItemsPaginatedCalled = true
         if let result = fetchItemsPaginatedResult {
             switch result {
-            case .success(let response):
+            case let .success(response):
                 return response
-            case .failure(let error):
+            case let .failure(error):
                 throw error
             }
         }
@@ -81,9 +81,9 @@ public final class MockItemService: ItemServiceProtocol {
 
         if let result = fetchItemResult {
             switch result {
-            case .success(let item):
+            case let .success(item):
                 return item
-            case .failure(let error):
+            case let .failure(error):
                 throw error
             }
         }
@@ -97,9 +97,9 @@ public final class MockItemService: ItemServiceProtocol {
 
         if let result = fetchPreviewItemResult {
             switch result {
-            case .success(let item):
+            case let .success(item):
                 return item
-            case .failure(let error):
+            case let .failure(error):
                 throw error
             }
         }
@@ -113,9 +113,9 @@ public final class MockItemService: ItemServiceProtocol {
 
         if let result = createItemResult {
             switch result {
-            case .success(let item):
+            case let .success(item):
                 return item
-            case .failure(let error):
+            case let .failure(error):
                 throw error
             }
         }
@@ -130,9 +130,9 @@ public final class MockItemService: ItemServiceProtocol {
 
         if let result = updateItemResult {
             switch result {
-            case .success(let item):
+            case let .success(item):
                 return item
-            case .failure(let error):
+            case let .failure(error):
                 throw error
             }
         }
@@ -147,9 +147,9 @@ public final class MockItemService: ItemServiceProtocol {
 
         if let result = setParentResult {
             switch result {
-            case .success(let item):
+            case let .success(item):
                 return item
-            case .failure(let error):
+            case let .failure(error):
                 throw error
             }
         }
@@ -165,7 +165,7 @@ public final class MockItemService: ItemServiceProtocol {
             switch result {
             case .success:
                 return
-            case .failure(let error):
+            case let .failure(error):
                 throw error
             }
         }

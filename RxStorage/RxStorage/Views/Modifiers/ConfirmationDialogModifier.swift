@@ -27,7 +27,7 @@ struct ConfirmationDialogModifier: ViewModifier {
         self.title = title
         self.message = message
         self.confirmButtonTitle = confirmButtonTitle
-        self._isPresented = isPresented
+        _isPresented = isPresented
         self.onConfirm = onConfirm
         self.onCancel = onCancel
     }

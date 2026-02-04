@@ -3,19 +3,18 @@
 //  JsonSchemaEditorTests
 //
 
-import Testing
 import JSONSchema
 @testable import JsonSchemaEditor
+import Testing
 
 @Suite("Schema Conversion Tests")
 struct SchemaConversionTests {
-
     @Test("Schema to property items with object schema")
     func testSchemaToPropertyItems() {
         let schema = JSONSchema.object(
             properties: [
                 "name": JSONSchema.string(),
-                "age": JSONSchema.integer()
+                "age": JSONSchema.integer(),
             ],
             required: ["name"]
         )
@@ -29,13 +28,13 @@ struct SchemaConversionTests {
     }
 
     @Test("Schema to property items with nil returns empty array")
-    func testSchemaToPropertyItemsNil() {
+    func schemaToPropertyItemsNil() {
         let items = SchemaConversion.schemaToPropertyItems(nil)
         #expect(items.isEmpty)
     }
 
     @Test("Schema to property items with non-object returns empty array")
-    func testSchemaToPropertyItemsNonObject() {
+    func schemaToPropertyItemsNonObject() {
         let schema = JSONSchema.array()
         let items = SchemaConversion.schemaToPropertyItems(schema)
         #expect(items.isEmpty)
@@ -45,7 +44,7 @@ struct SchemaConversionTests {
     func testPropertyItemsToSchema() {
         let items = [
             PropertyItem(key: "name", property: JSONSchema.string(), isRequired: true),
-            PropertyItem(key: "age", property: JSONSchema.integer(), isRequired: false)
+            PropertyItem(key: "age", property: JSONSchema.integer(), isRequired: false),
         ]
 
         let schema = SchemaConversion.propertyItemsToSchema(items, title: "Test", description: "Test schema")
@@ -57,25 +56,25 @@ struct SchemaConversionTests {
     }
 
     @Test("Create schema of type object")
-    func testCreateSchemaOfTypeObject() {
+    func createSchemaOfTypeObject() {
         let schema = SchemaConversion.createSchemaOfType(.object)
         #expect(schema.type == .object)
     }
 
     @Test("Create schema of type array")
-    func testCreateSchemaOfTypeArray() {
+    func createSchemaOfTypeArray() {
         let schema = SchemaConversion.createSchemaOfType(.array)
         #expect(schema.type == .array)
     }
 
     @Test("Create schema of type string")
-    func testCreateSchemaOfTypeString() {
+    func createSchemaOfTypeString() {
         let schema = SchemaConversion.createSchemaOfType(.string)
         #expect(schema.type == .string)
     }
 
     @Test("Convert schema type preserves description")
-    func testConvertSchemaTypePreservesMetadata() {
+    func convertSchemaTypePreservesMetadata() {
         let original = JSONSchema.object(title: "Original", description: "Description")
         let converted = SchemaConversion.convertSchemaType(original, to: .array)
 
@@ -95,13 +94,13 @@ struct SchemaConversionTests {
     }
 
     @Test("Generate unique key with no conflicts")
-    func testGenerateUniqueKeyNoConflicts() {
+    func generateUniqueKeyNoConflicts() {
         let uniqueKey = SchemaConversion.generateUniqueKey(existingKeys: [])
         #expect(uniqueKey == "property")
     }
 
     @Test("Generate unique key with conflicts")
-    func testGenerateUniqueKeyWithConflicts() {
+    func generateUniqueKeyWithConflicts() {
         let uniqueKey = SchemaConversion.generateUniqueKey(existingKeys: ["property", "property_1", "property_2"])
         #expect(uniqueKey == "property_3")
     }

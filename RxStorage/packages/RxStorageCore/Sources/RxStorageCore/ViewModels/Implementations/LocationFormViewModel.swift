@@ -5,8 +5,8 @@
 //  Location form view model implementation
 //
 
-import Foundation
 import CoreLocation
+import Foundation
 import Observation
 
 /// Location form view model implementation

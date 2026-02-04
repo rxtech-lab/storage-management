@@ -5,12 +5,11 @@
 //  Tests for ItemDetailViewModel
 //
 
-import Testing
 @testable import RxStorageCore
+import Testing
 
 @Suite("ItemDetailViewModel Tests")
 struct ItemDetailViewModelTests {
-
     // MARK: - Test Data
 
     static let testContent = TestHelpers.makeContentRef(
@@ -40,7 +39,7 @@ struct ItemDetailViewModelTests {
 
     @Test("Fetch item successfully with children")
     @MainActor
-    func testFetchItemSuccess() async throws {
+    func fetchItemSuccess() async {
         // Given
         let mockService = MockItemService()
         let mockContentService = MockContentService()
@@ -69,7 +68,7 @@ struct ItemDetailViewModelTests {
 
     @Test("Fetch item with error")
     @MainActor
-    func testFetchItemError() async throws {
+    func fetchItemError() async {
         // Given
         let mockService = MockItemService()
         let mockContentService = MockContentService()
@@ -95,7 +94,7 @@ struct ItemDetailViewModelTests {
 
     @Test("Refresh reloads item")
     @MainActor
-    func testRefresh() async throws {
+    func testRefresh() async {
         // Given
         let mockService = MockItemService()
         let mockContentService = MockContentService()

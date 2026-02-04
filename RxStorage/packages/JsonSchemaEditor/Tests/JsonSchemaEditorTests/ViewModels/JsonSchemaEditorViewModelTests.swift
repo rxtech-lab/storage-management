@@ -3,16 +3,15 @@
 //  JsonSchemaEditorTests
 //
 
-import Testing
 import JSONSchema
 @testable import JsonSchemaEditor
+import Testing
 
 @Suite("JsonSchemaEditorViewModel Tests")
 struct JsonSchemaEditorViewModelTests {
-
     @Test("Initial state with nil schema")
     @MainActor
-    func testInitialStateWithNilSchema() async {
+    func initialStateWithNilSchema() {
         let sut = JsonSchemaEditorViewModel(schema: nil)
 
         #expect(sut.schemaType == .object)
@@ -22,11 +21,11 @@ struct JsonSchemaEditorViewModelTests {
 
     @Test("Load existing object schema")
     @MainActor
-    func testLoadExistingObjectSchema() async {
+    func loadExistingObjectSchema() {
         let schema = JSONSchema.object(
             title: "Test",
             properties: [
-                "name": JSONSchema.string()
+                "name": JSONSchema.string(),
             ],
             required: ["name"]
         )
@@ -42,7 +41,7 @@ struct JsonSchemaEditorViewModelTests {
 
     @Test("Load array schema")
     @MainActor
-    func testLoadArraySchema() async {
+    func loadArraySchema() {
         let schema = JSONSchema.array(
             title: "List",
             items: JSONSchema.integer()
@@ -58,7 +57,7 @@ struct JsonSchemaEditorViewModelTests {
 
     @Test("Add property creates new item")
     @MainActor
-    func testAddProperty() async {
+    func testAddProperty() {
         let sut = JsonSchemaEditorViewModel(schema: nil)
 
         sut.addProperty()
@@ -70,7 +69,7 @@ struct JsonSchemaEditorViewModelTests {
 
     @Test("Add property generates unique key")
     @MainActor
-    func testAddPropertyGeneratesUniqueKey() async {
+    func addPropertyGeneratesUniqueKey() {
         let sut = JsonSchemaEditorViewModel(schema: nil)
 
         sut.addProperty()
@@ -86,11 +85,11 @@ struct JsonSchemaEditorViewModelTests {
 
     @Test("Delete property removes item")
     @MainActor
-    func testDeleteProperty() async {
+    func testDeleteProperty() {
         let schema = JSONSchema.object(
             properties: [
                 "name": JSONSchema.string(),
-                "age": JSONSchema.integer()
+                "age": JSONSchema.integer(),
             ]
         )
         let sut = JsonSchemaEditorViewModel(schema: schema)
@@ -102,7 +101,7 @@ struct JsonSchemaEditorViewModelTests {
 
     @Test("Delete property at invalid index does nothing")
     @MainActor
-    func testDeletePropertyInvalidIndex() async {
+    func deletePropertyInvalidIndex() {
         let sut = JsonSchemaEditorViewModel(schema: nil)
         sut.addProperty()
 
@@ -113,11 +112,11 @@ struct JsonSchemaEditorViewModelTests {
 
     @Test("Move property up changes order")
     @MainActor
-    func testMovePropertyUp() async {
+    func testMovePropertyUp() {
         let schema = JSONSchema.object(
             properties: [
                 "first": JSONSchema.string(),
-                "second": JSONSchema.string()
+                "second": JSONSchema.string(),
             ]
         )
         let sut = JsonSchemaEditorViewModel(schema: schema)
@@ -134,11 +133,11 @@ struct JsonSchemaEditorViewModelTests {
 
     @Test("Move property down changes order")
     @MainActor
-    func testMovePropertyDown() async {
+    func testMovePropertyDown() {
         let schema = JSONSchema.object(
             properties: [
                 "first": JSONSchema.string(),
-                "second": JSONSchema.string()
+                "second": JSONSchema.string(),
             ]
         )
         let sut = JsonSchemaEditorViewModel(schema: schema)
@@ -154,7 +153,7 @@ struct JsonSchemaEditorViewModelTests {
 
     @Test("Handle type change to array")
     @MainActor
-    func testHandleTypeChangeToArray() async {
+    func handleTypeChangeToArray() {
         let sut = JsonSchemaEditorViewModel(schema: nil)
         sut.addProperty()
         sut.title = "Test"
@@ -168,7 +167,7 @@ struct JsonSchemaEditorViewModelTests {
 
     @Test("Build schema returns correct structure")
     @MainActor
-    func testBuildSchema() async {
+    func testBuildSchema() {
         let sut = JsonSchemaEditorViewModel(schema: nil)
         sut.addProperty()
         sut.items[0].key = "testField"
@@ -186,7 +185,7 @@ struct JsonSchemaEditorViewModelTests {
 
     @Test("Build array schema")
     @MainActor
-    func testBuildArraySchema() async {
+    func buildArraySchema() {
         let sut = JsonSchemaEditorViewModel(schema: nil)
         sut.handleTypeChange(.array)
         sut.arrayItemsType = .integer
@@ -202,7 +201,7 @@ struct JsonSchemaEditorViewModelTests {
 
     @Test("Update property at index")
     @MainActor
-    func testUpdatePropertyAtIndex() async {
+    func updatePropertyAtIndex() {
         let sut = JsonSchemaEditorViewModel(schema: nil)
         sut.addProperty()
 

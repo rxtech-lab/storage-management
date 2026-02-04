@@ -16,7 +16,7 @@ public struct APICallMacro: BodyMacro {
     public static func expansion(
         of node: AttributeSyntax,
         providingBodyFor declaration: some DeclSyntaxProtocol & WithOptionalCodeBlockSyntax,
-        in context: some MacroExpansionContext
+        in _: some MacroExpansionContext
     ) throws -> [CodeBlockItemSyntax] {
         guard let body = declaration.body else {
             throw MacroExpansionError.missingBody
@@ -60,113 +60,113 @@ public struct APICallMacro: BodyMacro {
 
         if successCase == "noContent" {
             wrappedCode = """
-                do {
-                    \(raw: setupCode)let response = \(apiCallStatement)
-                    switch response {
-                    case .noContent:
-                        return
-                    case .badRequest(let badRequest):
-                        let error = try? badRequest.body.json
-                        throw APIError.badRequest(error?.error ?? "Invalid request")
-                    case .unauthorized:
-                        throw APIError.unauthorized
-                    case .forbidden:
-                        throw APIError.forbidden
-                    case .notFound:
-                        throw APIError.notFound
-                    case .internalServerError:
-                        throw APIError.serverError("Internal server error")
-                    case .undocumented(let statusCode, _):
-                        throw APIError.serverError("HTTP \\(statusCode)")
-                    }
-                } catch let clientError as ClientError {
-                    if let decodingError = clientError.underlyingError as? DecodingError {
-                        logger.error("Decoding error: \\(describeDecodingError(decodingError))")
-                    } else {
-                        logger.error("Client error: \\(clientError)")
-                    }
-                    throw APIError.serverError("Unable to decode response data")
-                } catch let error as DecodingError {
-                    logger.error("Decoding error: \\(describeDecodingError(error))")
-                    throw APIError.serverError("Unable to decode response data")
-                } catch {
-                    logger.error("Unexpected error: \\(error)")
-                    throw error
+            do {
+                \(raw: setupCode)let response = \(apiCallStatement)
+                switch response {
+                case .noContent:
+                    return
+                case .badRequest(let badRequest):
+                    let error = try? badRequest.body.json
+                    throw APIError.badRequest(error?.error ?? "Invalid request")
+                case .unauthorized:
+                    throw APIError.unauthorized
+                case .forbidden:
+                    throw APIError.forbidden
+                case .notFound:
+                    throw APIError.notFound
+                case .internalServerError:
+                    throw APIError.serverError("Internal server error")
+                case .undocumented(let statusCode, _):
+                    throw APIError.serverError("HTTP \\(statusCode)")
                 }
-                """
+            } catch let clientError as ClientError {
+                if let decodingError = clientError.underlyingError as? DecodingError {
+                    logger.error("Decoding error: \\(describeDecodingError(decodingError))")
+                } else {
+                    logger.error("Client error: \\(clientError)")
+                }
+                throw APIError.serverError("Unable to decode response data")
+            } catch let error as DecodingError {
+                logger.error("Decoding error: \\(describeDecodingError(error))")
+                throw APIError.serverError("Unable to decode response data")
+            } catch {
+                logger.error("Unexpected error: \\(error)")
+                throw error
+            }
+            """
         } else if successCase == "created" {
             wrappedCode = """
-                do {
-                    \(raw: setupCode)let response = \(apiCallStatement)
-                    switch response {
-                    case .created(let createdResponse):
-                        return \(raw: createdReturnExpr)
-                    case .badRequest(let badRequest):
-                        let error = try? badRequest.body.json
-                        throw APIError.badRequest(error?.error ?? "Invalid request")
-                    case .unauthorized:
-                        throw APIError.unauthorized
-                    case .forbidden:
-                        throw APIError.forbidden
-                    case .notFound:
-                        throw APIError.notFound
-                    case .internalServerError:
-                        throw APIError.serverError("Internal server error")
-                    case .undocumented(let statusCode, _):
-                        throw APIError.serverError("HTTP \\(statusCode)")
-                    }
-                } catch let clientError as ClientError {
-                    if let decodingError = clientError.underlyingError as? DecodingError {
-                        logger.error("Decoding error: \\(describeDecodingError(decodingError))")
-                    } else {
-                        logger.error("Client error: \\(clientError)")
-                    }
-                    throw APIError.serverError("Unable to decode response data")
-                } catch let error as DecodingError {
-                    logger.error("Decoding error: \\(describeDecodingError(error))")
-                    throw APIError.serverError("Unable to decode response data")
-                } catch {
-                    logger.error("Unexpected error: \\(error)")
-                    throw error
+            do {
+                \(raw: setupCode)let response = \(apiCallStatement)
+                switch response {
+                case .created(let createdResponse):
+                    return \(raw: createdReturnExpr)
+                case .badRequest(let badRequest):
+                    let error = try? badRequest.body.json
+                    throw APIError.badRequest(error?.error ?? "Invalid request")
+                case .unauthorized:
+                    throw APIError.unauthorized
+                case .forbidden:
+                    throw APIError.forbidden
+                case .notFound:
+                    throw APIError.notFound
+                case .internalServerError:
+                    throw APIError.serverError("Internal server error")
+                case .undocumented(let statusCode, _):
+                    throw APIError.serverError("HTTP \\(statusCode)")
                 }
-                """
+            } catch let clientError as ClientError {
+                if let decodingError = clientError.underlyingError as? DecodingError {
+                    logger.error("Decoding error: \\(describeDecodingError(decodingError))")
+                } else {
+                    logger.error("Client error: \\(clientError)")
+                }
+                throw APIError.serverError("Unable to decode response data")
+            } catch let error as DecodingError {
+                logger.error("Decoding error: \\(describeDecodingError(error))")
+                throw APIError.serverError("Unable to decode response data")
+            } catch {
+                logger.error("Unexpected error: \\(error)")
+                throw error
+            }
+            """
         } else {
             // Default to .ok
             wrappedCode = """
-                do {
-                    \(raw: setupCode)let response = \(apiCallStatement)
-                    switch response {
-                    case .ok(let okResponse):
-                        return \(raw: returnExpr)
-                    case .badRequest(let badRequest):
-                        let error = try? badRequest.body.json
-                        throw APIError.badRequest(error?.error ?? "Invalid request")
-                    case .unauthorized:
-                        throw APIError.unauthorized
-                    case .forbidden:
-                        throw APIError.forbidden
-                    case .notFound:
-                        throw APIError.notFound
-                    case .internalServerError:
-                        throw APIError.serverError("Internal server error")
-                    case .undocumented(let statusCode, _):
-                        throw APIError.serverError("HTTP \\(statusCode)")
-                    }
-                } catch let clientError as ClientError {
-                    if let decodingError = clientError.underlyingError as? DecodingError {
-                        logger.error("Decoding error: \\(describeDecodingError(decodingError))")
-                    } else {
-                        logger.error("Client error: \\(clientError)")
-                    }
-                    throw APIError.serverError("Unable to decode response data")
-                } catch let error as DecodingError {
-                    logger.error("Decoding error: \\(describeDecodingError(error))")
-                    throw APIError.serverError("Unable to decode response data")
-                } catch {
-                    logger.error("Unexpected error: \\(error)")
-                    throw error
+            do {
+                \(raw: setupCode)let response = \(apiCallStatement)
+                switch response {
+                case .ok(let okResponse):
+                    return \(raw: returnExpr)
+                case .badRequest(let badRequest):
+                    let error = try? badRequest.body.json
+                    throw APIError.badRequest(error?.error ?? "Invalid request")
+                case .unauthorized:
+                    throw APIError.unauthorized
+                case .forbidden:
+                    throw APIError.forbidden
+                case .notFound:
+                    throw APIError.notFound
+                case .internalServerError:
+                    throw APIError.serverError("Internal server error")
+                case .undocumented(let statusCode, _):
+                    throw APIError.serverError("HTTP \\(statusCode)")
                 }
-                """
+            } catch let clientError as ClientError {
+                if let decodingError = clientError.underlyingError as? DecodingError {
+                    logger.error("Decoding error: \\(describeDecodingError(decodingError))")
+                } else {
+                    logger.error("Client error: \\(clientError)")
+                }
+                throw APIError.serverError("Unable to decode response data")
+            } catch let error as DecodingError {
+                logger.error("Decoding error: \\(describeDecodingError(error))")
+                throw APIError.serverError("Unable to decode response data")
+            } catch {
+                logger.error("Unexpected error: \\(error)")
+                throw error
+            }
+            """
         }
 
         return Array(wrappedCode)
@@ -174,8 +174,9 @@ public struct APICallMacro: BodyMacro {
 
     private static func extractSuccessCase(from node: AttributeSyntax) -> String? {
         guard let arguments = node.arguments,
-              case .argumentList(let argList) = arguments,
-              let firstArg = argList.first?.expression else {
+              case let .argumentList(argList) = arguments,
+              let firstArg = argList.first?.expression
+        else {
             return nil
         }
 
@@ -188,7 +189,8 @@ public struct APICallMacro: BodyMacro {
 
     private static func extractTransform(from node: AttributeSyntax) -> String? {
         guard let arguments = node.arguments,
-              case .argumentList(let argList) = arguments else {
+              case let .argumentList(argList) = arguments
+        else {
             return nil
         }
 
@@ -196,7 +198,8 @@ public struct APICallMacro: BodyMacro {
         for arg in argList {
             if arg.label?.text == "transform",
                let stringLiteral = arg.expression.as(StringLiteralExprSyntax.self),
-               let segment = stringLiteral.segments.first?.as(StringSegmentSyntax.self) {
+               let segment = stringLiteral.segments.first?.as(StringSegmentSyntax.self)
+            {
                 return segment.content.text
             }
         }

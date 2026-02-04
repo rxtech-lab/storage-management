@@ -5,8 +5,8 @@
 //  Author create/edit form
 //
 
-import SwiftUI
 import RxStorageCore
+import SwiftUI
 
 /// Author form sheet for creating or editing authors
 struct AuthorFormSheet: View {
@@ -27,13 +27,13 @@ struct AuthorFormSheet: View {
         Form {
             Section("Information") {
                 TextField("Name", text: $viewModel.name)
-                    #if os(iOS)
+                #if os(iOS)
                     .textInputAutocapitalization(.words)
-                    #endif
+                #endif
                     .accessibilityIdentifier("author-form-name-field")
 
                 TextField("Bio", text: $viewModel.bio, axis: .vertical)
-                    .lineLimit(3...6)
+                    .lineLimit(3 ... 6)
                     .accessibilityIdentifier("author-form-bio-field")
             }
 
@@ -52,42 +52,42 @@ struct AuthorFormSheet: View {
         }
         .navigationTitle(author == nil ? "New Author" : "Edit Author")
         #if os(iOS)
-        .navigationBarTitleDisplayMode(.inline)
+            .navigationBarTitleDisplayMode(.inline)
         #endif
-        .toolbar {
-            ToolbarItem(placement: .cancellationAction) {
-                Button("Cancel") {
-                    dismiss()
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") {
+                        dismiss()
+                    }
+                    .accessibilityIdentifier("author-form-cancel-button")
                 }
-                .accessibilityIdentifier("author-form-cancel-button")
-            }
 
-            ToolbarItem(placement: .confirmationAction) {
-                Button(author == nil ? "Create" : "Save") {
-                    Task {
-                        await submitForm()
+                ToolbarItem(placement: .confirmationAction) {
+                    Button(author == nil ? "Create" : "Save") {
+                        Task {
+                            await submitForm()
+                        }
                     }
+                    .disabled(viewModel.isSubmitting)
+                    .accessibilityIdentifier("author-form-submit-button")
                 }
-                .disabled(viewModel.isSubmitting)
-                .accessibilityIdentifier("author-form-submit-button")
             }
-        }
-        .overlay {
-            if viewModel.isSubmitting {
-                ProgressView()
-                    .progressViewStyle(.circular)
-                    .padding()
-                    .background {
-                        #if os(iOS)
-                        Color(uiColor: .systemBackground)
-                        #elseif os(macOS)
-                        Color(nsColor: .windowBackgroundColor)
-                        #endif
-                    }
-                    .cornerRadius(10)
-                    .shadow(radius: 10)
+            .overlay {
+                if viewModel.isSubmitting {
+                    ProgressView()
+                        .progressViewStyle(.circular)
+                        .padding()
+                        .background {
+                            #if os(iOS)
+                                Color(uiColor: .systemBackground)
+                            #elseif os(macOS)
+                                Color(nsColor: .windowBackgroundColor)
+                            #endif
+                        }
+                        .cornerRadius(10)
+                        .shadow(radius: 10)
+                }
             }
-        }
     }
 
     // MARK: - Actions

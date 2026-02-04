@@ -34,7 +34,7 @@ public final class StorageAPIClient: Sendable {
 
         let joinedPath =
             configuration.apiBaseURL.hasSuffix("/api")
-            ? configuration.apiBaseURL : configuration.apiBaseURL + "/api"
+                ? configuration.apiBaseURL : configuration.apiBaseURL + "/api"
         let serverURL = URL(string: joinedPath)!
 
         // Configure date transcoder to handle ISO8601 dates with fractional seconds (.000Z)
@@ -42,7 +42,7 @@ public final class StorageAPIClient: Sendable {
             dateTranscoder: .iso8601WithFractionalSeconds
         )
 
-        self.client = Client(
+        client = Client(
             serverURL: serverURL,
             configuration: clientConfiguration,
             transport: URLSessionTransport(),
@@ -52,7 +52,7 @@ public final class StorageAPIClient: Sendable {
             ]
         )
 
-        self.optionalAuthClient = Client(
+        optionalAuthClient = Client(
             serverURL: serverURL,
             configuration: clientConfiguration,
             transport: URLSessionTransport(),
@@ -75,7 +75,7 @@ public final class StorageAPIClient: Sendable {
             configuration: clientConfiguration,
             transport: URLSessionTransport(),
             middlewares: [
-                LoggingMiddleware()
+                LoggingMiddleware(),
             ]
         )
     }
@@ -88,7 +88,7 @@ public final class StorageAPIClient: Sendable {
     ) -> Client {
         let joinedPath =
             configuration.apiBaseURL.hasSuffix("/api")
-            ? configuration.apiBaseURL : configuration.apiBaseURL + "/api"
+                ? configuration.apiBaseURL : configuration.apiBaseURL + "/api"
         let serverURL = URL(string: joinedPath)!
         let clientConfiguration = Configuration(
             dateTranscoder: .iso8601WithFractionalSeconds
@@ -119,7 +119,7 @@ public actor OptionalAuthMiddleware: ClientMiddleware {
         _ request: HTTPRequest,
         body: HTTPBody?,
         baseURL: URL,
-        operationID: String,
+        operationID _: String,
         next: @Sendable (HTTPRequest, HTTPBody?, URL) async throws -> (HTTPResponse, HTTPBody?)
     ) async throws -> (HTTPResponse, HTTPBody?) {
         var modifiedRequest = request

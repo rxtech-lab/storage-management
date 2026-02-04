@@ -4,8 +4,8 @@
 //
 
 import Foundation
-import SwiftUI
 import JSONSchema
+import SwiftUI
 
 /// Main view model for the JSON Schema Editor
 /// Uses @Observable for SwiftUI integration with @MainActor for thread safety
@@ -110,25 +110,25 @@ public final class JsonSchemaEditorViewModel {
 
     /// Delete a property at index
     public func deleteProperty(at index: Int) {
-        guard index >= 0 && index < items.count else { return }
+        guard index >= 0, index < items.count else { return }
         items.remove(at: index)
     }
 
     /// Move a property up
     public func movePropertyUp(at index: Int) {
-        guard index > 0 && index < items.count else { return }
+        guard index > 0, index < items.count else { return }
         items.swapAt(index, index - 1)
     }
 
     /// Move a property down
     public func movePropertyDown(at index: Int) {
-        guard index >= 0 && index < items.count - 1 else { return }
+        guard index >= 0, index < items.count - 1 else { return }
         items.swapAt(index, index + 1)
     }
 
     /// Update a property at index
     public func updateProperty(at index: Int, with item: PropertyItem) {
-        guard index >= 0 && index < items.count else { return }
+        guard index >= 0, index < items.count else { return }
         items[index] = item
     }
 

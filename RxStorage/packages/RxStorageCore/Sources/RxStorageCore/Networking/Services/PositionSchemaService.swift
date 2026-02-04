@@ -9,7 +9,7 @@ import Foundation
 import Logging
 import OpenAPIRuntime
 
-fileprivate let logger = Logger(label: "PositionSchemaService")
+private let logger = Logger(label: "PositionSchemaService")
 
 // MARK: - Protocol
 
@@ -74,7 +74,7 @@ public struct PositionSchemaService: PositionSchemaServiceProtocol {
         switch response {
         case .ok:
             return
-        case .badRequest(let badRequest):
+        case let .badRequest(badRequest):
             let error = try? badRequest.body.json
             throw APIError.badRequest(error?.error ?? "Invalid request")
         case .unauthorized:
@@ -85,7 +85,7 @@ public struct PositionSchemaService: PositionSchemaServiceProtocol {
             throw APIError.notFound
         case .internalServerError:
             throw APIError.serverError("Internal server error")
-        case .undocumented(let statusCode, _):
+        case let .undocumented(statusCode, _):
             throw APIError.serverError("HTTP \(statusCode)")
         }
     }

@@ -41,9 +41,9 @@ public final class MockContentService: ContentServiceProtocol, @unchecked Sendab
         fetchItemContentsCalled = true
         lastFetchItemId = itemId
         switch fetchItemContentsResult {
-        case .success(let contents):
+        case let .success(contents):
             return contents
-        case .failure(let error):
+        case let .failure(error):
             throw error
         }
     }
@@ -55,9 +55,9 @@ public final class MockContentService: ContentServiceProtocol, @unchecked Sendab
 
         if let result = createContentResult {
             switch result {
-            case .success(let content):
+            case let .success(content):
                 return content
-            case .failure(let error):
+            case let .failure(error):
                 throw error
             }
         }
@@ -72,9 +72,9 @@ public final class MockContentService: ContentServiceProtocol, @unchecked Sendab
 
         if let result = updateContentResult {
             switch result {
-            case .success(let content):
+            case let .success(content):
                 return content
-            case .failure(let error):
+            case let .failure(error):
                 throw error
             }
         }
@@ -89,7 +89,7 @@ public final class MockContentService: ContentServiceProtocol, @unchecked Sendab
         switch deleteContentResult {
         case .success:
             return
-        case .failure(let error):
+        case let .failure(error):
             throw error
         }
     }

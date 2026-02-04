@@ -40,12 +40,12 @@ public final class MockLocationService: LocationServiceProtocol {
 
     // MARK: - LocationServiceProtocol
 
-    public func fetchLocations(filters: LocationFilters?) async throws -> [Location] {
+    public func fetchLocations(filters _: LocationFilters?) async throws -> [Location] {
         fetchLocationsCalled = true
         switch fetchLocationsResult {
-        case .success(let locations):
+        case let .success(locations):
             return locations
-        case .failure(let error):
+        case let .failure(error):
             throw error
         }
     }
@@ -54,9 +54,9 @@ public final class MockLocationService: LocationServiceProtocol {
         fetchLocationsPaginatedCalled = true
         if let result = fetchLocationsPaginatedResult {
             switch result {
-            case .success(let response):
+            case let .success(response):
                 return response
-            case .failure(let error):
+            case let .failure(error):
                 throw error
             }
         }
@@ -74,9 +74,9 @@ public final class MockLocationService: LocationServiceProtocol {
 
         if let result = fetchLocationResult {
             switch result {
-            case .success(let location):
+            case let .success(location):
                 return location
-            case .failure(let error):
+            case let .failure(error):
                 throw error
             }
         }
@@ -90,9 +90,9 @@ public final class MockLocationService: LocationServiceProtocol {
 
         if let result = createLocationResult {
             switch result {
-            case .success(let location):
+            case let .success(location):
                 return location
-            case .failure(let error):
+            case let .failure(error):
                 throw error
             }
         }
@@ -107,9 +107,9 @@ public final class MockLocationService: LocationServiceProtocol {
 
         if let result = updateLocationResult {
             switch result {
-            case .success(let location):
+            case let .success(location):
                 return location
-            case .failure(let error):
+            case let .failure(error):
                 throw error
             }
         }
@@ -125,7 +125,7 @@ public final class MockLocationService: LocationServiceProtocol {
             switch result {
             case .success:
                 return
-            case .failure(let error):
+            case let .failure(error):
                 throw error
             }
         }

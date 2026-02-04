@@ -12,19 +12,19 @@ struct AnimatedGradientBackground: View {
     @Environment(\.colorScheme) private var colorScheme
     @State private var animateGradient = false
 
-    // Gradient colors based on color scheme
+    /// Gradient colors based on color scheme
     private var gradientColors: [Color] {
         if colorScheme == .dark {
             return [
                 Color(red: 0.1, green: 0.1, blue: 0.2),
                 Color(red: 0.15, green: 0.1, blue: 0.25),
-                Color(red: 0.1, green: 0.15, blue: 0.2)
+                Color(red: 0.1, green: 0.15, blue: 0.2),
             ]
         } else {
             return [
                 Color(red: 0.95, green: 0.95, blue: 1.0),
                 Color(red: 0.92, green: 0.94, blue: 1.0),
-                Color(red: 0.96, green: 0.94, blue: 0.98)
+                Color(red: 0.96, green: 0.94, blue: 0.98),
             ]
         }
     }
@@ -117,7 +117,7 @@ struct AnimatedGradientBackground: View {
 
             withAnimation(
                 .easeInOut(duration: 6)
-                .repeatForever(autoreverses: true)
+                    .repeatForever(autoreverses: true)
             ) {
                 animateGradient = true
             }
