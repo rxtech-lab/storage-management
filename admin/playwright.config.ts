@@ -37,6 +37,9 @@ export default defineConfig({
       AUTH_CLIENT_ID: "test-client",
       AUTH_CLIENT_SECRET: "test-secret",
       NEXT_PUBLIC_URL: "http://localhost:3000",
+      APPLE_TEAM_ID: "TESTTEAMID",
+      APPLE_APP_BUNDLE_ID: "com.test.app",
+      APPLE_APP_CLIP_BUNDLE_ID: "com.test.app.Clip",
     },
   },
 });
