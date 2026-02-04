@@ -40,12 +40,12 @@ public final class MockAuthorService: AuthorServiceProtocol {
 
     // MARK: - AuthorServiceProtocol
 
-    public func fetchAuthors(filters: AuthorFilters?) async throws -> [Author] {
+    public func fetchAuthors(filters _: AuthorFilters?) async throws -> [Author] {
         fetchAuthorsCalled = true
         switch fetchAuthorsResult {
-        case .success(let authors):
+        case let .success(authors):
             return authors
-        case .failure(let error):
+        case let .failure(error):
             throw error
         }
     }
@@ -54,9 +54,9 @@ public final class MockAuthorService: AuthorServiceProtocol {
         fetchAuthorsPaginatedCalled = true
         if let result = fetchAuthorsPaginatedResult {
             switch result {
-            case .success(let response):
+            case let .success(response):
                 return response
-            case .failure(let error):
+            case let .failure(error):
                 throw error
             }
         }
@@ -74,9 +74,9 @@ public final class MockAuthorService: AuthorServiceProtocol {
 
         if let result = fetchAuthorResult {
             switch result {
-            case .success(let author):
+            case let .success(author):
                 return author
-            case .failure(let error):
+            case let .failure(error):
                 throw error
             }
         }
@@ -90,9 +90,9 @@ public final class MockAuthorService: AuthorServiceProtocol {
 
         if let result = createAuthorResult {
             switch result {
-            case .success(let author):
+            case let .success(author):
                 return author
-            case .failure(let error):
+            case let .failure(error):
                 throw error
             }
         }
@@ -107,9 +107,9 @@ public final class MockAuthorService: AuthorServiceProtocol {
 
         if let result = updateAuthorResult {
             switch result {
-            case .success(let author):
+            case let .success(author):
                 return author
-            case .failure(let error):
+            case let .failure(error):
                 throw error
             }
         }
@@ -125,7 +125,7 @@ public final class MockAuthorService: AuthorServiceProtocol {
             switch result {
             case .success:
                 return
-            case .failure(let error):
+            case let .failure(error):
                 throw error
             }
         }

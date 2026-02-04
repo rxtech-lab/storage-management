@@ -58,7 +58,8 @@ public struct PendingPosition: Identifiable, Sendable {
         var convertedData: [String: OpenAPIValueContainer] = [:]
         for (key, value) in data {
             if let jsonValue = try? JSONEncoder().encode(value),
-               let container = try? JSONDecoder().decode(OpenAPIValueContainer.self, from: jsonValue) {
+               let container = try? JSONDecoder().decode(OpenAPIValueContainer.self, from: jsonValue)
+            {
                 convertedData[key] = container
             }
         }

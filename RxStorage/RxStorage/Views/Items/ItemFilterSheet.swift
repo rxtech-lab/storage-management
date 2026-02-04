@@ -22,9 +22,9 @@ struct ItemFilterSheet: View {
     @State private var showingAuthorPicker = false
 
     init(filters: Binding<ItemFilters>, onApply: @escaping () -> Void) {
-        self._filters = filters
+        _filters = filters
         self.onApply = onApply
-        self._viewModel = State(initialValue: ItemFilterViewModel(initialFilters: filters.wrappedValue))
+        _viewModel = State(initialValue: ItemFilterViewModel(initialFilters: filters.wrappedValue))
     }
 
     var body: some View {

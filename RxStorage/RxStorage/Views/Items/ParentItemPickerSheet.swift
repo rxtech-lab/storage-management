@@ -32,9 +32,9 @@ struct ParentItemPickerSheet: View {
                     .foregroundStyle(.secondary)
                 TextField("Search items...", text: $viewModel.searchText)
                     .textFieldStyle(.plain)
-                    #if os(iOS)
+                #if os(iOS)
                     .autocorrectionDisabled()
-                    #endif
+                #endif
                 if !viewModel.searchText.isEmpty {
                     Button {
                         viewModel.searchText = ""
@@ -47,9 +47,9 @@ struct ParentItemPickerSheet: View {
             }
             .padding()
             #if os(iOS)
-            .background(Color(.systemGray6))
+                .background(Color(.systemGray6))
             #elseif os(macOS)
-            .background(Color(nsColor: .quaternaryLabelColor))
+                .background(Color(nsColor: .quaternaryLabelColor))
             #endif
 
             Divider()
@@ -75,31 +75,31 @@ struct ParentItemPickerSheet: View {
         }
         .navigationTitle("Select Parent Item")
         #if os(iOS)
-        #if os(iOS)
-        .navigationBarTitleDisplayMode(.inline)
+            #if os(iOS)
+                .navigationBarTitleDisplayMode(.inline)
+            #endif
         #endif
-        #endif
-        .toolbar {
-            ToolbarItem(placement: .cancellationAction) {
-                Button("Cancel") {
-                    dismiss()
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") {
+                        dismiss()
+                    }
+                    .accessibilityIdentifier("parent-picker-cancel-button")
                 }
-                .accessibilityIdentifier("parent-picker-cancel-button")
-            }
-            ToolbarItem(placement: .confirmationAction) {
-                Button("Clear") {
-                    onSelect(nil)
-                    dismiss()
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Clear") {
+                        onSelect(nil)
+                        dismiss()
+                    }
+                    .accessibilityIdentifier("parent-picker-clear-button")
                 }
-                .accessibilityIdentifier("parent-picker-clear-button")
             }
-        }
-        .task {
-            await viewModel.loadItems()
-        }
-        .onChange(of: viewModel.searchText) { _, newValue in
-            viewModel.search(newValue)
-        }
+            .task {
+                await viewModel.loadItems()
+            }
+            .onChange(of: viewModel.searchText) { _, newValue in
+                viewModel.search(newValue)
+            }
     }
 
     private var itemList: some View {

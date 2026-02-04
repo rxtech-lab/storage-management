@@ -128,7 +128,7 @@ public final class ItemListViewModel: ItemListViewModelProtocol {
             isSearching = false
         } catch {
             logger.error("Failed to search items: \(error.localizedDescription)", metadata: [
-                "error": "\(error)"
+                "error": "\(error)",
             ])
             self.error = error
             isSearching = false
@@ -171,7 +171,7 @@ public final class ItemListViewModel: ItemListViewModelProtocol {
             isLoading = false
         } catch {
             logger.error("Failed to fetch items: \(error.localizedDescription)", metadata: [
-                "error": "\(error)"
+                "error": "\(error)",
             ])
             self.error = error
             isLoading = false
@@ -210,7 +210,7 @@ public final class ItemListViewModel: ItemListViewModelProtocol {
             isLoadingMore = false
         } catch {
             logger.error("Failed to load more items: \(error.localizedDescription)", metadata: [
-                "error": "\(error)"
+                "error": "\(error)",
             ])
             self.error = error
             isLoadingMore = false
@@ -268,19 +268,19 @@ extension ItemFilters {
     /// Check if filters are empty
     var isEmpty: Bool {
         categoryId == nil &&
-        locationId == nil &&
-        authorId == nil &&
-        parentId == nil &&
-        visibility == nil &&
-        search == nil
+            locationId == nil &&
+            authorId == nil &&
+            parentId == nil &&
+            visibility == nil &&
+            search == nil
     }
 
     /// Check if there are active filters (excluding search)
     public var hasActiveFilters: Bool {
         categoryId != nil ||
-        locationId != nil ||
-        authorId != nil ||
-        parentId != nil ||
-        visibility != nil
+            locationId != nil ||
+            authorId != nil ||
+            parentId != nil ||
+            visibility != nil
     }
 }

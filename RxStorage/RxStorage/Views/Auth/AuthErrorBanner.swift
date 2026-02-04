@@ -7,7 +7,7 @@
 
 import SwiftUI
 #if os(iOS)
-import UIKit
+    import UIKit
 #endif
 
 struct AuthErrorBanner: View {
@@ -62,7 +62,7 @@ struct AuthErrorBanner: View {
         guard !reduceMotion else { return }
 
         #if os(iOS)
-        UINotificationFeedbackGenerator().notificationOccurred(.error)
+            UINotificationFeedbackGenerator().notificationOccurred(.error)
         #endif
 
         withAnimation(.default) {

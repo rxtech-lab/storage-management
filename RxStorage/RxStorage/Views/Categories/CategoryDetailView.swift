@@ -5,8 +5,8 @@
 //  Category detail view
 //
 
-import SwiftUI
 import RxStorageCore
+import SwiftUI
 
 /// Category detail view
 struct CategoryDetailView: View {
@@ -44,32 +44,31 @@ struct CategoryDetailView: View {
         }
         .navigationTitle(viewModel.category?.name ?? "Category")
         #if os(iOS)
-        .navigationBarTitleDisplayMode(.inline)
+            .navigationBarTitleDisplayMode(.inline)
         #endif
-        .toolbar {
-            ToolbarItem(placement: .primaryAction) {
-                Button {
-                    showingEditSheet = true
-                } label: {
-                    Label("Edit", systemImage: "pencil")
+            .toolbar {
+                ToolbarItem(placement: .primaryAction) {
+                    Button {
+                        showingEditSheet = true
+                    } label: {
+                        Label("Edit", systemImage: "pencil")
+                    }
                 }
             }
-        }
-        .sheet(isPresented: $showingEditSheet) {
-            if let category = viewModel.category {
-                NavigationStack {
-                    CategoryFormSheet(category: category)
+            .sheet(isPresented: $showingEditSheet) {
+                if let category = viewModel.category {
+                    NavigationStack {
+                        CategoryFormSheet(category: category)
+                    }
                 }
             }
-        }
-        .task(id: categoryId) {
-            await viewModel.fetchCategory(id: categoryId)
-        }
+            .task(id: categoryId) {
+                await viewModel.fetchCategory(id: categoryId)
+            }
     }
 
     // MARK: - Category Header
 
-    @ViewBuilder
     private func categoryHeader(_ category: RxStorageCore.Category) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             Text(category.name)
@@ -86,7 +85,6 @@ struct CategoryDetailView: View {
 
     // MARK: - Category Details
 
-    @ViewBuilder
     private func categoryDetails(_ category: RxStorageCore.Category) -> some View {
         VStack(alignment: .leading, spacing: 12) {
             DetailRow(

@@ -40,12 +40,12 @@ public final class MockCategoryService: CategoryServiceProtocol {
 
     // MARK: - CategoryServiceProtocol
 
-    public func fetchCategories(filters: CategoryFilters?) async throws -> [RxStorageCore.Category] {
+    public func fetchCategories(filters _: CategoryFilters?) async throws -> [RxStorageCore.Category] {
         fetchCategoriesCalled = true
         switch fetchCategoriesResult {
-        case .success(let categories):
+        case let .success(categories):
             return categories
-        case .failure(let error):
+        case let .failure(error):
             throw error
         }
     }
@@ -54,9 +54,9 @@ public final class MockCategoryService: CategoryServiceProtocol {
         fetchCategoriesPaginatedCalled = true
         if let result = fetchCategoriesPaginatedResult {
             switch result {
-            case .success(let response):
+            case let .success(response):
                 return response
-            case .failure(let error):
+            case let .failure(error):
                 throw error
             }
         }
@@ -74,9 +74,9 @@ public final class MockCategoryService: CategoryServiceProtocol {
 
         if let result = fetchCategoryResult {
             switch result {
-            case .success(let category):
+            case let .success(category):
                 return category
-            case .failure(let error):
+            case let .failure(error):
                 throw error
             }
         }
@@ -90,9 +90,9 @@ public final class MockCategoryService: CategoryServiceProtocol {
 
         if let result = createCategoryResult {
             switch result {
-            case .success(let category):
+            case let .success(category):
                 return category
-            case .failure(let error):
+            case let .failure(error):
                 throw error
             }
         }
@@ -107,9 +107,9 @@ public final class MockCategoryService: CategoryServiceProtocol {
 
         if let result = updateCategoryResult {
             switch result {
-            case .success(let category):
+            case let .success(category):
                 return category
-            case .failure(let error):
+            case let .failure(error):
                 throw error
             }
         }
@@ -125,7 +125,7 @@ public final class MockCategoryService: CategoryServiceProtocol {
             switch result {
             case .success:
                 return
-            case .failure(let error):
+            case let .failure(error):
                 throw error
             }
         }

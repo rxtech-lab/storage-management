@@ -34,30 +34,30 @@ struct CategoryPickerSheet: View {
         }
         .navigationTitle("Select Category")
         #if os(iOS)
-        .navigationBarTitleDisplayMode(.inline)
+            .navigationBarTitleDisplayMode(.inline)
         #endif
-        .toolbar {
-            ToolbarItem(placement: .cancellationAction) {
-                Button("Cancel") {
-                    dismiss()
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") {
+                        dismiss()
+                    }
+                    .accessibilityIdentifier("category-picker-cancel-button")
                 }
-                .accessibilityIdentifier("category-picker-cancel-button")
-            }
-            ToolbarItem(placement: .confirmationAction) {
-                Button("Clear") {
-                    onSelect(nil)
-                    dismiss()
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Clear") {
+                        onSelect(nil)
+                        dismiss()
+                    }
+                    .accessibilityIdentifier("category-picker-clear-button")
                 }
-                .accessibilityIdentifier("category-picker-clear-button")
             }
-        }
-        .searchable(text: $viewModel.searchText, prompt: "Search categories")
-        .onChange(of: viewModel.searchText) { _, newValue in
-            viewModel.search(newValue)
-        }
-        .task {
-            await viewModel.loadCategories()
-        }
+            .searchable(text: $viewModel.searchText, prompt: "Search categories")
+            .onChange(of: viewModel.searchText) { _, newValue in
+                viewModel.search(newValue)
+            }
+            .task {
+                await viewModel.loadCategories()
+            }
     }
 
     private var categoryList: some View {

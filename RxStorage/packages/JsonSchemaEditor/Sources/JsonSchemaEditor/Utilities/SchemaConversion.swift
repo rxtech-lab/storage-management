@@ -13,7 +13,8 @@ public enum SchemaConversion {
         guard let schema = schema,
               schema.type == .object,
               let objectSchema = schema.objectSchema,
-              let properties = objectSchema.properties else {
+              let properties = objectSchema.properties
+        else {
             return []
         }
 
@@ -96,7 +97,7 @@ public enum SchemaConversion {
 
     /// Move an item in an array
     public static func moveArrayItem<T>(_ array: inout [T], from: Int, to: Int) {
-        guard from >= 0 && from < array.count && to >= 0 && to < array.count && from != to else {
+        guard from >= 0, from < array.count, to >= 0, to < array.count, from != to else {
             return
         }
 

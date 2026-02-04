@@ -151,11 +151,11 @@ public actor AuthenticationMiddleware: ClientMiddleware {
 
         request.httpBody =
             bodyParams
-            .map {
-                "\($0.key)=\($0.value.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "")"
-            }
-            .joined(separator: "&")
-            .data(using: .utf8)
+                .map {
+                    "\($0.key)=\($0.value.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "")"
+                }
+                .joined(separator: "&")
+                .data(using: .utf8)
 
         // Perform token refresh
         let (data, response) = try await URLSession.shared.data(for: request)
@@ -171,7 +171,8 @@ public actor AuthenticationMiddleware: ClientMiddleware {
                     metadata: [
                         "status": "\(httpResponse.statusCode)",
                         "response": "\(errorString.prefix(200))",
-                    ])
+                    ]
+                )
             }
             throw AuthenticationError.refreshFailed
         }
@@ -221,8 +222,9 @@ public enum AuthenticationError: LocalizedError, Sendable {
 
 // MARK: - Notification Names
 
-extension Notification.Name {
+public extension Notification.Name {
     /// Posted when the auth session has expired and user needs to re-authenticate
-    public static let authSessionExpired = Notification.Name(
-        "com.rxlab.rxstorage.authSessionExpired")
+    static let authSessionExpired = Notification.Name(
+        "com.rxlab.rxstorage.authSessionExpired"
+    )
 }

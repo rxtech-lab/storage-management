@@ -13,13 +13,7 @@ struct WebPage: Hashable, Identifiable {
     let title: String
     let url: URL
 
-    init(id: String, title: String, url: URL) {
-        self.id = id
-        self.title = title
-        self.url = url
-    }
-
-    // Predefined web pages for settings
+    /// Predefined web pages for settings
     static let helpAndSupport = WebPage(
         id: "help",
         title: "Help & Support",

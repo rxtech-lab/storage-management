@@ -25,7 +25,7 @@ public enum UploadError: LocalizedError, Sendable {
             return "File not found"
         case .invalidFileURL:
             return "Invalid file URL"
-        case .fileTooLarge(let maxSize):
+        case let .fileTooLarge(maxSize):
             let formatter = ByteCountFormatter()
             formatter.allowedUnits = [.useMB]
             formatter.countStyle = .file
@@ -33,9 +33,9 @@ public enum UploadError: LocalizedError, Sendable {
             return "File exceeds maximum size of \(maxSizeStr)"
         case .invalidContentType:
             return "Invalid content type. Only images are allowed."
-        case .presignedURLFailed(let message):
+        case let .presignedURLFailed(message):
             return "Failed to get upload URL: \(message)"
-        case .uploadFailed(let message):
+        case let .uploadFailed(message):
             return "Upload failed: \(message)"
         case .cancelled:
             return "Upload was cancelled"

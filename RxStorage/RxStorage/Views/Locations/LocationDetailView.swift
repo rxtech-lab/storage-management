@@ -16,9 +16,9 @@ private enum LocationSheet: Identifiable, Equatable {
 
     var id: String {
         switch self {
-        case .info(let location):
+        case let .info(location):
             return "info-\(location.id)"
-        case .edit(let location):
+        case let .edit(location):
             return "edit-\(location.id)"
         }
     }
@@ -65,34 +65,34 @@ struct LocationDetailView: View {
         }
         .navigationTitle(viewModel.location?.title ?? "Location")
         #if os(iOS)
-        .navigationBarTitleDisplayMode(.inline)
+            .navigationBarTitleDisplayMode(.inline)
         #endif
-        .sheet(item: $activeSheet) { sheet in
-            switch sheet {
-            case .info(let location):
-                LocationInfoSheet(location: location)
-                    .presentationDetents([.height(180), .medium, .large])
-                    .presentationDragIndicator(.visible)
-                    .presentationBackgroundInteraction(.enabled(upThrough: .medium))
-                    .interactiveDismissDisabled(true)
+            .sheet(item: $activeSheet) { sheet in
+                switch sheet {
+                case let .info(location):
+                    LocationInfoSheet(location: location)
+                        .presentationDetents([.height(180), .medium, .large])
+                        .presentationDragIndicator(.visible)
+                        .presentationBackgroundInteraction(.enabled(upThrough: .medium))
+                        .interactiveDismissDisabled(true)
 
-            case .edit(let location):
-                NavigationStack {
-                    LocationFormSheet(location: location)
+                case let .edit(location):
+                    NavigationStack {
+                        LocationFormSheet(location: location)
+                    }
                 }
             }
-        }
-        .onChange(of: activeSheet) { oldValue, newValue in
-            // When edit sheet is dismissed, show info sheet again
-            if case .edit = oldValue, newValue == nil {
-                if let location = viewModel.location {
-                    activeSheet = .info(location)
+            .onChange(of: activeSheet) { oldValue, newValue in
+                // When edit sheet is dismissed, show info sheet again
+                if case .edit = oldValue, newValue == nil {
+                    if let location = viewModel.location {
+                        activeSheet = .info(location)
+                    }
                 }
             }
-        }
-        .task(id: locationId) {
-            await viewModel.fetchLocation(id: locationId)
-        }
+            .task(id: locationId) {
+                await viewModel.fetchLocation(id: locationId)
+            }
     }
 
     // MARK: - Full Screen Map Content
@@ -173,10 +173,10 @@ private struct LocationInfoSheet: View {
                 }
             }
             #if os(iOS)
-.listStyle(.insetGrouped)
-#elseif os(macOS)
-.listStyle(.inset)
-#endif
+            .listStyle(.insetGrouped)
+            #elseif os(macOS)
+            .listStyle(.inset)
+            #endif
         }
     }
 }

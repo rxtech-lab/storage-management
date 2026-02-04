@@ -34,28 +34,28 @@ struct AuthorPickerSheet: View {
         }
         .navigationTitle("Select Author")
         #if os(iOS)
-        .navigationBarTitleDisplayMode(.inline)
+            .navigationBarTitleDisplayMode(.inline)
         #endif
-        .toolbar {
-            ToolbarItem(placement: .cancellationAction) {
-                Button("Cancel") {
-                    dismiss()
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") {
+                        dismiss()
+                    }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Clear") {
+                        onSelect(nil)
+                        dismiss()
+                    }
                 }
             }
-            ToolbarItem(placement: .confirmationAction) {
-                Button("Clear") {
-                    onSelect(nil)
-                    dismiss()
-                }
+            .searchable(text: $viewModel.searchText, prompt: "Search authors")
+            .onChange(of: viewModel.searchText) { _, newValue in
+                viewModel.search(newValue)
             }
-        }
-        .searchable(text: $viewModel.searchText, prompt: "Search authors")
-        .onChange(of: viewModel.searchText) { _, newValue in
-            viewModel.search(newValue)
-        }
-        .task {
-            await viewModel.loadAuthors()
-        }
+            .task {
+                await viewModel.loadAuthors()
+            }
     }
 
     private var authorList: some View {

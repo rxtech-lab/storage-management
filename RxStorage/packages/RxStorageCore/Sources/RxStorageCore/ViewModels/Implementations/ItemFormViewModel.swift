@@ -28,14 +28,14 @@ public final class ItemFormViewModel: ItemFormViewModelProtocol {
     public var existingImages: [ImageReference] = []
 
     // Position data
-    public var positionSchemas: [PositionSchema] = []       // Public for binding (inline creation)
-    public private(set) var positions: [Position] = []      // Edit mode: existing positions
-    public var pendingPositions: [PendingPosition] = []     // Create/edit: new positions to add
+    public var positionSchemas: [PositionSchema] = [] // Public for binding (inline creation)
+    public private(set) var positions: [Position] = [] // Edit mode: existing positions
+    public var pendingPositions: [PendingPosition] = [] // Create/edit: new positions to add
 
     // Content data
-    public var contentSchemas: [ContentSchema] = []         // Predefined schemas (file/image/video)
-    public private(set) var contents: [Content] = []        // Edit mode: existing contents
-    public var pendingContents: [PendingContent] = []       // Create/edit: new contents to add
+    public var contentSchemas: [ContentSchema] = [] // Predefined schemas (file/image/video)
+    public private(set) var contents: [Content] = [] // Edit mode: existing contents
+    public var pendingContents: [PendingContent] = [] // Create/edit: new contents to add
 
     // State
     public private(set) var isLoading = false
@@ -334,7 +334,7 @@ public final class ItemFormViewModel: ItemFormViewModelProtocol {
 
     /// Remove an existing image
     public func removeSavedImage(at index: Int) {
-        guard index >= 0 && index < existingImages.count else { return }
+        guard index >= 0, index < existingImages.count else { return }
         existingImages.remove(at: index)
     }
 

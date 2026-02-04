@@ -27,15 +27,15 @@ struct ItemListView: View {
     @State private var showingError = false
 
     #if os(iOS)
-    @State private var showQrCodeScanner = false
-    // QR scan state
-    @State private var isLoadingFromQR = false
-    @State private var qrScanError: Error?
-    @State private var showQrScanError = false
-    private let itemService = ItemService()
+        @State private var showQrCodeScanner = false
+        // QR scan state
+        @State private var isLoadingFromQR = false
+        @State private var qrScanError: Error?
+        @State private var showQrScanError = false
+        private let itemService = ItemService()
     #endif
 
-    // Refresh state
+    /// Refresh state
     @State private var isRefreshing = false
 
     // Delete confirmation state
@@ -56,14 +56,14 @@ struct ItemListView: View {
                 }
 
                 #if os(iOS)
-                ToolbarItem(placement: .primaryAction) {
-                    Button {
-                        showQrCodeScanner = true
-                    } label: {
-                        Label("Scan", systemImage: "qrcode.viewfinder")
+                    ToolbarItem(placement: .primaryAction) {
+                        Button {
+                            showQrCodeScanner = true
+                        } label: {
+                            Label("Scan", systemImage: "qrcode.viewfinder")
+                        }
+                        .accessibilityIdentifier("item-list-scan-button")
                     }
-                    .accessibilityIdentifier("item-list-scan-button")
-                }
                 #endif
 
                 ToolbarItem(placement: .secondaryAction) {
@@ -147,15 +147,15 @@ struct ItemListView: View {
             }
             .overlay {
                 #if os(iOS)
-                if isLoadingFromQR {
-                    LoadingOverlay(title: "Loading item from QR code..")
-                } else if isRefreshing {
-                    LoadingOverlay(title: "Refreshing...")
-                }
+                    if isLoadingFromQR {
+                        LoadingOverlay(title: "Loading item from QR code..")
+                    } else if isRefreshing {
+                        LoadingOverlay(title: "Refreshing...")
+                    }
                 #else
-                if isRefreshing {
-                    LoadingOverlay(title: "Refreshing...")
-                }
+                    if isRefreshing {
+                        LoadingOverlay(title: "Refreshing...")
+                    }
                 #endif
             }
         #if os(iOS)
@@ -188,7 +188,6 @@ struct ItemListView: View {
 
     // MARK: - Items List
 
-    @ViewBuilder
     private var itemsList: some View {
         AdaptiveList(horizontalSizeClass: horizontalSizeClass, selection: $selectedItem) {
             ForEach(viewModel.items) { item in
@@ -282,36 +281,36 @@ struct ItemListView: View {
 
     #if os(iOS)
 
-    // MARK: - QR Code Handling
+        // MARK: - QR Code Handling
 
-    private func handleScannedQRCode(_ code: String) async {
-        guard let url = URL(string: code) else {
-            qrScanError = APIError.unsupportedQRCode(code)
-            showQrScanError = true
-            return
+        private func handleScannedQRCode(_ code: String) async {
+            guard let url = URL(string: code) else {
+                qrScanError = APIError.unsupportedQRCode(code)
+                showQrScanError = true
+                return
+            }
+
+            // Extract item ID from URL path (e.g., /preview/123)
+            guard let itemIdString = url.pathComponents.last,
+                  let itemId = Int(itemIdString)
+            else {
+                qrScanError = APIError.unsupportedQRCode(code)
+                showQrScanError = true
+                return
+            }
+
+            // Fetch the item directly
+            isLoadingFromQR = true
+            defer { isLoadingFromQR = false }
+
+            do {
+                let itemDetail = try await itemService.fetchItem(id: itemId)
+                selectedItem = itemDetail.toStorageItem()
+            } catch {
+                qrScanError = error
+                showQrScanError = true
+            }
         }
-
-        // Extract item ID from URL path (e.g., /preview/123)
-        guard let itemIdString = url.pathComponents.last,
-              let itemId = Int(itemIdString)
-        else {
-            qrScanError = APIError.unsupportedQRCode(code)
-            showQrScanError = true
-            return
-        }
-
-        // Fetch the item directly
-        isLoadingFromQR = true
-        defer { isLoadingFromQR = false }
-
-        do {
-            let itemDetail = try await itemService.fetchItem(id: itemId)
-            selectedItem = itemDetail.toStorageItem()
-        } catch {
-            qrScanError = error
-            showQrScanError = true
-        }
-    }
     #endif
 }
 

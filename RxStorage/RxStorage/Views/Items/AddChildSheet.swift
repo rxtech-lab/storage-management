@@ -39,7 +39,7 @@ struct AddChildSheet: View {
     ) {
         self.parentItemId = parentItemId
         self.existingChildIds = existingChildIds
-        self._isAdding = isAdding
+        _isAdding = isAdding
         self.onChildSelected = onChildSelected
 
         // Exclude parent and existing children
@@ -82,24 +82,24 @@ struct AddChildSheet: View {
         }
         .navigationTitle("Add Child Item")
         #if os(iOS)
-        .navigationBarTitleDisplayMode(.inline)
+            .navigationBarTitleDisplayMode(.inline)
         #endif
-        .toolbar {
-            ToolbarItem(placement: .cancellationAction) {
-                Button("Cancel") {
-                    dismiss()
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") {
+                        dismiss()
+                    }
                 }
             }
-        }
-        .searchable(text: $viewModel.searchText, prompt: "Search items")
-        .onChange(of: viewModel.searchText) { _, newValue in
-            viewModel.search(newValue)
-        }
-        .overlay {
-            if isAdding {
-                LoadingOverlay()
+            .searchable(text: $viewModel.searchText, prompt: "Search items")
+            .onChange(of: viewModel.searchText) { _, newValue in
+                viewModel.search(newValue)
             }
-        }
+            .overlay {
+                if isAdding {
+                    LoadingOverlay()
+                }
+            }
     }
 
     // MARK: - Items List

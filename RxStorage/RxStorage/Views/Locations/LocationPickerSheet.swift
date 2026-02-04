@@ -34,30 +34,30 @@ struct LocationPickerSheet: View {
         }
         .navigationTitle("Select Location")
         #if os(iOS)
-        #if os(iOS)
-        .navigationBarTitleDisplayMode(.inline)
+            #if os(iOS)
+                .navigationBarTitleDisplayMode(.inline)
+            #endif
         #endif
-        #endif
-        .toolbar {
-            ToolbarItem(placement: .cancellationAction) {
-                Button("Cancel") {
-                    dismiss()
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") {
+                        dismiss()
+                    }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Clear") {
+                        onSelect(nil)
+                        dismiss()
+                    }
                 }
             }
-            ToolbarItem(placement: .confirmationAction) {
-                Button("Clear") {
-                    onSelect(nil)
-                    dismiss()
-                }
+            .searchable(text: $viewModel.searchText, prompt: "Search locations")
+            .onChange(of: viewModel.searchText) { _, newValue in
+                viewModel.search(newValue)
             }
-        }
-        .searchable(text: $viewModel.searchText, prompt: "Search locations")
-        .onChange(of: viewModel.searchText) { _, newValue in
-            viewModel.search(newValue)
-        }
-        .task {
-            await viewModel.loadLocations()
-        }
+            .task {
+                await viewModel.loadLocations()
+            }
     }
 
     private var locationList: some View {

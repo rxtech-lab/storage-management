@@ -5,8 +5,8 @@
 //  Category list view
 //
 
-import SwiftUI
 import RxStorageCore
+import SwiftUI
 
 /// Category list view
 struct CategoryListView: View {
@@ -152,9 +152,9 @@ struct CategoryListView: View {
         }
         let threshold = 3
         return index >= viewModel.categories.count - threshold &&
-               viewModel.hasNextPage &&
-               !viewModel.isLoadingMore &&
-               !viewModel.isLoading
+            viewModel.hasNextPage &&
+            !viewModel.isLoadingMore &&
+            !viewModel.isLoading
     }
 }
 

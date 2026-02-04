@@ -29,23 +29,23 @@ struct LocationFormSheet: View {
         Form {
             Section("Information") {
                 TextField("Title", text: $viewModel.title)
-                    #if os(iOS)
+                #if os(iOS)
                     .textInputAutocapitalization(.words)
-                    #endif
+                #endif
                     .accessibilityIdentifier("location-form-title-field")
             }
 
             Section("Coordinates") {
                 TextField("Latitude", text: $viewModel.latitude)
-                    #if os(iOS)
+                #if os(iOS)
                     .keyboardType(.decimalPad)
-                    #endif
+                #endif
                     .accessibilityIdentifier("location-form-latitude-field")
 
                 TextField("Longitude", text: $viewModel.longitude)
-                    #if os(iOS)
+                #if os(iOS)
                     .keyboardType(.decimalPad)
-                    #endif
+                #endif
                     .accessibilityIdentifier("location-form-longitude-field")
 
                 Button {
@@ -71,51 +71,51 @@ struct LocationFormSheet: View {
         }
         .navigationTitle(location == nil ? "New Location" : "Edit Location")
         #if os(iOS)
-        .navigationBarTitleDisplayMode(.inline)
+            .navigationBarTitleDisplayMode(.inline)
         #endif
-        .toolbar {
-            ToolbarItem(placement: .cancellationAction) {
-                Button("Cancel") {
-                    dismiss()
-                }
-                .accessibilityIdentifier("location-form-cancel-button")
-            }
-
-            ToolbarItem(placement: .confirmationAction) {
-                Button(location == nil ? "Create" : "Save") {
-                    Task {
-                        await submitForm()
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") {
+                        dismiss()
                     }
+                    .accessibilityIdentifier("location-form-cancel-button")
                 }
-                .disabled(viewModel.isSubmitting)
-                .accessibilityIdentifier("location-form-submit-button")
+
+                ToolbarItem(placement: .confirmationAction) {
+                    Button(location == nil ? "Create" : "Save") {
+                        Task {
+                            await submitForm()
+                        }
+                    }
+                    .disabled(viewModel.isSubmitting)
+                    .accessibilityIdentifier("location-form-submit-button")
+                }
             }
-        }
         #if os(iOS)
-        .fullScreenCover(isPresented: $showingMapPicker) {
-            MapPickerView(
-                initialCoordinate: parseCurrentCoordinate()
-            ) { coordinate in
-                viewModel.updateCoordinates(coordinate)
-                showingMapPicker = false
+            .fullScreenCover(isPresented: $showingMapPicker) {
+                MapPickerView(
+                    initialCoordinate: parseCurrentCoordinate()
+                ) { coordinate in
+                    viewModel.updateCoordinates(coordinate)
+                    showingMapPicker = false
+                }
             }
-        }
         #elseif os(macOS)
-        .sheet(isPresented: $showingMapPicker) {
-            MapPickerView(
-                initialCoordinate: parseCurrentCoordinate()
-            ) { coordinate in
-                viewModel.updateCoordinates(coordinate)
-                showingMapPicker = false
+            .sheet(isPresented: $showingMapPicker) {
+                MapPickerView(
+                    initialCoordinate: parseCurrentCoordinate()
+                ) { coordinate in
+                    viewModel.updateCoordinates(coordinate)
+                    showingMapPicker = false
+                }
+                .frame(minWidth: 600, minHeight: 500)
             }
-            .frame(minWidth: 600, minHeight: 500)
-        }
         #endif
-        .overlay {
-            if viewModel.isSubmitting {
-                LoadingOverlay()
+            .overlay {
+                if viewModel.isSubmitting {
+                    LoadingOverlay()
+                }
             }
-        }
     }
 
     // MARK: - Actions

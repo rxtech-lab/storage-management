@@ -23,7 +23,7 @@ struct AnimatedAppLogo: View {
                         LinearGradient(
                             colors: [
                                 Color.white.opacity(colorScheme == .dark ? 0.2 : 0.5),
-                                Color.white.opacity(colorScheme == .dark ? 0.05 : 0.1)
+                                Color.white.opacity(colorScheme == .dark ? 0.05 : 0.1),
                             ],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
@@ -42,7 +42,7 @@ struct AnimatedAppLogo: View {
                         colors: [
                             Color.blue.opacity(glowPulse ? 0.4 : 0.25),
                             Color.purple.opacity(glowPulse ? 0.2 : 0.1),
-                            Color.clear
+                            Color.clear,
                         ],
                         center: .center,
                         startRadius: 20,
@@ -70,7 +70,7 @@ struct AnimatedAppLogo: View {
                         colors: [
                             Color.blue,
                             Color.blue.opacity(0.7),
-                            Color.purple.opacity(0.8)
+                            Color.purple.opacity(0.8),
                         ],
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
@@ -99,14 +99,14 @@ struct AnimatedAppLogo: View {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
                 withAnimation(
                     .easeInOut(duration: 2.5)
-                    .repeatForever(autoreverses: true)
+                        .repeatForever(autoreverses: true)
                 ) {
                     isFloating = true
                 }
 
                 withAnimation(
                     .easeInOut(duration: 3.0)
-                    .repeatForever(autoreverses: true)
+                        .repeatForever(autoreverses: true)
                 ) {
                     glowPulse = true
                 }

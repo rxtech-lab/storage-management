@@ -22,7 +22,7 @@ struct AdaptiveList<SelectionValue: Hashable, Content: View>: View {
         @ViewBuilder content: @escaping () -> Content
     ) {
         self.horizontalSizeClass = horizontalSizeClass
-        self._selection = selection
+        _selection = selection
         self.content = content
     }
 

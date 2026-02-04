@@ -54,10 +54,10 @@ public final class ItemFilterViewModel {
         self.authorService = authorService
 
         // Initialize from existing filters
-        self.selectedCategoryId = initialFilters.categoryId
-        self.selectedLocationId = initialFilters.locationId
-        self.selectedAuthorId = initialFilters.authorId
-        self.selectedVisibility = initialFilters.visibility
+        selectedCategoryId = initialFilters.categoryId
+        selectedLocationId = initialFilters.locationId
+        selectedAuthorId = initialFilters.authorId
+        selectedVisibility = initialFilters.visibility
     }
 
     // MARK: - Public Methods

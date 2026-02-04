@@ -8,7 +8,7 @@
 import RxStorageCore
 import SwiftUI
 #if os(macOS)
-import AppKit
+    import AppKit
 #endif
 
 // MARK: - Platform Colors
@@ -16,25 +16,25 @@ import AppKit
 private extension Color {
     static var systemGroupedBackground: Color {
         #if os(iOS)
-        Color(UIColor.systemGroupedBackground)
+            Color(UIColor.systemGroupedBackground)
         #else
-        Color(nsColor: .windowBackgroundColor)
+            Color(nsColor: .windowBackgroundColor)
         #endif
     }
 
     static var secondarySystemGroupedBackground: Color {
         #if os(iOS)
-        Color(UIColor.secondarySystemGroupedBackground)
+            Color(UIColor.secondarySystemGroupedBackground)
         #else
-        Color(nsColor: .controlBackgroundColor)
+            Color(nsColor: .controlBackgroundColor)
         #endif
     }
 
     static var systemGray6: Color {
         #if os(iOS)
-        Color(UIColor.systemGray6)
+            Color(UIColor.systemGray6)
         #else
-        Color(nsColor: .systemGray)
+            Color(nsColor: .systemGray)
         #endif
     }
 }
@@ -51,11 +51,11 @@ struct ItemDetailView: View {
     @State private var showingEditSheet = false
     @State private var showingQRSheet = false
     #if os(iOS)
-    @State private var nfcWriter = NFCWriter()
-    @State private var isWritingNFC = false
-    @State private var showNFCError = false
-    @State private var nfcError: Error?
-    @State private var showNFCSuccess = false
+        @State private var nfcWriter = NFCWriter()
+        @State private var isWritingNFC = false
+        @State private var showNFCError = false
+        @State private var nfcError: Error?
+        @State private var showNFCSuccess = false
     #endif
     @State private var showingAddChildSheet = false
     @State private var isAddingChild = false
@@ -203,7 +203,6 @@ struct ItemDetailView: View {
 
     // MARK: - Item Content
 
-    @ViewBuilder
     private func itemContent(_ item: StorageItemDetail) -> some View {
         ScrollView {
             VStack(spacing: 0) {
@@ -241,7 +240,6 @@ struct ItemDetailView: View {
 
     // MARK: - Toolbar Menu
 
-    @ViewBuilder
     private func toolbarMenu(_ item: StorageItemDetail) -> some View {
         Menu {
             Button {
@@ -257,12 +255,12 @@ struct ItemDetailView: View {
             }
 
             #if os(iOS)
-            Button {
-                Task { await writeToNFC(previewUrl: item.previewUrl) }
-            } label: {
-                Label(isWritingNFC ? "Writing..." : "Write to NFC Tag", systemImage: "wave.3.right")
-            }
-            .disabled(isWritingNFC)
+                Button {
+                    Task { await writeToNFC(previewUrl: item.previewUrl) }
+                } label: {
+                    Label(isWritingNFC ? "Writing..." : "Write to NFC Tag", systemImage: "wave.3.right")
+                }
+                .disabled(isWritingNFC)
             #endif
         } label: {
             Label("More", systemImage: "ellipsis.circle")
@@ -273,18 +271,18 @@ struct ItemDetailView: View {
 
     private func handleEvent(_ event: AppEvent) async {
         switch event {
-        case .itemUpdated(let id) where id == itemId:
+        case let .itemUpdated(id) where id == itemId:
             guard !Task.isCancelled else { return }
             isRefreshing = true
             await viewModel.refresh()
             isRefreshing = false
-        case .contentCreated(let iId, _) where iId == itemId,
+        case let .contentCreated(iId, _) where iId == itemId,
              .contentDeleted(let iId, _) where iId == itemId:
             guard !Task.isCancelled else { return }
             isRefreshing = true
             await viewModel.refresh()
             isRefreshing = false
-        case .childAdded(let pId, _) where pId == itemId,
+        case let .childAdded(pId, _) where pId == itemId,
              .childRemoved(let pId, _) where pId == itemId:
             guard !Task.isCancelled else { return }
             isRefreshing = true
@@ -298,24 +296,23 @@ struct ItemDetailView: View {
     // MARK: - NFC Writing
 
     #if os(iOS)
-    private func writeToNFC(previewUrl: String) async {
-        isWritingNFC = true
-        defer { isWritingNFC = false }
-        do {
-            try await nfcWriter.writeToNfcChip(url: previewUrl)
-            showNFCSuccess = true
-        } catch NFCWriterError.cancelled {
-            // User cancelled - do nothing (silent dismissal)
-        } catch {
-            nfcError = error
-            showNFCError = true
+        private func writeToNFC(previewUrl: String) async {
+            isWritingNFC = true
+            defer { isWritingNFC = false }
+            do {
+                try await nfcWriter.writeToNfcChip(url: previewUrl)
+                showNFCSuccess = true
+            } catch NFCWriterError.cancelled {
+                // User cancelled - do nothing (silent dismissal)
+            } catch {
+                nfcError = error
+                showNFCError = true
+            }
         }
-    }
     #endif
 
     // MARK: - Image Carousel
 
-    @ViewBuilder
     private func stretchyImageCarousel(_ images: [Components.Schemas.SignedImageSchema]) -> some View {
         GeometryReader { geometry in
             let minY = geometry.frame(in: .global).minY
@@ -326,7 +323,7 @@ struct ItemDetailView: View {
                 ForEach(Array(images.enumerated()), id: \.offset) { index, image in
                     AsyncImage(url: URL(string: image.url)) { phase in
                         switch phase {
-                        case .success(let loadedImage):
+                        case let .success(loadedImage):
                             loadedImage
                                 .resizable()
                                 .scaledToFill()
@@ -365,7 +362,6 @@ struct ItemDetailView: View {
 
     // MARK: - Header Card
 
-    @ViewBuilder
     private func headerCard(_ item: StorageItemDetail) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
@@ -404,7 +400,6 @@ struct ItemDetailView: View {
 
     // MARK: - Details Card
 
-    @ViewBuilder
     private func detailsCard(_ item: StorageItemDetail) -> some View {
         VStack(alignment: .leading, spacing: 12) {
             Label("Details", systemImage: "info.circle")
@@ -492,7 +487,6 @@ struct ItemDetailView: View {
         .cardStyle()
     }
 
-    @ViewBuilder
     private func childRowWithActions(_ child: StorageItem) -> some View {
         HStack {
             NavigationLink(value: child) {
@@ -640,7 +634,6 @@ struct ItemDetailView: View {
 
     // MARK: - Content Row
 
-    @ViewBuilder
     private func contentRow(_ content: Content) -> some View {
         HStack(alignment: .top, spacing: 12) {
             Image(systemName: content.type.icon)
