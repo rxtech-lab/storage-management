@@ -8,8 +8,9 @@ import { z } from 'zod';
  * NOT other users' items (even if they are public).
  */
 test.describe.serial("Dashboard Statistics User Isolation", () => {
-  const USER_A = "dashboard-user-a";
-  const USER_B = "dashboard-user-b";
+  // Use randomized user IDs to avoid conflicts with data from previous test runs
+  const USER_A = `dashboard-user-a-${crypto.randomUUID()}`;
+  const USER_B = `dashboard-user-b-${crypto.randomUUID()}`;
 
   let userAPrivateItemId: number;
   let userAPublicItemId: number;
@@ -136,8 +137,8 @@ test.describe.serial("Dashboard Statistics User Isolation", () => {
     });
   });
 
-  test.describe("Contrast with List Items API", () => {
-    test("List items API DOES show other users' public items (unlike dashboard)", async ({ request }) => {
+  test.describe("List Items API consistency", () => {
+    test("List items API returns ONLY user's own items (same as dashboard)", async ({ request }) => {
       const response = await request.get("/api/v1/items", {
         headers: { "X-Test-User-Id": USER_A },
       });
@@ -151,8 +152,8 @@ test.describe.serial("Dashboard Statistics User Isolation", () => {
       expect(itemTitles).toContain("User A Private Item");
       expect(itemTitles).toContain("User A Public Item");
 
-      // User A ALSO sees User B's PUBLIC item (but not private)
-      expect(itemTitles).toContain("User B Public Item");
+      // User A does NOT see other users' items (not even public ones)
+      expect(itemTitles).not.toContain("User B Public Item");
       expect(itemTitles).not.toContain("User B Private Item");
     });
   });

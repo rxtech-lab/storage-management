@@ -27,7 +27,7 @@ struct AppClipRootView: View {
     @State private var isAuthenticating = false
     @State private var authError: String?
 
-    // Sign out confirmation state
+    /// Sign out confirmation state
     @State private var showSignOutConfirmation = false
 
     var body: some View {

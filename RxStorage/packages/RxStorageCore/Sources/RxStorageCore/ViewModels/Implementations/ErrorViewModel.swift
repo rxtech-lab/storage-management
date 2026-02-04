@@ -23,12 +23,12 @@ public final class ErrorViewModel: ErrorViewModelProtocol {
     /// - Parameter error: The error to display
     public func showError(_ error: Error) {
         self.error = error
-        self.isPresented = true
+        isPresented = true
     }
 
     /// Clear the current error
     public func clearError() {
-        self.error = nil
-        self.isPresented = false
+        error = nil
+        isPresented = false
     }
 }

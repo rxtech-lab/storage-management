@@ -710,9 +710,7 @@ export async function getItemsPaginated(
   const cursor = filters?.cursor ? decodeCursor(filters.cursor) : null;
 
   // Build base conditions (same as getItems)
-  const conditions = [
-    or(eq(items.userId, sessionUserId), eq(items.visibility, "publicAccess")),
-  ];
+  const conditions = [eq(items.userId, sessionUserId)];
 
   if (filters?.categoryId) {
     conditions.push(eq(items.categoryId, filters.categoryId));

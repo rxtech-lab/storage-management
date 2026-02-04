@@ -17,7 +17,7 @@ struct AppClipAccessDeniedView: View {
     @State private var showTitle = false
     @State private var showButton = false
 
-    // Confirmation dialog state
+    /// Confirmation dialog state
     @State private var showConfirmation = false
 
     var body: some View {

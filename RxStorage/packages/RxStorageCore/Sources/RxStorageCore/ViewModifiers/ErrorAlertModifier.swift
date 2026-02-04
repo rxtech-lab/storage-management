@@ -7,12 +7,12 @@
 
 import SwiftUI
 
-extension View {
+public extension View {
     /// Add an error alert that displays errors from the given ErrorViewModel
     /// - Parameter errorViewModel: The error view model to observe
     /// - Returns: A view with the error alert modifier applied
-    public func showViewModelError(_ errorViewModel: ErrorViewModel) -> some View {
-        self.alert("Error", isPresented: Bindable(errorViewModel).isPresented) {
+    func showViewModelError(_ errorViewModel: ErrorViewModel) -> some View {
+        alert("Error", isPresented: Bindable(errorViewModel).isPresented) {
             Button("OK") {
                 errorViewModel.clearError()
             }

@@ -5,8 +5,9 @@ import { test, expect } from "@playwright/test";
  * Uses X-Test-User-Id header to simulate different users.
  */
 test.describe.serial("Permission Tests", () => {
-  const USER_1 = "test-user-1";
-  const USER_2 = "test-user-2";
+  // Use randomized user IDs to avoid conflicts with data from previous test runs
+  const USER_1 = `test-user-1-${crypto.randomUUID()}`;
+  const USER_2 = `test-user-2-${crypto.randomUUID()}`;
 
   let user1ItemId: number;
   let user1CategoryId: number;
@@ -205,18 +206,18 @@ test.describe.serial("Permission Tests", () => {
   });
 
   test.describe("User 2 can view but not modify public items", () => {
-    test("should see User 1 public item in list", async ({ request }) => {
+    test("should NOT see User 1 public item in list (users only see their own items)", async ({ request }) => {
       const response = await request.get("/api/v1/items", {
         headers: { "X-Test-User-Id": USER_2 },
       });
       expect(response.status()).toBe(200);
       const body = await response.json();
+      // List endpoint returns only user's own items, not other users' public items
       const user1Items = body.data.filter((item: any) => item.id === user1ItemId);
-      expect(user1Items.length).toBe(1);
-      expect(user1Items[0].visibility).toBe("publicAccess");
+      expect(user1Items.length).toBe(0);
     });
 
-    test("should access User 1 public item by ID", async ({ request }) => {
+    test("should access User 1 public item by ID (direct access still works)", async ({ request }) => {
       const response = await request.get(`/api/v1/items/${user1ItemId}`, {
         headers: { "X-Test-User-Id": USER_2 },
       });
@@ -278,12 +279,13 @@ test.describe.serial("Permission Tests", () => {
  * Verifies that users can only see their own private items and all public items.
  */
 test.describe.serial("Multi-User Item Isolation", () => {
-  const USER_A = "isolation-user-a";
-  const USER_A_EMAIL = "user-a@example.com";
-  const USER_B = "isolation-user-b";
-  const USER_B_EMAIL = "user-b@example.com";
-  const USER_C = "isolation-user-c";
-  const USER_C_EMAIL = "user-c@example.com";
+  // Use randomized user IDs to avoid conflicts with data from previous test runs
+  const USER_A = `isolation-user-a-${crypto.randomUUID()}`;
+  const USER_A_EMAIL = `user-a-${crypto.randomUUID()}@example.com`;
+  const USER_B = `isolation-user-b-${crypto.randomUUID()}`;
+  const USER_B_EMAIL = `user-b-${crypto.randomUUID()}@example.com`;
+  const USER_C = `isolation-user-c-${crypto.randomUUID()}`;
+  const USER_C_EMAIL = `user-c-${crypto.randomUUID()}@example.com`;
 
   // Track created item IDs
   let userAPrivateItem1Id: number;
@@ -373,7 +375,7 @@ test.describe.serial("Multi-User Item Isolation", () => {
   });
 
   test.describe("List isolation verification", () => {
-    test("User A sees only their own private items plus public items from others", async ({ request }) => {
+    test("User A sees ONLY their own items (not other users' public items)", async ({ request }) => {
       const response = await request.get("/api/v1/items", {
         headers: { "X-Test-User-Id": USER_A, "X-Test-User-Email": USER_A_EMAIL },
       });
@@ -386,15 +388,13 @@ test.describe.serial("Multi-User Item Isolation", () => {
       expect(itemTitles).toContain("User A Private Item 2");
       expect(itemTitles).toContain("User A Public Item");
 
-      // User A should see other users' public items
-      expect(itemTitles).toContain("User B Public Item");
-
-      // User A should NOT see other users' private items
+      // User A should NOT see other users' items (not even public ones)
+      expect(itemTitles).not.toContain("User B Public Item");
       expect(itemTitles).not.toContain("User B Private Item");
       expect(itemTitles).not.toContain("User C Private Item");
     });
 
-    test("User B sees only their own private items plus public items from others", async ({ request }) => {
+    test("User B sees ONLY their own items (not other users' public items)", async ({ request }) => {
       const response = await request.get("/api/v1/items", {
         headers: { "X-Test-User-Id": USER_B, "X-Test-User-Email": USER_B_EMAIL },
       });
@@ -406,16 +406,14 @@ test.describe.serial("Multi-User Item Isolation", () => {
       expect(itemTitles).toContain("User B Private Item");
       expect(itemTitles).toContain("User B Public Item");
 
-      // User B should see other users' public items
-      expect(itemTitles).toContain("User A Public Item");
-
-      // User B should NOT see other users' private items
+      // User B should NOT see other users' items (not even public ones)
+      expect(itemTitles).not.toContain("User A Public Item");
       expect(itemTitles).not.toContain("User A Private Item 1");
       expect(itemTitles).not.toContain("User A Private Item 2");
       expect(itemTitles).not.toContain("User C Private Item");
     });
 
-    test("User C sees only their own private item plus public items from others", async ({ request }) => {
+    test("User C sees ONLY their own items (not other users' public items)", async ({ request }) => {
       const response = await request.get("/api/v1/items", {
         headers: { "X-Test-User-Id": USER_C, "X-Test-User-Email": USER_C_EMAIL },
       });
@@ -423,14 +421,12 @@ test.describe.serial("Multi-User Item Isolation", () => {
       const body = await response.json();
       const itemTitles = body.data.map((item: any) => item.title);
 
-      // User C should see their own item
+      // User C should see their own item (1 total)
       expect(itemTitles).toContain("User C Private Item");
 
-      // User C should see all public items
-      expect(itemTitles).toContain("User A Public Item");
-      expect(itemTitles).toContain("User B Public Item");
-
-      // User C should NOT see other users' private items
+      // User C should NOT see other users' items (not even public ones)
+      expect(itemTitles).not.toContain("User A Public Item");
+      expect(itemTitles).not.toContain("User B Public Item");
       expect(itemTitles).not.toContain("User A Private Item 1");
       expect(itemTitles).not.toContain("User A Private Item 2");
       expect(itemTitles).not.toContain("User B Private Item");
@@ -483,7 +479,7 @@ test.describe.serial("Multi-User Item Isolation", () => {
   });
 
   test.describe("Ownership verification in list response", () => {
-    test("All items in User A's list have correct ownership metadata", async ({ request }) => {
+    test("All items in User A's list belong to User A only", async ({ request }) => {
       const response = await request.get("/api/v1/items", {
         headers: { "X-Test-User-Id": USER_A, "X-Test-User-Email": USER_A_EMAIL },
       });
@@ -492,35 +488,31 @@ test.describe.serial("Multi-User Item Isolation", () => {
 
       // Filter to only our test items by title prefix
       const testItems = body.data.filter((item: any) =>
-        item.title.startsWith("User A ") || item.title.startsWith("User B Public")
+        item.title.startsWith("User A ")
       );
 
-      // Verify each item has userId field and correct ownership
+      // Verify each item has userId field and belongs to User A
       for (const item of testItems) {
         expect(item.userId).toBeDefined();
-
-        if (item.title.startsWith("User A ")) {
-          expect(item.userId).toBe(USER_A);
-        }
-
-        if (item.title === "User B Public Item") {
-          expect(item.userId).toBe(USER_B);
-        }
+        expect(item.userId).toBe(USER_A);
       }
+
+      // Verify User B's items are NOT in the list
+      const userBItems = body.data.filter((item: any) =>
+        item.title.startsWith("User B ")
+      );
+      expect(userBItems.length).toBe(0);
     });
 
-    test("Private items in list always belong to requesting user", async ({ request }) => {
+    test("All items in list always belong to requesting user", async ({ request }) => {
       const response = await request.get("/api/v1/items", {
         headers: { "X-Test-User-Id": USER_B, "X-Test-User-Email": USER_B_EMAIL },
       });
       expect(response.status()).toBe(200);
       const body = await response.json();
 
-      // Filter to private items only
-      const privateItems = body.data.filter((item: any) => item.visibility === "privateAccess");
-
-      // All private items should belong to User B
-      for (const item of privateItems) {
+      // All items in the list should belong to User B
+      for (const item of body.data) {
         expect(item.userId).toBe(USER_B);
       }
     });

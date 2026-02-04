@@ -10,7 +10,7 @@ import XCTest
 final class RxStorageClipsUITests: XCTestCase {
     // MARK: - URL Parsing Tests
 
-    func testInvalidURLShowsError() throws {
+    func testInvalidURLShowsError() {
         let app = launchAppClip(withURL: "http://localhost:3000/invalid/path")
 
         let errorTitle = app.staticTexts["Invalid URL"]
@@ -19,7 +19,7 @@ final class RxStorageClipsUITests: XCTestCase {
 
     // MARK: - Item Loading Tests
 
-    func testPublicItemLoadsSuccessfully() throws {
+    func testPublicItemLoadsSuccessfully() {
         // Use a known public item ID from test environment
         let app = launchAppClip(withItemId: 1)
 
