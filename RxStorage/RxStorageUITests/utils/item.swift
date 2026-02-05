@@ -68,4 +68,26 @@ extension XCUIApplication {
     var deepLinkErrorOKButton: XCUIElement {
         alerts["Deep Link Error"].buttons["OK"].firstMatch
     }
+
+    // MARK: - QR Code Scanner
+
+    var qrScannerButton: XCUIElement {
+        buttons["qr-scanner-button"].firstMatch
+    }
+
+    var qrCodeLoadingOverlay: XCUIElement {
+        staticTexts["Loading item from QR code.."].firstMatch
+    }
+
+    // MARK: - Error Alert (for QR scan tests)
+
+    // Note: These are aliases to the deep link error alert selectors for semantic clarity
+
+    var errorAlert: XCUIElement {
+        alerts["Deep Link Error"].firstMatch
+    }
+
+    var errorAlertOKButton: XCUIElement {
+        alerts["Deep Link Error"].buttons["OK"].firstMatch
+    }
 }

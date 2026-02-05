@@ -83,3 +83,15 @@ func launchAppWithUniversalLink(itemId id: Int) -> XCUIApplication {
 
     return app
 }
+
+/// Launch main app with simulated QR code scan
+/// The QR content will be processed when navigating to Items tab
+/// - Parameter qrContent: The QR code content to simulate (e.g., "preview/item/1" or full URL)
+func launchAppWithQRCode(_ qrContent: String) -> XCUIApplication {
+    let app = XCUIApplication()
+    app.launchArguments.append("--reset-auth")
+    app.launchArguments.append("--test-qr-code")
+    app.launchArguments.append(qrContent)
+    app.launch()
+    return app
+}

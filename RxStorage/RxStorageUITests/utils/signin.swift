@@ -56,11 +56,6 @@ extension XCUIApplication {
             // WebView elements need extra handling for keyboard focus in CI
             emailField.tap()
             sleep(1) // Give WebView time to establish keyboard focus
-
-            // Double-tap to ensure focus and select any existing text
-            emailField.doubleTap()
-            sleep(1)
-
             // Type the email
             emailField.typeText(testEmail)
             NSLog("✅ Email entered")
@@ -83,8 +78,6 @@ extension XCUIApplication {
         // WebView password field also needs focus handling
         passwordField.tap()
         sleep(1) // Give WebView time to establish keyboard focus
-        passwordField.doubleTap()
-        sleep(1)
 
         passwordField.typeText(testPassword)
         NSLog("✅ Password entered, submitting...")

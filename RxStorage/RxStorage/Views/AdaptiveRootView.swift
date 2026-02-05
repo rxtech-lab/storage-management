@@ -5,7 +5,6 @@
 //  Main view that detects size class and switches between TabBar/Sidebar navigation
 //
 
-import RxStorageCore
 import SwiftUI
 
 /// Adaptive root view that uses TabView on iPhone and NavigationSplitView on iPad
@@ -40,9 +39,11 @@ struct AdaptiveRootView: View {
         }
         .alert("Deep Link Error", isPresented: $navigationManager.showDeepLinkError) {
             Button("OK", role: .cancel) {}
+                .accessibilityIdentifier("deep-link-error-ok-button")
         } message: {
             if let error = navigationManager.deepLinkError {
                 Text(error.localizedDescription)
+                    .accessibilityIdentifier("deep-link-error-message")
             }
         }
         .overlay {
