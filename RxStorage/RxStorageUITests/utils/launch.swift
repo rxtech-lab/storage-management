@@ -42,3 +42,44 @@ func launchAppClip(withURL url: String) -> XCUIApplication {
 
     return app
 }
+
+/// Launch main app and trigger deep link with item ID
+/// Uses the custom URL scheme: rxstorage://preview/item/{id}
+func launchAppWithDeepLink(itemId id: Int) -> XCUIApplication {
+    let app = XCUIApplication()
+    app.launchArguments.append("--reset-auth")
+    app.launch()
+
+    // Open the deep link URL after app launches
+    let url = URL(string: "rxstorage://preview/item/\(id)")!
+    app.open(url)
+
+    return app
+}
+
+/// Launch main app and trigger deep link with custom URL
+func launchAppWithDeepLink(url: String) -> XCUIApplication {
+    let app = XCUIApplication()
+    app.launchArguments.append("--reset-auth")
+    app.launch()
+
+    // Open the deep link URL after app launches
+    if let deepLinkURL = URL(string: url) {
+        app.open(deepLinkURL)
+    }
+
+    return app
+}
+
+/// Launch main app and trigger deep link with HTTP URL (universal link simulation)
+func launchAppWithUniversalLink(itemId id: Int) -> XCUIApplication {
+    let app = XCUIApplication()
+    app.launchArguments.append("--reset-auth")
+    app.launch()
+
+    // Open the universal link URL after app launches
+    let url = URL(string: "http://localhost:3000/preview/item/\(id)")!
+    app.open(url)
+
+    return app
+}

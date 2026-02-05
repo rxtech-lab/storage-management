@@ -54,4 +54,18 @@ extension XCUIApplication {
     var appClipsAccessDenined: XCUIElement {
         staticTexts["app-clips-access-denied"].firstMatch
     }
+
+    // MARK: - Deep Link
+
+    var deepLinkErrorAlert: XCUIElement {
+        alerts["Deep Link Error"].firstMatch
+    }
+
+    var deepLinkLoadingOverlay: XCUIElement {
+        staticTexts["Loading item..."].firstMatch
+    }
+
+    var deepLinkErrorOKButton: XCUIElement {
+        alerts["Deep Link Error"].buttons["OK"].firstMatch
+    }
 }
