@@ -110,6 +110,7 @@
 		DF66282F2F2E325B00333552 /* Exceptions for "RxStorage" folder in "RxStorageClips" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
+				Navigation/NavigationManager.swift,
 				Views/AppClip/AppClipAccessDeniedView.swift,
 				Views/AppClip/AppClipRootView.swift,
 				Views/AppClip/AppClipSignInView.swift,

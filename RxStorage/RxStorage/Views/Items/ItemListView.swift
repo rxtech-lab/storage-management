@@ -13,26 +13,28 @@ struct ItemListView: View {
     @Binding var selectedItem: StorageItem?
     @State private var viewModel = ItemListViewModel()
     @Environment(EventViewModel.self) private var eventViewModel
+    @Environment(NavigationManager.self) private var navigationManager
 
     let horizontalSizeClass: UserInterfaceSizeClass
 
+    /// Optional callback for navigation (used when ItemListView is embedded in TabView)
+    /// When provided, this is called to navigate to an item instead of using selectedItem binding
+    var onNavigateToItem: ((StorageItem) -> Void)?
+
     /// Initialize with an optional binding (defaults to constant nil for standalone use)
-    init(horizontalSizeClass: UserInterfaceSizeClass, selectedItem: Binding<StorageItem?> = .constant(nil)) {
+    init(
+        horizontalSizeClass: UserInterfaceSizeClass,
+        selectedItem: Binding<StorageItem?> = .constant(nil),
+        onNavigateToItem: ((StorageItem) -> Void)? = nil
+    ) {
         _selectedItem = selectedItem
         self.horizontalSizeClass = horizontalSizeClass
+        self.onNavigateToItem = onNavigateToItem
     }
 
     @State private var showingCreateSheet = false
     @State private var showingFilterSheet = false
     @State private var errorViewModel = ErrorViewModel()
-
-    #if os(iOS)
-        @State private var showQrCodeScanner = false
-        // QR scan state
-        @State private var isLoadingFromQR = false
-        private let itemService = ItemService()
-        private let qrCodeService = QrCodeService()
-    #endif
 
     /// Refresh state
     @State private var isRefreshing = false
@@ -45,27 +47,14 @@ struct ItemListView: View {
         itemsList
             .navigationTitle("Items")
             .toolbar {
-                ToolbarItem(placement: .primaryAction) {
+                ToolbarItemGroup(placement: .primaryAction) {
                     Button {
                         showingCreateSheet = true
                     } label: {
                         Label("New Item", systemImage: "plus")
                     }
                     .accessibilityIdentifier("item-list-new-button")
-                }
 
-                #if os(iOS)
-                    ToolbarItem(placement: .primaryAction) {
-                        Button {
-                            showQrCodeScanner = true
-                        } label: {
-                            Label("Scan", systemImage: "qrcode.viewfinder")
-                        }
-                        .accessibilityIdentifier("item-list-scan-button")
-                    }
-                #endif
-
-                ToolbarItem(placement: .secondaryAction) {
                     Button {
                         showingFilterSheet = true
                     } label: {
@@ -84,18 +73,6 @@ struct ItemListView: View {
             .refreshable {
                 await viewModel.refreshItems()
             }
-        #if os(iOS)
-            .sheet(isPresented: $showQrCodeScanner) {
-                NavigationStack {
-                    QRCodeScannerView { code in
-                        showQrCodeScanner = false
-                        Task {
-                            await handleScannedQRCode(code)
-                        }
-                    }
-                }
-            }
-        #endif
             .sheet(isPresented: $showingCreateSheet) {
                 NavigationStack {
                     ItemFormSheet()
@@ -112,6 +89,17 @@ struct ItemListView: View {
             }
             .task {
                 await viewModel.fetchItems()
+
+                #if DEBUG && os(iOS)
+                    // Handle injected QR code for UI testing
+                    // This allows tests to simulate QR scanning without camera access
+                    if let qrContent = UserDefaults.standard.string(forKey: "testQRCodeContent"),
+                       let url = URL(string: qrContent)
+                    {
+                        UserDefaults.standard.removeObject(forKey: "testQRCodeContent")
+                        await navigationManager.handleDeepLink(url)
+                    }
+                #endif
             }
             .task {
                 // Listen for item events and refresh
@@ -135,9 +123,7 @@ struct ItemListView: View {
             }
             .overlay {
                 #if os(iOS)
-                    if isLoadingFromQR {
-                        LoadingOverlay(title: "Loading item from QR code..")
-                    } else if isRefreshing {
+                    if isRefreshing {
                         LoadingOverlay(title: "Refreshing...")
                     }
                 #else
@@ -261,27 +247,6 @@ struct ItemListView: View {
             !viewModel.isLoadingMore &&
             !viewModel.isLoading
     }
-
-    #if os(iOS)
-
-        // MARK: - QR Code Handling
-
-        private func handleScannedQRCode(_ code: String) async {
-            isLoadingFromQR = true
-            defer { isLoadingFromQR = false }
-
-            do {
-                // Step 1: Call backend to resolve QR code to URL
-                let scanResponse = try await qrCodeService.scanQrCode(qrcontent: code)
-
-                // Step 2: Fetch the item using the resolved URL (auth included if signed in)
-                let itemDetail = try await itemService.fetchItemUsingUrl(url: scanResponse.url)
-                selectedItem = itemDetail.toStorageItem()
-            } catch {
-                errorViewModel.showError(error)
-            }
-        }
-    #endif
 }
 
 #Preview {
