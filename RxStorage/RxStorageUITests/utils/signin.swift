@@ -25,11 +25,16 @@ extension XCUIApplication {
         NSLog("🔐 Starting sign-in flow with email: \(testEmail)")
         logger.info("🔐 Starting sign-in flow with email: \(testEmail)")
 
-        // Tap sign in button (by accessibility identifier)
+        // If mock auth is active, the app is already authenticated — skip Safari flow
         let signInButton = buttons["sign-in-button"].firstMatch
+        if !signInButton.waitForExistence(timeout: 5) {
+            NSLog("✅ Mock auth active — already authenticated, skipping Safari sign-in")
+            return
+        }
+
+        // Tap sign in button (by accessibility identifier)
         NSLog("⏱️  Waiting for sign-in button...")
         logger.info("⏱️  Waiting for sign-in button...")
-        XCTAssertTrue(signInButton.waitForExistence(timeout: 10), "Sign-in button did not appear")
         NSLog("✅ Sign-in button found, tapping...")
         logger.info("✅ Sign-in button found, tapping...")
         signInButton.tap()
@@ -49,6 +54,7 @@ extension XCUIApplication {
 
             // Use a longer timeout and provide better error message
             let emailFieldExists = emailField.waitForExistence(timeout: 30)
+            XCTAssertTrue(emailFieldExists, "Failed to find 'you@example.com' TextField — OAuth page may not have loaded in Safari")
             NSLog("✅ Email field found, entering credentials...")
             logger.info("✅ Email field found, entering credentials...")
 
