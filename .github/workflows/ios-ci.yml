@@ -30,7 +30,7 @@ jobs:
       scheme: RxStorage
       configuration: Debug
       sdk: macosx
-      runs-on: macos-26
+      runs-on: '"macos-26"'
       artifact-name: macos-build-logs
       artifact-path: build-macos.log
     secrets: inherit
@@ -39,7 +39,7 @@ jobs:
     name: Run Tests
     uses: ./.github/workflows/ios-setup.yml
     with:
-      runs-on: macos-26
+      runs-on: '"macos-26"'
       job-name: Run Tests
       script: ios-test.sh
       scheme: RxStorage
@@ -65,11 +65,11 @@ jobs:
 
   # UI tests - currently skipped
   ui-tests:
-    if: false
+    if: true
     name: Run UI Tests
     uses: ./.github/workflows/ios-setup.yml
     with:
-      runs-on: macos-latest
+      runs-on: '["self-hosted", "macOS"]'
       job-name: Run UI Tests
       script: ios-ui-test.sh
       scheme: RxStorage
