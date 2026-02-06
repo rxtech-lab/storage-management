@@ -12,12 +12,23 @@ import SwiftUI
 struct SidebarNavigationView: View {
     @Environment(NavigationManager.self) private var navigationManager
 
+    #if os(iOS)
+        @State private var showQrCodeScanner = false
+        @State private var isLoadingFromQR = false
+        private let itemService = ItemService()
+        private let qrCodeService = QrCodeService()
+    #endif
+
     var body: some View {
         @Bindable var nav = navigationManager
 
         NavigationSplitView(columnVisibility: $nav.columnVisibility) {
             // Column 1: Sidebar
-            SidebarContent()
+            #if os(iOS)
+                SidebarContent(showQrCodeScanner: $showQrCodeScanner)
+            #else
+                SidebarContent()
+            #endif
         } content: {
             // Column 2: List
             ContentColumn()
@@ -26,7 +37,41 @@ struct SidebarNavigationView: View {
             DetailColumn()
         }
         .navigationSplitViewStyle(.balanced)
+        #if os(iOS)
+            .sheet(isPresented: $showQrCodeScanner) {
+                NavigationStack {
+                    QRCodeScannerView { code in
+                        showQrCodeScanner = false
+                        Task {
+                            await handleScannedQRCode(code)
+                        }
+                    }
+                }
+            }
+            .overlay {
+                if isLoadingFromQR {
+                    LoadingOverlay(title: "Loading item from QR code...")
+                }
+            }
+        #endif
     }
+
+    #if os(iOS)
+        private func handleScannedQRCode(_ code: String) async {
+            isLoadingFromQR = true
+            defer { isLoadingFromQR = false }
+
+            do {
+                let scanResponse = try await qrCodeService.scanQrCode(qrcontent: code)
+                let itemDetail = try await itemService.fetchItemUsingUrl(url: scanResponse.url)
+                let item = itemDetail.toStorageItem()
+                navigationManager.navigateToItem(item)
+            } catch {
+                navigationManager.deepLinkError = error
+                navigationManager.showDeepLinkError = true
+            }
+        }
+    #endif
 }
 
 // MARK: - Sidebar Content
@@ -34,6 +79,16 @@ struct SidebarNavigationView: View {
 /// Sidebar with navigation sections
 struct SidebarContent: View {
     @Environment(NavigationManager.self) private var navigationManager
+
+    #if os(iOS)
+        @Binding var showQrCodeScanner: Bool
+
+        init(showQrCodeScanner: Binding<Bool>) {
+            _showQrCodeScanner = showQrCodeScanner
+        }
+    #else
+        init() {}
+    #endif
 
     var body: some View {
         List {
@@ -43,6 +98,18 @@ struct SidebarContent: View {
         }
         .navigationTitle("RxStorage")
         .listStyle(.sidebar)
+        #if os(iOS)
+            .toolbar {
+                ToolbarItem(placement: .primaryAction) {
+                    Button {
+                        showQrCodeScanner = true
+                    } label: {
+                        Label("Scan", systemImage: "qrcode.viewfinder")
+                    }
+                    .accessibilityIdentifier("qr-scanner-button")
+                }
+            }
+        #endif
     }
 
     private var mainSection: some View {
@@ -121,7 +188,13 @@ struct ContentColumn: View {
         case .dashboard:
             DashboardView()
         case .items:
-            ItemListView(horizontalSizeClass: .regular, selectedItem: $nav.selectedItem)
+            ItemListView(
+                horizontalSizeClass: .regular,
+                selectedItem: $nav.selectedItem,
+                onNavigateToItem: { item in
+                    nav.selectedItem = item
+                }
+            )
         case .management:
             ManagementListView(
                 section: navigationManager.selectedManagementSection,

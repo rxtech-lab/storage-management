@@ -24,6 +24,17 @@ struct RxStorageApp: App {
                 try? await TokenStorage.shared.clearAll()
             }
         }
+
+        #if DEBUG
+            // Handle --test-qr-code launch argument for UI testing
+            // This allows tests to inject QR code content without camera access
+            if let qrIndex = CommandLine.arguments.firstIndex(of: "--test-qr-code"),
+               qrIndex + 1 < CommandLine.arguments.count
+            {
+                let qrContent = CommandLine.arguments[qrIndex + 1]
+                UserDefaults.standard.set(qrContent, forKey: "testQRCodeContent")
+            }
+        #endif
     }
 
     var body: some Scene {

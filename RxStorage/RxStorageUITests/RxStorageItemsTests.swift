@@ -53,4 +53,106 @@ final class RxStorageItemsUITests: XCTestCase {
 
         XCTAssertTrue(app.itemDetailTitle.waitForExistence(timeout: 20), "Item detail title")
     }
+
+    // MARK: - Deep Link Tests
+
+    @MainActor
+    func testDeepLinkToPublicItem() throws {
+        let app = launchApp()
+
+        // Open deep link to a known public item (same as App Clips test)
+        let url = try XCTUnwrap(URL(string: "rxstorage://preview/item/1"))
+        app.open(url)
+
+        try app.signInWithEmailAndPassword()
+
+        // Wait for loading to complete
+        let loadingOverlay = app.deepLinkLoadingOverlay
+        if loadingOverlay.waitForExistence(timeout: 2) {
+            XCTAssertTrue(loadingOverlay.waitForNonExistence(timeout: 15), "Loading overlay did not disappear")
+        }
+
+        // Verify no error alert is shown
+        XCTAssertFalse(app.deepLinkErrorAlert.exists, "Deep link error alert should not appear for valid item")
+
+        // Verify item detail is shown
+        XCTAssertTrue(app.itemDetailTitle.waitForExistence(timeout: 10), "Item detail should be displayed after deep link")
+    }
+
+    @MainActor
+    func testDeepLinkToPrivateItem() throws {
+        let app = launchApp()
+
+        // Open deep link to a known private item (item 2 - requires auth per App Clips test)
+        let url = try XCTUnwrap(URL(string: "rxstorage://preview/item/2"))
+        app.open(url)
+
+        try app.signInWithEmailAndPassword()
+
+        // Wait for loading to complete
+        let loadingOverlay = app.deepLinkLoadingOverlay
+        if loadingOverlay.waitForExistence(timeout: 2) {
+            XCTAssertTrue(loadingOverlay.waitForNonExistence(timeout: 15), "Loading overlay did not disappear")
+        }
+
+        // Since we're already signed in, we should see the item detail
+        XCTAssertTrue(app.itemDetailTitle.waitForExistence(timeout: 10), "Item detail should be displayed for private item when authenticated")
+    }
+
+    @MainActor
+    func testDeepLinkToPrivateItemBelongsToOthers() throws {
+        let app = launchApp()
+
+        // Open deep link to a known private item (item 2 - requires auth per App Clips test)
+        let url = try XCTUnwrap(URL(string: "rxstorage://preview/item/3"))
+        app.open(url)
+
+        try app.signInWithEmailAndPassword()
+        // Wait for error alert to appear
+        XCTAssertTrue(app.deepLinkErrorAlert.waitForExistence(timeout: 15), "Deep link error alert should appear for invalid URL")
+
+        // Dismiss the alert
+        app.deepLinkErrorOKButton.tap()
+
+        // Verify we're still in the app
+        XCTAssertTrue(app.itemsTab.waitForExistence(timeout: 5), "Should return to main app after dismissing error")
+    }
+
+    @MainActor
+    func testDeepLinkInvalidUrl() throws {
+        let app = launchApp()
+
+        // Open deep link with invalid URL format
+        let url = try XCTUnwrap(URL(string: "rxstorage://invalid/path"))
+        app.open(url)
+        try app.signInWithEmailAndPassword()
+
+        // Wait for error alert to appear
+        XCTAssertTrue(app.deepLinkErrorAlert.waitForExistence(timeout: 15), "Deep link error alert should appear for invalid URL")
+
+        // Dismiss the alert
+        app.deepLinkErrorOKButton.tap()
+
+        // Verify we're still in the app
+        XCTAssertTrue(app.itemsTab.waitForExistence(timeout: 5), "Should return to main app after dismissing error")
+    }
+
+    @MainActor
+    func testDeepLinkNonExistentItem() throws {
+        let app = launchApp()
+
+        // Open deep link to a non-existent item ID
+        let url = try XCTUnwrap(URL(string: "rxstorage://preview/item/999999"))
+        app.open(url)
+
+        try app.signInWithEmailAndPassword()
+        // Wait for error alert to appear (item not found)
+        XCTAssertTrue(app.deepLinkErrorAlert.waitForExistence(timeout: 15), "Deep link error alert should appear for non-existent item")
+
+        // Dismiss the alert
+        app.deepLinkErrorOKButton.tap()
+
+        // Verify we're still in the app
+        XCTAssertTrue(app.itemsTab.waitForExistence(timeout: 5), "Should return to main app after dismissing error")
+    }
 }
