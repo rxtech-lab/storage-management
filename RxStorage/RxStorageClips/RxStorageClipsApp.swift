@@ -20,9 +20,8 @@ struct RxStorageClipsApp: App {
     init() {
         // Clear tokens if running UI tests with --reset-auth flag
         if CommandLine.arguments.contains("--reset-auth") {
-            Task {
-                try? await TokenStorage.shared.clearAll()
-            }
+            let tokenStorage = KeychainTokenStorage(serviceName: "com.rxlab.RxStorage")
+            try? tokenStorage.clearAll()
         }
     }
 

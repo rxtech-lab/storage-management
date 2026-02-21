@@ -67,6 +67,17 @@ public class AppConfiguration: @unchecked Sendable {
         }
     }
 
+    /// RxAuthSwift configuration derived from Info.plist values
+    public var rxAuthConfiguration: RxAuthConfiguration {
+        RxAuthConfiguration(
+            issuer: authIssuer,
+            clientID: authClientID,
+            redirectURI: authRedirectURI,
+            scopes: authScopes,
+            keychainServiceName: "com.rxlab.RxStorage"
+        )
+    }
+
     /// Full API URL for a given path
     public func apiURL(for path: String) -> URL? {
         let cleanPath = path.hasPrefix("/") ? path : "/\(path)"

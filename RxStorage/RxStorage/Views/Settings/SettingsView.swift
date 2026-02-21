@@ -11,7 +11,7 @@ import SwiftUI
 /// Settings view with account info and sign out
 struct SettingsView: View {
     @Environment(NavigationManager.self) private var navigationManager
-    private var authManager = OAuthManager.shared
+    @Environment(OAuthManager.self) private var authManager
     @State private var showingSignOutConfirmation = false
 
     var body: some View {
@@ -154,7 +154,6 @@ struct SettingsView: View {
     }
 
     private func signOut() async {
-        try? await TokenStorage.shared.clearAll()
         await authManager.logout()
     }
 }

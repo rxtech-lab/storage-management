@@ -5,7 +5,6 @@
 //  Main module file that exports all public types
 //
 
-import AuthenticationServices
 import Foundation
 import Observation
 import SwiftUI
@@ -15,3 +14,5 @@ import SwiftUI
 
 // Re-export key types for convenience
 @_exported import Foundation
+@_exported import RxAuthSwift
+@_exported import RxAuthSwiftUI

@@ -1,5 +1,5 @@
 {
-  "originHash" : "61bca546033f0a23f9efd1d8da5c822a0c7db7975585777add291471d013ea01",
+  "originHash" : "6fe5af9f84e71d2fd459947439e295aef388d8b4b0f1325ce5a1d0ac5c5ae9de",
   "pins" : [
     {
       "identity" : "openapikit",
@@ -8,6 +8,15 @@
       "state" : {
         "revision" : "343b2c1793058fcc53c1bd7e2907f8e3a4d640fb",
         "version" : "3.9.0"
+      }
+    },
+    {
+      "identity" : "rxauthswift",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/rxtech-lab/RxAuthSwift",
+      "state" : {
+        "revision" : "82236a3515469484ba97c1d68e426cfd5bc1d136",
+        "version" : "1.0.3"
       }
     },
     {

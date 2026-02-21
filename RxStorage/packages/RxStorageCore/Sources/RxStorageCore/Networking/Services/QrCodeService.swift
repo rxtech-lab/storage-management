@@ -26,14 +26,14 @@ public protocol QrCodeServiceProtocol: Sendable {
 /// Uses optional authentication to support both authenticated users and App Clips
 public struct QrCodeService: QrCodeServiceProtocol {
     private let configuration: AppConfiguration
-    private let tokenStorage: TokenStorage
+    private let tokenStorage: TokenStorageProtocol
 
     public init(
         configuration: AppConfiguration = .shared,
-        tokenStorage: TokenStorage = .shared
+        tokenStorage: TokenStorageProtocol? = nil
     ) {
         self.configuration = configuration
-        self.tokenStorage = tokenStorage
+        self.tokenStorage = tokenStorage ?? KeychainTokenStorage(serviceName: "com.rxlab.RxStorage")
     }
 
     public func scanQrCode(qrcontent: String) async throws -> QrCodeScanResponse {
@@ -53,7 +53,7 @@ public struct QrCodeService: QrCodeServiceProtocol {
         request.setValue("application/json", forHTTPHeaderField: "Accept")
 
         // Add auth token if available (optional auth for App Clips)
-        if let accessToken = await tokenStorage.getAccessToken() {
+        if let accessToken = tokenStorage.getAccessToken() {
             request.setValue("Bearer \(accessToken)", forHTTPHeaderField: "Authorization")
         }
 
