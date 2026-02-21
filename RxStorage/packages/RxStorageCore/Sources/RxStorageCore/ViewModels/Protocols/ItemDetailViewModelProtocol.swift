@@ -19,6 +19,12 @@ public protocol ItemDetailViewModelProtocol: AnyObject, Observable {
     /// Contents attached to the item
     var contents: [Content] { get }
 
+    /// Stock history entries
+    var stockHistory: [StockHistoryRef] { get }
+
+    /// Computed current stock quantity
+    var quantity: Int { get }
+
     /// Loading state
     var isLoading: Bool { get }
 
@@ -56,4 +62,12 @@ public protocol ItemDetailViewModelProtocol: AnyObject, Observable {
 
     /// Update an existing content
     func updateContent(id: Int, type: ContentType, formData: [String: AnyCodable]) async throws
+
+    /// Add a stock history entry
+    /// Returns the created stock history entry
+    @discardableResult
+    func addStockEntry(quantity: Int, note: String?) async throws -> StockHistory
+
+    /// Delete a stock history entry
+    func deleteStockEntry(id: Int) async throws
 }

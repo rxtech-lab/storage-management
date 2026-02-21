@@ -331,6 +331,7 @@ import SwiftUI
                     }
                 }
             }
+            .scrollDismissesKeyboard(.interactively)
             .navigationTitle("Custom Size")
             .navigationBarTitleDisplayMode(.inline)
         }
@@ -365,7 +366,9 @@ import SwiftUI
             author: nil,
             children: [],
             contents: [],
-            positions: []
+            positions: [],
+            quantity: 0,
+            stockHistory: []
         )
 
         // Generate a simple QR code image for preview
@@ -379,7 +382,7 @@ import SwiftUI
             return UIImage(ciImage: scaled)
         }()
 
-        return QRPrintConfigurationView(item: item, qrImage: qrImage)
+        QRPrintConfigurationView(item: item, qrImage: qrImage)
     }
 
 #endif

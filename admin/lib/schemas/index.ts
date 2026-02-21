@@ -13,3 +13,4 @@ export * from "./whitelists";
 export * from "./upload";
 export * from "./dashboard";
 export * from "./content-schemas-api";
+export * from "./stock-histories";

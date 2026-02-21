@@ -37,3 +37,9 @@ export {
   type UploadFile,
   type NewUploadFile,
 } from "./upload-files";
+export {
+  stockHistories,
+  stockHistoriesRelations,
+  type StockHistory,
+  type NewStockHistory,
+} from "./stock-histories";

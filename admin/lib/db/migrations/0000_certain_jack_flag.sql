@@ -97,3 +97,13 @@ CREATE TABLE `upload_files` (
 	`created_at` integer NOT NULL,
 	FOREIGN KEY (`item_id`) REFERENCES `items`(`id`) ON UPDATE no action ON DELETE set null
 );
+--> statement-breakpoint
+CREATE TABLE `stock_histories` (
+	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
+	`user_id` text NOT NULL,
+	`item_id` integer NOT NULL,
+	`quantity` integer NOT NULL,
+	`note` text,
+	`created_at` integer NOT NULL,
+	FOREIGN KEY (`item_id`) REFERENCES `items`(`id`) ON UPDATE no action ON DELETE cascade
+);
