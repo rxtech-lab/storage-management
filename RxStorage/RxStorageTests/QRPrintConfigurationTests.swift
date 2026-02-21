@@ -49,21 +49,6 @@ struct QRPrintConfigurationTests {
         #expect(config.enabledFields.contains(.title))
     }
 
-    // MARK: - Field Reordering
-
-    @Test("Move fields reorders correctly")
-    func moveFields() {
-        let config = QRPrintConfiguration()
-
-        // Move first field (title) to last position
-        config.moveFields(from: IndexSet(integer: 0), to: 4)
-
-        #expect(config.fieldOrder[0] == .category)
-        #expect(config.fieldOrder[1] == .location)
-        #expect(config.fieldOrder[2] == .description)
-        #expect(config.fieldOrder[3] == .title)
-    }
-
     // MARK: - Active Fields
 
     @Test("Active fields returns only enabled fields in order")

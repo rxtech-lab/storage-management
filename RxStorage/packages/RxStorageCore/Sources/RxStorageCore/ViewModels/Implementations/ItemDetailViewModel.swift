@@ -7,6 +7,9 @@
 
 import Foundation
 import Observation
+import OSLog
+
+private let logger = Logger(subsystem: "com.rxlab.rxstorage", category: "ItemDetailViewModel")
 
 /// Item detail view model implementation
 @Observable
@@ -119,6 +122,7 @@ public final class ItemDetailViewModel: ItemDetailViewModelProtocol {
                 quantity = item.quantity
             }
         } catch {
+            logger.error("Failed to fetch item using URL: \(error.localizedDescription, privacy: .public) - url: \(url, privacy: .public)")
             self.error = error
             isLoading = false
         }

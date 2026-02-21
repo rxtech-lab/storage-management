@@ -22,7 +22,7 @@ public class AppConfiguration: @unchecked Sendable {
     /// OAuth client ID
     public let authClientID: String
 
-    /// OAuth redirect URI (e.g., "rxstorage://oauth-callback")
+    /// OAuth redirect URI (e.g., "rxstorage://oauth/callback")
     public let authRedirectURI: String
 
     /// OAuth scopes
@@ -62,7 +62,7 @@ public class AppConfiguration: @unchecked Sendable {
             apiBaseURL = "http://localhost:3000"
             authIssuer = "https://auth.test.local"
             authClientID = "test_client_id"
-            authRedirectURI = "rxstorage://oauth-callback"
+            authRedirectURI = "rxstorage://oauth/callback"
             authScopes = ["openid", "email", "profile", "offline_access"]
         }
     }
