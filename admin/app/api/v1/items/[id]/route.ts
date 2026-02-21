@@ -8,14 +8,13 @@ import {
 } from "@/lib/actions/item-actions";
 import { getItemContents } from "@/lib/actions/content-actions";
 import { getItemPositions } from "@/lib/actions/position-actions";
+import { getItemStockHistory, getItemQuantity } from "@/lib/actions/stock-history-actions";
 import { signImagesArrayWithIds } from "@/lib/actions/s3-upload-actions";
 import { isEmailWhitelisted } from "@/lib/actions/whitelist-actions";
 import {
   ItemDetailResponseSchema,
   ItemResponseSchema,
 } from "@/lib/schemas/items";
-import { stat } from "fs";
-
 interface RouteParams {
   params: Promise<{ id: string }>;
 }
@@ -77,14 +76,16 @@ async function buildItemResponse(
 ) {
   const previewUrl = `${process.env.NEXT_PUBLIC_URL}/preview/item/${item.id}`;
 
-  // Fetch item images, children, contents, and positions in parallel
-  const [images, children, contents, positions] = await Promise.all([
+  // Fetch item images, children, contents, positions, and stock in parallel
+  const [images, children, contents, positions, stockHistory, quantity] = await Promise.all([
     item.images && item.images.length > 0
       ? signImagesArrayWithIds(item.images)
       : Promise.resolve([]),
     getItemChildren(itemId, userId ?? undefined),
     getItemContents(itemId),
     getItemPositions(itemId),
+    getItemStockHistory(itemId),
+    getItemQuantity(itemId),
   ]);
 
   // Sign images for each child
@@ -109,6 +110,8 @@ async function buildItemResponse(
     children: childrenWithSignedImages,
     contents,
     positions,
+    quantity,
+    stockHistory,
   };
 
   const validated = ItemDetailResponseSchema.safeParse(responseData);

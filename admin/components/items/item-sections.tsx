@@ -26,6 +26,7 @@ import {
   Loader2,
   Upload,
   Box,
+  Package,
 } from "lucide-react";
 import { toast } from "sonner";
 import Form from "@rjsf/shadcn";
@@ -46,7 +47,11 @@ import {
   removeFromWhitelistAction,
   bulkAddToWhitelistAction,
 } from "@/lib/actions/whitelist-actions";
-import type { Content, ContentData, ItemWhitelist, PositionSchema } from "@/lib/db";
+import {
+  createStockHistoryAction,
+  deleteStockHistoryAction,
+} from "@/lib/actions/stock-history-actions";
+import type { Content, ContentData, ItemWhitelist, PositionSchema, StockHistory } from "@/lib/db";
 import type { ItemWithRelations } from "@/lib/actions/item-actions";
 
 const contentIcons = {
@@ -62,6 +67,8 @@ interface ItemSectionsProps {
   contents: Content[];
   children: ItemWithRelations[];
   whitelist: ItemWhitelist[];
+  stockHistory: StockHistory[];
+  quantity: number;
   onUpdate?: () => void;
 }
 
@@ -72,6 +79,8 @@ export function ItemSections({
   contents: initialContents,
   children,
   whitelist: initialWhitelist,
+  stockHistory: initialStockHistory,
+  quantity: initialQuantity,
   onUpdate,
 }: ItemSectionsProps) {
   const [isPending, startTransition] = useTransition();
@@ -82,6 +91,13 @@ export function ItemSections({
 
   // Content state
   const [contentLoading, setContentLoading] = useState(false);
+
+  // Stock history state
+  const [stockHistory, setStockHistory] = useState(initialStockHistory);
+  const [stockQuantity, setStockQuantity] = useState(initialQuantity);
+  const [stockQty, setStockQty] = useState("");
+  const [stockNote, setStockNote] = useState("");
+  const [stockLoading, setStockLoading] = useState(false);
 
   // Whitelist state
   const [email, setEmail] = useState("");
@@ -104,6 +120,55 @@ export function ItemSections({
         toast.error("Failed to delete position");
       }
     });
+  };
+
+  // Stock history handlers
+  const handleAddStock = async () => {
+    const qty = parseInt(stockQty);
+    if (isNaN(qty) || qty === 0) {
+      toast.error("Please enter a non-zero quantity");
+      return;
+    }
+    setStockLoading(true);
+    try {
+      const result = await createStockHistoryAction({
+        itemId: item.id,
+        quantity: qty,
+        note: stockNote.trim() || null,
+      });
+      if (result.success && result.data) {
+        setStockHistory([result.data, ...stockHistory]);
+        setStockQuantity(stockQuantity + qty);
+        setStockQty("");
+        setStockNote("");
+        toast.success("Stock entry added");
+      } else {
+        toast.error(result.error || "Failed to add stock entry");
+      }
+    } catch {
+      toast.error("Failed to add stock entry");
+    } finally {
+      setStockLoading(false);
+    }
+  };
+
+  const handleDeleteStock = async (entryId: number) => {
+    setStockLoading(true);
+    try {
+      const entry = stockHistory.find((e) => e.id === entryId);
+      const result = await deleteStockHistoryAction(entryId);
+      if (result.success) {
+        setStockHistory(stockHistory.filter((e) => e.id !== entryId));
+        if (entry) setStockQuantity(stockQuantity - entry.quantity);
+        toast.success("Stock entry deleted");
+      } else {
+        toast.error(result.error || "Failed to delete stock entry");
+      }
+    } catch {
+      toast.error("Failed to delete stock entry");
+    } finally {
+      setStockLoading(false);
+    }
   };
 
   // Content handlers
@@ -274,6 +339,111 @@ export function ItemSections({
                     disabled={isPending}
                   >
                     {isPending ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Trash className="h-4 w-4 text-destructive" />
+                    )}
+                  </Button>
+                </div>
+              ))
+            )}
+          </div>
+        </CollapsibleContent>
+      </Collapsible>
+
+      {/* Stock Section */}
+      <Collapsible className="border rounded-xl overflow-hidden">
+        <CollapsibleTrigger className="flex items-center gap-3 w-full p-4 hover:bg-muted/50 transition-colors [&[data-state=open]>svg:first-child]:rotate-90">
+          <ChevronRight className="h-4 w-4 transition-transform duration-200" />
+          <div className="flex items-center gap-2">
+            <Package className="h-4 w-4 text-muted-foreground" />
+            <span className="font-medium">Stock</span>
+          </div>
+          <Badge variant="secondary" className="rounded-full">
+            {stockQuantity}
+          </Badge>
+        </CollapsibleTrigger>
+        <CollapsibleContent>
+          <div className="px-4 pb-4 space-y-3">
+            {/* Inline add form */}
+            <div className="flex gap-2">
+              <Input
+                type="number"
+                placeholder="Qty (+/-)"
+                value={stockQty}
+                onChange={(e) => setStockQty(e.target.value)}
+                className="w-24"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    handleAddStock();
+                  }
+                }}
+              />
+              <Input
+                placeholder="Note (optional)"
+                value={stockNote}
+                onChange={(e) => setStockNote(e.target.value)}
+                className="flex-1"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    handleAddStock();
+                  }
+                }}
+              />
+              <Button
+                onClick={handleAddStock}
+                disabled={stockLoading}
+                size="sm"
+              >
+                {stockLoading ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Plus className="h-4 w-4" />
+                )}
+              </Button>
+            </div>
+
+            {/* Stock history list */}
+            {stockHistory.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-4">
+                No stock history yet.
+              </p>
+            ) : (
+              stockHistory.map((entry) => (
+                <div
+                  key={entry.id}
+                  className="flex items-center justify-between p-3 bg-muted/30 rounded-lg"
+                >
+                  <div className="flex items-center gap-3">
+                    <span
+                      className={`font-mono font-medium ${
+                        entry.quantity > 0
+                          ? "text-green-600"
+                          : "text-red-600"
+                      }`}
+                    >
+                      {entry.quantity > 0 ? "+" : ""}
+                      {entry.quantity}
+                    </span>
+                    <div>
+                      {entry.note && (
+                        <p className="text-sm">{entry.note}</p>
+                      )}
+                      <p className="text-xs text-muted-foreground">
+                        {new Date(entry.createdAt).toLocaleString()}
+                      </p>
+                    </div>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleDeleteStock(entry.id)}
+                    disabled={stockLoading}
+                  >
+                    {stockLoading ? (
                       <Loader2 className="h-4 w-4 animate-spin" />
                     ) : (
                       <Trash className="h-4 w-4 text-destructive" />

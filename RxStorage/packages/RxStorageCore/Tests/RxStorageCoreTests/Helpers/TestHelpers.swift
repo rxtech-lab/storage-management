@@ -191,7 +191,9 @@ enum TestHelpers {
         author: AuthorRef? = nil,
         children: [StorageItem] = [],
         contents: [ContentRef] = [],
-        positions: [PositionRef] = []
+        positions: [PositionRef] = [],
+        quantity: Int = 0,
+        stockHistory: [StockHistoryRef] = []
     ) -> StorageItemDetail {
         // Create default refs if not provided
         let categoryRef = category ?? CategoryRef(id: categoryId ?? 0, name: "Default Category")
@@ -220,7 +222,9 @@ enum TestHelpers {
             author: StorageItemDetail.authorPayload(value1: authorRef),
             children: children,
             contents: contents,
-            positions: positions
+            positions: positions,
+            quantity: quantity,
+            stockHistory: stockHistory
         )
     }
 

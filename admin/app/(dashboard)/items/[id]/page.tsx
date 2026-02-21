@@ -5,6 +5,7 @@ import { getPositionSchemas } from "@/lib/actions/position-schema-actions";
 import { getItemPositions } from "@/lib/actions/position-actions";
 import { getItemContents } from "@/lib/actions/content-actions";
 import { getItemWhitelist } from "@/lib/actions/whitelist-actions";
+import { getItemStockHistory, getItemQuantity } from "@/lib/actions/stock-history-actions";
 
 interface ItemDetailPageProps {
   params: Promise<{ id: string }>;
@@ -28,12 +29,16 @@ export default async function ItemDetailPage({
     contents,
     whitelist,
     children,
+    stockHistory,
+    quantity,
   ] = await Promise.all([
     getPositionSchemas(),
     getItemPositions(itemId),
     getItemContents(itemId),
     getItemWhitelist(itemId),
     getItemChildren(itemId),
+    getItemStockHistory(itemId),
+    getItemQuantity(itemId),
   ]);
 
   return (
@@ -44,6 +49,8 @@ export default async function ItemDetailPage({
       contents={contents}
       whitelist={whitelist}
       childItems={children}
+      stockHistory={stockHistory}
+      quantity={quantity}
     />
   );
 }

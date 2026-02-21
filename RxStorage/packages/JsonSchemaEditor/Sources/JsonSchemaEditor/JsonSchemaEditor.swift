@@ -26,6 +26,7 @@ public typealias JSSchemaEditorView = JsonSchemaEditorView
     Form {
         JsonSchemaEditorView(schema: $schema)
     }
+    .scrollDismissesKeyboard(.interactively)
 }
 
 #Preview("Object Schema") {
@@ -40,4 +41,5 @@ public typealias JSSchemaEditorView = JsonSchemaEditorView
     Form {
         JsonSchemaEditorView(schema: $schema)
     }
+    .scrollDismissesKeyboard(.interactively)
 }

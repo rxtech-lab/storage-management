@@ -50,6 +50,7 @@ struct CategoryFormSheet: View {
                 }
             }
         }
+        .scrollDismissesKeyboard(.interactively)
         .navigationTitle(category == nil ? "New Category" : "Edit Category")
         #if os(iOS)
             .navigationBarTitleDisplayMode(.inline)

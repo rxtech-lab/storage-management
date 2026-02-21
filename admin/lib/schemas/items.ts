@@ -153,6 +153,14 @@ export const PositionRefSchema = z.object({
   data: z.record(z.unknown()).describe("Position data"),
 });
 
+// Stock history entry in item detail response
+export const StockHistoryRefSchema = z.object({
+  id: z.number().int().describe("Stock history entry ID"),
+  quantity: z.number().int().describe("Quantity change"),
+  note: z.string().nullable().describe("Optional note"),
+  createdAt: z.coerce.date().describe("Creation timestamp"),
+});
+
 // Signed image with ID and URL
 export const SignedImageSchema = z.object({
   id: z.number().int().describe("File ID"),
@@ -220,6 +228,8 @@ export const ItemDetailResponseSchema = z.object({
     .array(ContentRefSchema)
     .describe("Associated content attachments"),
   positions: z.array(PositionRefSchema).describe("Position data entries"),
+  quantity: z.number().int().describe("Computed current stock quantity"),
+  stockHistory: z.array(StockHistoryRefSchema).describe("Stock history entries"),
 });
 
 // Query params for items list

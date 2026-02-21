@@ -132,6 +132,7 @@
 				Views/Items/ItemFormSheet.swift,
 				Views/Items/ItemListView.swift,
 				Views/Items/ItemRow.swift,
+				Views/Items/NFCLockSheet.swift,
 				Views/Items/ParentItemPickerSheet.swift,
 				Views/Items/PositionFormSheet.swift,
 				Views/Loading/LoadingOverlay.swift,

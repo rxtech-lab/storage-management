@@ -45,6 +45,9 @@ public typealias DashboardRecentItem = Components.Schemas.DashboardRecentItemSch
 /// Whitelist entry
 public typealias Whitelist = Components.Schemas.WhitelistResponseSchema
 
+/// Stock history entry
+public typealias StockHistory = Components.Schemas.StockHistoryResponseSchema
+
 /// Presigned upload response
 public typealias PresignedUploadResponse = Components.Schemas.PresignedUploadResponseSchema
 
@@ -95,6 +98,9 @@ public typealias SetParentRequest = Components.Schemas.SetParentRequestSchema
 /// Request to add to whitelist
 public typealias WhitelistAddRequest = Components.Schemas.WhitelistAddRequestSchema
 
+/// Request to create a stock history entry
+public typealias NewStockHistoryRequest = Components.Schemas.StockHistoryInsertSchema
+
 // MARK: - Paginated Response Type Aliases
 
 /// Paginated items response
@@ -131,6 +137,9 @@ public typealias ContentRef = Components.Schemas.ContentRefSchema
 
 /// Position reference in item detail
 public typealias PositionRef = Components.Schemas.PositionRefSchema
+
+/// Stock history reference in item detail
+public typealias StockHistoryRef = Components.Schemas.StockHistoryRefSchema
 
 /// Signed image with id and URL
 public typealias SignedImage = Components.Schemas.SignedImageSchema
@@ -174,6 +183,7 @@ extension Components.Schemas.PositionSchemaResponseSchema: Identifiable {}
 extension Components.Schemas.PositionResponseSchema: Identifiable {}
 extension Components.Schemas.ContentResponseSchema: Identifiable {}
 extension Components.Schemas.DashboardRecentItemSchema: Identifiable {}
+extension Components.Schemas.StockHistoryResponseSchema: Identifiable {}
 
 // Reference schemas also need Identifiable
 extension Components.Schemas.CategoryRefSchema: Identifiable {}
@@ -181,6 +191,7 @@ extension Components.Schemas.LocationRefSchema: Identifiable {}
 extension Components.Schemas.AuthorRefSchema: Identifiable {}
 extension Components.Schemas.ContentRefSchema: Identifiable {}
 extension Components.Schemas.PositionRefSchema: Identifiable {}
+extension Components.Schemas.StockHistoryRefSchema: Identifiable {}
 
 // MARK: - Content Convenience Extensions
 

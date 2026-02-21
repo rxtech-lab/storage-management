@@ -13,7 +13,14 @@ import Foundation
 
     /// Protocol for NFC writing operations - enables testing with mocks
     public protocol NFCWriterProtocol: Sendable {
-        func writeToNfcChip(url: String) async throws
+        func writeToNfcChip(url: String, allowOverwrite: Bool) async throws
+        func lockNfcTag() async throws
+    }
+
+    public extension NFCWriterProtocol {
+        func writeToNfcChip(url: String) async throws {
+            try await writeToNfcChip(url: url, allowOverwrite: false)
+        }
     }
 
     /// Actor that handles NFC tag writing operations
@@ -21,9 +28,11 @@ import Foundation
         public init() {}
 
         /// Writes a URL to an NFC tag
-        /// - Parameter url: The URL string to write to the NFC tag
+        /// - Parameters:
+        ///   - url: The URL string to write to the NFC tag
+        ///   - allowOverwrite: If true, writes directly without checking existing content
         /// - Throws: NFCWriterError if writing fails
-        public func writeToNfcChip(url: String) async throws {
+        public func writeToNfcChip(url: String, allowOverwrite: Bool = false) async throws {
             guard NFCNDEFReaderSession.readingAvailable else {
                 throw NFCWriterError.notAvailable
             }
@@ -33,7 +42,22 @@ import Foundation
             }
 
             try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
-                let delegate = NFCWriterDelegate(url: url, continuation: continuation)
+                let delegate = NFCWriterDelegate(url: url, allowOverwrite: allowOverwrite, continuation: continuation)
+                Task { @MainActor in
+                    delegate.startSession()
+                }
+            }
+        }
+
+        /// Locks an NFC tag to prevent further writes
+        /// - Throws: NFCWriterError if locking fails
+        public func lockNfcTag() async throws {
+            guard NFCNDEFReaderSession.readingAvailable else {
+                throw NFCWriterError.notAvailable
+            }
+
+            try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
+                let delegate = NFCLockDelegate(continuation: continuation)
                 Task { @MainActor in
                     delegate.startSession()
                 }
@@ -45,6 +69,7 @@ import Foundation
     /// CoreNFC requires delegates to be NSObject subclasses
     private final class NFCWriterDelegate: NSObject, NFCNDEFReaderSessionDelegate, @unchecked Sendable {
         private let urlToWrite: String
+        private let allowOverwrite: Bool
         private var continuation: CheckedContinuation<Void, Error>?
         private var session: NFCNDEFReaderSession?
         private let logger = Logger(label: "com.rxlab.rxstorage.NFCWriter")
@@ -53,11 +78,12 @@ import Foundation
         /// This is cleared when the session completes
         private var retainedSelf: NFCWriterDelegate?
 
-        init(url: String, continuation: CheckedContinuation<Void, Error>) {
+        init(url: String, allowOverwrite: Bool, continuation: CheckedContinuation<Void, Error>) {
             urlToWrite = url
+            self.allowOverwrite = allowOverwrite
             self.continuation = continuation
             super.init()
-            logger.debug("NFCWriterDelegate initialized", metadata: ["url": "\(url)"])
+            logger.debug("NFCWriterDelegate initialized", metadata: ["url": "\(url)", "allowOverwrite": "\(allowOverwrite)"])
         }
 
         deinit {
@@ -129,8 +155,13 @@ import Foundation
                         session.invalidate(errorMessage: "Tag is read-only.")
 
                     case .readWrite:
-                        self.logger.info("Tag is read-write, proceeding to write")
-                        self.writeURL(to: tag, session: session)
+                        if self.allowOverwrite {
+                            self.logger.info("Tag is read-write, overwrite allowed - proceeding to write")
+                            self.writeURL(to: tag, session: session)
+                        } else {
+                            self.logger.info("Tag is read-write, checking existing content first")
+                            self.readAndConditionallyWrite(tag: tag, session: session)
+                        }
 
                     @unknown default:
                         self.logger.warning("Unknown tag status", metadata: ["status": "\(status.rawValue)"])
@@ -170,6 +201,53 @@ import Foundation
         }
 
         // MARK: - Private Methods
+
+        private func readAndConditionallyWrite(tag: NFCNDEFTag, session: NFCNDEFReaderSession) {
+            tag.readNDEF { [weak self] message, error in
+                guard let self = self else { return }
+
+                if let error = error as? NSError {
+                    // Error code 403 (ndefReaderSessionErrorZeroLengthMessage) means tag is empty
+                    if error.domain == "NFCError", error.code == 403 {
+                        self.logger.info("Tag is empty (zero-length message), proceeding to write")
+                        self.writeURL(to: tag, session: session)
+                        return
+                    }
+                    // Other read errors - treat as empty and proceed
+                    self.logger.info("Read error (treating as empty)", metadata: ["error": "\(error.localizedDescription)"])
+                    self.writeURL(to: tag, session: session)
+                    return
+                }
+
+                if let message = message, !message.records.isEmpty {
+                    // Check if the only record is an empty record (type and payload both empty)
+                    let hasRealContent = message.records.contains { record in
+                        !record.type.isEmpty || !record.payload.isEmpty
+                    }
+
+                    if hasRealContent {
+                        let description = message.records.compactMap { record in
+                            if record.typeNameFormat == .nfcWellKnown,
+                               let url = record.wellKnownTypeURIPayload()
+                            {
+                                return url.absoluteString
+                            }
+                            return String(data: record.payload, encoding: .utf8) ?? "Unknown content"
+                        }.joined(separator: ", ")
+
+                        self.logger.warning("Tag has existing content", metadata: ["content": "\(description)"])
+                        session.alertMessage = "Tag already has content."
+                        session.invalidate()
+                        self.resumeContinuation(with: .failure(NFCWriterError.tagHasExistingContent(description)))
+                        return
+                    }
+                }
+
+                // Tag is empty or has no real content
+                self.logger.info("Tag is empty, proceeding to write")
+                self.writeURL(to: tag, session: session)
+            }
+        }
 
         private func writeURL(to tag: NFCNDEFTag, session: NFCNDEFReaderSession) {
             logger.info("Preparing to write URL", metadata: ["url": "\(urlToWrite)"])
@@ -225,13 +303,15 @@ import Foundation
     }
 
     /// Errors that can occur during NFC writing
-    public enum NFCWriterError: LocalizedError, Sendable {
+    public enum NFCWriterError: LocalizedError, Sendable, Equatable {
         case notAvailable
         case noTag
         case notWritable
         case writeFailed(String)
         case invalidURL
         case cancelled
+        case tagHasExistingContent(String)
+        case lockFailed(String)
 
         public var errorDescription: String? {
             switch self {
@@ -247,7 +327,125 @@ import Foundation
                 return "Invalid URL format"
             case .cancelled:
                 return "NFC operation was cancelled"
+            case let .tagHasExistingContent(description):
+                return "Tag already has content: \(description)"
+            case let .lockFailed(message):
+                return "Failed to lock NFC tag: \(message)"
             }
+        }
+    }
+
+    /// Internal delegate class for handling NFC tag locking
+    private final class NFCLockDelegate: NSObject, NFCNDEFReaderSessionDelegate, @unchecked Sendable {
+        private var continuation: CheckedContinuation<Void, Error>?
+        private var session: NFCNDEFReaderSession?
+        private let logger = Logger(label: "com.rxlab.rxstorage.NFCLock")
+        private var retainedSelf: NFCLockDelegate?
+
+        init(continuation: CheckedContinuation<Void, Error>) {
+            self.continuation = continuation
+            super.init()
+        }
+
+        @MainActor
+        func startSession() {
+            retainedSelf = self
+            logger.info("Starting NFC lock session")
+            session = NFCNDEFReaderSession(delegate: self, queue: nil, invalidateAfterFirstRead: false)
+            session?.alertMessage = "Hold your iPhone near the NFC tag to lock it."
+            session?.begin()
+        }
+
+        func readerSessionDidBecomeActive(_: NFCNDEFReaderSession) {
+            logger.info("NFC lock session became active")
+        }
+
+        func readerSession(_ session: NFCNDEFReaderSession, didDetect tags: [NFCNDEFTag]) {
+            guard let tag = tags.first else {
+                session.alertMessage = "No NFC tag detected."
+                session.invalidate(errorMessage: "No NFC tag detected.")
+                return
+            }
+
+            session.connect(to: tag) { [weak self] error in
+                guard let self = self else { return }
+
+                if let error = error {
+                    self.logger.error("Connection failed", metadata: ["error": "\(error.localizedDescription)"])
+                    session.alertMessage = "Connection failed."
+                    session.invalidate(errorMessage: error.localizedDescription)
+                    return
+                }
+
+                tag.queryNDEFStatus { status, _, error in
+                    if let error = error {
+                        self.logger.error("Failed to query tag", metadata: ["error": "\(error.localizedDescription)"])
+                        session.alertMessage = "Failed to query tag."
+                        session.invalidate(errorMessage: error.localizedDescription)
+                        return
+                    }
+
+                    switch status {
+                    case .readOnly:
+                        // Already locked - treat as success
+                        self.logger.info("Tag is already read-only (locked)")
+                        session.alertMessage = "Tag is already locked."
+                        session.invalidate()
+                        self.resumeContinuation(with: .success(()))
+
+                    case .readWrite:
+                        self.logger.info("Locking tag")
+                        tag.writeLock { error in
+                            if let error = error {
+                                self.logger.error("Lock failed", metadata: ["error": "\(error.localizedDescription)"])
+                                session.alertMessage = "Failed to lock tag."
+                                session.invalidate(errorMessage: error.localizedDescription)
+                                self.resumeContinuation(with: .failure(NFCWriterError.lockFailed(error.localizedDescription)))
+                            } else {
+                                self.logger.info("Tag locked successfully")
+                                session.alertMessage = "Tag locked successfully!"
+                                session.invalidate()
+                                self.resumeContinuation(with: .success(()))
+                            }
+                        }
+
+                    default:
+                        self.logger.warning("Tag cannot be locked", metadata: ["status": "\(status.rawValue)"])
+                        session.alertMessage = "This tag cannot be locked."
+                        session.invalidate(errorMessage: "Tag is not compatible.")
+                        self.resumeContinuation(with: .failure(NFCWriterError.lockFailed("Tag is not compatible")))
+                    }
+                }
+            }
+        }
+
+        func readerSession(_: NFCNDEFReaderSession, didInvalidateWithError error: Error) {
+            logger.warning("Lock session invalidated", metadata: ["error": "\(error.localizedDescription)"])
+
+            if let nfcError = error as? NFCReaderError {
+                switch nfcError.code {
+                case .readerSessionInvalidationErrorUserCanceled:
+                    resumeContinuation(with: .failure(NFCWriterError.cancelled))
+                default:
+                    resumeContinuation(with: .failure(NFCWriterError.lockFailed(error.localizedDescription)))
+                }
+            } else {
+                resumeContinuation(with: .failure(NFCWriterError.lockFailed(error.localizedDescription)))
+            }
+        }
+
+        func readerSession(_: NFCNDEFReaderSession, didDetectNDEFs _: [NFCNDEFMessage]) {}
+
+        private func resumeContinuation(with result: Result<Void, Error>) {
+            guard let continuation = continuation else { return }
+            self.continuation = nil
+            switch result {
+            case .success:
+                continuation.resume()
+            case let .failure(error):
+                continuation.resume(throwing: error)
+            }
+            retainedSelf = nil
         }
     }
 

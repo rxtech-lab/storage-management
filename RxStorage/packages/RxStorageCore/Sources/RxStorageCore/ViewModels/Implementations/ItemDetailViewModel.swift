@@ -17,6 +17,8 @@ public final class ItemDetailViewModel: ItemDetailViewModelProtocol {
     public private(set) var item: StorageItemDetail?
     public private(set) var children: [StorageItem] = []
     public private(set) var contents: [Content] = []
+    public private(set) var stockHistory: [StockHistoryRef] = []
+    public private(set) var quantity: Int = 0
     public var contentSchemas: [ContentSchema] = []
     public private(set) var isLoading = false
     public private(set) var error: Error?
@@ -26,17 +28,20 @@ public final class ItemDetailViewModel: ItemDetailViewModelProtocol {
     private let itemService: ItemServiceProtocol
     private let contentService: ContentServiceProtocol
     private let contentSchemaService: ContentSchemaServiceProtocol
+    private let stockHistoryService: StockHistoryServiceProtocol
 
     // MARK: - Initialization
 
     public init(
         itemService: ItemServiceProtocol = ItemService(),
         contentService: ContentServiceProtocol = ContentService(),
-        contentSchemaService: ContentSchemaServiceProtocol = ContentSchemaService()
+        contentSchemaService: ContentSchemaServiceProtocol = ContentSchemaService(),
+        stockHistoryService: StockHistoryServiceProtocol = StockHistoryService()
     ) {
         self.itemService = itemService
         self.contentService = contentService
         self.contentSchemaService = contentSchemaService
+        self.stockHistoryService = stockHistoryService
     }
 
     // MARK: - Public Methods
@@ -55,6 +60,8 @@ public final class ItemDetailViewModel: ItemDetailViewModelProtocol {
             // Use contents from item response (no separate API call needed)
             if let item = item {
                 contents = item.contents.map { $0.toContent(itemId: item.id) }
+                stockHistory = item.stockHistory
+                quantity = item.quantity
             }
         } catch {
             self.error = error
@@ -81,6 +88,8 @@ public final class ItemDetailViewModel: ItemDetailViewModelProtocol {
             // Use contents from item response (no separate API call needed)
             if let item = item {
                 contents = item.contents.map { $0.toContent(itemId: item.id) }
+                stockHistory = item.stockHistory
+                quantity = item.quantity
             }
         } catch {
             self.error = error
@@ -106,6 +115,8 @@ public final class ItemDetailViewModel: ItemDetailViewModelProtocol {
             // Use contents from item response (no separate API call needed)
             if let item = item {
                 contents = item.contents.map { $0.toContent(itemId: item.id) }
+                stockHistory = item.stockHistory
+                quantity = item.quantity
             }
         } catch {
             self.error = error
@@ -259,6 +270,40 @@ public final class ItemDetailViewModel: ItemDetailViewModelProtocol {
         if let index = contents.firstIndex(where: { $0.id == id }) {
             contents[index] = updated
         }
+    }
+
+    // MARK: - Stock History Management
+
+    /// Add a stock history entry
+    @discardableResult
+    public func addStockEntry(quantity: Int, note: String?) async throws -> StockHistory {
+        guard let itemId = item?.id else {
+            throw ItemDetailError.noItemLoaded
+        }
+
+        let request = NewStockHistoryRequest(
+            itemId: itemId,
+            quantity: quantity,
+            note: note
+        )
+        let created = try await stockHistoryService.createStockHistory(itemId: itemId, request)
+
+        // Refresh to get updated stock data from server
+        await refresh()
+
+        return created
+    }
+
+    /// Delete a stock history entry
+    public func deleteStockEntry(id: Int) async throws {
+        guard item != nil else {
+            throw ItemDetailError.noItemLoaded
+        }
+
+        try await stockHistoryService.deleteStockHistory(id: id)
+
+        // Refresh to get updated stock data from server
+        await refresh()
     }
 }
 
