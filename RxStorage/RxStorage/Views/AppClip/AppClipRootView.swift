@@ -19,7 +19,9 @@ struct AppClipRootView: View {
     @State private var itemId: Int?
     @State private var parseError: String?
     @State private var viewModel = ItemDetailViewModel()
-    @State private var oauthManager = OAuthManager()
+    @State private var oauthManager = OAuthManager(
+        configuration: AppConfiguration.shared.rxAuthConfiguration
+    )
 
     /// Service for QR code resolution
     private let qrCodeService = QrCodeService()
@@ -33,8 +35,6 @@ struct AppClipRootView: View {
     // Auth flow states
     @State private var needsAuth = false
     @State private var accessDenied = false
-    @State private var isAuthenticating = false
-    @State private var authError: String?
 
     /// Sign out confirmation state
     @State private var showSignOutConfirmation = false
@@ -43,10 +43,23 @@ struct AppClipRootView: View {
         NavigationStack {
             Group {
                 if needsAuth {
-                    AppClipSignInView(
-                        authError: authError,
-                        isAuthenticating: isAuthenticating,
-                        onSignIn: { Task { await signIn() } }
+                    RxSignInView(
+                        manager: oauthManager,
+                        appearance: RxSignInAppearance(
+                            icon: .systemImage("lock.shield.fill"),
+                            title: "Sign In Required",
+                            subtitle: "This item is private. Please sign in to view it.",
+                            signInButtonTitle: "Sign In with RxLab"
+                        ),
+                        onAuthSuccess: {
+                            Task {
+                                if let url = resolvedItemUrl {
+                                    await fetchItemUsingUrl(url: url)
+                                } else if let qrcontent = originalQrContent {
+                                    await fetchItemFromQrCode(qrcontent)
+                                }
+                            }
+                        }
                     )
                 } else if accessDenied {
                     AppClipAccessDeniedView(
@@ -124,7 +137,6 @@ struct AppClipRootView: View {
                 isPresented: $showSignOutConfirmation
             ) {
                 Task {
-                    try? await TokenStorage.shared.clearAll()
                     await oauthManager.logout()
                     // After sign out, retry fetching (no auth since user signed out)
                     if let url = resolvedItemUrl {
@@ -176,7 +188,6 @@ struct AppClipRootView: View {
         // Reset states
         needsAuth = false
         accessDenied = false
-        authError = nil
         parseError = nil
 
         // Store the original QR content for retry after auth
@@ -238,31 +249,8 @@ struct AppClipRootView: View {
 
     // MARK: - Authentication
 
-    private func signIn() async {
-        isAuthenticating = true
-        authError = nil
-
-        do {
-            try await oauthManager.authenticate()
-
-            // After successful authentication, retry the appropriate step
-            if let url = resolvedItemUrl {
-                // We already have the resolved URL, just fetch the item (auth included automatically)
-                await fetchItemUsingUrl(url: url)
-            } else if let qrcontent = originalQrContent {
-                // QR scan itself returned 401, retry the entire flow with auth
-                await fetchItemFromQrCode(qrcontent)
-            }
-        } catch {
-            authError = error.localizedDescription
-        }
-
-        isAuthenticating = false
-    }
-
     private func tryDifferentAccount() async {
-        // Clear tokens and sign out
-        try? await TokenStorage.shared.clearAll()
+        // Sign out (handles token clearing internally)
         await oauthManager.logout()
 
         // Show sign-in view again

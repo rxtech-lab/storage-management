@@ -9,11 +9,12 @@ import Foundation
 import HTTPTypes
 import Logging
 import OpenAPIRuntime
+import RxAuthSwift
 
 /// Middleware that injects Bearer token into requests and handles token refresh
 public actor AuthenticationMiddleware: ClientMiddleware {
-    private let tokenStorage: TokenStorage
-    private let configuration: AppConfiguration
+    private let tokenStorage: TokenStorageProtocol
+    private let configuration: RxAuthConfiguration
     private let logger = Logger(label: "com.rxlab.rxstorage.AuthenticationMiddleware")
 
     /// Track if a token refresh is in progress
@@ -21,8 +22,8 @@ public actor AuthenticationMiddleware: ClientMiddleware {
     private var pendingRequests: [CheckedContinuation<Void, Error>] = []
 
     public init(
-        tokenStorage: TokenStorage = .shared,
-        configuration: AppConfiguration = .shared
+        tokenStorage: TokenStorageProtocol,
+        configuration: RxAuthConfiguration
     ) {
         self.tokenStorage = tokenStorage
         self.configuration = configuration
@@ -35,9 +36,9 @@ public actor AuthenticationMiddleware: ClientMiddleware {
         operationID: String,
         next: @Sendable (HTTPRequest, HTTPBody?, URL) async throws -> (HTTPResponse, HTTPBody?)
     ) async throws -> (HTTPResponse, HTTPBody?) {
-        // Inject Bearer token if available (don't proactively refresh - let server reject with 401)
+        // Inject Bearer token if available
         var modifiedRequest = request
-        if let accessToken = await tokenStorage.getAccessToken() {
+        if let accessToken = tokenStorage.getAccessToken() {
             modifiedRequest.headerFields[.authorization] = "Bearer \(accessToken)"
         }
 
@@ -49,12 +50,11 @@ public actor AuthenticationMiddleware: ClientMiddleware {
             logger.info("Received 401, attempting token refresh", metadata: ["operationID": "\(operationID)"])
 
             // Check if refresh is possible
-            guard await tokenStorage.getRefreshToken() != nil else {
+            guard tokenStorage.getRefreshToken() != nil else {
                 logger.error("No refresh token available for 401 retry")
                 await MainActor.run {
-                    NotificationCenter.default.post(name: .authSessionExpired, object: nil)
+                    NotificationCenter.default.post(name: .rxAuthSessionExpired, object: nil)
                 }
-                // Return original 401 - let caller handle it
                 return (response, responseBody)
             }
 
@@ -63,16 +63,15 @@ public actor AuthenticationMiddleware: ClientMiddleware {
 
                 // Retry with new token
                 var retryRequest = request
-                if let accessToken = await tokenStorage.getAccessToken() {
+                if let accessToken = tokenStorage.getAccessToken() {
                     retryRequest.headerFields[.authorization] = "Bearer \(accessToken)"
                 }
                 return try await next(retryRequest, body, baseURL)
             } catch {
                 logger.error("Token refresh failed during 401 retry", metadata: ["error": "\(error)"])
                 await MainActor.run {
-                    NotificationCenter.default.post(name: .authSessionExpired, object: nil)
+                    NotificationCenter.default.post(name: .rxAuthSessionExpired, object: nil)
                 }
-                // Return original 401 - let caller handle it
                 return (response, responseBody)
             }
         }
@@ -91,10 +90,10 @@ public actor AuthenticationMiddleware: ClientMiddleware {
             }
         }
 
-        // Double-check if still expired (another request might have refreshed)
-        guard await tokenStorage.isTokenExpired() else { return }
+        // Double-check if still expired
+        guard tokenStorage.isTokenExpired() else { return }
 
-        guard await tokenStorage.getRefreshToken() != nil else {
+        guard tokenStorage.getRefreshToken() != nil else {
             logger.error("No refresh token available")
             throw AuthenticationError.noRefreshToken
         }
@@ -132,15 +131,11 @@ public actor AuthenticationMiddleware: ClientMiddleware {
 
     /// Refresh access token using refresh token
     private func performTokenRefresh() async throws {
-        guard let refreshToken = await tokenStorage.getRefreshToken() else {
+        guard let refreshToken = tokenStorage.getRefreshToken() else {
             throw AuthenticationError.noRefreshToken
         }
 
-        // Build token refresh request
-        var urlComponents = URLComponents(string: configuration.authIssuer)!
-        urlComponents.path = "/api/oauth/token"
-
-        guard let url = urlComponents.url else {
+        guard let url = configuration.tokenURL else {
             throw AuthenticationError.invalidURL
         }
 
@@ -151,7 +146,7 @@ public actor AuthenticationMiddleware: ClientMiddleware {
         let bodyParams = [
             "grant_type": "refresh_token",
             "refresh_token": refreshToken,
-            "client_id": configuration.authClientID,
+            "client_id": configuration.clientID,
         ]
 
         request.httpBody =
@@ -192,14 +187,14 @@ public actor AuthenticationMiddleware: ClientMiddleware {
         let tokenResponse = try JSONDecoder().decode(TokenResponse.self, from: data)
 
         // Save new tokens
-        try await tokenStorage.saveAccessToken(tokenResponse.access_token)
+        try tokenStorage.saveAccessToken(tokenResponse.access_token)
 
         if let newRefreshToken = tokenResponse.refresh_token {
-            try await tokenStorage.saveRefreshToken(newRefreshToken)
+            try tokenStorage.saveRefreshToken(newRefreshToken)
         }
 
         let expiresAt = Date().addingTimeInterval(TimeInterval(tokenResponse.expires_in))
-        try await tokenStorage.saveExpiresAt(expiresAt)
+        try tokenStorage.saveExpiresAt(expiresAt)
     }
 }
 
@@ -223,13 +218,4 @@ public enum AuthenticationError: LocalizedError, Sendable {
             return "Token refresh failed"
         }
     }
-}
-
-// MARK: - Notification Names
-
-public extension Notification.Name {
-    /// Posted when the auth session has expired and user needs to re-authenticate
-    static let authSessionExpired = Notification.Name(
-        "com.rxlab.rxstorage.authSessionExpired"
-    )
 }

@@ -73,8 +73,8 @@ struct AppClipAccessDeniedView: View {
 
                 // Try different account button
                 SecondaryAuthButton(
-                    "Try Different Account",
-                    icon: "arrow.triangle.2.circlepath"
+                    title: "Try Different Account",
+                    systemImage: "arrow.triangle.2.circlepath"
                 ) {
                     showConfirmation = true
                 }

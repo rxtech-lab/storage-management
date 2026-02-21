@@ -105,7 +105,7 @@ jobs:
           restore-keys: xcode-${{ runner.os }}-
 
       - name: Start Backend Server
-        run: bun install && bun dev &
+        run: bun install && bun dev:e2e &
         working-directory: admin
 
       - name: Wait for Backend Server
