@@ -144,7 +144,11 @@
 				Views/PositionSchemas/PositionSchemaFormSheet.swift,
 				Views/QRCode/QRCodeScannerView.swift,
 				Views/QRCode/QRCodeView.swift,
+				Views/QRCode/QRPrintConfiguration.swift,
+				Views/QRCode/QRPrintConfigurationView.swift,
+				Views/QRCode/QRPrintLayoutView.swift,
 				Views/Shared/AdaptiveList.swift,
+				Views/Shared/CameraPickerView.swift,
 			);
 			target = DF66258F2F29138300333552 /* RxStorageClips */;
 		};
@@ -1016,7 +1020,6 @@
 		DF6625BC2F29138400333552 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = P9KK452K8P;
@@ -1031,14 +1034,12 @@
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/RxStorageClips.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/RxStorageClips";
 			};
 			name = Debug;
 		};
 		DF6625BD2F29138400333552 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = P9KK452K8P;
@@ -1053,7 +1054,6 @@
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/RxStorageClips.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/RxStorageClips";
 			};
 			name = Release;
 		};

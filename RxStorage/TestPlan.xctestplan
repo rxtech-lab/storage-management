@@ -15,15 +15,15 @@
     {
       "target" : {
         "containerPath" : "container:RxStorage.xcodeproj",
-        "identifier" : "DF6625772F29137000333552",
-        "name" : "RxStorageUITests"
+        "identifier" : "DF66256D2F29137000333552",
+        "name" : "RxStorageTests"
       }
     },
     {
       "target" : {
         "containerPath" : "container:RxStorage.xcodeproj",
-        "identifier" : "DF6625AA2F29138400333552",
-        "name" : "RxStorageClipsUITests"
+        "identifier" : "DF6625772F29137000333552",
+        "name" : "RxStorageUITests"
       }
     }
   ],

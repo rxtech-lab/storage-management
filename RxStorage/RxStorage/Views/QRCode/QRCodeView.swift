@@ -6,6 +6,7 @@
 //
 
 import CoreImage.CIFilterBuiltins
+import RxStorageCore
 import SwiftUI
 #if os(iOS)
     import UIKit
@@ -16,13 +17,27 @@ import SwiftUI
 /// Simple QR code view that displays a QR code from a URL string
 struct QRCodeView: View {
     let urlString: String
+    let item: StorageItemDetail?
 
     #if os(iOS)
         @State private var qrImage: UIImage?
+        @State private var showingPrintConfig = false
     #elseif os(macOS)
         @State private var qrImage: NSImage?
     #endif
     @Environment(\.dismiss) private var dismiss
+
+    /// Backward-compatible initializer using only a URL string
+    init(urlString: String) {
+        self.urlString = urlString
+        item = nil
+    }
+
+    /// Initializer with full item detail for enhanced print layout
+    init(item: StorageItemDetail) {
+        self.item = item
+        urlString = item.previewUrl
+    }
 
     var body: some View {
         VStack(spacing: 20) {
@@ -72,7 +87,11 @@ struct QRCodeView: View {
                     if let image = qrImage {
                         ToolbarItemGroup(placement: .bottomBar) {
                             Button {
-                                printQRCode(image)
+                                if item != nil {
+                                    showingPrintConfig = true
+                                } else {
+                                    printQRCode(image)
+                                }
                             } label: {
                                 Label("Print QR Code", systemImage: "printer")
                                     .frame(maxWidth: .infinity)
@@ -103,6 +122,13 @@ struct QRCodeView: View {
             .task {
                 qrImage = generateQRCode(from: urlString)
             }
+        #if os(iOS)
+            .sheet(isPresented: $showingPrintConfig) {
+                if let item, let qrImage {
+                    QRPrintConfigurationView(item: item, qrImage: qrImage)
+                }
+            }
+        #endif
     }
 
     // MARK: - QR Code Generation

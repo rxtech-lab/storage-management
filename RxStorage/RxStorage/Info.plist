@@ -25,7 +25,7 @@
 
 	<!-- Permissions -->
 	<key>NSCameraUsageDescription</key>
-	<string>Camera access is needed to scan QR codes</string>
+	<string>Camera access is needed to scan QR codes and take photos</string>
 
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>Save QR codes to your photo library</string>

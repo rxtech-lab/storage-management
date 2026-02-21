@@ -101,7 +101,7 @@ struct ItemDetailView: View {
             .sheet(isPresented: $showingQRSheet) {
                 if let item = viewModel.item {
                     NavigationStack {
-                        QRCodeView(urlString: item.previewUrl)
+                        QRCodeView(item: item)
                     }
                 }
             }
