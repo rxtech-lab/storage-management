@@ -23,6 +23,8 @@
 		DF6628342F2E327300333552 /* JsonSchemaEditor in Frameworks */ = {isa = PBXBuildFile; productRef = DF6628332F2E327300333552 /* JsonSchemaEditor */; };
 		DF6628362F2E327300333552 /* RxStorageCore in Frameworks */ = {isa = PBXBuildFile; productRef = DF6628352F2E327300333552 /* RxStorageCore */; };
 		DF6628382F2E327300333552 /* JSONSchema in Frameworks */ = {isa = PBXBuildFile; productRef = DF6628372F2E327300333552 /* JSONSchema */; };
+		DFE7DB8A2F49610900018A97 /* RxAuthSwift in Frameworks */ = {isa = PBXBuildFile; productRef = DFE7DB892F49610900018A97 /* RxAuthSwift */; };
+		DFE7DB8C2F49610900018A97 /* RxAuthSwiftUI in Frameworks */ = {isa = PBXBuildFile; productRef = DFE7DB8B2F49610900018A97 /* RxAuthSwiftUI */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -113,12 +115,6 @@
 				Navigation/NavigationManager.swift,
 				Views/AppClip/AppClipAccessDeniedView.swift,
 				Views/AppClip/AppClipRootView.swift,
-				Views/AppClip/AppClipSignInView.swift,
-				Views/Auth/AnimatedAppLogo.swift,
-				Views/Auth/AnimatedGradientBackground.swift,
-				Views/Auth/AnimatedSecurityIcon.swift,
-				Views/Auth/AuthErrorBanner.swift,
-				Views/Auth/PrimaryAuthButton.swift,
 				Views/Authors/AuthorDetailView.swift,
 				Views/Authors/AuthorFormSheet.swift,
 				Views/Authors/AuthorListView.swift,
@@ -203,9 +199,11 @@
 			buildActionMask = 2147483647;
 			files = (
 				DF6626072F2A54C200333552 /* RxStorageCore in Frameworks */,
+				DFE7DB8C2F49610900018A97 /* RxAuthSwiftUI in Frameworks */,
 				DF6626612F2B828600333552 /* RxStorageCore in Frameworks */,
 				DF6626582F2B803300333552 /* JSONSchemaValidator in Frameworks */,
 				DF6626642F2B892800333552 /* JSONSchema in Frameworks */,
+				DFE7DB8A2F49610900018A97 /* RxAuthSwift in Frameworks */,
 				DF66265B2F2B821600333552 /* JsonSchemaEditor in Frameworks */,
 				DF6626562F2B803300333552 /* JSONSchemaForm in Frameworks */,
 				DF66265E2F2B826C00333552 /* JsonSchemaEditor in Frameworks */,
@@ -318,6 +316,8 @@
 				DF66265D2F2B826C00333552 /* JsonSchemaEditor */,
 				DF6626602F2B828600333552 /* RxStorageCore */,
 				DF6626632F2B892800333552 /* JSONSchema */,
+				DFE7DB892F49610900018A97 /* RxAuthSwift */,
+				DFE7DB8B2F49610900018A97 /* RxAuthSwiftUI */,
 			);
 			productName = RxStorage;
 			productReference = DF66255D2F29136F00333552 /* RxStorage.app */;
@@ -489,6 +489,7 @@
 				DF66265C2F2B826C00333552 /* XCLocalSwiftPackageReference "packages/JsonSchemaEditor" */,
 				DF66265F2F2B828600333552 /* XCLocalSwiftPackageReference "packages/RxStorageCore" */,
 				DF6626622F2B892800333552 /* XCRemoteSwiftPackageReference "swift-json-schema" */,
+				DFE7DB882F49610900018A97 /* XCRemoteSwiftPackageReference "RxAuthSwift" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = DF66255E2F29136F00333552 /* Products */;
@@ -1200,6 +1201,14 @@
 				minimumVersion = 1.0.2;
 			};
 		};
+		DFE7DB882F49610900018A97 /* XCRemoteSwiftPackageReference "RxAuthSwift" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/rxtech-lab/RxAuthSwift";
+			requirement = {
+				kind = exactVersion;
+				version = 1.0.3;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -1253,6 +1262,16 @@
 			isa = XCSwiftPackageProductDependency;
 			package = DF6626622F2B892800333552 /* XCRemoteSwiftPackageReference "swift-json-schema" */;
 			productName = JSONSchema;
+		};
+		DFE7DB892F49610900018A97 /* RxAuthSwift */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = DFE7DB882F49610900018A97 /* XCRemoteSwiftPackageReference "RxAuthSwift" */;
+			productName = RxAuthSwift;
+		};
+		DFE7DB8B2F49610900018A97 /* RxAuthSwiftUI */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = DFE7DB882F49610900018A97 /* XCRemoteSwiftPackageReference "RxAuthSwift" */;
+			productName = RxAuthSwiftUI;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

@@ -9,6 +9,7 @@ import Foundation
 import HTTPTypes
 import OpenAPIRuntime
 import OpenAPIURLSession
+import RxAuthSwift
 
 /// Configured API client for Storage Management API
 public final class StorageAPIClient: Sendable {
@@ -22,15 +23,15 @@ public final class StorageAPIClient: Sendable {
     public let optionalAuthClient: Client
 
     private let configuration: AppConfiguration
-    private let tokenStorage: TokenStorage
 
     /// Create authenticated client
     public init(
         configuration: AppConfiguration = .shared,
-        tokenStorage: TokenStorage = .shared
+        tokenStorage: TokenStorageProtocol? = nil
     ) {
         self.configuration = configuration
-        self.tokenStorage = tokenStorage
+
+        let storage = tokenStorage ?? KeychainTokenStorage(serviceName: "com.rxlab.RxStorage")
 
         let joinedPath =
             configuration.apiBaseURL.hasSuffix("/api")
@@ -48,7 +49,10 @@ public final class StorageAPIClient: Sendable {
             transport: URLSessionTransport(),
             middlewares: [
                 LoggingMiddleware(),
-                AuthenticationMiddleware(tokenStorage: tokenStorage, configuration: configuration),
+                AuthenticationMiddleware(
+                    tokenStorage: storage,
+                    configuration: configuration.rxAuthConfiguration
+                ),
             ]
         )
 
@@ -58,7 +62,7 @@ public final class StorageAPIClient: Sendable {
             transport: URLSessionTransport(),
             middlewares: [
                 LoggingMiddleware(),
-                OptionalAuthMiddleware(tokenStorage: tokenStorage),
+                OptionalAuthMiddleware(tokenStorage: storage),
             ]
         )
     }
@@ -84,8 +88,9 @@ public final class StorageAPIClient: Sendable {
     /// Includes Bearer token if available but doesn't fail if no token exists.
     public static func optionalAuthClient(
         configuration: AppConfiguration = .shared,
-        tokenStorage: TokenStorage = .shared
+        tokenStorage: TokenStorageProtocol? = nil
     ) -> Client {
+        let storage = tokenStorage ?? KeychainTokenStorage(serviceName: "com.rxlab.RxStorage")
         let joinedPath =
             configuration.apiBaseURL.hasSuffix("/api")
                 ? configuration.apiBaseURL : configuration.apiBaseURL + "/api"
@@ -99,7 +104,7 @@ public final class StorageAPIClient: Sendable {
             transport: URLSessionTransport(),
             middlewares: [
                 LoggingMiddleware(),
-                OptionalAuthMiddleware(tokenStorage: tokenStorage),
+                OptionalAuthMiddleware(tokenStorage: storage),
             ]
         )
     }
@@ -109,9 +114,9 @@ public final class StorageAPIClient: Sendable {
 
 /// Middleware that adds Bearer token if available, but doesn't require it
 public actor OptionalAuthMiddleware: ClientMiddleware {
-    private let tokenStorage: TokenStorage
+    private let tokenStorage: TokenStorageProtocol
 
-    public init(tokenStorage: TokenStorage = .shared) {
+    public init(tokenStorage: TokenStorageProtocol) {
         self.tokenStorage = tokenStorage
     }
 
@@ -125,7 +130,7 @@ public actor OptionalAuthMiddleware: ClientMiddleware {
         var modifiedRequest = request
 
         // Add Bearer token IF available (but don't require it)
-        if let accessToken = await tokenStorage.getAccessToken() {
+        if let accessToken = tokenStorage.getAccessToken() {
             modifiedRequest.headerFields[.authorization] = "Bearer \(accessToken)"
         }
 

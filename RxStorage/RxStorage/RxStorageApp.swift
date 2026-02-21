@@ -16,13 +16,15 @@ struct RxStorageApp: App {
     @State private var locationDetailViewModel = LocationDetailViewModel()
     @State private var positionSchemaDetailViewModel = PositionSchemaDetailViewModel()
     @State private var eventViewModel = EventViewModel()
+    @State private var authManager = OAuthManager(
+        configuration: AppConfiguration.shared.rxAuthConfiguration
+    )
 
     init() {
         // Clear tokens if running UI tests with --reset-auth flag
         if CommandLine.arguments.contains("--reset-auth") {
-            Task {
-                try? await TokenStorage.shared.clearAll()
-            }
+            let tokenStorage = KeychainTokenStorage(serviceName: "com.rxlab.RxStorage")
+            try? tokenStorage.clearAll()
         }
 
         #if DEBUG
@@ -39,12 +41,16 @@ struct RxStorageApp: App {
 
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            ContentView(authManager: authManager)
                 .environment(categoryDetailViewModel)
                 .environment(authorDetailViewModel)
                 .environment(locationDetailViewModel)
                 .environment(positionSchemaDetailViewModel)
                 .environment(eventViewModel)
+                .environment(authManager)
+                .task {
+                    await authManager.checkExistingAuth()
+                }
         }
         #if os(macOS)
         .defaultSize(width: 500, height: 600)

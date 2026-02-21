@@ -94,7 +94,8 @@ public struct ItemService: ItemServiceProtocol {
         request.setValue("application/json", forHTTPHeaderField: "Accept")
 
         // Always add auth token if user is signed in
-        if let accessToken = await TokenStorage.shared.getAccessToken() {
+        let tokenStorage = KeychainTokenStorage(serviceName: "com.rxlab.RxStorage")
+        if let accessToken = tokenStorage.getAccessToken() {
             request.setValue("Bearer \(accessToken)", forHTTPHeaderField: "Authorization")
         }
 
