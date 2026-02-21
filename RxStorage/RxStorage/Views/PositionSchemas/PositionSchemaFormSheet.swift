@@ -98,6 +98,7 @@ struct PositionSchemaFormSheet: View {
                 }
             }
         }
+        .scrollDismissesKeyboard(.interactively)
         .navigationTitle(schema == nil ? "New Schema" : "Edit Schema")
         #if os(iOS)
             .navigationBarTitleDisplayMode(.inline)

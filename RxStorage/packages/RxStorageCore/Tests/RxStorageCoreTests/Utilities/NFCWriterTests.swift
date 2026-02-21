@@ -74,6 +74,43 @@ import Testing
             let error2 = NFCWriterError.writeFailed("test2")
             #expect(error1 != error2)
         }
+
+        // MARK: - New Error Case Tests
+
+        @Test("tagHasExistingContent error has correct description")
+        func tagHasExistingContentErrorDescription() {
+            let error = NFCWriterError.tagHasExistingContent("https://example.com")
+            #expect(error.errorDescription?.contains("https://example.com") == true)
+            #expect(error.errorDescription?.contains("already has content") == true)
+        }
+
+        @Test("lockFailed error has correct description")
+        func lockFailedErrorDescription() {
+            let error = NFCWriterError.lockFailed("Connection lost")
+            #expect(error.errorDescription?.contains("Connection lost") == true)
+            #expect(error.errorDescription?.contains("lock") == true)
+        }
+
+        @Test("tagHasExistingContent errors with same content are equal")
+        func tagHasExistingContentEquality() {
+            let error1 = NFCWriterError.tagHasExistingContent("test")
+            let error2 = NFCWriterError.tagHasExistingContent("test")
+            #expect(error1 == error2)
+        }
+
+        @Test("tagHasExistingContent errors with different content are not equal")
+        func tagHasExistingContentInequality() {
+            let error1 = NFCWriterError.tagHasExistingContent("test1")
+            let error2 = NFCWriterError.tagHasExistingContent("test2")
+            #expect(error1 != error2)
+        }
+
+        @Test("lockFailed errors with same message are equal")
+        func lockFailedEquality() {
+            let error1 = NFCWriterError.lockFailed("test")
+            let error2 = NFCWriterError.lockFailed("test")
+            #expect(error1 == error2)
+        }
     }
 
     @Suite("MockNFCWriter Tests")
@@ -88,6 +125,18 @@ import Testing
 
             #expect(mock.writeCalled == true)
             #expect(mock.lastWrittenUrl == "https://example.com")
+            #expect(mock.lastAllowOverwrite == false)
+        }
+
+        @Test("MockNFCWriter tracks allowOverwrite parameter")
+        @MainActor
+        func writeWithOverwriteTracking() async throws {
+            let mock = MockNFCWriter()
+
+            try await mock.writeToNfcChip(url: "https://example.com", allowOverwrite: true)
+
+            #expect(mock.writeCalled == true)
+            #expect(mock.lastAllowOverwrite == true)
         }
 
         @Test("MockNFCWriter returns success by default")
@@ -121,6 +170,42 @@ import Testing
                 Issue.record("Expected error to be thrown")
             } catch let error as NFCWriterError {
                 #expect(error == .cancelled)
+            }
+        }
+
+        @Test("MockNFCWriter tracks lock calls")
+        @MainActor
+        func lockCallTracking() async throws {
+            let mock = MockNFCWriter()
+            #expect(mock.lockCalled == false)
+
+            try await mock.lockNfcTag()
+
+            #expect(mock.lockCalled == true)
+        }
+
+        @Test("MockNFCWriter lock throws configured error")
+        @MainActor
+        func lockConfiguredError() async throws {
+            let mock = MockNFCWriter()
+            mock.lockResult = .failure(NFCWriterError.lockFailed("test"))
+
+            await #expect(throws: NFCWriterError.lockFailed("test")) {
+                try await mock.lockNfcTag()
+            }
+        }
+
+        @Test("MockNFCWriter can simulate tagHasExistingContent")
+        @MainActor
+        func existingContentSimulation() async throws {
+            let mock = MockNFCWriter()
+            mock.writeResult = .failure(NFCWriterError.tagHasExistingContent("https://old.com"))
+
+            do {
+                try await mock.writeToNfcChip(url: "https://example.com")
+                Issue.record("Expected error to be thrown")
+            } catch let error as NFCWriterError {
+                #expect(error == .tagHasExistingContent("https://old.com"))
             }
         }
     }

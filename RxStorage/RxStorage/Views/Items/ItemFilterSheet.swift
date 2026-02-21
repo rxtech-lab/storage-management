@@ -112,6 +112,7 @@ struct ItemFilterSheet: View {
                 }
             }
         }
+        .scrollDismissesKeyboard(.interactively)
         .navigationTitle("Filters")
         #if os(iOS)
             .navigationBarTitleDisplayMode(.inline)

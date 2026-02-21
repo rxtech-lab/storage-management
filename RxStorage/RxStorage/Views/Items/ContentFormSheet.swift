@@ -92,6 +92,7 @@ struct ContentFormSheet: View {
                 }
             }
         }
+        .scrollDismissesKeyboard(.interactively)
         .formStyle(.grouped)
         .navigationTitle(isEditing ? "Edit Content" : "Add Content")
         #if os(iOS)

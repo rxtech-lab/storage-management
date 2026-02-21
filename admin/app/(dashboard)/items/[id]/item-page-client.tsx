@@ -20,6 +20,7 @@ import type {
   PositionSchema,
   Content,
   ItemWhitelist,
+  StockHistory,
 } from "@/lib/db";
 
 interface ItemPageClientProps {
@@ -29,6 +30,8 @@ interface ItemPageClientProps {
   contents: Content[];
   whitelist: ItemWhitelist[];
   childItems: ItemWithRelations[];
+  stockHistory: StockHistory[];
+  quantity: number;
 }
 
 export function ItemPageClient({
@@ -38,6 +41,8 @@ export function ItemPageClient({
   contents,
   whitelist,
   childItems,
+  stockHistory,
+  quantity,
 }: ItemPageClientProps) {
   const router = useRouter();
   const [isEditOpen, setIsEditOpen] = useState(false);
@@ -83,6 +88,8 @@ export function ItemPageClient({
           contents={contents}
           children={childItems}
           whitelist={whitelist}
+          stockHistory={stockHistory}
+          quantity={quantity}
           onUpdate={handleUpdate}
         />
       </div>

@@ -118,6 +118,7 @@ struct ContentDetailSheet: View {
                 }
             }
         }
+        .scrollDismissesKeyboard(.interactively)
         .formStyle(.grouped)
         .navigationTitle(content.contentData.title ?? "Content Details")
         #if os(iOS)

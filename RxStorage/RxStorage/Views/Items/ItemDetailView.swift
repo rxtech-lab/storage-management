@@ -54,7 +54,12 @@ struct ItemDetailView: View {
     #if os(iOS)
         @State private var nfcWriter = NFCWriter()
         @State private var isWritingNFC = false
-        @State private var showNFCSuccess = false
+        // Overwrite flow
+        @State private var showNFCOverwriteConfirmation = false
+        @State private var existingNFCContent = ""
+        @State private var pendingNFCUrl = ""
+        /// Lock flow
+        @State private var showNFCLockSheet = false
     #endif
     @State private var showingAddChildSheet = false
     @State private var isAddingChild = false
@@ -64,6 +69,7 @@ struct ItemDetailView: View {
     @State private var selectedContentForEdit: Content?
     @State private var selectedContentForDetail: Content?
     @State private var isRefreshing = false
+    @State private var showingStockDetailSheet = false
     private let imageHeight: CGFloat = 400
 
     init(itemId: Int, isViewOnly: Bool = false) {
@@ -124,10 +130,19 @@ struct ItemDetailView: View {
                 }
             }
         #if os(iOS)
-            .alert("NFC Write Successful", isPresented: $showNFCSuccess) {
-                Button("OK", role: .cancel) {}
-            } message: {
-                Text("The URL has been written to the NFC tag.")
+            .confirmationDialog(
+                title: "Tag Already Has Content",
+                message: "This NFC tag already contains: \(existingNFCContent). Do you want to overwrite it?",
+                confirmButtonTitle: "Overwrite",
+                isPresented: $showNFCOverwriteConfirmation,
+                onConfirm: {
+                    Task { await writeToNFCWithOverwrite() }
+                }
+            )
+            .sheet(isPresented: $showNFCLockSheet) {
+                NFCLockSheet(nfcWriter: nfcWriter) {
+                    showNFCLockSheet = false
+                }
             }
         #endif
             .sheet(isPresented: $showingAddChildSheet) {
@@ -146,6 +161,9 @@ struct ItemDetailView: View {
                     }
                 }
             }
+        #if os(iOS)
+            .toolbar(.hidden, for: .tabBar)
+        #endif
             .sheet(isPresented: $showingContentSheet) {
                 NavigationStack {
                     ContentFormSheet(
@@ -153,6 +171,15 @@ struct ItemDetailView: View {
                         onSubmit: { type, data in
                             Task { await createContent(type: type, data: data) }
                         }
+                    )
+                }
+            }
+            .sheet(isPresented: $showingStockDetailSheet) {
+                NavigationStack {
+                    StockDetailSheet(
+                        viewModel: viewModel,
+                        errorViewModel: errorViewModel,
+                        isViewOnly: isViewOnly
                     )
                 }
             }
@@ -201,7 +228,7 @@ struct ItemDetailView: View {
                     childrenCard
                 }
                 .padding(.horizontal, 16)
-                .padding(.top, item.images.isEmpty ? 16 : 8)
+                .padding(.top, item.images.isEmpty ? 8 : 12)
                 .padding(.bottom, 32)
             }
             .frame(maxWidth: .infinity)
@@ -282,12 +309,29 @@ struct ItemDetailView: View {
     #if os(iOS)
         private func writeToNFC(previewUrl: String) async {
             isWritingNFC = true
+            pendingNFCUrl = previewUrl
             defer { isWritingNFC = false }
             do {
                 try await nfcWriter.writeToNfcChip(url: previewUrl)
-                showNFCSuccess = true
+                showNFCLockSheet = true
+            } catch let NFCWriterError.tagHasExistingContent(content) {
+                existingNFCContent = content
+                showNFCOverwriteConfirmation = true
             } catch NFCWriterError.cancelled {
                 // User cancelled - do nothing (silent dismissal)
+            } catch {
+                errorViewModel.showError(error)
+            }
+        }
+
+        private func writeToNFCWithOverwrite() async {
+            isWritingNFC = true
+            defer { isWritingNFC = false }
+            do {
+                try await nfcWriter.writeToNfcChip(url: pendingNFCUrl, allowOverwrite: true)
+                showNFCLockSheet = true
+            } catch NFCWriterError.cancelled {
+                // User cancelled - do nothing
             } catch {
                 errorViewModel.showError(error)
             }
@@ -423,6 +467,22 @@ struct ItemDetailView: View {
                         Label("Price", systemImage: "dollarsign.circle")
                     }
                 }
+
+                Button {
+                    showingStockDetailSheet = true
+                } label: {
+                    LabeledContent {
+                        HStack(spacing: 4) {
+                            Text("\(viewModel.quantity)")
+                            Image(systemName: "chevron.right")
+                                .font(.caption)
+                                .foregroundStyle(.tertiary)
+                        }
+                    } label: {
+                        Label("Stock", systemImage: "shippingbox")
+                    }
+                }
+                .buttonStyle(.plain)
             }
         }
         .cardStyle()
@@ -746,6 +806,155 @@ struct DetailRow: View {
                 .foregroundStyle(.secondary)
 
             Spacer()
+        }
+    }
+}
+
+// MARK: - Stock Detail Sheet
+
+struct StockDetailSheet: View {
+    let viewModel: ItemDetailViewModel
+    let errorViewModel: ErrorViewModel
+    let isViewOnly: Bool
+    @Environment(\.dismiss) private var dismiss
+    @State private var showingAddSheet = false
+
+    var body: some View {
+        List {
+            Section {
+                HStack {
+                    Label("Current Quantity", systemImage: "shippingbox")
+                    Spacer()
+                    Text("\(viewModel.quantity)")
+                        .font(.title2)
+                        .fontWeight(.bold)
+                }
+            }
+
+            Section("History") {
+                if viewModel.stockHistory.isEmpty {
+                    Text("No stock history yet")
+                        .foregroundStyle(.secondary)
+                } else {
+                    ForEach(viewModel.stockHistory) { entry in
+                        HStack {
+                            Text(entry.quantity > 0 ? "+\(entry.quantity)" : "\(entry.quantity)")
+                                .font(.system(.body, design: .monospaced))
+                                .fontWeight(.medium)
+                                .foregroundStyle(entry.quantity > 0 ? .green : .red)
+                                .frame(width: 60, alignment: .leading)
+
+                            VStack(alignment: .leading, spacing: 2) {
+                                if let note = entry.note {
+                                    Text(note)
+                                        .font(.subheadline)
+                                }
+                                Text(entry.createdAt, style: .date)
+                                    .font(.caption)
+                                    .foregroundStyle(.tertiary)
+                            }
+
+                            Spacer()
+                        }
+                    }
+                    .onDelete { indexSet in
+                        guard !isViewOnly else { return }
+                        for index in indexSet {
+                            let entry = viewModel.stockHistory[index]
+                            Task { await deleteStockEntry(entry.id) }
+                        }
+                    }
+                }
+            }
+        }
+        #if os(iOS)
+        .listStyle(.insetGrouped)
+        #endif
+        .navigationTitle("Stock")
+        #if os(iOS)
+            .navigationBarTitleDisplayMode(.inline)
+        #endif
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Done") { dismiss() }
+                }
+                if !isViewOnly {
+                    ToolbarItem(placement: .primaryAction) {
+                        Button {
+                            showingAddSheet = true
+                        } label: {
+                            Image(systemName: "plus")
+                        }
+                    }
+                }
+            }
+            .sheet(isPresented: $showingAddSheet) {
+                NavigationStack {
+                    StockEntrySheet(viewModel: viewModel, errorViewModel: errorViewModel)
+                }
+            }
+    }
+
+    private func deleteStockEntry(_ id: Int) async {
+        do {
+            try await viewModel.deleteStockEntry(id: id)
+        } catch {
+            errorViewModel.showError(error)
+        }
+    }
+}
+
+// MARK: - Stock Entry Sheet
+
+struct StockEntrySheet: View {
+    let viewModel: ItemDetailViewModel
+    let errorViewModel: ErrorViewModel
+    @Environment(\.dismiss) private var dismiss
+    @State private var quantityText = ""
+    @State private var note = ""
+    @State private var isSubmitting = false
+
+    var body: some View {
+        Form {
+            Section {
+                TextField("Quantity", text: $quantityText)
+                #if os(iOS)
+                    .keyboardType(.numbersAndPunctuation)
+                #endif
+                TextField("Note (optional)", text: $note)
+            } footer: {
+                Text("Use positive numbers to add stock, negative to remove.")
+            }
+        }
+        .navigationTitle("Add Stock Entry")
+        #if os(iOS)
+            .navigationBarTitleDisplayMode(.inline)
+        #endif
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { dismiss() }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Add") {
+                        Task { await submit() }
+                    }
+                    .disabled(isSubmitting || Int(quantityText) == nil || Int(quantityText) == 0)
+                }
+            }
+    }
+
+    private func submit() async {
+        guard let qty = Int(quantityText), qty != 0 else { return }
+        isSubmitting = true
+        defer { isSubmitting = false }
+        do {
+            _ = try await viewModel.addStockEntry(
+                quantity: qty,
+                note: note.isEmpty ? nil : note
+            )
+            dismiss()
+        } catch {
+            errorViewModel.showError(error)
         }
     }
 }
