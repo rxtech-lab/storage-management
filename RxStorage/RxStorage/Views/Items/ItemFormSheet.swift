@@ -30,6 +30,10 @@ struct ItemFormSheet: View {
     @State private var showingAuthorPicker = false
     @State private var showingParentItemPicker = false
 
+    // Image source
+    @State private var showingCamera = false
+    @State private var showingPhotoPicker = false
+
     // Selected entities from pickers (for display names)
     @State private var selectedCategory: RxStorageCore.Category?
     @State private var selectedLocation: RxStorageCore.Location?
@@ -327,22 +331,46 @@ struct ItemFormSheet: View {
                 pendingUploadRow(pending)
             }
 
-            // PhotosPicker button
-            PhotosPicker(
-                selection: $selectedPhotos,
-                maxSelectionCount: 10,
-                matching: .images
-            ) {
+            // Add images menu with camera and library options
+            Menu {
+                Button {
+                    showingPhotoPicker = true
+                } label: {
+                    Label("Choose from Library", systemImage: "photo.on.rectangle")
+                }
+                #if os(iOS)
+                    Button {
+                        showingCamera = true
+                    } label: {
+                        Label("Take Photo", systemImage: "camera")
+                    }
+                #endif
+            } label: {
                 Label("Add Images", systemImage: "photo.badge.plus")
             }
             .disabled(viewModel.isUploading)
             .accessibilityIdentifier("item-form-add-images-button")
         }
+        .photosPicker(
+            isPresented: $showingPhotoPicker,
+            selection: $selectedPhotos,
+            maxSelectionCount: 10,
+            matching: .images
+        )
         .onChange(of: selectedPhotos) { _, newValue in
             Task {
                 await handleSelectedPhotos(newValue)
             }
         }
+        #if os(iOS)
+        .fullScreenCover(isPresented: $showingCamera) {
+            CameraPickerView { image in
+                Task {
+                    await handleCapturedImage(image)
+                }
+            }
+        }
+        #endif
     }
 
     private func pendingUploadRow(_ pending: PendingUpload) -> some View {
@@ -597,6 +625,22 @@ struct ItemFormSheet: View {
         private func loadImage(from url: URL) -> NSImage? {
             guard let data = try? Data(contentsOf: url) else { return nil }
             return NSImage(data: data)
+        }
+    #endif
+
+    #if os(iOS)
+        private func handleCapturedImage(_ image: UIImage) async {
+            guard let data = image.jpegData(compressionQuality: 0.8) else { return }
+            let tempURL = FileManager.default.temporaryDirectory
+                .appendingPathComponent(UUID().uuidString)
+                .appendingPathExtension("jpg")
+            do {
+                try data.write(to: tempURL)
+                viewModel.addImage(from: tempURL)
+                await viewModel.uploadPendingImages()
+            } catch {
+                print("Failed to save captured image: \(error)")
+            }
         }
     #endif
 
