@@ -47,6 +47,7 @@ jobs:
       sdk: iphonesimulator
       artifact-name: test-logs
       artifact-path: test.log
+      result-bundle-path: test-results.xcresult
       upload-test-results: true
     secrets: inherit
 
@@ -63,13 +64,11 @@ jobs:
       artifact-path: build.log
     secrets: inherit
 
-  # UI tests - currently skipped
   ui-tests:
-    if: false
     name: Run UI Tests
     uses: ./.github/workflows/ios-setup.yml
     with:
-      runs-on: macos-latest
+      runs-on: self-hosted
       job-name: Run UI Tests
       script: ios-ui-test.sh
       scheme: RxStorage
@@ -77,5 +76,6 @@ jobs:
       sdk: iphonesimulator
       artifact-name: ui-test-logs
       artifact-path: ui-test.log
+      result-bundle-path: ui-test-results.xcresult
       upload-test-results: true
     secrets: inherit
