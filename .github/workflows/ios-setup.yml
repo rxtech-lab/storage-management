@@ -41,6 +41,16 @@ on:
         required: false
         type: string
         default: 'build.log'
+      result-bundle-path:
+        description: 'Path to the xcresult bundle'
+        required: false
+        type: string
+        default: 'test-results.xcresult'
+      backend-log-path:
+        description: 'Path to backend server log file'
+        required: false
+        type: string
+        default: 'admin/backend.log'
       upload-test-results:
         description: 'Whether to upload test results'
         required: false
@@ -95,6 +105,17 @@ jobs:
           RXSTORAGE_TESTING_SECRETS: ${{ secrets.RXSTORAGE_TESTING_SECRETS }}
         run: ./scripts/decode-env-secrets.sh
 
+      - name: Setup Admin .env from GitHub Secrets
+        env:
+          ADMIN_ENV_BASE64: ${{ secrets.ADMIN_ENV_BASE64 }}
+        run: |
+          if [ -z "$ADMIN_ENV_BASE64" ]; then
+            echo "⚠️ Warning: ADMIN_ENV_BASE64 secret is not set, skipping admin .env setup"
+          else
+            echo "$ADMIN_ENV_BASE64" | base64 --decode > admin/.env
+            echo "✅ Successfully decoded admin .env"
+          fi
+
       - name: Install xcbeautify
         run: brew install xcbeautify
 
@@ -105,7 +126,7 @@ jobs:
           restore-keys: xcode-${{ runner.os }}-
 
       - name: Start Backend Server
-        run: bun install && bun dev:e2e &
+        run: bun install && bun dev:e2e > backend.log 2>&1 &
         working-directory: admin
 
       - name: Wait for Backend Server
@@ -139,18 +160,53 @@ jobs:
           path: ${{ inputs.artifact-path }}
           retention-days: 7
 
+      - name: Upload Backend Logs
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: ${{ inputs.artifact-name }}-backend
+          path: ${{ inputs.backend-log-path }}
+          retention-days: 7
+          if-no-files-found: ignore
+
       - name: Upload Test Results
         if: ${{ inputs.upload-test-results && always() }}
         uses: actions/upload-artifact@v6
         with:
-          name: test-results
-          path: test-results.xcresult
+          name: ${{ inputs.artifact-name }}-results
+          path: ${{ inputs.result-bundle-path }}
           retention-days: 7
+
+      - name: Extract Screenshots from xcresult
+        if: ${{ inputs.upload-test-results && always() }}
+        run: |
+          RESULT_BUNDLE="${{ inputs.result-bundle-path }}"
+          if [ -d "$RESULT_BUNDLE" ]; then
+            echo "📸 Extracting screenshots from $RESULT_BUNDLE..."
+            mkdir -p test-screenshots
+            xcrun xcresulttool get test-results attachments \
+              --path "$RESULT_BUNDLE" \
+              --output-path test-screenshots || echo "No attachments found in result bundle"
+            SCREENSHOT_COUNT=$(find test-screenshots -type f 2>/dev/null | wc -l | tr -d ' ')
+            echo "Found $SCREENSHOT_COUNT attachment(s)"
+          else
+            echo "⚠️ Result bundle not found at $RESULT_BUNDLE"
+          fi
+
+      - name: Upload Screenshots
+        if: ${{ inputs.upload-test-results && always() }}
+        uses: actions/upload-artifact@v6
+        with:
+          name: ${{ inputs.artifact-name }}-screenshots
+          path: test-screenshots/
+          retention-days: 7
+          if-no-files-found: ignore
 
       - name: Generate Test Report
         if: ${{ inputs.upload-test-results && always() }}
         run: |
-          if [ -d "test-results.xcresult" ]; then
+          RESULT_BUNDLE="${{ inputs.result-bundle-path }}"
+          if [ -d "$RESULT_BUNDLE" ]; then
             echo "## Test Results" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
             echo "Test results bundle available in artifacts." >> $GITHUB_STEP_SUMMARY
