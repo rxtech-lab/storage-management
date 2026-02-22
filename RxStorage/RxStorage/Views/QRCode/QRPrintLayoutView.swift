@@ -164,7 +164,6 @@ import SwiftUI
             HStack(spacing: 4) {
                 Text("\(label):")
                     .font(configuration.labelFont)
-                    .foregroundColor(.gray)
                 Text(value)
                     .font(configuration.bodyFont)
                     .foregroundColor(.black)

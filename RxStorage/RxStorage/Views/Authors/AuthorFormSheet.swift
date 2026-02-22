@@ -50,6 +50,7 @@ struct AuthorFormSheet: View {
                 }
             }
         }
+        .formStyle(.grouped)
         .scrollDismissesKeyboard(.interactively)
         .navigationTitle(author == nil ? "New Author" : "Edit Author")
         #if os(iOS)

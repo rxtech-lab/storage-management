@@ -93,6 +93,7 @@ struct ItemDetailView: View {
                 ProgressView("Loading...")
             }
         }
+        .formStyle(.grouped)
         .navigationTitle(viewModel.item?.title ?? "Item")
         #if os(iOS)
             .navigationBarTitleDisplayMode(.inline)

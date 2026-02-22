@@ -60,6 +60,7 @@ struct ItemFormSheet: View {
             positionsSection
             validationErrorsSection
         }
+        .formStyle(.grouped)
         .scrollDismissesKeyboard(.interactively)
         .navigationTitle(item == nil ? "New Item" : "Edit Item")
         #if os(iOS)
