@@ -40,6 +40,7 @@ struct PositionSchemaDetailView: View {
                         JsonSchemaEditorView(schema: $jsonSchema, disabled: true)
                     }
                 }
+                .formStyle(.grouped)
                 .scrollDismissesKeyboard(.interactively)
             } else if let error = viewModel.error {
                 ContentUnavailableView(

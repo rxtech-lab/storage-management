@@ -74,6 +74,7 @@ struct PositionFormSheet: View {
                 }
             }
         }
+        .formStyle(.grouped)
         .scrollDismissesKeyboard(.interactively)
         .navigationTitle("Add Position")
         #if os(iOS)
