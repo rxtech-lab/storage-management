@@ -63,6 +63,7 @@ struct PositionSchemaDetailView: View {
                     } label: {
                         Label("Edit", systemImage: "pencil")
                     }
+                    .accessibilityIdentifier("schema-detail-edit-button")
                 }
             }
             .sheet(isPresented: $showingEditSheet, onDismiss: {
@@ -115,6 +116,7 @@ struct PositionSchemaDetailView: View {
             Text(schema.name)
                 .font(.title2)
                 .fontWeight(.bold)
+                .accessibilityIdentifier("schema-detail-name")
 
             Text("\(Self.fieldCount(from: schema.schema)) fields defined")
                 .font(.body)

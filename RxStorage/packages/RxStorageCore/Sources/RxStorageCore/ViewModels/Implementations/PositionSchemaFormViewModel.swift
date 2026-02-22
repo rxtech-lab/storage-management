@@ -89,20 +89,12 @@ public final class PositionSchemaFormViewModel: PositionSchemaFormViewModelProto
         error = nil
 
         do {
-            // Parse JSON string to dictionary
+            // Parse JSON string directly to OpenAPIValueContainer map
             let data = schemaJSON.data(using: .utf8)!
-            let schemaDict = try JSONSerialization.jsonObject(with: data, options: []) as! [String: Any]
-
-            // Convert [String: Any] to [String: OpenAPIValueContainer]
-            var convertedSchema: [String: OpenAPIRuntime.OpenAPIValueContainer] = [:]
-            for (key, value) in schemaDict {
-                // Encode and decode through JSON to get OpenAPIValueContainer
-                if let jsonData = try? JSONSerialization.data(withJSONObject: value, options: []),
-                   let container = try? JSONDecoder().decode(OpenAPIRuntime.OpenAPIValueContainer.self, from: jsonData)
-                {
-                    convertedSchema[key] = container
-                }
-            }
+            let convertedSchema = try JSONDecoder().decode(
+                [String: OpenAPIRuntime.OpenAPIValueContainer].self,
+                from: data
+            )
 
             let result: PositionSchema
             if let existingSchema = schema {
