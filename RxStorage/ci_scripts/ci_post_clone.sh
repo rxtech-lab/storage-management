@@ -15,6 +15,16 @@ defaults write com.apple.dt.Xcode IDESkipPackagePluginFingerprintValidatation -b
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 
+# Version bump from tag
+if [ -n "$CI_TAG" ]; then
+    VERSION="${CI_TAG#v}"   # v1.2.3 → 1.2.3
+    echo "Setting MARKETING_VERSION=$VERSION, CURRENT_PROJECT_VERSION=$CI_BUILD_NUMBER"
+    cd "$REPO_ROOT/RxStorage"
+    agvtool new-marketing-version "$VERSION"
+    agvtool new-version -all "$CI_BUILD_NUMBER"
+    cd "$REPO_ROOT"
+fi
+
 # 1. Setup Secrets.xcconfig from Xcode Cloud environment variable
 SECRETS_FILE="$REPO_ROOT/RxStorage/RxStorage/Config/Secrets.xcconfig"
 if [ -z "$SECRETS_XCCONFIG_BASE64" ]; then
