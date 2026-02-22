@@ -12,7 +12,7 @@ func launchApp() -> XCUIApplication {
     // --reset-auth flag will:
     // 1. Clear stored tokens from Keychain
     // 2. Use ephemeral Safari session (no cached credentials)
-    app.launchArguments = ["--reset-auth"]
+    app.launchArguments = ["--reset-auth", "--ui-testing"]
 
     app.launch()
     return app

@@ -54,6 +54,7 @@ struct PositionSchemaListView: View {
                 } label: {
                     Label("New Schema", systemImage: "plus")
                 }
+                .accessibilityIdentifier("schema-list-new-button")
             }
         }
         .searchable(text: $viewModel.searchText, prompt: "Search schemas")
@@ -187,6 +188,7 @@ struct PositionSchemaRow: View {
         VStack(alignment: .leading, spacing: 4) {
             Text(schema.name)
                 .font(.headline)
+                .accessibilityIdentifier("schema-row")
 
             Text("\(fieldCount) fields")
                 .font(.caption)

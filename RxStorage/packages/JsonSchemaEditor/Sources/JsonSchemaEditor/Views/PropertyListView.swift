@@ -40,6 +40,7 @@ public struct PropertyListView: View {
                     viewModel.addProperty()
                 }
                 .disabled(disabled)
+                .accessibilityIdentifier("schema-editor-add-property")
             }
         }
     }

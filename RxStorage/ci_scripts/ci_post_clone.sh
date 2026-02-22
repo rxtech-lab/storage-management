@@ -20,7 +20,10 @@ if [ -n "$CI_TAG" ]; then
     VERSION="${CI_TAG#v}"   # v1.2.3 → 1.2.3
     echo "Setting MARKETING_VERSION=$VERSION, CURRENT_PROJECT_VERSION=$CI_BUILD_NUMBER"
     cd "$REPO_ROOT/RxStorage"
-    agvtool new-marketing-version "$VERSION"
+    # agvtool new-marketing-version only updates Info.plist, not the MARKETING_VERSION
+    # build setting. With GENERATE_INFOPLIST_FILE=YES, Xcode uses the build setting,
+    # so we must update it directly in the project file.
+    sed -i '' "s/MARKETING_VERSION = .*;/MARKETING_VERSION = $VERSION;/g" RxStorage.xcodeproj/project.pbxproj
     agvtool new-version -all "$CI_BUILD_NUMBER"
     cd "$REPO_ROOT"
 fi

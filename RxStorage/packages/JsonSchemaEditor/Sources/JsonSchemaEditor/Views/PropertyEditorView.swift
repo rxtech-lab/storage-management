@@ -40,6 +40,7 @@ public struct PropertyEditorView: View {
         Section {
             TextField("Property Name", text: $item.key)
                 .disabled(disabled)
+                .accessibilityIdentifier("schema-editor-property-name")
                 .onChange(of: item.key) { _, newValue in
                     validateKey(newValue)
                 }

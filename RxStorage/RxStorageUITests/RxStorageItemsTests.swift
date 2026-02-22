@@ -54,6 +54,85 @@ final class RxStorageItemsUITests: XCTestCase {
         XCTAssertTrue(app.itemDetailTitle.waitForExistence(timeout: 20), "Item detail title")
     }
 
+    // MARK: - Image Picker & Camera Tests
+
+    @MainActor
+    func testItemAddPhotoFromImagePicker() throws {
+        let app = launchApp()
+        try app.signInWithEmailAndPassword()
+
+        // Navigate to Items tab
+        XCTAssertTrue(app.itemsTab.waitForExistence(timeout: 10), "Items tab did not appear")
+        app.itemsTab.tap()
+
+        // Tap New Item button
+        XCTAssertTrue(app.newItemButton.waitForExistence(timeout: 10), "New Item button did not appear")
+        app.newItemButton.tap()
+
+        // Fill in title
+        XCTAssertTrue(app.itemTitleField.waitForExistence(timeout: 5), "Title field did not appear")
+        app.itemTitleField.tap()
+        app.itemTitleField.typeText("Test Item With Photo")
+
+        // Dismiss keyboard so we can scroll
+        app.keyboards.buttons["Return"].firstMatch.tap()
+        sleep(1)
+
+        // Scroll down to the Images section
+        let form = app.collectionViews.firstMatch
+        form.swipeUp()
+
+        // With --ui-testing flag, buttons render vertically instead of Menu
+        // Tap "Choose from Library" directly
+        NSLog("🔍 chooseFromLibrary exists: \(app.chooseFromLibraryButton.exists)")
+        NSLog("🔍 chooseFromLibrary debugDescription:\n\(app.chooseFromLibraryButton.debugDescription)")
+        XCTAssertTrue(app.chooseFromLibraryButton.waitForExistence(timeout: 5), "Choose from Library button did not appear")
+        app.chooseFromLibraryButton.tap()
+
+        // PHPicker runs inside the app process — interact via app
+        sleep(5)
+        let firstImage = app.images.firstMatch
+        XCTAssertTrue(firstImage.waitForExistence(timeout: 10), "No images found in photo picker")
+    }
+
+//
+//    @MainActor
+//    func testItemCameraOpensAndStaysOpen() throws {
+//        let app = launchApp()
+//        try app.signInWithEmailAndPassword()
+//
+//        // Navigate to Items tab
+//        XCTAssertTrue(app.itemsTab.waitForExistence(timeout: 10), "Items tab did not appear")
+//        app.itemsTab.tap()
+//
+//        // Tap New Item button
+//        XCTAssertTrue(app.newItemButton.waitForExistence(timeout: 10), "New Item button did not appear")
+//        app.newItemButton.tap()
+//
+//        // Scroll down to the Images section
+//        let form = app.collectionViews.firstMatch
+//        form.swipeUp()
+//        form.swipeUp()
+//
+//        // With --ui-testing flag, buttons render vertically instead of Menu
+//        // Tap "Take Photo" directly
+//        NSLog("🔍 takePhoto exists: \(app.takePhotoButton.exists)")
+//        NSLog("🔍 takePhoto debugDescription:\n\(app.takePhotoButton.debugDescription)")
+//        XCTAssertTrue(app.takePhotoButton.waitForExistence(timeout: 5), "Take Photo button did not appear")
+//        app.takePhotoButton.tap()
+//
+//        // Verify camera view appears (fullScreenCover)
+//        // UIImagePickerController with camera source shows a "Cancel" button
+//        let cameraCancelButton = app.buttons["Cancel"].firstMatch
+//        XCTAssertTrue(cameraCancelButton.waitForExistence(timeout: 10), "Camera view did not appear")
+//
+//        // Wait 10 seconds to verify camera stays open and doesn't crash
+//        sleep(10)
+//
+//        // Verify camera is still presented (Cancel button still visible)
+//        XCTAssertTrue(cameraCancelButton.exists, "Camera closed unexpectedly after 10 seconds")
+//    }
+
     // MARK: - Deep Link Tests
 
     @MainActor
