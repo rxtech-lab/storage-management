@@ -76,6 +76,7 @@ struct PositionSchemaFormSheet: View {
         Form {
             Section {
                 TextField("Name", text: $viewModel.name)
+                    .accessibilityIdentifier("schema-form-name-field")
                 #if os(iOS)
                     .textInputAutocapitalization(.words)
                 #endif
@@ -109,6 +110,7 @@ struct PositionSchemaFormSheet: View {
                     Button("Cancel") {
                         dismiss()
                     }
+                    .accessibilityIdentifier("schema-form-cancel-button")
                 }
 
                 ToolbarItem(placement: .confirmationAction) {
@@ -118,6 +120,7 @@ struct PositionSchemaFormSheet: View {
                         }
                     }
                     .disabled(viewModel.isSubmitting)
+                    .accessibilityIdentifier("schema-form-submit-button")
                 }
             }
             .overlay {

@@ -90,4 +90,26 @@ extension XCUIApplication {
     var errorAlertOKButton: XCUIElement {
         alerts["Deep Link Error"].buttons["OK"].firstMatch
     }
+
+    // MARK: - Image Picker & Camera
+
+    var addImagesButton: XCUIElement {
+        buttons["add-image"].firstMatch
+    }
+
+    var chooseFromLibraryButton: XCUIElement {
+        buttons["item-form-choose-from-library"].firstMatch
+    }
+
+    var takePhotoButton: XCUIElement {
+        buttons["Take Photo"].firstMatch
+    }
+
+    var pendingUploadRow: XCUIElement {
+        otherElements["item-form-pending-upload"].firstMatch
+    }
+
+    var uploadedStatus: XCUIElement {
+        staticTexts["item-form-uploaded-status"].firstMatch
+    }
 }

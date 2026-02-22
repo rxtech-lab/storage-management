@@ -153,6 +153,23 @@ struct ItemFormSheet: View {
                     }
                 }
             }
+            .photosPicker(
+                isPresented: $showingPhotoPicker,
+                selection: $selectedPhotos,
+                maxSelectionCount: 10,
+                matching: .images
+            )
+        #if os(iOS)
+            .fullScreenCover(isPresented: $showingCamera) {
+                CameraPickerView { image in
+                    Task {
+                        await handleCapturedImage(image)
+                    }
+                }
+                .ignoresSafeArea()
+                .accessibilityIdentifier("camera-picker-view")
+            }
+        #endif
             .task {
                 await viewModel.loadReferenceData()
             }
@@ -333,46 +350,54 @@ struct ItemFormSheet: View {
                 pendingUploadRow(pending)
             }
 
-            // Add images menu with camera and library options
-            Menu {
+            // Add images — use vertical buttons during UI testing (SwiftUI Menu is not tappable in XCUITest)
+            if ProcessInfo.processInfo.arguments.contains("--ui-testing") {
                 Button {
                     showingPhotoPicker = true
                 } label: {
                     Label("Choose from Library", systemImage: "photo.on.rectangle")
                 }
+                .accessibilityIdentifier("item-form-choose-from-library")
+                .disabled(viewModel.isUploading)
+
                 #if os(iOS)
                     Button {
                         showingCamera = true
                     } label: {
                         Label("Take Photo", systemImage: "camera")
                     }
+                    .accessibilityIdentifier("item-form-take-photo")
+                    .disabled(viewModel.isUploading)
                 #endif
-            } label: {
-                Label("Add Images", systemImage: "photo.badge.plus")
+            } else {
+                Menu {
+                    Button {
+                        showingPhotoPicker = true
+                    } label: {
+                        Label("Choose from Library", systemImage: "photo.on.rectangle")
+                    }
+                    .accessibilityIdentifier("item-form-choose-from-library")
+                    #if os(iOS)
+                        Button {
+                            showingCamera = true
+                        } label: {
+                            Label("Take Photo", systemImage: "camera")
+                        }
+                        .accessibilityIdentifier("item-form-take-photo")
+                    #endif
+                } label: {
+                    Label("Add Images", systemImage: "photo.badge.plus")
+                        .accessibilityIdentifier("item-form-add-images-button")
+                }
+                .accessibilityIdentifier("add-image")
+                .disabled(viewModel.isUploading)
             }
-            .disabled(viewModel.isUploading)
-            .accessibilityIdentifier("item-form-add-images-button")
         }
-        .photosPicker(
-            isPresented: $showingPhotoPicker,
-            selection: $selectedPhotos,
-            maxSelectionCount: 10,
-            matching: .images
-        )
         .onChange(of: selectedPhotos) { _, newValue in
             Task {
                 await handleSelectedPhotos(newValue)
             }
         }
-        #if os(iOS)
-        .fullScreenCover(isPresented: $showingCamera) {
-            CameraPickerView { image in
-                Task {
-                    await handleCapturedImage(image)
-                }
-            }
-        }
-        #endif
     }
 
     private func pendingUploadRow(_ pending: PendingUpload) -> some View {
@@ -414,6 +439,7 @@ struct ItemFormSheet: View {
                     Text("Uploaded")
                         .foregroundStyle(.green)
                         .font(.caption)
+                        .accessibilityIdentifier("item-form-uploaded-status")
                 }
             }
 
@@ -427,6 +453,7 @@ struct ItemFormSheet: View {
                 }
             }
         }
+        .accessibilityIdentifier("item-form-pending-upload")
     }
 
     private var positionsSection: some View {
