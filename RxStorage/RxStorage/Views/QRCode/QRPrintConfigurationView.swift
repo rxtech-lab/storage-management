@@ -25,13 +25,18 @@ import SwiftUI
             self.item = item
             self.qrImage = qrImage
             let saved = QRPrintConfiguration.loadSaved()
+            let unit = saved.sizeUnit
             if case let .custom(w, h) = saved.pageSize {
-                _customWidth = State(initialValue: "\(Int(w))")
-                _customHeight = State(initialValue: "\(Int(h))")
+                let displayW = unit.fromPoints(w)
+                let displayH = unit.fromPoints(h)
+                _customWidth = State(initialValue: "\(Int(displayW.rounded()))")
+                _customHeight = State(initialValue: "\(Int(displayH.rounded()))")
                 _isCustomSize = State(initialValue: true)
             } else {
-                _customWidth = State(initialValue: "612")
-                _customHeight = State(initialValue: "792")
+                let defaultW = unit.fromPoints(612)
+                let defaultH = unit.fromPoints(792)
+                _customWidth = State(initialValue: "\(Int(defaultW.rounded()))")
+                _customHeight = State(initialValue: "\(Int(defaultH.rounded()))")
                 _isCustomSize = State(initialValue: false)
             }
             _configuration = State(initialValue: saved)
@@ -151,6 +156,18 @@ import SwiftUI
                 }
 
                 HStack {
+                    Text("QR Size")
+                    Slider(
+                        value: $configuration.qrCodeSize,
+                        in: 40 ... min(min(configuration.pageSize.width, configuration.pageSize.height) * 0.8, 400),
+                        step: 4
+                    )
+                    Text("\(Int(configuration.qrCodeSize)) pt")
+                        .foregroundStyle(.secondary)
+                        .frame(width: 48, alignment: .trailing)
+                }
+
+                HStack {
                     Text("Font Size")
                     Slider(
                         value: $configuration.fontSize,
@@ -219,22 +236,50 @@ import SwiftUI
                 }
 
                 if isCustomSize {
+                    Picker("Unit", selection: sizeUnitBinding) {
+                        ForEach(PrintSizeUnit.allCases) { unit in
+                            Text(unit.abbreviation).tag(unit)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+
                     NavigationLink {
                         CustomPageSizeView(
                             width: $customWidth,
                             height: $customHeight,
+                            sizeUnit: configuration.sizeUnit,
                             onChanged: { updateCustomSize() }
                         )
                     } label: {
                         HStack {
                             Text("Custom Size")
                             Spacer()
-                            Text("\(customWidth) × \(customHeight) pt")
+                            Text("\(customWidth) × \(customHeight) \(configuration.sizeUnit.abbreviation)")
                                 .foregroundStyle(.secondary)
                         }
                     }
                 }
             }
+        }
+
+        private var sizeUnitBinding: Binding<PrintSizeUnit> {
+            Binding(
+                get: { configuration.sizeUnit },
+                set: { newUnit in
+                    let oldUnit = configuration.sizeUnit
+                    guard newUnit != oldUnit else { return }
+                    // Convert current text field values to the new unit
+                    if let wPts = Double(customWidth).map({ oldUnit.toPoints(CGFloat($0)) }),
+                       let hPts = Double(customHeight).map({ oldUnit.toPoints(CGFloat($0)) })
+                    {
+                        let newW = newUnit.fromPoints(wPts)
+                        let newH = newUnit.fromPoints(hPts)
+                        customWidth = "\(Int(newW.rounded()))"
+                        customHeight = "\(Int(newH.rounded()))"
+                    }
+                    configuration.sizeUnit = newUnit
+                }
+            )
         }
 
         private var pageSizeBinding: Binding<PrintPageSize> {
@@ -253,12 +298,16 @@ import SwiftUI
         }
 
         private func updateCustomSize() {
-            let w = CGFloat(Double(customWidth) ?? 612)
-            let h = CGFloat(Double(customHeight) ?? 792)
+            let unit = configuration.sizeUnit
+            let w = unit.toPoints(CGFloat(Double(customWidth) ?? unit.fromPoints(612)))
+            let h = unit.toPoints(CGFloat(Double(customHeight) ?? unit.fromPoints(792)))
             configuration.pageSize = .custom(width: max(w, 72), height: max(h, 72))
         }
 
         // MARK: - Print Action
+
+        /// Delegate retained during print interaction to auto-select paper size
+        @State private var printDelegate: PrintPaperDelegate?
 
         private func printQRCode() {
             let layoutView = QRPrintLayoutView(
@@ -280,7 +329,34 @@ import SwiftUI
             printController.printInfo = printInfo
             printController.printingItem = printImage
 
+            let delegate = PrintPaperDelegate(
+                pageSize: CGSize(
+                    width: configuration.pageSize.width,
+                    height: configuration.pageSize.height
+                )
+            )
+            printDelegate = delegate
+            printController.delegate = delegate
+
             printController.present(animated: true)
+        }
+    }
+
+    // MARK: - Print Paper Delegate
+
+    /// Delegate that auto-selects the best matching paper size for the print dialog
+    private final class PrintPaperDelegate: NSObject, UIPrintInteractionControllerDelegate {
+        let pageSize: CGSize
+
+        init(pageSize: CGSize) {
+            self.pageSize = pageSize
+        }
+
+        func printInteractionController(
+            _: UIPrintInteractionController,
+            choosePaper paperList: [UIPrintPaper]
+        ) -> UIPrintPaper {
+            UIPrintPaper.bestPaper(forPageSize: pageSize, withPapersFrom: paperList)
         }
     }
 
@@ -289,42 +365,48 @@ import SwiftUI
     private struct CustomPageSizeView: View {
         @Binding var width: String
         @Binding var height: String
+        let sizeUnit: PrintSizeUnit
         let onChanged: () -> Void
+        @FocusState private var isInputActive: Bool
 
         var body: some View {
             Form {
                 Section {
                     HStack {
-                        Text("Width (pt)")
+                        Text("Width (\(sizeUnit.abbreviation))")
                         Spacer()
                         TextField("Width", text: $width)
                             .keyboardType(.decimalPad)
                             .multilineTextAlignment(.trailing)
                             .frame(width: 120)
+                            .focused($isInputActive)
                             .onChange(of: width) { onChanged() }
                     }
                     HStack {
-                        Text("Height (pt)")
+                        Text("Height (\(sizeUnit.abbreviation))")
                         Spacer()
                         TextField("Height", text: $height)
                             .keyboardType(.decimalPad)
                             .multilineTextAlignment(.trailing)
                             .frame(width: 120)
+                            .focused($isInputActive)
                             .onChange(of: height) { onChanged() }
                     }
                 }
 
                 Section("Common Sizes") {
                     ForEach(PrintPageSize.allPresets) { size in
+                        let displayW = Int(sizeUnit.fromPoints(size.width).rounded())
+                        let displayH = Int(sizeUnit.fromPoints(size.height).rounded())
                         Button {
-                            width = "\(Int(size.width))"
-                            height = "\(Int(size.height))"
+                            width = "\(displayW)"
+                            height = "\(displayH)"
                         } label: {
                             HStack {
                                 Text(size.displayName)
                                     .foregroundStyle(.primary)
                                 Spacer()
-                                Text("\(Int(size.width)) × \(Int(size.height)) pt")
+                                Text("\(displayW) × \(displayH) \(sizeUnit.abbreviation)")
                                     .foregroundStyle(.secondary)
                             }
                         }
@@ -332,6 +414,13 @@ import SwiftUI
                 }
             }
             .scrollDismissesKeyboard(.interactively)
+            .onTapGesture { isInputActive = false }
+            .toolbar {
+                ToolbarItemGroup(placement: .keyboard) {
+                    Spacer()
+                    Button("Done") { isInputActive = false }
+                }
+            }
             .navigationTitle("Custom Size")
             .navigationBarTitleDisplayMode(.inline)
         }
