@@ -69,6 +69,7 @@ struct LocationFormSheet: View {
                 }
             }
         }
+        .formStyle(.grouped)
         .scrollDismissesKeyboard(.interactively)
         .navigationTitle(location == nil ? "New Location" : "Edit Location")
         #if os(iOS)

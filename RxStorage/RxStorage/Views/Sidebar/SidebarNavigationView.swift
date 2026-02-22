@@ -32,9 +32,15 @@ struct SidebarNavigationView: View {
         } content: {
             // Column 2: List
             ContentColumn()
+            #if os(macOS)
+                .frame(minWidth: 400)
+            #endif
         } detail: {
             // Column 3: Detail
             DetailColumn()
+            #if os(macOS)
+                .frame(minWidth: 400)
+            #endif
         }
         .navigationSplitViewStyle(.balanced)
         #if os(iOS)
@@ -147,6 +153,9 @@ struct SidebarButton: View {
         }
         .listRowBackground(isSelected ? Color.accentColor.opacity(0.2) : nil)
         .foregroundStyle(isSelected ? .primary : .secondary)
+        #if os(macOS)
+            .buttonStyle(.plain)
+        #endif
     }
 
     private var isSelected: Bool {
@@ -168,6 +177,9 @@ struct ManagementSectionButton: View {
         }
         .listRowBackground(isSelected ? Color.accentColor.opacity(0.2) : nil)
         .foregroundStyle(isSelected ? .primary : .secondary)
+        #if os(macOS)
+            .buttonStyle(.plain)
+        #endif
     }
 
     private var isSelected: Bool {
