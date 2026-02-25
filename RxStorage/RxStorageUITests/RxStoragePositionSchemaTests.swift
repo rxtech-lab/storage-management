@@ -18,24 +18,15 @@ final class RxStoragePositionSchemaTests: XCTestCase {
         app.positionSchemasSection.tap()
     }
 
-    // MARK: - Create
-
+    /// Create a schema and return to the list. Call after navigateToSchemaList.
     @MainActor
-    func testCreatePositionSchema() throws {
-        let app = launchApp()
-        try app.signInWithEmailAndPassword()
-
-        navigateToSchemaList(app: app)
-
-        // Tap "+" to open create form
+    private func createSchema(app: XCUIApplication, name: String) {
         XCTAssertTrue(app.newSchemaButton.waitForExistence(timeout: 10), "New Schema button did not appear")
         app.newSchemaButton.tap()
 
-        // Fill in name
         XCTAssertTrue(app.schemaFormNameField.waitForExistence(timeout: 5), "Name field did not appear")
         app.schemaFormNameField.tap()
-        let schemaName = "Test Schema \(Int.random(in: 1000 ... 9999))"
-        app.schemaFormNameField.typeText(schemaName)
+        app.schemaFormNameField.typeText(name)
 
         // Dismiss keyboard so we can scroll to Add Property
         app.keyboards.buttons["Return"].firstMatch.tap()
@@ -52,20 +43,33 @@ final class RxStoragePositionSchemaTests: XCTestCase {
         // Fill in property name
         XCTAssertTrue(app.schemaEditorPropertyNameField.waitForExistence(timeout: 5), "Property name field did not appear")
         app.schemaEditorPropertyNameField.tap()
-        // Clear the default text and type new name
         app.schemaEditorPropertyNameField.press(forDuration: 1.2)
         let selectAllProp = app.menuItems["Select All"].firstMatch
         if selectAllProp.waitForExistence(timeout: 3) {
             selectAllProp.tap()
         }
-        app.schemaEditorPropertyNameField.typeText("shelf")
+        app.schemaEditorPropertyNameField.typeText("prop")
 
         // Submit
         XCTAssertTrue(app.schemaFormSubmitButton.waitForExistence(timeout: 5), "Submit button did not appear")
         app.schemaFormSubmitButton.tap()
 
-        // Verify we returned to the list (new button visible again)
+        // Wait for list to reload
         XCTAssertTrue(app.newSchemaButton.waitForExistence(timeout: 10), "Did not return to schema list after creation")
+    }
+
+    // MARK: - Create
+
+    @MainActor
+    func testCreatePositionSchema() throws {
+        let app = launchApp()
+        try app.signInWithEmailAndPassword()
+
+        navigateToSchemaList(app: app)
+
+        // Create a schema and verify we return to the list
+        let schemaName = "Test Schema \(Int.random(in: 1000 ... 9999))"
+        createSchema(app: app, name: schemaName)
     }
 
     // MARK: - Read
@@ -77,7 +81,11 @@ final class RxStoragePositionSchemaTests: XCTestCase {
 
         navigateToSchemaList(app: app)
 
-        // Wait for at least one row to appear
+        // Create a schema to view
+        let schemaName = "View Test \(Int.random(in: 1000 ... 9999))"
+        createSchema(app: app, name: schemaName)
+
+        // Wait for at least one row to appear and tap it
         XCTAssertTrue(app.schemaRow.firstMatch.waitForExistence(timeout: 10), "No schema rows found in list")
         app.schemaRow.firstMatch.tap()
 
@@ -93,6 +101,10 @@ final class RxStoragePositionSchemaTests: XCTestCase {
         try app.signInWithEmailAndPassword()
 
         navigateToSchemaList(app: app)
+
+        // Create a schema to edit
+        let schemaName = "Edit Test \(Int.random(in: 1000 ... 9999))"
+        createSchema(app: app, name: schemaName)
 
         // Tap first row to open detail
         XCTAssertTrue(app.schemaRow.firstMatch.waitForExistence(timeout: 10), "No schema rows found in list")

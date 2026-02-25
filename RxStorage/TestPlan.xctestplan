@@ -11,6 +11,7 @@
   "defaultOptions" : {
     "testExecutionOrdering" : "random",
     "executeInParallel" : true,
+    "parallelizationMaximumWorkers" : 2,
     "maximumTestRepetitions" : 3,
     "testRepetitionMode" : "retryOnFailure",
     "testTimeoutsEnabled" : true

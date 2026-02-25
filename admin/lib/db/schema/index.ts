@@ -43,3 +43,8 @@ export {
   type StockHistory,
   type NewStockHistory,
 } from "./stock-histories";
+export {
+  accountDeletions,
+  type AccountDeletion,
+  type NewAccountDeletion,
+} from "./account-deletions";
