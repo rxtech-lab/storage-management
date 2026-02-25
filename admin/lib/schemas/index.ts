@@ -14,3 +14,4 @@ export * from "./upload";
 export * from "./dashboard";
 export * from "./content-schemas-api";
 export * from "./stock-histories";
+export * from "./account-deletions";
