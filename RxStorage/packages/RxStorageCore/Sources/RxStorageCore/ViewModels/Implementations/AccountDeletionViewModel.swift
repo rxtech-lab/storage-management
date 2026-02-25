@@ -36,7 +36,7 @@ public final class AccountDeletionViewModel {
         do {
             let status = try await service.getStatus()
             isPendingDeletion = status.pending
-            pendingDeletion = status.deletion
+            pendingDeletion = status.deletion?.value1
         } catch {
             self.error = error
         }
@@ -50,7 +50,7 @@ public final class AccountDeletionViewModel {
         do {
             let response = try await service.requestDeletion()
             isPendingDeletion = true
-            pendingDeletion = response.deletion
+            pendingDeletion = response.deletion.value1
         } catch {
             self.error = error
         }

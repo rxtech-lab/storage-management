@@ -43,9 +43,14 @@ export async function POST(request: NextRequest) {
   }
 
   // Build the callback URL for QStash
-  const protocol = request.headers.get("x-forwarded-proto") || "https";
-  const host = request.headers.get("host") || "localhost:3000";
-  const callbackUrl = `${protocol}://${host}/api/v1/account/delete/callback`;
+  const baseUrl = process.env.NEXT_PUBLIC_URL;
+  if (!baseUrl) {
+    return NextResponse.json(
+      { error: "Server configuration error: NEXT_PUBLIC_URL is not set" },
+      { status: 500 }
+    );
+  }
+  const callbackUrl = `${baseUrl}/api/v1/account/delete/callback`;
 
   const result = await requestAccountDeletion(
     session.user.id,
@@ -71,7 +76,7 @@ export async function POST(request: NextRequest) {
  * Cancel account deletion
  * @operationId cancelAccountDeletion
  * @description Cancel a pending account deletion request during the grace period
- * @response AccountDeletionCancelResponseSchema
+ * @response 200:AccountDeletionCancelResponseSchema
  * @auth bearer
  * @tag Account
  * @responseSet auth

@@ -1,6 +1,10 @@
 import { test, expect } from "@playwright/test";
 
 test.describe.serial("Account Deletion API", () => {
+  // Use a unique user ID to avoid interfering with other tests
+  const TEST_USER_ID = `deletion-test-user-${crypto.randomUUID()}`;
+  const headers = { "X-Test-User-Id": TEST_USER_ID };
+
   // First create some data to delete
   let createdCategoryId: number;
   let createdLocationId: number;
@@ -9,6 +13,7 @@ test.describe.serial("Account Deletion API", () => {
   test("Setup: Create test data", async ({ request }) => {
     // Create a category
     const catResponse = await request.post("/api/v1/categories", {
+      headers,
       data: {
         name: "Deletion Test Category",
         description: "Will be deleted",
@@ -20,6 +25,7 @@ test.describe.serial("Account Deletion API", () => {
 
     // Create a location
     const locResponse = await request.post("/api/v1/locations", {
+      headers,
       data: {
         title: "Deletion Test Location",
         latitude: 0,
@@ -32,10 +38,12 @@ test.describe.serial("Account Deletion API", () => {
 
     // Create an item
     const itemResponse = await request.post("/api/v1/items", {
+      headers,
       data: {
         title: "Deletion Test Item",
         categoryId: createdCategoryId,
         locationId: createdLocationId,
+        visibility: "privateAccess",
       },
     });
     expect(itemResponse.status()).toBe(201);
@@ -46,7 +54,7 @@ test.describe.serial("Account Deletion API", () => {
   test("GET /api/v1/account/delete - should return no pending deletion", async ({
     request,
   }) => {
-    const response = await request.get("/api/v1/account/delete");
+    const response = await request.get("/api/v1/account/delete", { headers });
 
     expect(response.status()).toBe(200);
     const body = await response.json();
@@ -57,7 +65,7 @@ test.describe.serial("Account Deletion API", () => {
   test("POST /api/v1/account/delete - should request account deletion", async ({
     request,
   }) => {
-    const response = await request.post("/api/v1/account/delete");
+    const response = await request.post("/api/v1/account/delete", { headers });
 
     expect(response.status()).toBe(201);
     const body = await response.json();
@@ -71,7 +79,7 @@ test.describe.serial("Account Deletion API", () => {
   test("POST /api/v1/account/delete - should reject duplicate deletion request", async ({
     request,
   }) => {
-    const response = await request.post("/api/v1/account/delete");
+    const response = await request.post("/api/v1/account/delete", { headers });
 
     expect(response.status()).toBe(400);
     const body = await response.json();
@@ -81,7 +89,7 @@ test.describe.serial("Account Deletion API", () => {
   test("GET /api/v1/account/delete - should return pending deletion", async ({
     request,
   }) => {
-    const response = await request.get("/api/v1/account/delete");
+    const response = await request.get("/api/v1/account/delete", { headers });
 
     expect(response.status()).toBe(200);
     const body = await response.json();
@@ -93,7 +101,9 @@ test.describe.serial("Account Deletion API", () => {
   test("DELETE /api/v1/account/delete - should cancel deletion", async ({
     request,
   }) => {
-    const response = await request.delete("/api/v1/account/delete");
+    const response = await request.delete("/api/v1/account/delete", {
+      headers,
+    });
 
     expect(response.status()).toBe(200);
     const body = await response.json();
@@ -103,7 +113,7 @@ test.describe.serial("Account Deletion API", () => {
   test("GET /api/v1/account/delete - should return no pending after cancellation", async ({
     request,
   }) => {
-    const response = await request.get("/api/v1/account/delete");
+    const response = await request.get("/api/v1/account/delete", { headers });
 
     expect(response.status()).toBe(200);
     const body = await response.json();
@@ -113,7 +123,9 @@ test.describe.serial("Account Deletion API", () => {
   test("DELETE /api/v1/account/delete - should fail when no pending deletion", async ({
     request,
   }) => {
-    const response = await request.delete("/api/v1/account/delete");
+    const response = await request.delete("/api/v1/account/delete", {
+      headers,
+    });
 
     expect(response.status()).toBe(400);
     const body = await response.json();
@@ -122,14 +134,16 @@ test.describe.serial("Account Deletion API", () => {
 
   test("Full flow: Request and execute deletion", async ({ request }) => {
     // Request deletion again
-    const requestResponse = await request.post("/api/v1/account/delete");
+    const requestResponse = await request.post("/api/v1/account/delete", {
+      headers,
+    });
     expect(requestResponse.status()).toBe(201);
 
     // Execute the deletion via callback (simulating QStash)
     const callbackResponse = await request.post(
       "/api/v1/account/delete/callback",
       {
-        data: { userId: "test-user-id" },
+        data: { userId: TEST_USER_ID },
       }
     );
     expect(callbackResponse.status()).toBe(200);
@@ -137,20 +151,23 @@ test.describe.serial("Account Deletion API", () => {
     expect(callbackBody.message).toContain("Account deleted");
 
     // Verify all data was deleted
-    const categoriesResponse = await request.get("/api/v1/categories");
+    const categoriesResponse = await request.get("/api/v1/categories", {
+      headers,
+    });
     expect(categoriesResponse.status()).toBe(200);
     const categories = await categoriesResponse.json();
-    // Categories should be empty (all user data deleted)
     expect(categories).toEqual([]);
 
-    const locationsResponse = await request.get("/api/v1/locations");
+    const locationsResponse = await request.get("/api/v1/locations", {
+      headers,
+    });
     expect(locationsResponse.status()).toBe(200);
     const locations = await locationsResponse.json();
     expect(locations).toEqual([]);
 
-    const itemsResponse = await request.get("/api/v1/items");
+    const itemsResponse = await request.get("/api/v1/items", { headers });
     expect(itemsResponse.status()).toBe(200);
-    const items = await itemsResponse.json();
-    expect(items).toEqual([]);
+    const itemsBody = await itemsResponse.json();
+    expect(itemsBody.data).toEqual([]);
   });
 });

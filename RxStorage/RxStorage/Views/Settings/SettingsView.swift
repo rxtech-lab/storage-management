@@ -15,6 +15,7 @@ struct SettingsView: View {
     @State private var showingSignOutConfirmation = false
     @State private var showingDeleteAccountConfirmation = false
     @State private var showingCancelDeletionConfirmation = false
+    @State private var showingErrorAlert = false
     @State private var accountDeletionViewModel = AccountDeletionViewModel()
 
     var body: some View {
@@ -206,7 +207,7 @@ struct SettingsView: View {
         .confirmationDialog(
             title: "Delete Account",
             message:
-                "Are you sure you want to delete your account? Your account will be scheduled for deletion in 24 hours. All your data including items, categories, locations, and uploaded files will be permanently deleted. You can cancel the deletion during the grace period.",
+            "Are you sure you want to delete your account? Your account will be scheduled for deletion in 24 hours. All your data including items, categories, locations, and uploaded files will be permanently deleted. You can cancel the deletion during the grace period.",
             confirmButtonTitle: "Delete Account",
             isPresented: $showingDeleteAccountConfirmation
         ) {
@@ -226,6 +227,22 @@ struct SettingsView: View {
         }
         .task {
             await accountDeletionViewModel.fetchStatus()
+        }
+        .alert(
+            "Error",
+            isPresented: $showingErrorAlert,
+            presenting: accountDeletionViewModel.error
+        ) { _ in
+            Button("OK") {
+                accountDeletionViewModel.clearError()
+            }
+        } message: { error in
+            Text(error.localizedDescription)
+        }
+        .onChange(of: accountDeletionViewModel.error != nil) { _, hasError in
+            if hasError {
+                showingErrorAlert = true
+            }
         }
     }
 
