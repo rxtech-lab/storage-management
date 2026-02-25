@@ -51,6 +51,15 @@ public typealias StockHistory = Components.Schemas.StockHistoryResponseSchema
 /// Presigned upload response
 public typealias PresignedUploadResponse = Components.Schemas.PresignedUploadResponseSchema
 
+/// Account deletion status response
+public typealias AccountDeletionStatus = Components.Schemas.AccountDeletionStatusResponseSchema
+
+/// Account deletion request response
+public typealias AccountDeletionRequestResponse = Components.Schemas.AccountDeletionRequestResponseSchema
+
+/// Account deletion record
+public typealias AccountDeletion = Components.Schemas.AccountDeletionResponseSchema
+
 // MARK: - Request Schema Type Aliases
 
 /// Request to create an item
