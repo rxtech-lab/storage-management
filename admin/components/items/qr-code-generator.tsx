@@ -25,7 +25,7 @@ export function QRCodeGenerator({ itemId, itemTitle }: QRCodeGeneratorProps) {
 
   useEffect(() => {
     const baseUrl = typeof window !== "undefined" ? window.location.origin : "";
-    const url = `${baseUrl}/preview/item/${itemId}`;
+    const url = `${baseUrl}/preview/item?id=${itemId}`;
     setPreviewUrl(url);
 
     QRCode.toDataURL(url, {

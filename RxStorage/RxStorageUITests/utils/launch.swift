@@ -20,7 +20,7 @@ func launchApp() -> XCUIApplication {
 
 /// Launch App Clip with a simulated invocation URL
 func launchAppClip(withItemId id: Int) -> XCUIApplication {
-    let url = "http://localhost:3000/preview/item/\(id)"
+    let url = "http://localhost:3000/preview/item?id=\(id)"
     let app = XCUIApplication()
 
     app.launchArguments.append("--reset-auth") // Reset auth state for each test
@@ -44,14 +44,14 @@ func launchAppClip(withURL url: String) -> XCUIApplication {
 }
 
 /// Launch main app and trigger deep link with item ID
-/// Uses the custom URL scheme: rxstorage://preview/item/{id}
+/// Uses the custom URL scheme: rxstorage://preview/item?id={id}
 func launchAppWithDeepLink(itemId id: Int) -> XCUIApplication {
     let app = XCUIApplication()
     app.launchArguments.append("--reset-auth")
     app.launch()
 
     // Open the deep link URL after app launches
-    let url = URL(string: "rxstorage://preview/item/\(id)")!
+    let url = URL(string: "rxstorage://preview/item?id=\(id)")!
     app.open(url)
 
     return app
@@ -78,7 +78,7 @@ func launchAppWithUniversalLink(itemId id: Int) -> XCUIApplication {
     app.launch()
 
     // Open the universal link URL after app launches
-    let url = URL(string: "http://localhost:3000/preview/item/\(id)")!
+    let url = URL(string: "http://localhost:3000/preview/item?id=\(id)")!
     app.open(url)
 
     return app
@@ -86,7 +86,7 @@ func launchAppWithUniversalLink(itemId id: Int) -> XCUIApplication {
 
 /// Launch main app with simulated QR code scan
 /// The QR content will be processed when navigating to Items tab
-/// - Parameter qrContent: The QR code content to simulate (e.g., "preview/item/1" or full URL)
+/// - Parameter qrContent: The QR code content to simulate (e.g., "preview/item?id=1" or full URL)
 func launchAppWithQRCode(_ qrContent: String) -> XCUIApplication {
     let app = XCUIApplication()
     app.launchArguments.append("--reset-auth")

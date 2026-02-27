@@ -74,7 +74,7 @@ async function buildItemResponse(
   itemId: number,
   userId: string | null,
 ) {
-  const previewUrl = `${process.env.NEXT_PUBLIC_URL}/preview/item/${item.id}`;
+  const previewUrl = `${process.env.NEXT_PUBLIC_URL}/preview/item?id=${item.id}`;
 
   // Fetch item images, children, contents, positions, and stock in parallel
   const [images, children, contents, positions, stockHistory, quantity] = await Promise.all([
@@ -98,7 +98,7 @@ async function buildItemResponse(
       return {
         ...child,
         images: childImages,
-        previewUrl: `${process.env.NEXT_PUBLIC_URL}/preview/item/${child.id}`,
+        previewUrl: `${process.env.NEXT_PUBLIC_URL}/preview/item?id=${child.id}`,
       };
     }),
   );
@@ -150,7 +150,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     const result = await updateItemAction(parseInt(id), body, session.user.id);
 
     if (result.success && result.data) {
-      const previewUrl = `${process.env.NEXT_PUBLIC_URL}/preview/item/${result.data.id}`;
+      const previewUrl = `${process.env.NEXT_PUBLIC_URL}/preview/item?id=${result.data.id}`;
 
       // Sign images - replace file IDs with signed URLs
       const images =

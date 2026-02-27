@@ -117,7 +117,7 @@ Response:
 {
   "data": {
     "itemId": 1,
-    "previewUrl": "https://your-domain.com/preview/item/1",
+    "previewUrl": "https://your-domain.com/preview/item?id=1",
     "qrCodeDataUrl": "data:image/png;base64,..."
   }
 }

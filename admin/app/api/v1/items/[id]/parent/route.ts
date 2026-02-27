@@ -38,7 +38,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     );
 
     if (result.success && result.data) {
-      const previewUrl = `${process.env.NEXT_PUBLIC_URL}/preview/item/${result.data.id}`;
+      const previewUrl = `${process.env.NEXT_PUBLIC_URL}/preview/item?id=${result.data.id}`;
 
       // Sign images - replace file IDs with signed URLs
       const images =
