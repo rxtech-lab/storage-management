@@ -56,7 +56,7 @@ async function checkItemPermission(
 /**
  * Scan QR code and resolve to item URL
  * @operationId scanQrCode
- * @description Scan a QR code content and resolve it to an item API URL. Supports preview URL format (preview/item/:id) and raw QR codes stored in items.
+ * @description Scan a QR code content and resolve it to an item API URL. Supports preview URL format (preview/item/:id and preview/item?id=) and raw QR codes stored in items.
  * @body QrCodeScanRequestSchema
  * @response QrCodeScanResponseSchema
  * @auth bearer
@@ -90,7 +90,38 @@ export async function POST(request: NextRequest) {
   const { qrcontent } = parsed.data;
   const baseUrl = process.env.NEXT_PUBLIC_URL || "http://localhost:3000";
 
-  // Pattern A: Match preview/item/:id format (with or without full URL)
+  // Pattern A1: Match preview/item?id=:id format (query param, with or without full URL)
+  // Matches:
+  // - preview/item?id=123
+  // - /preview/item?id=123
+  // - https://storage.rxlab.app/preview/item?id=123
+  // - http://localhost:3000/preview/item?id=123
+  const queryParamMatch = qrcontent.match(/(?:^|\/)?preview\/item\?id=(\d+)(?:$|&|#)/);
+  if (queryParamMatch) {
+    const itemId = parseInt(queryParamMatch[1]);
+    const item = await getItem(itemId);
+
+    if (!item) {
+      return NextResponse.json({ error: "Invalid QR code" }, { status: 400 });
+    }
+
+    const permissionResult = await checkItemPermission(item, session);
+    if (permissionResult.error) {
+      return NextResponse.json(
+        { error: permissionResult.error },
+        { status: permissionResult.status },
+      );
+    }
+
+    const response = QrCodeScanResponseSchema.parse({
+      type: "item",
+      url: `${baseUrl}/api/v1/items/${itemId}`,
+    });
+
+    return NextResponse.json(response);
+  }
+
+  // Pattern A2: Match preview/item/:id format (path param, with or without full URL)
   // Matches:
   // - preview/item/123
   // - /preview/item/123

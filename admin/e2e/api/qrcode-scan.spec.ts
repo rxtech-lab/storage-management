@@ -154,6 +154,63 @@ test.describe.serial("QR Code Scan API", () => {
       expect(body.type).toBe("item");
       expect(body.url).toContain(`/api/v1/items/${publicItemId}`);
     });
+
+    test("should resolve query param format for public item", async ({
+      request,
+    }) => {
+      const response = await request.post("/api/v1/qrcode/scan", {
+        headers: {
+          "X-Test-User-Id": OTHER_USER,
+          "X-Test-User-Email": OTHER_EMAIL,
+        },
+        data: {
+          qrcontent: `preview/item?id=${publicItemId}`,
+        },
+      });
+      expect(response.status()).toBe(200);
+
+      const body = await response.json();
+      expect(body.type).toBe("item");
+      expect(body.url).toContain(`/api/v1/items/${publicItemId}`);
+    });
+
+    test("should resolve full URL with query param format", async ({
+      request,
+    }) => {
+      const response = await request.post("/api/v1/qrcode/scan", {
+        headers: {
+          "X-Test-User-Id": OTHER_USER,
+          "X-Test-User-Email": OTHER_EMAIL,
+        },
+        data: {
+          qrcontent: `https://storage.rxlab.app/preview/item?id=${publicItemId}`,
+        },
+      });
+      expect(response.status()).toBe(200);
+
+      const body = await response.json();
+      expect(body.type).toBe("item");
+      expect(body.url).toContain(`/api/v1/items/${publicItemId}`);
+    });
+
+    test("should resolve query param format with leading slash", async ({
+      request,
+    }) => {
+      const response = await request.post("/api/v1/qrcode/scan", {
+        headers: {
+          "X-Test-User-Id": OTHER_USER,
+          "X-Test-User-Email": OTHER_EMAIL,
+        },
+        data: {
+          qrcontent: `/preview/item?id=${publicItemId}`,
+        },
+      });
+      expect(response.status()).toBe(200);
+
+      const body = await response.json();
+      expect(body.type).toBe("item");
+      expect(body.url).toContain(`/api/v1/items/${publicItemId}`);
+    });
   });
 
   test.describe("Preview URL QR codes - Private items", () => {
@@ -335,6 +392,24 @@ test.describe.serial("QR Code Scan API", () => {
         },
         data: {
           qrcontent: "preview/item/999999",
+        },
+      });
+      expect(response.status()).toBe(400);
+
+      const body = await response.json();
+      expect(body.error).toBe("Invalid QR code");
+    });
+
+    test("should return 400 for non-existent item ID in query param format", async ({
+      request,
+    }) => {
+      const response = await request.post("/api/v1/qrcode/scan", {
+        headers: {
+          "X-Test-User-Id": OWNER,
+          "X-Test-User-Email": OWNER_EMAIL,
+        },
+        data: {
+          qrcontent: "preview/item?id=999999",
         },
       });
       expect(response.status()).toBe(400);
