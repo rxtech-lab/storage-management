@@ -118,15 +118,20 @@ struct AppClipRootView: View {
     private func itemDetailView(id: Int) -> some View {
         ItemDetailView(itemId: id, isViewOnly: true)
             .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Menu {
-                        Button(role: .destructive) {
-                            showSignOutConfirmation = true
+                // Only show sign out menu when user is authenticated
+                if oauthManager.currentUser != nil {
+                    ToolbarItem(placement: .navigationBarTrailing) {
+                        Menu {
+                            Button(role: .destructive) {
+                                showSignOutConfirmation = true
+                            } label: {
+                                Label("Sign Out", systemImage: "rectangle.portrait.and.arrow.right")
+                            }
+                            .accessibilityIdentifier("app-clips-sign-out-button")
                         } label: {
-                            Label("Sign Out", systemImage: "rectangle.portrait.and.arrow.right")
+                            Image(systemName: "ellipsis.circle")
                         }
-                    } label: {
-                        Image(systemName: "ellipsis.circle")
+                        .accessibilityIdentifier("app-clips-more-menu")
                     }
                 }
             }

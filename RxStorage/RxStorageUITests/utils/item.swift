@@ -55,6 +55,14 @@ extension XCUIApplication {
         staticTexts["app-clips-access-denied"].firstMatch
     }
 
+    var appClipsSignOutButton: XCUIElement {
+        buttons["app-clips-sign-out-button"].firstMatch
+    }
+
+    var appClipsMoreMenu: XCUIElement {
+        buttons["app-clips-more-menu"].firstMatch
+    }
+
     // MARK: - Deep Link
 
     var deepLinkErrorAlert: XCUIElement {
