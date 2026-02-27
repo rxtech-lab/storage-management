@@ -79,7 +79,7 @@ test.describe.serial("Items API", () => {
 
     expect(validated.id).toBe(createdItemId);
     expect(validated.title).toBe("Test Item from API");
-    expect(validated.previewUrl).toContain(`/preview/item/${createdItemId}`);
+    expect(validated.previewUrl).toContain(`/preview/item?id=${createdItemId}`);
     expect(validated.children).toBeInstanceOf(Array);
     expect(validated.contents).toBeInstanceOf(Array);
     expect(validated.positions).toBeInstanceOf(Array);
@@ -112,7 +112,7 @@ test.describe.serial("Items API", () => {
 
     expect(validated.title).toBe("Updated Test Item");
     expect(validated.visibility).toBe("publicAccess");
-    expect(validated.previewUrl).toContain(`/preview/item/${createdItemId}`);
+    expect(validated.previewUrl).toContain(`/preview/item?id=${createdItemId}`);
   });
 
   test("GET /api/v1/items/{id} - should include children in response", async ({

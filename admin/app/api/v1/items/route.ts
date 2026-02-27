@@ -75,7 +75,7 @@ export async function GET(request: NextRequest) {
       return {
         ...item,
         images,
-        previewUrl: `${process.env.NEXT_PUBLIC_URL}/preview/item/${item.id}`,
+        previewUrl: `${process.env.NEXT_PUBLIC_URL}/preview/item?id=${item.id}`,
       };
     })
   );
@@ -117,7 +117,7 @@ export async function POST(request: NextRequest) {
           ? await signImagesArrayWithIds(result.data.images)
           : [];
 
-      const previewUrl = `${process.env.NEXT_PUBLIC_URL}/preview/item/${result.data.id}`;
+      const previewUrl = `${process.env.NEXT_PUBLIC_URL}/preview/item?id=${result.data.id}`;
 
       // Validate response against schema
       const response = ItemResponseSchema.parse({ ...result.data, images, previewUrl });

@@ -116,7 +116,7 @@ test.describe.serial("Items Access Control", () => {
 
       const body = await response.json();
       expect(body.previewUrl).toBeDefined();
-      expect(body.previewUrl).toContain(`/preview/item/${publicItemId}`);
+      expect(body.previewUrl).toContain(`/preview/item?id=${publicItemId}`);
     });
 
     test("other user can access public item", async ({ request }) => {
