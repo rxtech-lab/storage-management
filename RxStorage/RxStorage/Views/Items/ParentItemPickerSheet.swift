@@ -10,14 +10,14 @@ import SwiftUI
 
 /// Searchable parent item picker sheet
 struct ParentItemPickerSheet: View {
-    let selectedId: Int?
-    let excludeItemId: Int?
+    let selectedId: String?
+    let excludeItemId: String?
     let onSelect: (StorageItem?) -> Void
 
     @State private var viewModel: ParentItemPickerViewModel
     @Environment(\.dismiss) private var dismiss
 
-    init(selectedId: Int?, excludeItemId: Int? = nil, onSelect: @escaping (StorageItem?) -> Void) {
+    init(selectedId: String?, excludeItemId: String? = nil, onSelect: @escaping (StorageItem?) -> Void) {
         self.selectedId = selectedId
         self.excludeItemId = excludeItemId
         self.onSelect = onSelect

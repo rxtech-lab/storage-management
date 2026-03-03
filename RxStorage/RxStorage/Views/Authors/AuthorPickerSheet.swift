@@ -10,7 +10,7 @@ import SwiftUI
 
 /// Searchable author picker sheet
 struct AuthorPickerSheet: View {
-    let selectedId: Int?
+    let selectedId: String?
     let onSelect: (Author?) -> Void
 
     @State private var viewModel = AuthorPickerViewModel()

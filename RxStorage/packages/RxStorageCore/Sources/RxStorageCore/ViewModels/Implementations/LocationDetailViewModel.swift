@@ -30,7 +30,7 @@ public final class LocationDetailViewModel {
 
     // MARK: - Public Methods
 
-    public func fetchLocation(id: Int) async {
+    public func fetchLocation(id: String) async {
         isLoading = true
         error = nil
 

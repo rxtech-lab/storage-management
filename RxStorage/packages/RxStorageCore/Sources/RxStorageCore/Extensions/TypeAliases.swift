@@ -265,7 +265,7 @@ public extension Components.Schemas.ItemDetailResponseSchema {
 public extension Components.Schemas.ContentRefSchema {
     /// Convert ContentRefSchema to ContentResponseSchema for display in views
     /// - Parameter itemId: The parent item ID (not included in ContentRefSchema)
-    func toContent(itemId: Int) -> Content {
+    func toContent(itemId: String) -> Content {
         // Map type payload
         let contentType: Content._typePayload
         switch _type {

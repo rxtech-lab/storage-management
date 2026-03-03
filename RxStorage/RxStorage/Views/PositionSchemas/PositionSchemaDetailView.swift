@@ -13,7 +13,7 @@ import SwiftUI
 
 /// Position schema detail view
 struct PositionSchemaDetailView: View {
-    let schemaId: Int
+    let schemaId: String
 
     @Environment(PositionSchemaDetailViewModel.self) private var viewModel
     @State private var showingEditSheet = false
@@ -144,7 +144,7 @@ struct PositionSchemaDetailView: View {
 
 #Preview {
     NavigationStack {
-        PositionSchemaDetailView(schemaId: 1)
+        PositionSchemaDetailView(schemaId: "1")
             .environment(PositionSchemaDetailViewModel())
     }
 }

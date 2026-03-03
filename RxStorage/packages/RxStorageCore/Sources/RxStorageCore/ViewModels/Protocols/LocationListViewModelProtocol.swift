@@ -24,5 +24,5 @@ public protocol LocationListViewModelProtocol: AnyObject, Observable {
     func loadMoreLocations() async
     func refreshLocations() async
     @discardableResult
-    func deleteLocation(_ location: Location) async throws -> Int
+    func deleteLocation(_ location: Location) async throws -> String
 }

@@ -44,7 +44,7 @@ public protocol ItemListViewModelProtocol: AnyObject, Observable {
 
     /// Delete an item
     @discardableResult
-    func deleteItem(_ item: StorageItem) async throws -> Int
+    func deleteItem(_ item: StorageItem) async throws -> String
 
     /// Clear filters
     func clearFilters()

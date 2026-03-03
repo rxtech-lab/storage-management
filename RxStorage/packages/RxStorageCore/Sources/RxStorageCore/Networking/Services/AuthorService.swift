@@ -17,10 +17,10 @@ private let logger = Logger(label: "AuthorService")
 public protocol AuthorServiceProtocol: Sendable {
     func fetchAuthors(filters: AuthorFilters?) async throws -> [Author]
     func fetchAuthorsPaginated(filters: AuthorFilters?) async throws -> PaginatedResponse<Author>
-    func fetchAuthor(id: Int) async throws -> Author
+    func fetchAuthor(id: String) async throws -> Author
     func createAuthor(_ request: NewAuthorRequest) async throws -> Author
-    func updateAuthor(id: Int, _ request: UpdateAuthorRequest) async throws -> Author
-    func deleteAuthor(id: Int) async throws
+    func updateAuthor(id: String, _ request: UpdateAuthorRequest) async throws -> Author
+    func deleteAuthor(id: String) async throws
 }
 
 // MARK: - Implementation
@@ -54,8 +54,8 @@ public struct AuthorService: AuthorServiceProtocol {
     }
 
     @APICall(.ok)
-    public func fetchAuthor(id: Int) async throws -> Author {
-        try await StorageAPIClient.shared.client.getAuthor(.init(path: .init(id: String(id))))
+    public func fetchAuthor(id: String) async throws -> Author {
+        try await StorageAPIClient.shared.client.getAuthor(.init(path: .init(id: id)))
     }
 
     @APICall(.created)
@@ -64,12 +64,12 @@ public struct AuthorService: AuthorServiceProtocol {
     }
 
     @APICall(.ok)
-    public func updateAuthor(id: Int, _ request: UpdateAuthorRequest) async throws -> Author {
-        try await StorageAPIClient.shared.client.updateAuthor(.init(path: .init(id: String(id)), body: .json(request)))
+    public func updateAuthor(id: String, _ request: UpdateAuthorRequest) async throws -> Author {
+        try await StorageAPIClient.shared.client.updateAuthor(.init(path: .init(id: id), body: .json(request)))
     }
 
-    public func deleteAuthor(id: Int) async throws {
-        let response = try await StorageAPIClient.shared.client.deleteAuthor(.init(path: .init(id: String(id))))
+    public func deleteAuthor(id: String) async throws {
+        let response = try await StorageAPIClient.shared.client.deleteAuthor(.init(path: .init(id: id)))
 
         switch response {
         case .ok:

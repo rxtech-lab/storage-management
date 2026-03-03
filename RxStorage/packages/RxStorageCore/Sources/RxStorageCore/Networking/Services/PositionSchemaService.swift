@@ -17,10 +17,10 @@ private let logger = Logger(label: "PositionSchemaService")
 public protocol PositionSchemaServiceProtocol: Sendable {
     func fetchPositionSchemas(filters: PositionSchemaFilters?) async throws -> [PositionSchema]
     func fetchPositionSchemasPaginated(filters: PositionSchemaFilters?) async throws -> PaginatedResponse<PositionSchema>
-    func fetchPositionSchema(id: Int) async throws -> PositionSchema
+    func fetchPositionSchema(id: String) async throws -> PositionSchema
     func createPositionSchema(_ request: NewPositionSchemaRequest) async throws -> PositionSchema
-    func updatePositionSchema(id: Int, _ request: UpdatePositionSchemaRequest) async throws -> PositionSchema
-    func deletePositionSchema(id: Int) async throws
+    func updatePositionSchema(id: String, _ request: UpdatePositionSchemaRequest) async throws -> PositionSchema
+    func deletePositionSchema(id: String) async throws
 }
 
 // MARK: - Implementation
@@ -54,8 +54,8 @@ public struct PositionSchemaService: PositionSchemaServiceProtocol {
     }
 
     @APICall(.ok)
-    public func fetchPositionSchema(id: Int) async throws -> PositionSchema {
-        try await StorageAPIClient.shared.client.getPositionSchema(.init(path: .init(id: String(id))))
+    public func fetchPositionSchema(id: String) async throws -> PositionSchema {
+        try await StorageAPIClient.shared.client.getPositionSchema(.init(path: .init(id: id)))
     }
 
     @APICall(.created)
@@ -64,12 +64,12 @@ public struct PositionSchemaService: PositionSchemaServiceProtocol {
     }
 
     @APICall(.ok)
-    public func updatePositionSchema(id: Int, _ request: UpdatePositionSchemaRequest) async throws -> PositionSchema {
-        try await StorageAPIClient.shared.client.updatePositionSchema(.init(path: .init(id: String(id)), body: .json(request)))
+    public func updatePositionSchema(id: String, _ request: UpdatePositionSchemaRequest) async throws -> PositionSchema {
+        try await StorageAPIClient.shared.client.updatePositionSchema(.init(path: .init(id: id), body: .json(request)))
     }
 
-    public func deletePositionSchema(id: Int) async throws {
-        let response = try await StorageAPIClient.shared.client.deletePositionSchema(.init(path: .init(id: String(id))))
+    public func deletePositionSchema(id: String) async throws {
+        let response = try await StorageAPIClient.shared.client.deletePositionSchema(.init(path: .init(id: id)))
 
         switch response {
         case .ok:

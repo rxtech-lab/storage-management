@@ -31,7 +31,7 @@ public final class ParentItemPickerViewModel {
     private var cancellables = Set<AnyCancellable>()
 
     /// The current item ID to exclude from the list (can't be its own parent)
-    private let excludeItemId: Int?
+    private let excludeItemId: String?
 
     // MARK: - Dependencies
 
@@ -40,7 +40,7 @@ public final class ParentItemPickerViewModel {
 
     // MARK: - Initialization
 
-    public init(excludeItemId: Int? = nil, itemService: ItemServiceProtocol = ItemService()) {
+    public init(excludeItemId: String? = nil, itemService: ItemServiceProtocol = ItemService()) {
         self.excludeItemId = excludeItemId
         self.itemService = itemService
         setupSearchPipeline()

@@ -11,10 +11,10 @@ import Foundation
 
 /// Filters for item queries
 public struct ItemFilters: Sendable {
-    public var categoryId: Int?
-    public var locationId: Int?
-    public var authorId: Int?
-    public var parentId: Int?
+    public var categoryId: String?
+    public var locationId: String?
+    public var authorId: String?
+    public var parentId: String?
     public var visibility: Visibility?
     public var search: String?
     public var cursor: String?
@@ -22,10 +22,10 @@ public struct ItemFilters: Sendable {
     public var limit: Int?
 
     public init(
-        categoryId: Int? = nil,
-        locationId: Int? = nil,
-        authorId: Int? = nil,
-        parentId: Int? = nil,
+        categoryId: String? = nil,
+        locationId: String? = nil,
+        authorId: String? = nil,
+        parentId: String? = nil,
         visibility: Visibility? = nil,
         search: String? = nil,
         cursor: String? = nil,

@@ -16,7 +16,7 @@ import SwiftUI
 /// 3. After sign-in, retry fetching
 /// 4. If 403, show access denied
 struct AppClipRootView: View {
-    @State private var itemId: Int?
+    @State private var itemId: String?
     @State private var parseError: String?
     @State private var viewModel = ItemDetailViewModel()
     @State private var oauthManager = OAuthManager(
@@ -115,7 +115,7 @@ struct AppClipRootView: View {
         }
     }
 
-    private func itemDetailView(id: Int) -> some View {
+    private func itemDetailView(id: String) -> some View {
         ItemDetailView(itemId: id, isViewOnly: true)
             .toolbar {
                 // Only show sign out menu when user is authenticated

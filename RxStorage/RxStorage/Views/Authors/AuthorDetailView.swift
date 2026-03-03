@@ -10,7 +10,7 @@ import SwiftUI
 
 /// Author detail view
 struct AuthorDetailView: View {
-    let authorId: Int
+    let authorId: String
 
     @Environment(AuthorDetailViewModel.self) private var viewModel
     @State private var showingEditSheet = false
@@ -104,7 +104,7 @@ struct AuthorDetailView: View {
 
 #Preview {
     NavigationStack {
-        AuthorDetailView(authorId: 1)
+        AuthorDetailView(authorId: "1")
             .environment(AuthorDetailViewModel())
     }
 }

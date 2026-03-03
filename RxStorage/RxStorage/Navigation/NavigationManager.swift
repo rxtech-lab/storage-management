@@ -120,7 +120,7 @@ final class NavigationManager {
     }
 
     /// Navigate to an item by its ID (fetches the full item first)
-    func navigateToItemById(_ id: Int) async {
+    func navigateToItemById(_ id: String) async {
         selectedTab = .items
         isLoadingDeepLink = true
         defer { isLoadingDeepLink = false }
@@ -138,7 +138,7 @@ final class NavigationManager {
 
     /// Navigate to an item from Dashboard (stays in Dashboard context)
     /// This avoids tab switching issues and keeps the user in their current context
-    func navigateToItemFromDashboard(_ id: Int) async {
+    func navigateToItemFromDashboard(_ id: String) async {
         isLoadingDeepLink = true
         defer { isLoadingDeepLink = false }
 

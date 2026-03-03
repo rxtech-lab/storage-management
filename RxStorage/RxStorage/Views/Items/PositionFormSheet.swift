@@ -16,7 +16,7 @@ struct PositionFormSheet: View {
     @Binding var positionSchemas: [PositionSchema]
     let onSubmit: (PositionSchema, [String: RxStorageCore.AnyCodable]) -> Void
 
-    @State private var selectedSchemaId: Int?
+    @State private var selectedSchemaId: String?
     @State private var formData: FormData = .object(properties: [:])
     @State private var showingSchemaSheet = false
     @Environment(\.dismiss) private var dismiss
@@ -38,9 +38,9 @@ struct PositionFormSheet: View {
             // Schema picker with inline creation
             Section {
                 Picker("Schema", selection: $selectedSchemaId) {
-                    Text("Select a schema").tag(nil as Int?)
+                    Text("Select a schema").tag(nil as String?)
                     ForEach(positionSchemas) { schema in
-                        Text(schema.name).tag(schema.id as Int?)
+                        Text(schema.name).tag(schema.id as String?)
                     }
                 }
 

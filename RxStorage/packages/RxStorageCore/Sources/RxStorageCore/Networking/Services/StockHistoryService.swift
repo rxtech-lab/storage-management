@@ -15,9 +15,9 @@ private let logger = Logger(label: "StockHistoryService")
 
 /// Protocol for stock history service operations
 public protocol StockHistoryServiceProtocol: Sendable {
-    func fetchItemStockHistory(itemId: Int) async throws -> [StockHistory]
-    func createStockHistory(itemId: Int, _ request: NewStockHistoryRequest) async throws -> StockHistory
-    func deleteStockHistory(id: Int) async throws
+    func fetchItemStockHistory(itemId: String) async throws -> [StockHistory]
+    func createStockHistory(itemId: String, _ request: NewStockHistoryRequest) async throws -> StockHistory
+    func deleteStockHistory(id: String) async throws
 }
 
 // MARK: - Implementation
@@ -27,20 +27,20 @@ public struct StockHistoryService: StockHistoryServiceProtocol {
     public init() {}
 
     @APICall(.ok)
-    public func fetchItemStockHistory(itemId: Int) async throws -> [StockHistory] {
-        try await StorageAPIClient.shared.client.getItemStockHistory(.init(path: .init(id: String(itemId))))
+    public func fetchItemStockHistory(itemId: String) async throws -> [StockHistory] {
+        try await StorageAPIClient.shared.client.getItemStockHistory(.init(path: .init(id: itemId)))
     }
 
     @APICall(.created)
-    public func createStockHistory(itemId: Int, _ request: NewStockHistoryRequest) async throws -> StockHistory {
+    public func createStockHistory(itemId: String, _ request: NewStockHistoryRequest) async throws -> StockHistory {
         try await StorageAPIClient.shared.client.createItemStockHistory(.init(
-            path: .init(id: String(itemId)),
+            path: .init(id: itemId),
             body: .json(request)
         ))
     }
 
-    public func deleteStockHistory(id: Int) async throws {
-        let response = try await StorageAPIClient.shared.client.deleteStockHistory(.init(path: .init(id: String(id))))
+    public func deleteStockHistory(id: String) async throws {
+        let response = try await StorageAPIClient.shared.client.deleteStockHistory(.init(path: .init(id: id)))
 
         switch response {
         case .ok:
