@@ -24,15 +24,15 @@ public final class MockCategoryService: CategoryServiceProtocol {
     public var fetchCategoriesCalled = false
     public var fetchCategoriesPaginatedCalled = false
     public var fetchCategoryCalled = false
-    public var lastFetchCategoryId: Int?
+    public var lastFetchCategoryId: String?
     public var createCategoryCalled = false
     public var updateCategoryCalled = false
     public var deleteCategoryCalled = false
 
     public var lastCreateCategoryRequest: NewCategoryRequest?
-    public var lastUpdateCategoryId: Int?
+    public var lastUpdateCategoryId: String?
     public var lastUpdateCategoryRequest: UpdateCategoryRequest?
-    public var lastDeleteCategoryId: Int?
+    public var lastDeleteCategoryId: String?
 
     // MARK: - Initialization
 
@@ -68,7 +68,7 @@ public final class MockCategoryService: CategoryServiceProtocol {
         )
     }
 
-    public func fetchCategory(id: Int) async throws -> RxStorageCore.Category {
+    public func fetchCategory(id: String) async throws -> RxStorageCore.Category {
         fetchCategoryCalled = true
         lastFetchCategoryId = id
 
@@ -100,7 +100,7 @@ public final class MockCategoryService: CategoryServiceProtocol {
         throw APIError.serverError("Not configured")
     }
 
-    public func updateCategory(id: Int, _ request: UpdateCategoryRequest) async throws -> RxStorageCore.Category {
+    public func updateCategory(id: String, _ request: UpdateCategoryRequest) async throws -> RxStorageCore.Category {
         updateCategoryCalled = true
         lastUpdateCategoryId = id
         lastUpdateCategoryRequest = request
@@ -117,7 +117,7 @@ public final class MockCategoryService: CategoryServiceProtocol {
         throw APIError.serverError("Not configured")
     }
 
-    public func deleteCategory(id: Int) async throws {
+    public func deleteCategory(id: String) async throws {
         deleteCategoryCalled = true
         lastDeleteCategoryId = id
 

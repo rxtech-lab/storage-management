@@ -24,12 +24,12 @@ public final class MockContentService: ContentServiceProtocol, @unchecked Sendab
     public var updateContentCalled = false
     public var deleteContentCalled = false
 
-    public var lastFetchItemId: Int?
-    public var lastCreateItemId: Int?
+    public var lastFetchItemId: String?
+    public var lastCreateItemId: String?
     public var lastCreateRequest: ContentRequest?
-    public var lastUpdateContentId: Int?
+    public var lastUpdateContentId: String?
     public var lastUpdateRequest: ContentRequest?
-    public var lastDeleteContentId: Int?
+    public var lastDeleteContentId: String?
 
     // MARK: - Initialization
 
@@ -37,7 +37,7 @@ public final class MockContentService: ContentServiceProtocol, @unchecked Sendab
 
     // MARK: - ContentServiceProtocol
 
-    public func fetchItemContents(itemId: Int) async throws -> [Content] {
+    public func fetchItemContents(itemId: String) async throws -> [Content] {
         fetchItemContentsCalled = true
         lastFetchItemId = itemId
         switch fetchItemContentsResult {
@@ -48,7 +48,7 @@ public final class MockContentService: ContentServiceProtocol, @unchecked Sendab
         }
     }
 
-    public func createContent(itemId: Int, _ request: ContentRequest) async throws -> Content {
+    public func createContent(itemId: String, _ request: ContentRequest) async throws -> Content {
         createContentCalled = true
         lastCreateItemId = itemId
         lastCreateRequest = request
@@ -65,7 +65,7 @@ public final class MockContentService: ContentServiceProtocol, @unchecked Sendab
         throw APIError.serverError("Not configured")
     }
 
-    public func updateContent(id: Int, _ request: ContentRequest) async throws -> Content {
+    public func updateContent(id: String, _ request: ContentRequest) async throws -> Content {
         updateContentCalled = true
         lastUpdateContentId = id
         lastUpdateRequest = request
@@ -82,7 +82,7 @@ public final class MockContentService: ContentServiceProtocol, @unchecked Sendab
         throw APIError.serverError("Not configured")
     }
 
-    public func deleteContent(id: Int) async throws {
+    public func deleteContent(id: String) async throws {
         deleteContentCalled = true
         lastDeleteContentId = id
 

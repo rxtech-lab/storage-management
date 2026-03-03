@@ -34,15 +34,15 @@ public final class MockItemService: ItemServiceProtocol {
     public var setParentCalled = false
     public var deleteItemCalled = false
 
-    public var lastFetchItemId: Int?
-    public var lastFetchPreviewItemId: Int?
+    public var lastFetchItemId: String?
+    public var lastFetchPreviewItemId: String?
     public var lastFetchItemUsingUrl: String?
     public var lastCreateItemRequest: NewItemRequest?
-    public var lastUpdateItemId: Int?
+    public var lastUpdateItemId: String?
     public var lastUpdateItemRequest: UpdateItemRequest?
-    public var lastDeleteItemId: Int?
-    public var lastSetParentItemId: Int?
-    public var lastSetParentParentId: Int?
+    public var lastDeleteItemId: String?
+    public var lastSetParentItemId: String?
+    public var lastSetParentParentId: String?
 
     // MARK: - Initialization
 
@@ -78,7 +78,7 @@ public final class MockItemService: ItemServiceProtocol {
         )
     }
 
-    public func fetchItem(id: Int) async throws -> StorageItemDetail {
+    public func fetchItem(id: String) async throws -> StorageItemDetail {
         fetchItemCalled = true
         lastFetchItemId = id
 
@@ -94,7 +94,7 @@ public final class MockItemService: ItemServiceProtocol {
         throw APIError.notFound
     }
 
-    public func fetchPreviewItem(id: Int) async throws -> StorageItemDetail {
+    public func fetchPreviewItem(id: String) async throws -> StorageItemDetail {
         fetchPreviewItemCalled = true
         lastFetchPreviewItemId = id
 
@@ -142,7 +142,7 @@ public final class MockItemService: ItemServiceProtocol {
         throw APIError.serverError("Not configured")
     }
 
-    public func updateItem(id: Int, _ request: UpdateItemRequest) async throws -> StorageItem {
+    public func updateItem(id: String, _ request: UpdateItemRequest) async throws -> StorageItem {
         updateItemCalled = true
         lastUpdateItemId = id
         lastUpdateItemRequest = request
@@ -159,7 +159,7 @@ public final class MockItemService: ItemServiceProtocol {
         throw APIError.serverError("Not configured")
     }
 
-    public func setParent(itemId: Int, parentId: Int?) async throws -> StorageItem {
+    public func setParent(itemId: String, parentId: String?) async throws -> StorageItem {
         setParentCalled = true
         lastSetParentItemId = itemId
         lastSetParentParentId = parentId
@@ -176,7 +176,7 @@ public final class MockItemService: ItemServiceProtocol {
         throw APIError.serverError("Not configured")
     }
 
-    public func deleteItem(id: Int) async throws {
+    public func deleteItem(id: String) async throws {
         deleteItemCalled = true
         lastDeleteItemId = id
 

@@ -96,7 +96,7 @@ test.describe.serial('Position Schema UI CRUD', () => {
     await editButton.click();
 
     // Wait for edit page
-    await page.waitForURL(/\/position-schemas\/\d+/);
+    await page.waitForURL(/\/position-schemas\/[^/]+$/);
     await expect(page.getByTestId('position-schema-form')).toBeVisible();
 
     // Update name

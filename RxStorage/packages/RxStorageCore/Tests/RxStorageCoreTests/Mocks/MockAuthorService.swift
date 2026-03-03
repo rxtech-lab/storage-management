@@ -24,15 +24,15 @@ public final class MockAuthorService: AuthorServiceProtocol {
     public var fetchAuthorsCalled = false
     public var fetchAuthorsPaginatedCalled = false
     public var fetchAuthorCalled = false
-    public var lastFetchAuthorId: Int?
+    public var lastFetchAuthorId: String?
     public var createAuthorCalled = false
     public var updateAuthorCalled = false
     public var deleteAuthorCalled = false
 
     public var lastCreateAuthorRequest: NewAuthorRequest?
-    public var lastUpdateAuthorId: Int?
+    public var lastUpdateAuthorId: String?
     public var lastUpdateAuthorRequest: UpdateAuthorRequest?
-    public var lastDeleteAuthorId: Int?
+    public var lastDeleteAuthorId: String?
 
     // MARK: - Initialization
 
@@ -68,7 +68,7 @@ public final class MockAuthorService: AuthorServiceProtocol {
         )
     }
 
-    public func fetchAuthor(id: Int) async throws -> Author {
+    public func fetchAuthor(id: String) async throws -> Author {
         fetchAuthorCalled = true
         lastFetchAuthorId = id
 
@@ -100,7 +100,7 @@ public final class MockAuthorService: AuthorServiceProtocol {
         throw APIError.serverError("Not configured")
     }
 
-    public func updateAuthor(id: Int, _ request: UpdateAuthorRequest) async throws -> Author {
+    public func updateAuthor(id: String, _ request: UpdateAuthorRequest) async throws -> Author {
         updateAuthorCalled = true
         lastUpdateAuthorId = id
         lastUpdateAuthorRequest = request
@@ -117,7 +117,7 @@ public final class MockAuthorService: AuthorServiceProtocol {
         throw APIError.serverError("Not configured")
     }
 
-    public func deleteAuthor(id: Int) async throws {
+    public func deleteAuthor(id: String) async throws {
         deleteAuthorCalled = true
         lastDeleteAuthorId = id
 
