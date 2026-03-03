@@ -13,10 +13,10 @@ test.describe.serial("QR Code Scan API", () => {
   const WHITELISTED_USER = "qr-whitelisted-user";
   const WHITELISTED_EMAIL = "qr-whitelisted@example.com";
 
-  let publicItemId: number;
-  let privateItemId: number;
-  let rawQrPublicItemId: number;
-  let rawQrPrivateItemId: number;
+  let publicItemId: string;
+  let privateItemId: string;
+  let rawQrPublicItemId: string;
+  let rawQrPrivateItemId: string;
 
   const RAW_QR_CODE_PUBLIC = "RAW-QR-PUBLIC-12345";
   const RAW_QR_CODE_PRIVATE = "RAW-QR-PRIVATE-67890";

@@ -8,10 +8,10 @@ vi.mock("../entity-sheet", () => ({
   EntitySheet: () => <button>+</button>,
 }));
 
-type TestItem = { id: number; name: string };
+type TestItem = { id: string; name: string };
 
 const defaultProps = {
-  value: null as number | null,
+  value: null as string | null,
   onSelect: vi.fn(),
   items: [] as TestItem[],
   isSearching: false,
@@ -35,8 +35,8 @@ describe("EntityCombobox", () => {
 
   it("shows items from items prop", async () => {
     const items = [
-      { id: 1, name: "Item One" },
-      { id: 2, name: "Item Two" },
+      { id: "1", name: "Item One" },
+      { id: "2", name: "Item Two" },
     ];
 
     render(<EntityCombobox {...defaultProps} items={items} />);
@@ -81,7 +81,7 @@ describe("EntityCombobox", () => {
 
   it("calls onSelect with item id when item is selected", async () => {
     const onSelect = vi.fn();
-    const items = [{ id: 42, name: "Test Item" }];
+    const items = [{ id: "42", name: "Test Item" }];
 
     render(
       <EntityCombobox {...defaultProps} items={items} onSelect={onSelect} />
@@ -96,18 +96,18 @@ describe("EntityCombobox", () => {
 
     await userEvent.click(screen.getByText("Test Item"));
 
-    expect(onSelect).toHaveBeenCalledWith(42);
+    expect(onSelect).toHaveBeenCalledWith("42");
   });
 
   it("calls onSelect with null when None is selected", async () => {
     const onSelect = vi.fn();
-    const items = [{ id: 1, name: "Some Item" }];
+    const items = [{ id: "1", name: "Some Item" }];
 
     render(
       <EntityCombobox
         {...defaultProps}
         items={items}
-        value={1}
+        value={"1"}
         onSelect={onSelect}
         hasSearchQuery={false}
       />
@@ -126,7 +126,7 @@ describe("EntityCombobox", () => {
   });
 
   it("shows None option only when not searching", async () => {
-    const items = [{ id: 1, name: "Test Item" }];
+    const items = [{ id: "1", name: "Test Item" }];
 
     // When not searching (hasSearchQuery=false), None should be visible
     const { rerender } = render(
@@ -169,7 +169,7 @@ describe("EntityCombobox", () => {
   });
 
   it("uses custom itemRenderer for item display", async () => {
-    const items = [{ id: 1, name: "Test" }];
+    const items = [{ id: "1", name: "Test" }];
     const customRenderer = (item: TestItem) => `Custom: ${item.name}`;
 
     render(
@@ -189,14 +189,14 @@ describe("EntityCombobox", () => {
   });
 
   it("uses custom selectedValueRenderer for selected label", async () => {
-    const items = [{ id: 1, name: "Item" }];
+    const items = [{ id: "1", name: "Item" }];
     const selectedValueRenderer = (item: TestItem) => `Selected: ${item.name}`;
 
     render(
       <EntityCombobox
         {...defaultProps}
         items={items}
-        value={1}
+        value={"1"}
         selectedValueRenderer={selectedValueRenderer}
       />
     );
@@ -226,9 +226,9 @@ describe("EntityCombobox", () => {
   });
 
   it("displays selected item label in input", async () => {
-    const items = [{ id: 5, name: "Selected Item" }];
+    const items = [{ id: "5", name: "Selected Item" }];
 
-    render(<EntityCombobox {...defaultProps} items={items} value={5} />);
+    render(<EntityCombobox {...defaultProps} items={items} value={"5"} />);
 
     const input = screen.getByPlaceholderText("Search...");
     expect(input).toHaveValue("Selected Item");

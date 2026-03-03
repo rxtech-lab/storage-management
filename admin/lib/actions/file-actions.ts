@@ -59,7 +59,7 @@ export async function createFileRecordAction(
 /**
  * Get a file record by ID
  */
-export async function getFile(id: number): Promise<UploadFile | undefined> {
+export async function getFile(id: string): Promise<UploadFile | undefined> {
   await ensureSchemaInitialized();
   const results = await db
     .select()
@@ -72,7 +72,7 @@ export async function getFile(id: number): Promise<UploadFile | undefined> {
 /**
  * Get multiple file records by IDs
  */
-export async function getFiles(ids: number[]): Promise<UploadFile[]> {
+export async function getFiles(ids: string[]): Promise<UploadFile[]> {
   if (ids.length === 0) return [];
   await ensureSchemaInitialized();
   return db.select().from(uploadFiles).where(inArray(uploadFiles.id, ids));
@@ -81,7 +81,7 @@ export async function getFiles(ids: number[]): Promise<UploadFile[]> {
 /**
  * Get files by item ID
  */
-export async function getFilesByItemId(itemId: number): Promise<UploadFile[]> {
+export async function getFilesByItemId(itemId: string): Promise<UploadFile[]> {
   await ensureSchemaInitialized();
   return db.select().from(uploadFiles).where(eq(uploadFiles.itemId, itemId));
 }
@@ -90,9 +90,9 @@ export async function getFilesByItemId(itemId: number): Promise<UploadFile[]> {
  * Validate that file IDs exist and belong to the user
  */
 export async function validateFileOwnership(
-  fileIds: number[],
+  fileIds: string[],
   userId: string
-): Promise<{ valid: boolean; invalidIds: number[]; error?: string }> {
+): Promise<{ valid: boolean; invalidIds: string[]; error?: string }> {
   if (fileIds.length === 0) {
     return { valid: true, invalidIds: [] };
   }
@@ -104,7 +104,7 @@ export async function validateFileOwnership(
     .where(inArray(uploadFiles.id, fileIds));
 
   const foundIds = new Set(files.map((f) => f.id));
-  const invalidIds: number[] = [];
+  const invalidIds: string[] = [];
 
   for (const id of fileIds) {
     if (!foundIds.has(id)) {
@@ -131,8 +131,8 @@ export async function validateFileOwnership(
  * Skips verification in E2E mode
  */
 export async function validateFilesExistInS3(
-  fileIds: number[]
-): Promise<{ valid: boolean; missingIds: number[]; error?: string }> {
+  fileIds: string[]
+): Promise<{ valid: boolean; missingIds: string[]; error?: string }> {
   if (fileIds.length === 0) {
     return { valid: true, missingIds: [] };
   }
@@ -144,7 +144,7 @@ export async function validateFilesExistInS3(
 
   await ensureSchemaInitialized();
   const files = await getFiles(fileIds);
-  const missingIds: number[] = [];
+  const missingIds: string[] = [];
 
   for (const file of files) {
     try {
@@ -170,8 +170,8 @@ export async function validateFilesExistInS3(
  * Associate files with an item
  */
 export async function associateFilesWithItem(
-  fileIds: number[],
-  itemId: number,
+  fileIds: string[],
+  itemId: string,
   userId: string
 ): Promise<{ success: boolean; error?: string }> {
   if (fileIds.length === 0) {
@@ -207,7 +207,7 @@ export async function associateFilesWithItem(
  * Disassociate files from an item (set itemId to null)
  */
 export async function disassociateFilesFromItem(
-  fileIds: number[]
+  fileIds: string[]
 ): Promise<{ success: boolean; error?: string }> {
   if (fileIds.length === 0) {
     return { success: true };
@@ -234,7 +234,7 @@ export async function disassociateFilesFromItem(
  * Delete a file record and its S3 object
  */
 export async function deleteFileAction(
-  id: number,
+  id: string,
   userId?: string
 ): Promise<{ success: boolean; error?: string }> {
   try {
@@ -290,7 +290,7 @@ export async function deleteFileAction(
  * Called when an item is deleted
  */
 export async function deleteFilesForItem(
-  itemId: number
+  itemId: string
 ): Promise<{ success: boolean; error?: string }> {
   try {
     await ensureSchemaInitialized();

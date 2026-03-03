@@ -14,14 +14,14 @@ import { Loader2 } from "lucide-react";
 import { searchItems } from "@/lib/actions/item-actions";
 
 interface ParentItemComboboxProps {
-  value: number | null;
-  onChange: (value: number | null) => void;
-  excludeId?: number;
+  value: string | null;
+  onChange: (value: string | null) => void;
+  excludeId?: string;
 }
 
-type ItemOption = { id: number; title: string };
+type ItemOption = { id: string; title: string };
 
-const NONE_OPTION: ItemOption = { id: 0, title: "None (Root Item)" };
+const NONE_OPTION: ItemOption = { id: "", title: "None (Root Item)" };
 
 export function ParentItemCombobox({
   value,
@@ -71,7 +71,7 @@ export function ParentItemCombobox({
     [onChange, options]
   );
 
-  const selectedTitle = options.find((opt) => opt.id === (value ?? 0))?.title ?? NONE_OPTION.title;
+  const selectedTitle = options.find((opt) => opt.id === (value ?? ""))?.title ?? NONE_OPTION.title;
 
   return (
     <div className="space-y-2">

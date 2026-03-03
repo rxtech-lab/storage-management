@@ -12,10 +12,10 @@ test.describe.serial("Dashboard Statistics User Isolation", () => {
   const USER_A = `dashboard-user-a-${crypto.randomUUID()}`;
   const USER_B = `dashboard-user-b-${crypto.randomUUID()}`;
 
-  let userAPrivateItemId: number;
-  let userAPublicItemId: number;
-  let userBPrivateItemId: number;
-  let userBPublicItemId: number;
+  let userAPrivateItemId: string;
+  let userAPublicItemId: string;
+  let userBPrivateItemId: string;
+  let userBPublicItemId: string;
 
   test.describe("Setup - Create items for different users", () => {
     test("User A creates 1 private and 1 public item", async ({ request }) => {
@@ -231,7 +231,7 @@ test.describe('Dashboard API', () => {
 
       // Additional type checks
       expect(['publicAccess', 'privateAccess']).toContain(item.visibility);
-      expect(typeof item.id).toBe('number');
+      expect(typeof item.id).toBe('string');
       expect(typeof item.title).toBe('string');
     }
   });

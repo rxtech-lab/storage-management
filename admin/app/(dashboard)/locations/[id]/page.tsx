@@ -8,7 +8,7 @@ interface EditLocationPageProps {
 
 export default async function EditLocationPage({ params }: EditLocationPageProps) {
   const { id } = await params;
-  const location = await getLocation(parseInt(id));
+  const location = await getLocation(id);
 
   if (!location) {
     notFound();

@@ -6,7 +6,7 @@ import { DeleteConfirmButton } from "@/components/ui/delete-confirm-button";
 import { deleteItemAndRedirect } from "@/lib/actions/item-actions";
 
 interface ItemDeleteButtonProps {
-  itemId: number;
+  itemId: string;
   itemTitle: string;
 }
 

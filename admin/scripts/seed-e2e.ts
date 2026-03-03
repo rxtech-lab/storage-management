@@ -8,21 +8,21 @@ async function seed() {
     .insert(items)
     .values([
       {
-        id: 1,
+        id: "test-public-item",
         userId: "test-user-id", // default test user
         title: "Public Test Item",
         description: "This is a public test item for E2E testing",
         visibility: "publicAccess",
       },
       {
-        id: 2,
+        id: "test-private-item",
         userId: "b8da73c7-eb56-46a2-a20a-385d298dfa97", // different user for access control testing
         title: "Private Test Item",
         description: "This is a private test item for E2E testing",
         visibility: "privateAccess",
       },
       {
-        id: 3,
+        id: "test-other-user-item",
         userId: "different-id", // different user for access control testing
         title: "Another User's Item",
         description: "This item belongs to another user",

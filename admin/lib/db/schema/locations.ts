@@ -1,7 +1,10 @@
 import { sqliteTable, text, integer, real } from "drizzle-orm/sqlite-core";
+import { nanoid } from "nanoid";
 
 export const locations = sqliteTable("locations", {
-  id: integer("id").primaryKey({ autoIncrement: true }),
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => nanoid()),
   userId: text("user_id").notNull(),
   title: text("title").notNull(),
   latitude: real("latitude").notNull(),

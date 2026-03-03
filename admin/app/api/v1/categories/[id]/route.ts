@@ -24,7 +24,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
   }
 
   const { id } = await params;
-  const category = await getCategory(parseInt(id));
+  const category = await getCategory(id);
 
   if (!category) {
     return NextResponse.json({ error: "Category not found" }, { status: 404 });
@@ -60,7 +60,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 
   try {
     const body = await request.json();
-    const result = await updateCategoryAction(parseInt(id), body, session.user.id);
+    const result = await updateCategoryAction(id, body, session.user.id);
 
     if (result.success) {
       return NextResponse.json(result.data);
@@ -95,7 +95,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
   }
 
   const { id } = await params;
-  const result = await deleteCategoryAction(parseInt(id), session.user.id);
+  const result = await deleteCategoryAction(id, session.user.id);
 
   if (result.success) {
     return NextResponse.json({ success: true });

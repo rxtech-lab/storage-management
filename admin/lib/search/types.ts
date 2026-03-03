@@ -2,7 +2,7 @@ import type { ItemWithRelations } from "@/lib/actions/item-actions";
 
 // Search result type for quick search
 export interface ItemSearchResult {
-  id: number;
+  id: string;
   title: string;
   snippet?: string;
   category?: string;
@@ -16,7 +16,7 @@ export interface DisplayItemsOutput {
   count: number;
   query?: string;
   items: Array<{
-    id: number;
+    id: string;
     title: string;
     description?: string | null;
     category?: string | null;
@@ -38,7 +38,7 @@ export interface DisplayStatisticsOutput {
   totalLocations: number;
   totalAuthors: number;
   categoryBreakdown?: Array<{
-    id: number;
+    id: string;
     name: string;
     count: number;
   }>;
@@ -46,17 +46,17 @@ export interface DisplayStatisticsOutput {
 
 export interface CategoriesOutput {
   type: "categories";
-  categories: Array<{ id: number; name: string }>;
+  categories: Array<{ id: string; name: string }>;
 }
 
 export interface LocationsOutput {
   type: "locations";
-  locations: Array<{ id: number; title: string }>;
+  locations: Array<{ id: string; title: string }>;
 }
 
 export interface AuthorsOutput {
   type: "authors";
-  authors: Array<{ id: number; name: string }>;
+  authors: Array<{ id: string; name: string }>;
 }
 
 export type ToolOutput =

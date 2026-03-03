@@ -8,7 +8,7 @@ interface EditCategoryPageProps {
 
 export default async function EditCategoryPage({ params }: EditCategoryPageProps) {
   const { id } = await params;
-  const category = await getCategory(parseInt(id));
+  const category = await getCategory(id);
 
   if (!category) {
     notFound();

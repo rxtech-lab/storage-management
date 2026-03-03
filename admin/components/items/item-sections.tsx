@@ -106,7 +106,7 @@ export function ItemSections({
   const [whitelistLoading, setWhitelistLoading] = useState(false);
 
   // Position handlers
-  const handleDeletePosition = async (positionId: number) => {
+  const handleDeletePosition = async (positionId: string) => {
     startTransition(async () => {
       try {
         const result = await deletePositionAction(positionId);
@@ -152,7 +152,7 @@ export function ItemSections({
     }
   };
 
-  const handleDeleteStock = async (entryId: number) => {
+  const handleDeleteStock = async (entryId: string) => {
     setStockLoading(true);
     try {
       const entry = stockHistory.find((e) => e.id === entryId);
@@ -173,7 +173,7 @@ export function ItemSections({
 
   // Content handlers
   const handleUpdateContent = async (
-    contentId: number,
+    contentId: string,
     type: "file" | "image" | "video",
     data: ContentData
   ) => {
@@ -195,7 +195,7 @@ export function ItemSections({
     }
   };
 
-  const handleDeleteContent = async (contentId: number) => {
+  const handleDeleteContent = async (contentId: string) => {
     if (!confirm("Are you sure you want to delete this content?")) return;
     setContentLoading(true);
     try {
@@ -266,7 +266,7 @@ export function ItemSections({
     }
   };
 
-  const handleRemoveEmail = async (id: number) => {
+  const handleRemoveEmail = async (id: string) => {
     setWhitelistLoading(true);
     try {
       const result = await removeFromWhitelistAction(id);

@@ -140,7 +140,7 @@ final class RxStorageItemsUITests: XCTestCase {
         let app = launchApp()
 
         // Open deep link to a known public item (same as App Clips test)
-        let url = try XCTUnwrap(URL(string: "rxstorage://preview/item?id=1"))
+        let url = try XCTUnwrap(URL(string: "rxstorage://preview/item?id=test-public-item"))
         app.open(url)
 
         try app.signInWithEmailAndPassword()
@@ -162,8 +162,8 @@ final class RxStorageItemsUITests: XCTestCase {
     func testDeepLinkToPrivateItem() throws {
         let app = launchApp()
 
-        // Open deep link to a known private item (item 2 - requires auth per App Clips test)
-        let url = try XCTUnwrap(URL(string: "rxstorage://preview/item?id=2"))
+        // Open deep link to a known private item (requires auth per App Clips test)
+        let url = try XCTUnwrap(URL(string: "rxstorage://preview/item?id=test-private-item"))
         app.open(url)
 
         try app.signInWithEmailAndPassword()
@@ -182,8 +182,8 @@ final class RxStorageItemsUITests: XCTestCase {
     func testDeepLinkToPrivateItemBelongsToOthers() throws {
         let app = launchApp()
 
-        // Open deep link to a known private item (item 2 - requires auth per App Clips test)
-        let url = try XCTUnwrap(URL(string: "rxstorage://preview/item?id=3"))
+        // Open deep link to a known private item belonging to another user
+        let url = try XCTUnwrap(URL(string: "rxstorage://preview/item?id=test-other-user-item"))
         app.open(url)
 
         try app.signInWithEmailAndPassword()
@@ -221,7 +221,7 @@ final class RxStorageItemsUITests: XCTestCase {
         let app = launchApp()
 
         // Open deep link to a non-existent item ID
-        let url = try XCTUnwrap(URL(string: "rxstorage://preview/item?id=999999"))
+        let url = try XCTUnwrap(URL(string: "rxstorage://preview/item?id=nonexistent-id"))
         app.open(url)
 
         try app.signInWithEmailAndPassword()

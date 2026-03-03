@@ -7,7 +7,7 @@ import { QRCodeGenerator } from "@/components/items/qr-code-generator";
 import { ItemDeleteButton } from "@/components/items/item-delete-button";
 
 interface ItemActionBarProps {
-  itemId: number;
+  itemId: string;
   itemTitle: string;
   onEditClick: () => void;
 }

@@ -41,7 +41,7 @@ final class RxStorageQRScanTests: XCTestCase {
     @MainActor
     func testQRCodeScanPublicItem() throws {
         // Launch app with injected QR code content for public item 1
-        let qrContent = "http://localhost:3000/preview/item?id=1"
+        let qrContent = "http://localhost:3000/preview/item?id=test-public-item"
         let app = launchAppWithQRCode(qrContent)
 
         try app.signInWithEmailAndPassword()
@@ -74,7 +74,7 @@ final class RxStorageQRScanTests: XCTestCase {
     @MainActor
     func testQRCodeScanPrivateItemAuthenticated() throws {
         // Launch app with injected QR code content for private item 2
-        let qrContent = "http://localhost:3000/preview/item?id=2"
+        let qrContent = "http://localhost:3000/preview/item?id=test-private-item"
         let app = launchAppWithQRCode(qrContent)
 
         try app.signInWithEmailAndPassword()
@@ -103,7 +103,7 @@ final class RxStorageQRScanTests: XCTestCase {
     @MainActor
     func testQRCodeScanPrivateItemAccessDenied() throws {
         // Launch app with injected QR code content for private item 3 (belongs to others)
-        let qrContent = "http://localhost:3000/preview/item?id=3"
+        let qrContent = "http://localhost:3000/preview/item?id=test-other-user-item"
         let app = launchAppWithQRCode(qrContent)
 
         try app.signInWithEmailAndPassword()
@@ -161,7 +161,7 @@ final class RxStorageQRScanTests: XCTestCase {
     @MainActor
     func testQRCodeScanNonExistentItem() throws {
         // Launch app with QR code content for non-existent item
-        let qrContent = "http://localhost:3000/preview/item?id=999999"
+        let qrContent = "http://localhost:3000/preview/item?id=nonexistent-id"
         let app = launchAppWithQRCode(qrContent)
 
         try app.signInWithEmailAndPassword()
@@ -190,7 +190,7 @@ final class RxStorageQRScanTests: XCTestCase {
     @MainActor
     func testQRCodeScanRelativePath() throws {
         // Launch app with relative path QR code content
-        let qrContent = "preview/item?id=1"
+        let qrContent = "preview/item?id=test-public-item"
         let app = launchAppWithQRCode(qrContent)
 
         try app.signInWithEmailAndPassword()

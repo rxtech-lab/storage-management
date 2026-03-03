@@ -9,12 +9,12 @@ import { SEARCH_DEBOUNCE_MS } from "@/lib/config";
 import { EntityCombobox } from "./entity-combobox";
 
 interface LocationComboboxProps {
-  value: number | null;
-  onChange: (value: number | null) => void;
+  value: string | null;
+  onChange: (value: string | null) => void;
   disablePortal?: boolean;
 }
 
-type LocationOption = { id: number; title: string };
+type LocationOption = { id: string; title: string };
 
 export function LocationCombobox({
   value,
@@ -69,7 +69,7 @@ export function LocationCombobox({
   }, []);
 
   const handleEntityCreated = useCallback(
-    (entity: { id: number; title?: string }) => {
+    (entity: { id: string; title?: string }) => {
       if (entity.title) {
         const newOption: LocationOption = {
           id: entity.id,

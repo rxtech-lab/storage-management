@@ -12,10 +12,10 @@ test.describe.serial("Items Access Control", () => {
   const OTHER_USER = "other-user";
   const OTHER_EMAIL = "other@example.com";
 
-  let publicItemId: number;
-  let privateItemId: number;
-  let childItemId: number;
-  let whitelistEntryId: number;
+  let publicItemId: string;
+  let privateItemId: string;
+  let childItemId: string;
+  let whitelistEntryId: string;
 
   test.describe("Setup - Create test data", () => {
     test("should create public item with child", async ({ request }) => {

@@ -2,7 +2,7 @@ import { z } from "zod";
 
 // Response schema for account deletion status
 export const AccountDeletionResponseSchema = z.object({
-  id: z.number().int().describe("Unique deletion request identifier"),
+  id: z.string().describe("Unique deletion request identifier"),
   userId: z.string().describe("User ID"),
   userEmail: z.string().nullable().describe("User email"),
   scheduledAt: z.coerce.date().describe("Scheduled deletion timestamp"),

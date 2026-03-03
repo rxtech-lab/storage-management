@@ -28,7 +28,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
   }
 
   const { id } = await params;
-  const schema = await getPositionSchema(parseInt(id));
+  const schema = await getPositionSchema(id);
 
   if (!schema) {
     return NextResponse.json({ error: "Position schema not found" }, { status: 404 });
@@ -64,7 +64,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 
   try {
     const body = await request.json();
-    const result = await updatePositionSchemaAction(parseInt(id), body, session.user.id);
+    const result = await updatePositionSchemaAction(id, body, session.user.id);
 
     if (result.success) {
       return NextResponse.json(result.data);
@@ -99,7 +99,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
   }
 
   const { id } = await params;
-  const result = await deletePositionSchemaAction(parseInt(id), session.user.id);
+  const result = await deletePositionSchemaAction(id, session.user.id);
 
   if (result.success) {
     return NextResponse.json({ success: true });

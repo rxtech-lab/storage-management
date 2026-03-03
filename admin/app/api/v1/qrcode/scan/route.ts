@@ -96,9 +96,9 @@ export async function POST(request: NextRequest) {
   // - /preview/item?id=123
   // - https://storage.rxlab.app/preview/item?id=123
   // - http://localhost:3000/preview/item?id=123
-  const queryParamMatch = qrcontent.match(/(?:^|\/)?preview\/item\?id=(\d+)(?:$|&|#)/);
+  const queryParamMatch = qrcontent.match(/(?:^|\/)?preview\/item\?id=([\w-]+)(?:$|&|#)/);
   if (queryParamMatch) {
-    const itemId = parseInt(queryParamMatch[1]);
+    const itemId = queryParamMatch[1];
     const item = await getItem(itemId);
 
     if (!item) {
@@ -127,9 +127,9 @@ export async function POST(request: NextRequest) {
   // - /preview/item/123
   // - https://storage.rxlab.app/preview/item/123
   // - http://localhost:3000/preview/item/123
-  const previewMatch = qrcontent.match(/(?:^|\/)?preview\/item\/(\d+)(?:$|[?#])/);
+  const previewMatch = qrcontent.match(/(?:^|\/)?preview\/item\/([\w-]+)(?:$|[?#])/);
   if (previewMatch) {
-    const itemId = parseInt(previewMatch[1]);
+    const itemId = previewMatch[1];
     const item = await getItem(itemId);
 
     if (!item) {

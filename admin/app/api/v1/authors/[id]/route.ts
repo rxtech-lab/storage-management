@@ -24,7 +24,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
   }
 
   const { id } = await params;
-  const author = await getAuthor(parseInt(id));
+  const author = await getAuthor(id);
 
   if (!author) {
     return NextResponse.json({ error: "Author not found" }, { status: 404 });
@@ -60,7 +60,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 
   try {
     const body = await request.json();
-    const result = await updateAuthorAction(parseInt(id), body, session.user.id);
+    const result = await updateAuthorAction(id, body, session.user.id);
 
     if (result.success) {
       return NextResponse.json(result.data);
@@ -95,7 +95,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
   }
 
   const { id } = await params;
-  const result = await deleteAuthorAction(parseInt(id), session.user.id);
+  const result = await deleteAuthorAction(id, session.user.id);
 
   if (result.success) {
     return NextResponse.json({ success: true });

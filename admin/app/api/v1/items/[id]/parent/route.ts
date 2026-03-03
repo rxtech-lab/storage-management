@@ -29,10 +29,10 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 
   try {
     const body = await request.json();
-    const parentId = body.parentId as number | null;
+    const parentId = body.parentId as string | null;
 
     const result = await setItemParent(
-      parseInt(id),
+      id,
       parentId,
       session.user.id
     );

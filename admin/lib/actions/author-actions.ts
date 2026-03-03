@@ -53,7 +53,7 @@ export async function getAuthors(userId?: string, filters?: AuthorFilters): Prom
   return query;
 }
 
-export async function getAuthor(id: number): Promise<Author | undefined> {
+export async function getAuthor(id: string): Promise<Author | undefined> {
   const results = await db
     .select()
     .from(authors)
@@ -98,7 +98,7 @@ export async function createAuthorAction(
 }
 
 export async function updateAuthorAction(
-  id: number,
+  id: string,
   data: Partial<Omit<NewAuthor, "id" | "userId" | "createdAt" | "updatedAt">>,
   userId?: string
 ): Promise<{ success: boolean; data?: Author; error?: string }> {
@@ -141,7 +141,7 @@ export async function updateAuthorAction(
 }
 
 export async function deleteAuthorAction(
-  id: number,
+  id: string,
   userId?: string
 ): Promise<{ success: boolean; error?: string }> {
   try {
@@ -188,7 +188,7 @@ export async function createAuthorAndRedirect(
   return result;
 }
 
-export async function deleteAuthorAndRedirect(id: number, userId?: string) {
+export async function deleteAuthorAndRedirect(id: string, userId?: string) {
   const result = await deleteAuthorAction(id, userId);
   if (result.success) {
     redirect("/authors");
@@ -196,7 +196,7 @@ export async function deleteAuthorAndRedirect(id: number, userId?: string) {
   return result;
 }
 
-export async function deleteAuthorFormAction(id: number): Promise<void> {
+export async function deleteAuthorFormAction(id: string): Promise<void> {
   await deleteAuthorAction(id);
   revalidatePath("/authors");
 }
@@ -204,7 +204,7 @@ export async function deleteAuthorFormAction(id: number): Promise<void> {
 export async function searchAuthors(
   query: string,
   limit: number = 20
-): Promise<{ id: number; name: string }[]> {
+): Promise<{ id: string; name: string }[]> {
   await ensureSchemaInitialized();
 
   const session = await getSession();

@@ -10,7 +10,7 @@ export interface CursorValue {
   /** The value of the sort column (updatedAt timestamp or name/title string) */
   sortValue: string | number;
   /** The row ID for tie-breaking when sort values are equal */
-  id: number;
+  id: string;
 }
 
 export interface PaginationParams {
@@ -62,7 +62,7 @@ export function decodeCursor(cursor: string): CursorValue | null {
       parsed !== null &&
       "sortValue" in parsed &&
       "id" in parsed &&
-      typeof parsed.id === "number"
+      typeof parsed.id === "string"
     ) {
       return parsed as CursorValue;
     }
@@ -81,7 +81,7 @@ export function decodeCursor(cursor: string): CursorValue | null {
  * @param getSortValue - Function to extract the sort value from an item
  * @param hasCursor - Whether a cursor was provided (to determine hasPrevPage on first page)
  */
-export function buildPaginatedResponse<T extends { id: number }>(
+export function buildPaginatedResponse<T extends { id: string }>(
   data: T[],
   limit: number,
   direction: "next" | "prev",
