@@ -14,9 +14,9 @@ import OpenAPIRuntime
 public struct ImageReference: Sendable, Identifiable {
     public let id: UUID
     public let url: String
-    public let fileId: Int?
+    public let fileId: String?
 
-    public init(id: UUID = UUID(), url: String, fileId: Int?) {
+    public init(id: UUID = UUID(), url: String, fileId: String?) {
         self.id = id
         self.url = url
         self.fileId = fileId
@@ -36,13 +36,13 @@ public struct ImageReference: Sendable, Identifiable {
 /// A position waiting to be saved with an item
 public struct PendingPosition: Identifiable, Sendable {
     public let id: UUID
-    public let positionSchemaId: Int
+    public let positionSchemaId: String
     public let schema: PositionSchema
     public let data: [String: AnyCodable]
 
     public init(
         id: UUID = UUID(),
-        positionSchemaId: Int,
+        positionSchemaId: String,
         schema: PositionSchema,
         data: [String: AnyCodable]
     ) {

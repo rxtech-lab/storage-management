@@ -1,11 +1,14 @@
 import { sqliteTable, text, integer } from "drizzle-orm/sqlite-core";
 import { relations } from "drizzle-orm";
+import { nanoid } from "nanoid";
 import { items } from "./items";
 
 export const stockHistories = sqliteTable("stock_histories", {
-  id: integer("id").primaryKey({ autoIncrement: true }),
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => nanoid()),
   userId: text("user_id").notNull(),
-  itemId: integer("item_id")
+  itemId: text("item_id")
     .notNull()
     .references(() => items.id, { onDelete: "cascade" }),
   quantity: integer("quantity").notNull(),

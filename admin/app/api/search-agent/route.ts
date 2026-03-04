@@ -35,17 +35,17 @@ Be concise and helpful. After showing results, briefly summarize what was found.
 const displayItemsSchema = z.object({
   search: z.string().optional().describe("Search query for title/description"),
   categoryId: z
-    .number()
+    .string()
     .optional()
     .describe(
       "Filter by category ID (use get_categories first to find the ID)",
     ),
   locationId: z
-    .number()
+    .string()
     .optional()
     .describe("Filter by location ID (use get_locations first to find the ID)"),
   authorId: z
-    .number()
+    .string()
     .optional()
     .describe("Filter by author ID (use get_authors first to find the ID)"),
   limit: z
@@ -138,7 +138,7 @@ export async function POST(request: Request) {
             ).length;
 
             // Count items per category
-            const categoryCount = new Map<number, number>();
+            const categoryCount = new Map<string, number>();
             for (const item of allItems) {
               if (item.categoryId) {
                 categoryCount.set(

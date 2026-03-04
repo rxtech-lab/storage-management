@@ -24,5 +24,5 @@ public protocol PositionSchemaListViewModelProtocol: AnyObject, Observable {
     func loadMoreSchemas() async
     func refreshSchemas() async
     @discardableResult
-    func deleteSchema(_ schema: PositionSchema) async throws -> Int
+    func deleteSchema(_ schema: PositionSchema) async throws -> String
 }

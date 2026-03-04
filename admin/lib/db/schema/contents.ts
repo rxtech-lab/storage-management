@@ -1,5 +1,6 @@
 import { sqliteTable, text, integer } from "drizzle-orm/sqlite-core";
 import { relations } from "drizzle-orm";
+import { nanoid } from "nanoid";
 import { items } from "./items";
 
 // Content JSON structure types
@@ -23,8 +24,10 @@ export interface VideoContentData extends ImageContentData {
 export type ContentData = FileContentData | ImageContentData | VideoContentData;
 
 export const contents = sqliteTable("contents", {
-  id: integer("id").primaryKey({ autoIncrement: true }),
-  itemId: integer("item_id")
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => nanoid()),
+  itemId: text("item_id")
     .notNull()
     .references(() => items.id, { onDelete: "cascade" }),
   type: text("type", { enum: ["file", "image", "video"] }).notNull(),

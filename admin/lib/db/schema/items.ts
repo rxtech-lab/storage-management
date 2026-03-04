@@ -1,19 +1,22 @@
 import { sqliteTable, text, integer, real } from "drizzle-orm/sqlite-core";
 import { relations } from "drizzle-orm";
+import { nanoid } from "nanoid";
 import { categories } from "./categories";
 import { locations } from "./locations";
 import { authors } from "./authors";
 
 export const items = sqliteTable("items", {
-  id: integer("id").primaryKey({ autoIncrement: true }),
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => nanoid()),
   userId: text("user_id").notNull(),
   title: text("title").notNull(),
   description: text("description"),
   originalQrCode: text("original_qr_code"),
-  categoryId: integer("category_id").references(() => categories.id),
-  locationId: integer("location_id").references(() => locations.id),
-  authorId: integer("author_id").references(() => authors.id),
-  parentId: integer("parent_id"),
+  categoryId: text("category_id").references(() => categories.id),
+  locationId: text("location_id").references(() => locations.id),
+  authorId: text("author_id").references(() => authors.id),
+  parentId: text("parent_id"),
   price: real("price"),
   currency: text("currency").default("USD"),
   visibility: text("visibility", { enum: ["publicAccess", "privateAccess"] })

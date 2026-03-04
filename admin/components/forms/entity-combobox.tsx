@@ -23,11 +23,11 @@ export interface EntityComboboxProps<T> {
   itemRenderer: (item: T) => React.ReactNode;
 
   // 4. onSelect - callback when item selected (with ID or null)
-  value: number | null;
-  onSelect: (value: number | null) => void;
+  value: string | null;
+  onSelect: (value: string | null) => void;
 
   // 5. defaultValue support via value prop + getItemLabel
-  getItemId: (item: T) => number;
+  getItemId: (item: T) => string;
   getItemLabel: (item: T) => string;
 
   // 6. selectedValueRenderer - custom label for selected value in input (optional)
@@ -49,7 +49,7 @@ export interface EntityComboboxProps<T> {
   // Optional EntitySheet integration
   entitySheetType?: EntityType;
   onEntityCreated?: (entity: {
-    id: number;
+    id: string;
     name?: string;
     title?: string;
   }) => void;
@@ -58,7 +58,7 @@ export interface EntityComboboxProps<T> {
   disablePortal?: boolean;
 }
 
-const NONE_ID = 0;
+const NONE_ID = "";
 
 export function EntityCombobox<T>({
   isSearching,

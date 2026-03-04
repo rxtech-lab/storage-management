@@ -16,10 +16,10 @@ public protocol ItemFormViewModelProtocol: AnyObject, Observable {
     /// Form data
     var title: String { get set }
     var description: String { get set }
-    var selectedCategoryId: Int? { get set }
-    var selectedLocationId: Int? { get set }
-    var selectedAuthorId: Int? { get set }
-    var selectedParentId: Int? { get set }
+    var selectedCategoryId: String? { get set }
+    var selectedLocationId: String? { get set }
+    var selectedAuthorId: String? { get set }
+    var selectedParentId: String? { get set }
     var price: String { get set }
     var visibility: Visibility { get set }
     var existingImages: [ImageReference] { get set }

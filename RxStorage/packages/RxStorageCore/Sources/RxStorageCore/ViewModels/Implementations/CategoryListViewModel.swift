@@ -190,7 +190,7 @@ public final class CategoryListViewModel: CategoryListViewModelProtocol {
     }
 
     @discardableResult
-    public func deleteCategory(_ category: Category) async throws -> Int {
+    public func deleteCategory(_ category: Category) async throws -> String {
         let categoryId = category.id
         try await categoryService.deleteCategory(id: categoryId)
 

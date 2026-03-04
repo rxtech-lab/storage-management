@@ -78,7 +78,7 @@ const icons = {
 };
 
 interface ContentFormProps {
-  itemId: number;
+  itemId: string;
   contents: Content[];
   onUpdate?: () => void;
 }
@@ -116,7 +116,7 @@ export function ContentForm({ itemId, contents, onUpdate }: ContentFormProps) {
   };
 
   const handleUpdateContent = async (
-    contentId: number,
+    contentId: string,
     type: "file" | "image" | "video",
     data: ContentData
   ) => {
@@ -137,7 +137,7 @@ export function ContentForm({ itemId, contents, onUpdate }: ContentFormProps) {
     }
   };
 
-  const handleDeleteContent = async (contentId: number) => {
+  const handleDeleteContent = async (contentId: string) => {
     if (!confirm("Are you sure you want to delete this content?")) return;
 
     setLoading(true);

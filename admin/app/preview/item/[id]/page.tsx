@@ -21,7 +21,7 @@ export async function generateMetadata({
   params,
 }: PreviewPageProps): Promise<Metadata> {
   const { id } = await params;
-  const item = await getItem(parseInt(id));
+  const item = await getItem(id);
 
   if (!item) {
     return { title: "Item Not Found" };
@@ -47,7 +47,6 @@ export async function generateMetadata({
 
 export default async function PreviewPage({ params }: PreviewPageProps) {
   const { id } = await params;
-  const itemId = parseInt(id);
 
   // Redirect to API if client requests JSON
   const headersList = await headers();
@@ -56,7 +55,7 @@ export default async function PreviewPage({ params }: PreviewPageProps) {
     redirect(`/api/v1/items/${id}`);
   }
 
-  const item = await getItem(itemId);
+  const item = await getItem(id);
 
   if (!item) {
     notFound();
@@ -69,12 +68,12 @@ export default async function PreviewPage({ params }: PreviewPageProps) {
     if (!session?.user) {
       // Redirect to login with return URL
       console.log("User not signed in, redirecting to login");
-      redirect(`/login?callbackUrl=/preview/item/${itemId}`);
+      redirect(`/login?callbackUrl=/preview/item/${id}`);
     }
 
     // Check whitelist if user has email. Otherwise, just allow access
     const hasAccess = session.user.email
-      ? await isEmailWhitelisted(itemId, session.user.email)
+      ? await isEmailWhitelisted(id, session.user.email)
       : true;
 
     if (!hasAccess) {
@@ -101,7 +100,7 @@ export default async function PreviewPage({ params }: PreviewPageProps) {
   // Fetch additional data for display
   const [location, contents, signedImagesResult] = await Promise.all([
     item.locationId ? getLocation(item.locationId) : null,
-    getItemContents(itemId),
+    getItemContents(id),
     item.images && item.images.length > 0
       ? signImageUrlsAction(item.images)
       : null,

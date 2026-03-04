@@ -27,19 +27,14 @@ export async function GET(
   }
 
   const { id } = await params;
-  const itemId = parseInt(id);
-
-  if (isNaN(itemId)) {
-    return NextResponse.json({ error: "Invalid item ID" }, { status: 400 });
-  }
 
   // Verify user owns the item
-  const item = await getItem(itemId);
+  const item = await getItem(id);
   if (!item || item.userId !== session.user.id) {
     return NextResponse.json({ error: "Item not found" }, { status: 404 });
   }
 
-  const history = await getItemStockHistory(itemId);
+  const history = await getItemStockHistory(id);
   return NextResponse.json(history);
 }
 
@@ -65,14 +60,9 @@ export async function POST(
   }
 
   const { id } = await params;
-  const itemId = parseInt(id);
-
-  if (isNaN(itemId)) {
-    return NextResponse.json({ error: "Invalid item ID" }, { status: 400 });
-  }
 
   // Verify user owns the item
-  const item = await getItem(itemId);
+  const item = await getItem(id);
   if (!item || item.userId !== session.user.id) {
     return NextResponse.json({ error: "Item not found" }, { status: 404 });
   }
@@ -88,7 +78,7 @@ export async function POST(
   }
 
   const result = await createStockHistoryAction(
-    { itemId, quantity, note: note ?? null },
+    { itemId: id, quantity, note: note ?? null },
     session.user.id
   );
 

@@ -9,7 +9,7 @@ import type { ItemWithRelations } from "@/lib/actions/item-actions";
 
 interface ItemChildrenProps {
   children: ItemWithRelations[];
-  parentId: number;
+  parentId: string;
 }
 
 export function ItemChildren({ children, parentId }: ItemChildrenProps) {

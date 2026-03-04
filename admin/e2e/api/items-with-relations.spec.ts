@@ -1,11 +1,11 @@
 import { test, expect } from "@playwright/test";
 
 test.describe.serial("Items API with Relations", () => {
-  let categoryId: number;
-  let locationId: number;
-  let authorId: number;
-  let parentItemId: number;
-  let childItemId: number;
+  let categoryId: string;
+  let locationId: string;
+  let authorId: string;
+  let parentItemId: string;
+  let childItemId: string;
 
   test("Setup - create related entities", async ({ request }) => {
     // Create category

@@ -30,7 +30,7 @@ public final class CategoryDetailViewModel {
 
     // MARK: - Public Methods
 
-    public func fetchCategory(id: Int) async {
+    public func fetchCategory(id: String) async {
         isLoading = true
         error = nil
 

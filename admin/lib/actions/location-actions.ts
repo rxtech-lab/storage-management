@@ -47,7 +47,7 @@ export async function getLocations(userId?: string, filters?: LocationFilters): 
   return query;
 }
 
-export async function getLocation(id: number): Promise<Location | undefined> {
+export async function getLocation(id: string): Promise<Location | undefined> {
   await ensureSchemaInitialized();
   const results = await db
     .select()
@@ -93,7 +93,7 @@ export async function createLocationAction(
 }
 
 export async function updateLocationAction(
-  id: number,
+  id: string,
   data: Partial<Omit<NewLocation, "id" | "userId" | "createdAt" | "updatedAt">>,
   userId?: string
 ): Promise<{ success: boolean; data?: Location; error?: string }> {
@@ -136,7 +136,7 @@ export async function updateLocationAction(
 }
 
 export async function deleteLocationAction(
-  id: number,
+  id: string,
   userId?: string
 ): Promise<{ success: boolean; error?: string }> {
   try {
@@ -183,7 +183,7 @@ export async function createLocationAndRedirect(
   return result;
 }
 
-export async function deleteLocationAndRedirect(id: number, userId?: string) {
+export async function deleteLocationAndRedirect(id: string, userId?: string) {
   const result = await deleteLocationAction(id, userId);
   if (result.success) {
     redirect("/locations");
@@ -191,7 +191,7 @@ export async function deleteLocationAndRedirect(id: number, userId?: string) {
   return result;
 }
 
-export async function deleteLocationFormAction(id: number): Promise<void> {
+export async function deleteLocationFormAction(id: string): Promise<void> {
   await deleteLocationAction(id);
   revalidatePath("/locations");
 }
@@ -199,7 +199,7 @@ export async function deleteLocationFormAction(id: number): Promise<void> {
 export async function searchLocations(
   query: string,
   limit: number = 20
-): Promise<{ id: number; title: string }[]> {
+): Promise<{ id: string; title: string }[]> {
   await ensureSchemaInitialized();
 
   const session = await getSession();

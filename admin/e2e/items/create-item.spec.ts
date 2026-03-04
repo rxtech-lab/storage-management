@@ -35,10 +35,10 @@ test.describe('Item Creation', () => {
     await page.getByTestId('item-submit-button').click();
 
     // Wait for redirect to item detail page
-    await page.waitForURL(/\/items\/\d+/);
+    await page.waitForURL(/\/items\/[^/]+$/);
 
     // Verify we're on the item detail page
-    expect(page.url()).toMatch(/\/items\/\d+$/);
+    expect(page.url()).toMatch(/\/items\/[^/]+$/);
 
     // Verify item title appears on detail page
     await expect(page.locator('h1')).toContainText('Test Item');

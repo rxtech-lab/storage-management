@@ -1,10 +1,13 @@
 import { sqliteTable, text, integer } from "drizzle-orm/sqlite-core";
 import { relations } from "drizzle-orm";
+import { nanoid } from "nanoid";
 import { items } from "./items";
 
 export const itemWhitelists = sqliteTable("item_whitelists", {
-  id: integer("id").primaryKey({ autoIncrement: true }),
-  itemId: integer("item_id")
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => nanoid()),
+  itemId: text("item_id")
     .notNull()
     .references(() => items.id, { onDelete: "cascade" }),
   email: text("email").notNull(),

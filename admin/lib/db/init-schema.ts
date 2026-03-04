@@ -28,8 +28,28 @@ export async function initializeSchema(client: Client) {
       .filter((s) => s.length > 0)
       // Replace CREATE TABLE with CREATE TABLE IF NOT EXISTS
       .map((s) => s.replace(/CREATE TABLE `/g, "CREATE TABLE IF NOT EXISTS `"))
-      // Skip ALTER TABLE statements for in-memory DB (columns already exist in latest schema)
-      .filter((s) => !s.startsWith("ALTER TABLE"));
+      // E2E in-memory DB must match current string ID schema even if migrations are older.
+      .map((s) =>
+        s
+          .replace(
+            /`id`\s+integer\s+PRIMARY KEY AUTOINCREMENT NOT NULL/g,
+            "`id` text PRIMARY KEY NOT NULL"
+          )
+          .replace(/(`(?:[a-z_]*_id)`)\s+integer/g, "$1 text")
+          .replace(
+            /`visibility`\s+text\s+DEFAULT 'private' NOT NULL/g,
+            "`visibility` text DEFAULT 'privateAccess' NOT NULL"
+          )
+      )
+      // Skip migration-rewrite/data-copy statements for fresh in-memory DB bootstrapping.
+      .filter(
+        (s) =>
+          !s.startsWith("ALTER TABLE") &&
+          !s.startsWith("PRAGMA ") &&
+          !s.startsWith("INSERT INTO ") &&
+          !s.startsWith("DROP TABLE ") &&
+          !s.includes("__new_")
+      );
 
     for (const statement of statements) {
       try {

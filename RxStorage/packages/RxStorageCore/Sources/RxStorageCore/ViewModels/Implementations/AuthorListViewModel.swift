@@ -190,7 +190,7 @@ public final class AuthorListViewModel: AuthorListViewModelProtocol {
     }
 
     @discardableResult
-    public func deleteAuthor(_ author: Author) async throws -> Int {
+    public func deleteAuthor(_ author: Author) async throws -> String {
         let authorId = author.id
         try await authorService.deleteAuthor(id: authorId)
 

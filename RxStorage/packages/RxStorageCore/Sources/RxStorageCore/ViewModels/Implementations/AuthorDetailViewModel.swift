@@ -30,7 +30,7 @@ public final class AuthorDetailViewModel {
 
     // MARK: - Public Methods
 
-    public func fetchAuthor(id: Int) async {
+    public func fetchAuthor(id: String) async {
         isLoading = true
         error = nil
 

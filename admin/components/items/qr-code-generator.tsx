@@ -15,7 +15,7 @@ import { QrCode, Download, Copy } from "lucide-react";
 import { toast } from "sonner";
 
 interface QRCodeGeneratorProps {
-  itemId: number;
+  itemId: string;
   itemTitle: string;
 }
 

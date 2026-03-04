@@ -31,8 +31,7 @@ interface RouteParams {
  */
 export async function GET(request: NextRequest, { params }: RouteParams) {
   const { id } = await params;
-  const itemId = parseInt(id);
-  const item = await getItem(itemId);
+  const item = await getItem(id);
 
   if (!item) {
     return NextResponse.json({ error: "Item not found" }, { status: 404 });
@@ -40,7 +39,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
   // Public items can be accessed without authentication
   if (item.visibility === "publicAccess") {
-    return buildItemResponse(item, itemId, null);
+    return buildItemResponse(item, id, null);
   }
 
   // Private items require authentication
@@ -53,7 +52,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
   if (item.userId !== session.user.id) {
     // Check if user's email is whitelisted for this item
     if (session.user.email) {
-      const whitelisted = await isEmailWhitelisted(itemId, session.user.email);
+      const whitelisted = await isEmailWhitelisted(id, session.user.email);
       if (!whitelisted) {
         return NextResponse.json(
           { error: "Permission denied" },
@@ -66,12 +65,12 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     }
   }
 
-  return buildItemResponse(item, itemId, session.user.id);
+  return buildItemResponse(item, id, session.user.id);
 }
 
 async function buildItemResponse(
   item: NonNullable<Awaited<ReturnType<typeof getItem>>>,
-  itemId: number,
+  itemId: string,
   userId: string | null,
 ) {
   const previewUrl = `${process.env.NEXT_PUBLIC_URL}/preview/item?id=${item.id}`;
@@ -147,7 +146,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 
   try {
     const body = await request.json();
-    const result = await updateItemAction(parseInt(id), body, session.user.id);
+    const result = await updateItemAction(id, body, session.user.id);
 
     if (result.success && result.data) {
       const previewUrl = `${process.env.NEXT_PUBLIC_URL}/preview/item?id=${result.data.id}`;
@@ -192,7 +191,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
   }
 
   const { id } = await params;
-  const result = await deleteItemAction(parseInt(id), session.user.id);
+  const result = await deleteItemAction(id, session.user.id);
 
   if (result.success) {
     return new NextResponse(null, { status: 204 });

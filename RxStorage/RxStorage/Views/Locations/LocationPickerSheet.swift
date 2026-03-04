@@ -10,7 +10,7 @@ import SwiftUI
 
 /// Searchable location picker sheet
 struct LocationPickerSheet: View {
-    let selectedId: Int?
+    let selectedId: String?
     let onSelect: (Location?) -> Void
 
     @State private var viewModel = LocationPickerViewModel()

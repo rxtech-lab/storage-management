@@ -1,13 +1,13 @@
 /**
  * Parse file IDs from images array
- * Images can be either "file:123" format or legacy URLs
+ * Images can be either "file:abc123" format or legacy URLs
  */
-export function parseFileIds(images: string[]): number[] {
-  const fileIds: number[] = [];
+export function parseFileIds(images: string[]): string[] {
+  const fileIds: string[] = [];
   for (const image of images) {
     if (image.startsWith("file:")) {
-      const id = parseInt(image.substring(5), 10);
-      if (!isNaN(id)) {
+      const id = image.substring(5);
+      if (id) {
         fileIds.push(id);
       }
     }

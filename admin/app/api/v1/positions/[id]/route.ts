@@ -25,13 +25,8 @@ export async function GET(
   }
 
   const { id } = await params;
-  const positionId = parseInt(id);
 
-  if (isNaN(positionId)) {
-    return NextResponse.json({ error: "Invalid position ID" }, { status: 400 });
-  }
-
-  const position = await getPosition(positionId);
+  const position = await getPosition(id);
   if (!position || position.userId !== session.user.id) {
     return NextResponse.json({ error: "Position not found" }, { status: 404 });
   }
@@ -60,13 +55,8 @@ export async function DELETE(
   }
 
   const { id } = await params;
-  const positionId = parseInt(id);
 
-  if (isNaN(positionId)) {
-    return NextResponse.json({ error: "Invalid position ID" }, { status: 400 });
-  }
-
-  const result = await deletePositionAction(positionId, session.user.id);
+  const result = await deletePositionAction(id, session.user.id);
 
   if (!result.success) {
     return NextResponse.json(

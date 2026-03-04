@@ -20,7 +20,7 @@ export const AuthorUpdateSchema = z.object({
 
 // Explicit response schema for OpenAPI (properly exports to OpenAPI spec)
 export const AuthorResponseSchema = z.object({
-  id: z.number().int().describe("Unique author identifier"),
+  id: z.string().describe("Unique author identifier"),
   userId: z.string().describe("Owner user ID"),
   name: z.string().describe("Author name"),
   bio: z.string().nullable().describe("Author biography"),

@@ -10,42 +10,42 @@ import SwiftUI
 
 public enum AppEvent: Sendable {
     // Item events
-    case itemCreated(id: Int)
-    case itemUpdated(id: Int)
-    case itemDeleted(id: Int)
+    case itemCreated(id: String)
+    case itemUpdated(id: String)
+    case itemDeleted(id: String)
 
     // Category events
-    case categoryCreated(id: Int)
-    case categoryUpdated(id: Int)
-    case categoryDeleted(id: Int)
+    case categoryCreated(id: String)
+    case categoryUpdated(id: String)
+    case categoryDeleted(id: String)
 
     // Location events
-    case locationCreated(id: Int)
-    case locationUpdated(id: Int)
-    case locationDeleted(id: Int)
+    case locationCreated(id: String)
+    case locationUpdated(id: String)
+    case locationDeleted(id: String)
 
     // Author events
-    case authorCreated(id: Int)
-    case authorUpdated(id: Int)
-    case authorDeleted(id: Int)
+    case authorCreated(id: String)
+    case authorUpdated(id: String)
+    case authorDeleted(id: String)
 
     // Position schema events
-    case positionSchemaCreated(id: Int)
-    case positionSchemaUpdated(id: Int)
-    case positionSchemaDeleted(id: Int)
+    case positionSchemaCreated(id: String)
+    case positionSchemaUpdated(id: String)
+    case positionSchemaDeleted(id: String)
 
     // Content events (tied to item)
-    case contentCreated(itemId: Int, contentId: Int)
-    case contentUpdated(itemId: Int, contentId: Int)
-    case contentDeleted(itemId: Int, contentId: Int)
+    case contentCreated(itemId: String, contentId: String)
+    case contentUpdated(itemId: String, contentId: String)
+    case contentDeleted(itemId: String, contentId: String)
 
     // Child relationship events
-    case childAdded(parentId: Int, childId: Int)
-    case childRemoved(parentId: Int, childId: Int)
+    case childAdded(parentId: String, childId: String)
+    case childRemoved(parentId: String, childId: String)
 
     // Position events (tied to item)
-    case positionCreated(itemId: Int, positionId: Int)
-    case positionDeleted(itemId: Int, positionId: Int)
+    case positionCreated(itemId: String, positionId: String)
+    case positionDeleted(itemId: String, positionId: String)
 
     /// Error event
     case error(message: String)

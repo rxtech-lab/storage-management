@@ -13,10 +13,5 @@ export default async function PreviewItemPage({
     notFound();
   }
 
-  const itemId = parseInt(id);
-  if (isNaN(itemId)) {
-    notFound();
-  }
-
-  redirect(`/preview/item/${itemId}`);
+  redirect(`/preview/item/${id}`);
 }

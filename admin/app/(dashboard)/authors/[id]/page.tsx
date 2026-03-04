@@ -8,7 +8,7 @@ interface EditAuthorPageProps {
 
 export default async function EditAuthorPage({ params }: EditAuthorPageProps) {
   const { id } = await params;
-  const author = await getAuthor(parseInt(id));
+  const author = await getAuthor(id);
 
   if (!author) {
     notFound();

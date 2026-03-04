@@ -13,27 +13,27 @@ struct AddChildData: Sendable {
     let itemId: String
     let title: String
     let description: String?
-    let categoryId: Int?
-    let locationId: Int?
-    let authorId: Int?
+    let categoryId: String?
+    let locationId: String?
+    let authorId: String?
     let price: Double?
     let visibility: String
 }
 
 /// Sheet for searching and adding child items
 struct AddChildSheet: View {
-    let parentItemId: Int
-    let existingChildIds: Set<Int>
+    let parentItemId: String
+    let existingChildIds: Set<String>
     let onChildSelected: (AddChildData) -> Void
     @Binding var isAdding: Bool
 
     @State private var viewModel: ChildItemSearchViewModel
-    @State private var addedChildIds: Set<Int> = []
+    @State private var addedChildIds: Set<String> = []
     @Environment(\.dismiss) private var dismiss
 
     init(
-        parentItemId: Int,
-        existingChildIds: Set<Int>,
+        parentItemId: String,
+        existingChildIds: Set<String>,
         isAdding: Binding<Bool>,
         onChildSelected: @escaping (AddChildData) -> Void
     ) {
@@ -109,7 +109,7 @@ struct AddChildSheet: View {
             let isAdded = addedChildIds.contains(item.id)
             Button {
                 let childData = AddChildData(
-                    itemId: String(item.id),
+                    itemId: item.id,
                     title: item.title,
                     description: item.description,
                     categoryId: item.categoryId,
@@ -145,8 +145,8 @@ struct AddChildSheet: View {
 #Preview {
     NavigationStack {
         AddChildSheet(
-            parentItemId: 1,
-            existingChildIds: [2, 3],
+            parentItemId: "1",
+            existingChildIds: ["2", "3"],
             isAdding: .constant(false),
             onChildSelected: { _ in }
         )

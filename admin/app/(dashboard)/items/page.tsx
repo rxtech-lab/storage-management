@@ -36,15 +36,9 @@ export default function ItemsPage() {
       setLoading(true);
       try {
         const filters = {
-          categoryId: searchParams.get("categoryId")
-            ? parseInt(searchParams.get("categoryId")!)
-            : undefined,
-          locationId: searchParams.get("locationId")
-            ? parseInt(searchParams.get("locationId")!)
-            : undefined,
-          authorId: searchParams.get("authorId")
-            ? parseInt(searchParams.get("authorId")!)
-            : undefined,
+          categoryId: searchParams.get("categoryId") || undefined,
+          locationId: searchParams.get("locationId") || undefined,
+          authorId: searchParams.get("authorId") || undefined,
           visibility: searchParams.get("visibility") as
             | "publicAccess"
             | "privateAccess"

@@ -31,13 +31,13 @@ import type { PositionSchema } from "@/lib/db";
 
 export interface PendingPosition {
   tempId: string;
-  positionSchemaId: number;
+  positionSchemaId: string;
   schema: PositionSchema;
   data: Record<string, unknown>;
 }
 
 interface PositionSheetProps {
-  itemId?: number;
+  itemId?: string;
   positionSchemas: PositionSchema[];
   onPositionCreated?: (position: PositionWithSchema) => void;
   onPendingPosition?: (pending: PendingPosition) => void;
@@ -55,7 +55,7 @@ export function PositionSheet({
 }: PositionSheetProps) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [selectedSchemaId, setSelectedSchemaId] = useState<number | null>(null);
+  const [selectedSchemaId, setSelectedSchemaId] = useState<string | null>(null);
   const [schemas, setSchemas] = useState(positionSchemas);
 
   const selectedSchema = schemas.find((s) => s.id === selectedSchemaId);
@@ -139,7 +139,7 @@ export function PositionSheet({
             <Select
               value={selectedSchemaId?.toString() ?? ""}
               onValueChange={(v) =>
-                setSelectedSchemaId(v ? parseInt(v) : null)
+                setSelectedSchemaId(v || null)
               }
             >
               <SelectTrigger>

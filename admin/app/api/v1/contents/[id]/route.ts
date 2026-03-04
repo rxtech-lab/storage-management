@@ -29,13 +29,8 @@ export async function GET(
   }
 
   const { id } = await params;
-  const contentId = parseInt(id);
 
-  if (isNaN(contentId)) {
-    return NextResponse.json({ error: "Invalid content ID" }, { status: 400 });
-  }
-
-  const content = await getContent(contentId);
+  const content = await getContent(id);
   if (!content) {
     return NextResponse.json({ error: "Content not found" }, { status: 404 });
   }
@@ -71,14 +66,9 @@ export async function PUT(
   }
 
   const { id } = await params;
-  const contentId = parseInt(id);
-
-  if (isNaN(contentId)) {
-    return NextResponse.json({ error: "Invalid content ID" }, { status: 400 });
-  }
 
   // Verify content exists and user owns it
-  const content = await getContent(contentId);
+  const content = await getContent(id);
   if (!content) {
     return NextResponse.json({ error: "Content not found" }, { status: 404 });
   }
@@ -98,7 +88,7 @@ export async function PUT(
     );
   }
 
-  const result = await updateContentAction(contentId, { type, data });
+  const result = await updateContentAction(id, { type, data });
 
   if (!result.success) {
     return NextResponse.json({ error: result.error }, { status: 500 });
@@ -128,14 +118,9 @@ export async function DELETE(
   }
 
   const { id } = await params;
-  const contentId = parseInt(id);
-
-  if (isNaN(contentId)) {
-    return NextResponse.json({ error: "Invalid content ID" }, { status: 400 });
-  }
 
   // Verify content exists and user owns it
-  const content = await getContent(contentId);
+  const content = await getContent(id);
   if (!content) {
     return NextResponse.json({ error: "Content not found" }, { status: 404 });
   }
@@ -145,7 +130,7 @@ export async function DELETE(
     return NextResponse.json({ error: "Content not found" }, { status: 404 });
   }
 
-  const result = await deleteContentAction(contentId);
+  const result = await deleteContentAction(id);
 
   if (!result.success) {
     return NextResponse.json({ error: result.error }, { status: 500 });

@@ -1,7 +1,10 @@
 import { sqliteTable, text, integer } from "drizzle-orm/sqlite-core";
+import { nanoid } from "nanoid";
 
 export const accountDeletions = sqliteTable("account_deletions", {
-  id: integer("id").primaryKey({ autoIncrement: true }),
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => nanoid()),
   userId: text("user_id").notNull(),
   userEmail: text("user_email"),
   scheduledAt: integer("scheduled_at", { mode: "timestamp" }).notNull(),

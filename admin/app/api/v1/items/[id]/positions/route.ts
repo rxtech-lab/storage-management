@@ -24,18 +24,13 @@ export async function GET(
   }
 
   const { id } = await params;
-  const itemId = parseInt(id);
-
-  if (isNaN(itemId)) {
-    return NextResponse.json({ error: "Invalid item ID" }, { status: 400 });
-  }
 
   // Verify user owns the item
-  const item = await getItem(itemId);
+  const item = await getItem(id);
   if (!item || item.userId !== session.user.id) {
     return NextResponse.json({ error: "Item not found" }, { status: 404 });
   }
 
-  const positions = await getItemPositions(itemId);
+  const positions = await getItemPositions(id);
   return NextResponse.json(positions);
 }

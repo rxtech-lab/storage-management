@@ -6,7 +6,7 @@ import {
 } from "@/lib/schemas/items";
 
 test.describe.serial("Items API", () => {
-  let createdItemId: number;
+  let createdItemId: string;
 
   test("POST /api/v1/items - should create a new item", async ({ request }) => {
     const response = await request.post("/api/v1/items", {
@@ -225,7 +225,7 @@ test.describe.serial("Items API", () => {
       expect(item.images).toBeInstanceOf(Array);
       for (const image of item.images) {
         expect(typeof image).toBe("object");
-        expect(typeof image.id).toBe("number");
+        expect(typeof image.id).toBe("string");
         expect(typeof image.url).toBe("string");
         // URL should be valid
         expect(() => new URL(image.url)).not.toThrow();

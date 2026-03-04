@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 
 test.describe.serial('Locations API', () => {
-  let createdLocationId: number;
+  let createdLocationId: string;
 
   test('POST /api/v1/locations - should create a new location', async ({ request }) => {
     const response = await request.post('/api/v1/locations', {

@@ -44,8 +44,8 @@ export const ContentUpdateSchema = z.object({
 
 // Explicit response schema for OpenAPI (properly exports to OpenAPI spec)
 export const ContentResponseSchema = z.object({
-  id: z.number().int().describe("Unique content identifier"),
-  itemId: z.number().int().describe("Associated item ID"),
+  id: z.string().describe("Unique content identifier"),
+  itemId: z.string().describe("Associated item ID"),
   type: z.enum(["file", "image", "video"]).describe("Content type: file, image, or video"),
   data: z.record(z.unknown()).describe("Content metadata (JSON)"),
   createdAt: z.coerce.date().describe("Creation timestamp"),

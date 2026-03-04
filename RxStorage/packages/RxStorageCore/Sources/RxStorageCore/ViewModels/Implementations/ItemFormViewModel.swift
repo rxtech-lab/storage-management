@@ -19,10 +19,10 @@ public final class ItemFormViewModel: ItemFormViewModelProtocol {
     // Form fields
     public var title = ""
     public var description = ""
-    public var selectedCategoryId: Int?
-    public var selectedLocationId: Int?
-    public var selectedAuthorId: Int?
-    public var selectedParentId: Int?
+    public var selectedCategoryId: String?
+    public var selectedLocationId: String?
+    public var selectedAuthorId: String?
+    public var selectedParentId: String?
     public var price = ""
     public var visibility: Visibility = .publicAccess
     public var existingImages: [ImageReference] = []
@@ -224,7 +224,7 @@ public final class ItemFormViewModel: ItemFormViewModelProtocol {
     }
 
     /// Delete an existing position (only for edit mode)
-    public func removePosition(id: Int) async throws {
+    public func removePosition(id: String) async throws {
         try await positionService.deletePosition(id: id)
         positions.removeAll { $0.id == id }
     }
@@ -252,7 +252,7 @@ public final class ItemFormViewModel: ItemFormViewModelProtocol {
     }
 
     /// Delete an existing content (only for edit mode)
-    public func removeContent(id: Int) async throws {
+    public func removeContent(id: String) async throws {
         try await contentService.deleteContent(id: id)
         contents.removeAll { $0.id == id }
     }

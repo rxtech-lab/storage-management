@@ -28,7 +28,8 @@ export default defineConfig({
   webServer: {
     command: "bun run dev",
     url: "http://localhost:3000",
-    reuseExistingServer: !process.env.CI,
+    // Never reuse an already-running localhost:3000 server; it may belong to another project.
+    reuseExistingServer: false,
     timeout: 120000,
     env: {
       IS_E2E: "true",

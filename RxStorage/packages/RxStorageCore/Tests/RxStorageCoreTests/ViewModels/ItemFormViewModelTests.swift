@@ -13,15 +13,15 @@ struct ItemFormViewModelTests {
     // MARK: - Test Data
 
     static let testItem = TestHelpers.makeStorageItem(
-        id: 1,
+        id: "1",
         title: "Existing Item",
         description: "Existing Description",
-        categoryId: 5,
-        locationId: 10,
-        authorId: 3,
+        categoryId: "5",
+        locationId: "10",
+        authorId: "3",
         price: 49.99,
         visibility: .publicAccess,
-        images: [TestHelpers.makeSignedImage(id: 1, url: "https://example.com/image.jpg")]
+        images: [TestHelpers.makeSignedImage(id: "1", url: "https://example.com/image.jpg")]
     )
 
     // MARK: - Initialization Tests
@@ -35,9 +35,9 @@ struct ItemFormViewModelTests {
         // Then
         #expect(sut.title == "Existing Item")
         #expect(sut.description == "Existing Description")
-        #expect(sut.selectedCategoryId == 5)
-        #expect(sut.selectedLocationId == 10)
-        #expect(sut.selectedAuthorId == 3)
+        #expect(sut.selectedCategoryId == "5")
+        #expect(sut.selectedLocationId == "10")
+        #expect(sut.selectedAuthorId == "3")
         #expect(sut.price == "49.99")
         #expect(sut.visibility == Visibility.publicAccess)
         #expect(sut.existingImages.count == 1)
@@ -141,7 +141,7 @@ struct ItemFormViewModelTests {
 
         // Then
         #expect(mockItemService.updateItemCalled == true)
-        #expect(mockItemService.lastUpdateItemId == 1)
+        #expect(mockItemService.lastUpdateItemId == "1")
         #expect(mockItemService.lastUpdateItemRequest?.title == "Updated Title")
         #expect(sut.isSubmitting == false)
     }

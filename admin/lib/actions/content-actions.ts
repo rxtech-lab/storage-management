@@ -5,7 +5,7 @@ import { eq } from "drizzle-orm";
 import { db, contents, type Content, type NewContent, type ContentData } from "@/lib/db";
 import { ensureSchemaInitialized } from "@/lib/db/client";
 
-export async function getItemContents(itemId: number): Promise<Content[]> {
+export async function getItemContents(itemId: string): Promise<Content[]> {
   await ensureSchemaInitialized();
   return db
     .select()
@@ -14,7 +14,7 @@ export async function getItemContents(itemId: number): Promise<Content[]> {
     .orderBy(contents.createdAt);
 }
 
-export async function getContent(id: number): Promise<Content | undefined> {
+export async function getContent(id: string): Promise<Content | undefined> {
   const results = await db
     .select()
     .from(contents)
@@ -39,7 +39,7 @@ export async function createContentAction(
 }
 
 export async function updateContentAction(
-  id: number,
+  id: string,
   data: Partial<{ type: "file" | "image" | "video"; data: ContentData }>
 ): Promise<{ success: boolean; data?: Content; error?: string }> {
   try {
@@ -62,7 +62,7 @@ export async function updateContentAction(
 }
 
 export async function deleteContentAction(
-  id: number
+  id: string
 ): Promise<{ success: boolean; error?: string }> {
   try {
     const content = await db

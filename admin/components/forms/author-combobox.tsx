@@ -6,12 +6,12 @@ import { SEARCH_DEBOUNCE_MS } from "@/lib/config";
 import { EntityCombobox } from "./entity-combobox";
 
 interface AuthorComboboxProps {
-  value: number | null;
-  onChange: (value: number | null) => void;
+  value: string | null;
+  onChange: (value: string | null) => void;
   disablePortal?: boolean;
 }
 
-type AuthorOption = { id: number; name: string };
+type AuthorOption = { id: string; name: string };
 
 export function AuthorCombobox({
   value,
@@ -66,7 +66,7 @@ export function AuthorCombobox({
   }, []);
 
   const handleEntityCreated = useCallback(
-    (entity: { id: number; name?: string }) => {
+    (entity: { id: string; name?: string }) => {
       if (entity.name) {
         const newOption: AuthorOption = { id: entity.id, name: entity.name };
         setItems((prev) => [...prev, newOption]);

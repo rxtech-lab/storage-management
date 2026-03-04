@@ -15,10 +15,10 @@ private let logger = Logger(label: "ContentService")
 
 /// Protocol for content service operations
 public protocol ContentServiceProtocol: Sendable {
-    func fetchItemContents(itemId: Int) async throws -> [Content]
-    func createContent(itemId: Int, _ request: ContentRequest) async throws -> Content
-    func updateContent(id: Int, _ request: ContentRequest) async throws -> Content
-    func deleteContent(id: Int) async throws
+    func fetchItemContents(itemId: String) async throws -> [Content]
+    func createContent(itemId: String, _ request: ContentRequest) async throws -> Content
+    func updateContent(id: String, _ request: ContentRequest) async throws -> Content
+    func deleteContent(id: String) async throws
 }
 
 // MARK: - Implementation
@@ -28,12 +28,12 @@ public struct ContentService: ContentServiceProtocol {
     public init() {}
 
     @APICall(.ok)
-    public func fetchItemContents(itemId: Int) async throws -> [Content] {
-        try await StorageAPIClient.shared.client.getItemContents(.init(path: .init(id: String(itemId))))
+    public func fetchItemContents(itemId: String) async throws -> [Content] {
+        try await StorageAPIClient.shared.client.getItemContents(.init(path: .init(id: itemId)))
     }
 
     @APICall(.created)
-    public func createContent(itemId: Int, _ request: ContentRequest) async throws -> Content {
+    public func createContent(itemId: String, _ request: ContentRequest) async throws -> Content {
         let contentData = request.data.toAPIData(for: request.type)
         let apiRequest = NewContentRequest(
             _type: Components.Schemas.ContentInsertSchema._typePayload(rawValue: request.type.rawValue)!,
@@ -41,13 +41,13 @@ public struct ContentService: ContentServiceProtocol {
         )
 
         try await StorageAPIClient.shared.client.createItemContent(.init(
-            path: .init(id: String(itemId)),
+            path: .init(id: itemId),
             body: .json(apiRequest)
         ))
     }
 
     @APICall(.ok)
-    public func updateContent(id: Int, _ request: ContentRequest) async throws -> Content {
+    public func updateContent(id: String, _ request: ContentRequest) async throws -> Content {
         let contentData = request.data.toAPIData(for: request.type)
         let apiRequest = UpdateContentRequest(
             _type: Components.Schemas.ContentUpdateSchema._typePayload(rawValue: request.type.rawValue),
@@ -55,13 +55,13 @@ public struct ContentService: ContentServiceProtocol {
         )
 
         try await StorageAPIClient.shared.client.updateContent(.init(
-            path: .init(id: String(id)),
+            path: .init(id: id),
             body: .json(apiRequest)
         ))
     }
 
-    public func deleteContent(id: Int) async throws {
-        let response = try await StorageAPIClient.shared.client.deleteContent(.init(path: .init(id: String(id))))
+    public func deleteContent(id: String) async throws {
+        let response = try await StorageAPIClient.shared.client.deleteContent(.init(path: .init(id: id)))
 
         switch response {
         case .ok:

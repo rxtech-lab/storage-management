@@ -15,9 +15,8 @@ export default async function ItemDetailPage({
   params,
 }: ItemDetailPageProps) {
   const { id } = await params;
-  const itemId = parseInt(id);
 
-  const item = await getItem(itemId);
+  const item = await getItem(id);
 
   if (!item) {
     notFound();
@@ -33,12 +32,12 @@ export default async function ItemDetailPage({
     quantity,
   ] = await Promise.all([
     getPositionSchemas(),
-    getItemPositions(itemId),
-    getItemContents(itemId),
-    getItemWhitelist(itemId),
-    getItemChildren(itemId),
-    getItemStockHistory(itemId),
-    getItemQuantity(itemId),
+    getItemPositions(id),
+    getItemContents(id),
+    getItemWhitelist(id),
+    getItemChildren(id),
+    getItemStockHistory(id),
+    getItemQuantity(id),
   ]);
 
   return (

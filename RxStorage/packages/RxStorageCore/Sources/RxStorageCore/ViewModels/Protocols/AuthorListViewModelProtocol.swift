@@ -24,5 +24,5 @@ public protocol AuthorListViewModelProtocol: AnyObject, Observable {
     func loadMoreAuthors() async
     func refreshAuthors() async
     @discardableResult
-    func deleteAuthor(_ author: Author) async throws -> Int
+    func deleteAuthor(_ author: Author) async throws -> String
 }

@@ -47,7 +47,7 @@ export async function getPositionSchemas(userId?: string, filters?: PositionSche
   return query;
 }
 
-export async function getPositionSchema(id: number): Promise<PositionSchema | undefined> {
+export async function getPositionSchema(id: string): Promise<PositionSchema | undefined> {
   const results = await db
     .select()
     .from(positionSchemas)
@@ -92,7 +92,7 @@ export async function createPositionSchemaAction(
 }
 
 export async function updatePositionSchemaAction(
-  id: number,
+  id: string,
   data: Partial<Omit<NewPositionSchema, "id" | "userId" | "createdAt" | "updatedAt">>,
   userId?: string
 ): Promise<{ success: boolean; data?: PositionSchema; error?: string }> {
@@ -135,7 +135,7 @@ export async function updatePositionSchemaAction(
 }
 
 export async function deletePositionSchemaAction(
-  id: number,
+  id: string,
   userId?: string
 ): Promise<{ success: boolean; error?: string }> {
   try {
@@ -182,7 +182,7 @@ export async function createPositionSchemaAndRedirect(
   return result;
 }
 
-export async function deletePositionSchemaAndRedirect(id: number, userId?: string) {
+export async function deletePositionSchemaAndRedirect(id: string, userId?: string) {
   const result = await deletePositionSchemaAction(id, userId);
   if (result.success) {
     redirect("/position-schemas");
@@ -190,7 +190,7 @@ export async function deletePositionSchemaAndRedirect(id: number, userId?: strin
   return result;
 }
 
-export async function deletePositionSchemaFormAction(id: number): Promise<void> {
+export async function deletePositionSchemaFormAction(id: string): Promise<void> {
   await deletePositionSchemaAction(id);
   revalidatePath("/position-schemas");
 }

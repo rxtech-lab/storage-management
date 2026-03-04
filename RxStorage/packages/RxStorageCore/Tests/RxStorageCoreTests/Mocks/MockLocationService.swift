@@ -28,11 +28,11 @@ public final class MockLocationService: LocationServiceProtocol {
     public var updateLocationCalled = false
     public var deleteLocationCalled = false
 
-    public var lastFetchLocationId: Int?
+    public var lastFetchLocationId: String?
     public var lastCreateLocationRequest: NewLocationRequest?
-    public var lastUpdateLocationId: Int?
+    public var lastUpdateLocationId: String?
     public var lastUpdateLocationRequest: UpdateLocationRequest?
-    public var lastDeleteLocationId: Int?
+    public var lastDeleteLocationId: String?
 
     // MARK: - Initialization
 
@@ -68,7 +68,7 @@ public final class MockLocationService: LocationServiceProtocol {
         )
     }
 
-    public func fetchLocation(id: Int) async throws -> Location {
+    public func fetchLocation(id: String) async throws -> Location {
         fetchLocationCalled = true
         lastFetchLocationId = id
 
@@ -100,7 +100,7 @@ public final class MockLocationService: LocationServiceProtocol {
         throw APIError.serverError("Not configured")
     }
 
-    public func updateLocation(id: Int, _ request: UpdateLocationRequest) async throws -> Location {
+    public func updateLocation(id: String, _ request: UpdateLocationRequest) async throws -> Location {
         updateLocationCalled = true
         lastUpdateLocationId = id
         lastUpdateLocationRequest = request
@@ -117,7 +117,7 @@ public final class MockLocationService: LocationServiceProtocol {
         throw APIError.serverError("Not configured")
     }
 
-    public func deleteLocation(id: Int) async throws {
+    public func deleteLocation(id: String) async throws {
         deleteLocationCalled = true
         lastDeleteLocationId = id
 

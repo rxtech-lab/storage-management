@@ -43,7 +43,7 @@ private extension Color {
 
 /// Item detail view
 struct ItemDetailView: View {
-    let itemId: Int
+    let itemId: String
     let isViewOnly: Bool
 
     @State private var viewModel = ItemDetailViewModel()
@@ -72,7 +72,7 @@ struct ItemDetailView: View {
     @State private var showingStockDetailSheet = false
     private let imageHeight: CGFloat = 400
 
-    init(itemId: Int, isViewOnly: Bool = false) {
+    init(itemId: String, isViewOnly: Bool = false) {
         self.itemId = itemId
         self.isViewOnly = isViewOnly
     }
@@ -154,9 +154,7 @@ struct ItemDetailView: View {
                             existingChildIds: Set(viewModel.children.map { $0.id }),
                             isAdding: $isAddingChild,
                             onChildSelected: { childData in
-                                if let childId = Int(childData.itemId) {
-                                    Task { await addChild(childId) }
-                                }
+                                Task { await addChild(childData.itemId) }
                             }
                         )
                     }
@@ -578,7 +576,7 @@ struct ItemDetailView: View {
 
     // MARK: - Child Management
 
-    private func addChild(_ childId: Int) async {
+    private func addChild(_ childId: String) async {
         isAddingChild = true
         defer { isAddingChild = false }
         do {
@@ -589,7 +587,7 @@ struct ItemDetailView: View {
         }
     }
 
-    private func removeChild(_ childId: Int) async {
+    private func removeChild(_ childId: String) async {
         do {
             let (parentId, childId) = try await viewModel.removeChildById(childId)
             eventViewModel.emit(.childRemoved(parentId: parentId, childId: childId))
@@ -760,7 +758,7 @@ struct ItemDetailView: View {
         }
     }
 
-    private func deleteContent(_ id: Int) async {
+    private func deleteContent(_ id: String) async {
         do {
             let (itemId, contentId) = try await viewModel.deleteContent(id: id)
             eventViewModel.emit(.contentDeleted(itemId: itemId, contentId: contentId))
@@ -769,7 +767,7 @@ struct ItemDetailView: View {
         }
     }
 
-    private func updateContent(_ id: Int, type: ContentType, data: [String: AnyCodable]) async {
+    private func updateContent(_ id: String, type: ContentType, data: [String: AnyCodable]) async {
         do {
             try await viewModel.updateContent(id: id, type: type, formData: data)
             await viewModel.refresh()
@@ -896,7 +894,7 @@ struct StockDetailSheet: View {
             }
     }
 
-    private func deleteStockEntry(_ id: Int) async {
+    private func deleteStockEntry(_ id: String) async {
         do {
             try await viewModel.deleteStockEntry(id: id)
         } catch {
@@ -964,12 +962,12 @@ struct StockEntrySheet: View {
 
 #Preview("Full Mode") {
     NavigationStack {
-        ItemDetailView(itemId: 1)
+        ItemDetailView(itemId: "1")
     }
 }
 
 #Preview("View Only Mode") {
     NavigationStack {
-        ItemDetailView(itemId: 1, isViewOnly: true)
+        ItemDetailView(itemId: "1", isViewOnly: true)
     }
 }

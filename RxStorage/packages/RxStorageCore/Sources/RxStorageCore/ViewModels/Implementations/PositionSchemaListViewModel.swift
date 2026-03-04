@@ -190,7 +190,7 @@ public final class PositionSchemaListViewModel: PositionSchemaListViewModelProto
     }
 
     @discardableResult
-    public func deleteSchema(_ schema: PositionSchema) async throws -> Int {
+    public func deleteSchema(_ schema: PositionSchema) async throws -> String {
         let schemaId = schema.id
         try await schemaService.deletePositionSchema(id: schemaId)
 

@@ -20,7 +20,7 @@ export const PositionSchemaUpdateSchema = z.object({
 
 // Explicit response schema for OpenAPI (properly exports to OpenAPI spec)
 export const PositionSchemaResponseSchema = z.object({
-  id: z.number().int().describe("Unique position schema identifier"),
+  id: z.string().describe("Unique position schema identifier"),
   userId: z.string().describe("Owner user ID"),
   name: z.string().describe("Schema name"),
   schema: z.record(z.unknown()).describe("JSON Schema definition"),
