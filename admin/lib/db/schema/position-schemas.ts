@@ -1,7 +1,10 @@
 import { sqliteTable, text, integer } from "drizzle-orm/sqlite-core";
+import { nanoid } from "nanoid";
 
 export const positionSchemas = sqliteTable("position_schemas", {
-  id: integer("id").primaryKey({ autoIncrement: true }),
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => nanoid()),
   userId: text("user_id").notNull(),
   name: text("name").notNull(),
   schema: text("schema", { mode: "json" }).notNull().$type<object>(),

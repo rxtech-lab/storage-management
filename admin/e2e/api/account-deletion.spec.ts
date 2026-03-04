@@ -6,9 +6,9 @@ test.describe.serial("Account Deletion API", () => {
   const headers = { "X-Test-User-Id": TEST_USER_ID };
 
   // First create some data to delete
-  let createdCategoryId: number;
-  let createdLocationId: number;
-  let createdItemId: number;
+  let createdCategoryId: string;
+  let createdLocationId: string;
+  let createdItemId: string;
 
   test("Setup: Create test data", async ({ request }) => {
     // Create a category

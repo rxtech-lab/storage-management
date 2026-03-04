@@ -12,7 +12,7 @@ interface EditPositionSchemaPageProps {
 
 export default async function EditPositionSchemaPage({ params }: EditPositionSchemaPageProps) {
   const { id } = await params;
-  const positionSchema = await getPositionSchema(parseInt(id));
+  const positionSchema = await getPositionSchema(id);
 
   if (!positionSchema) {
     notFound();

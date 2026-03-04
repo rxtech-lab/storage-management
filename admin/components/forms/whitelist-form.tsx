@@ -16,7 +16,7 @@ import {
 import type { ItemWhitelist } from "@/lib/db";
 
 interface WhitelistFormProps {
-  itemId: number;
+  itemId: string;
   whitelist: ItemWhitelist[];
   onUpdate?: () => void;
 }
@@ -101,7 +101,7 @@ export function WhitelistForm({
     }
   };
 
-  const handleRemoveEmail = async (id: number) => {
+  const handleRemoveEmail = async (id: string) => {
     setLoading(true);
     try {
       const result = await removeFromWhitelistAction(id);

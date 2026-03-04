@@ -17,13 +17,13 @@ private let logger = Logger(label: "ItemService")
 public protocol ItemServiceProtocol: Sendable {
     func fetchItems(filters: ItemFilters?) async throws -> [StorageItem]
     func fetchItemsPaginated(filters: ItemFilters?) async throws -> PaginatedResponse<StorageItem>
-    func fetchItem(id: Int) async throws -> StorageItemDetail
-    func fetchPreviewItem(id: Int) async throws -> StorageItemDetail
+    func fetchItem(id: String) async throws -> StorageItemDetail
+    func fetchPreviewItem(id: String) async throws -> StorageItemDetail
     func fetchItemUsingUrl(url: String) async throws -> StorageItemDetail
     func createItem(_ request: NewItemRequest) async throws -> StorageItem
-    func updateItem(id: Int, _ request: UpdateItemRequest) async throws -> StorageItem
-    func deleteItem(id: Int) async throws
-    func setParent(itemId: Int, parentId: Int?) async throws -> StorageItem
+    func updateItem(id: String, _ request: UpdateItemRequest) async throws -> StorageItem
+    func deleteItem(id: String) async throws
+    func setParent(itemId: String, parentId: String?) async throws -> StorageItem
 }
 
 // MARK: - Implementation
@@ -42,8 +42,8 @@ public struct ItemService: ItemServiceProtocol {
         // Build query params
         let direction = filters?.direction.flatMap { Operations.getItems.Input.Query.directionPayload(rawValue: $0.rawValue) }
         let queryVisibility = filters?.visibility.flatMap { Operations.getItems.Input.Query.visibilityPayload(rawValue: $0.rawValue) }
-        let parentIdContainer: OpenAPIValueContainer? = filters?.parentId.flatMap { id in
-            try? OpenAPIValueContainer(unvalidatedValue: id)
+        let parentIdContainer: OpenAPIValueContainer? = filters?.parentId.flatMap { parentId in
+            try? OpenAPIValueContainer(unvalidatedValue: parentId)
         }
         let query = Operations.getItems.Input.Query(
             cursor: filters?.cursor,
@@ -67,15 +67,15 @@ public struct ItemService: ItemServiceProtocol {
     }
 
     @APICall(.ok)
-    public func fetchItem(id: Int) async throws -> StorageItemDetail {
-        try await StorageAPIClient.shared.client.getItem(.init(path: .init(id: String(id))))
+    public func fetchItem(id: String) async throws -> StorageItemDetail {
+        try await StorageAPIClient.shared.client.getItem(.init(path: .init(id: id)))
     }
 
     /// Fetch item for preview (public access, optionally authenticated)
     /// Used by App Clips to load items - works for public items without auth
     @APICall(.ok)
-    public func fetchPreviewItem(id: Int) async throws -> StorageItemDetail {
-        try await StorageAPIClient.shared.optionalAuthClient.getItem(.init(path: .init(id: String(id))))
+    public func fetchPreviewItem(id: String) async throws -> StorageItemDetail {
+        try await StorageAPIClient.shared.optionalAuthClient.getItem(.init(path: .init(id: id)))
     }
 
     /// Fetch item directly using a full URL (not the generated OpenAPI client)
@@ -171,19 +171,19 @@ public struct ItemService: ItemServiceProtocol {
     }
 
     @APICall(.ok)
-    public func updateItem(id: Int, _ request: UpdateItemRequest) async throws -> StorageItem {
-        try await StorageAPIClient.shared.client.updateItem(.init(path: .init(id: String(id)), body: .json(request)))
+    public func updateItem(id: String, _ request: UpdateItemRequest) async throws -> StorageItem {
+        try await StorageAPIClient.shared.client.updateItem(.init(path: .init(id: id), body: .json(request)))
     }
 
     @APICall(.noContent)
-    public func deleteItem(id: Int) async throws {
-        try await StorageAPIClient.shared.client.deleteItem(.init(path: .init(id: String(id))))
+    public func deleteItem(id: String) async throws {
+        try await StorageAPIClient.shared.client.deleteItem(.init(path: .init(id: id)))
     }
 
     @APICall(.ok)
-    public func setParent(itemId: Int, parentId: Int?) async throws -> StorageItem {
+    public func setParent(itemId: String, parentId: String?) async throws -> StorageItem {
         let request = SetParentRequest(parentId: parentId)
-        try await StorageAPIClient.shared.client.setItemParent(.init(path: .init(id: String(itemId)), body: .json(request)))
+        try await StorageAPIClient.shared.client.setItemParent(.init(path: .init(id: itemId), body: .json(request)))
     }
 }
 

@@ -13,24 +13,24 @@ struct ItemDetailViewModelTests {
     // MARK: - Test Data
 
     static let testContent = TestHelpers.makeContentRef(
-        id: 1,
+        id: "1",
         type: .image
     )
 
     static let testChild = TestHelpers.makeStorageItem(
-        id: 2,
+        id: "2",
         title: "Child Item",
-        parentId: 1,
+        parentId: "1",
         visibility: .publicAccess
     )
 
     static let testItemDetail = TestHelpers.makeStorageItemDetail(
-        id: 1,
+        id: "1",
         title: "Test Item",
         description: "Test Description",
         price: 99.99,
         visibility: .publicAccess,
-        images: [TestHelpers.makeSignedImage(id: 1, url: "https://example.com/image.jpg")],
+        images: [TestHelpers.makeSignedImage(id: "1", url: "https://example.com/image.jpg")],
         children: [testChild],
         contents: [testContent]
     )
@@ -52,11 +52,11 @@ struct ItemDetailViewModelTests {
         )
 
         // When
-        await sut.fetchItem(id: 1)
+        await sut.fetchItem(id: "1")
 
         // Then
         #expect(sut.item != nil)
-        #expect(sut.item?.id == 1)
+        #expect(sut.item?.id == "1")
         #expect(sut.item?.title == "Test Item")
         #expect(sut.children.count == 1)
         #expect(sut.children[0].title == "Child Item")
@@ -81,7 +81,7 @@ struct ItemDetailViewModelTests {
         )
 
         // When
-        await sut.fetchItem(id: 999)
+        await sut.fetchItem(id: "999")
 
         // Then
         #expect(sut.item == nil)
@@ -106,7 +106,7 @@ struct ItemDetailViewModelTests {
             contentSchemaService: mockContentSchemaService
         )
 
-        await sut.fetchItem(id: 1)
+        await sut.fetchItem(id: "1")
 
         // Reset call tracking
         mockService.fetchItemCalled = false

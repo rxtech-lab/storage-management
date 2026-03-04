@@ -14,13 +14,13 @@ struct ItemListViewModelTests {
 
     static let testItems = [
         TestHelpers.makeStorageItem(
-            id: 1,
+            id: "1",
             title: "Test Item 1",
             description: "Description 1",
             visibility: .publicAccess
         ),
         TestHelpers.makeStorageItem(
-            id: 2,
+            id: "2",
             title: "Test Item 2",
             description: "Description 2",
             price: 99.99,
@@ -119,9 +119,9 @@ struct ItemListViewModelTests {
 
         // Then
         #expect(sut.items.count == 1)
-        #expect(sut.items[0].id == 2)
+        #expect(sut.items[0].id == "2")
         #expect(mockService.deleteItemCalled == true)
-        #expect(mockService.lastDeleteItemId == 1)
+        #expect(mockService.lastDeleteItemId == "1")
     }
 
     // MARK: - Clear Filters Tests
@@ -133,7 +133,7 @@ struct ItemListViewModelTests {
         let mockService = MockItemService()
         let sut = ItemListViewModel(itemService: mockService)
         sut.searchText = "test"
-        sut.filters.categoryId = 1
+        sut.filters.categoryId = "1"
         sut.filters.visibility = .publicAccess
 
         // When

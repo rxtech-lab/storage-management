@@ -7,10 +7,10 @@ import { ensureSchemaInitialized } from "@/lib/db/client";
 import { getSession } from "@/lib/auth-helper";
 
 export interface PositionWithSchema extends Position {
-  positionSchema?: { id: number; name: string; schema: object } | null;
+  positionSchema?: { id: string; name: string; schema: object } | null;
 }
 
-export async function getItemPositions(itemId: number): Promise<PositionWithSchema[]> {
+export async function getItemPositions(itemId: string): Promise<PositionWithSchema[]> {
   await ensureSchemaInitialized();
   const results = await db
     .select({
@@ -37,7 +37,7 @@ export async function getItemPositions(itemId: number): Promise<PositionWithSche
   }));
 }
 
-export async function getPosition(id: number): Promise<PositionWithSchema | undefined> {
+export async function getPosition(id: string): Promise<PositionWithSchema | undefined> {
   const results = await db
     .select({
       id: positions.id,
@@ -108,7 +108,7 @@ export async function createPositionAction(
 }
 
 export async function updatePositionAction(
-  id: number,
+  id: string,
   data: Partial<Omit<NewPosition, "id" | "userId" | "createdAt" | "updatedAt">>,
   userId?: string
 ): Promise<{ success: boolean; data?: Position; error?: string }> {
@@ -153,7 +153,7 @@ export async function updatePositionAction(
 }
 
 export async function deletePositionAction(
-  id: number,
+  id: string,
   userId?: string
 ): Promise<{ success: boolean; error?: string }> {
   try {

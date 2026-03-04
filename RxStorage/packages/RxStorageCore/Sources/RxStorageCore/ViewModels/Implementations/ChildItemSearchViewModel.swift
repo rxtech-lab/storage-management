@@ -29,7 +29,7 @@ public final class ChildItemSearchViewModel {
     // MARK: - Private Properties
 
     /// Items to exclude from results (current item + existing children)
-    private var excludedItemIds: Set<Int>
+    private var excludedItemIds: Set<String>
 
     // MARK: - Combine
 
@@ -43,7 +43,7 @@ public final class ChildItemSearchViewModel {
     // MARK: - Initialization
 
     public init(
-        excludedItemIds: Set<Int> = [],
+        excludedItemIds: Set<String> = [],
         itemService: ItemServiceProtocol = ItemService()
     ) {
         self.excludedItemIds = excludedItemIds
@@ -116,7 +116,7 @@ public final class ChildItemSearchViewModel {
     }
 
     /// Update the set of excluded item IDs
-    public func updateExcludedIds(_ ids: Set<Int>) {
+    public func updateExcludedIds(_ ids: Set<String>) {
         excludedItemIds = ids
         // Re-filter current results and default items
         searchResults = searchResults.filter { !excludedItemIds.contains($0.id) }

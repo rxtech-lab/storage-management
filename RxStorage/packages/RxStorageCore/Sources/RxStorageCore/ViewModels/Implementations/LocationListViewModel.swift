@@ -190,7 +190,7 @@ public final class LocationListViewModel: LocationListViewModelProtocol {
     }
 
     @discardableResult
-    public func deleteLocation(_ location: Location) async throws -> Int {
+    public func deleteLocation(_ location: Location) async throws -> String {
         let locationId = location.id
         try await locationService.deleteLocation(id: locationId)
 

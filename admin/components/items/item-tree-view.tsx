@@ -16,7 +16,7 @@ interface ItemTreeViewProps {
 }
 
 function buildTree(items: ItemWithRelations[]): TreeNode[] {
-  const itemMap = new Map<number, TreeNode>();
+  const itemMap = new Map<string, TreeNode>();
   const roots: TreeNode[] = [];
 
   // First pass: create all nodes

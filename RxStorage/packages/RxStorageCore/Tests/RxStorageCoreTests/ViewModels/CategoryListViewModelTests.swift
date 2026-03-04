@@ -13,8 +13,8 @@ struct CategoryListViewModelTests {
     // MARK: - Test Data
 
     static let testCategories = [
-        TestHelpers.makeCategory(id: 1, name: "Books", description: "Book category"),
-        TestHelpers.makeCategory(id: 2, name: "Electronics", description: "Electronics category"),
+        TestHelpers.makeCategory(id: "1", name: "Books", description: "Book category"),
+        TestHelpers.makeCategory(id: "2", name: "Electronics", description: "Electronics category"),
     ]
 
     // MARK: - Fetch Tests
@@ -93,8 +93,8 @@ struct CategoryListViewModelTests {
 
         // Then
         #expect(sut.categories.count == 1)
-        #expect(sut.categories[0].id == 2)
+        #expect(sut.categories[0].id == "2")
         #expect(mockService.deleteCategoryCalled == true)
-        #expect(mockService.lastDeleteCategoryId == 1)
+        #expect(mockService.lastDeleteCategoryId == "1")
     }
 }

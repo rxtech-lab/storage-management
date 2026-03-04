@@ -23,13 +23,8 @@ export async function DELETE(
   }
 
   const { id } = await params;
-  const stockHistoryId = parseInt(id);
 
-  if (isNaN(stockHistoryId)) {
-    return NextResponse.json({ error: "Invalid stock history ID" }, { status: 400 });
-  }
-
-  const result = await deleteStockHistoryAction(stockHistoryId, session.user.id);
+  const result = await deleteStockHistoryAction(id, session.user.id);
 
   if (!result.success) {
     return NextResponse.json(

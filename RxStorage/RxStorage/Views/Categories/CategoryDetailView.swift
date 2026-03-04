@@ -10,7 +10,7 @@ import SwiftUI
 
 /// Category detail view
 struct CategoryDetailView: View {
-    let categoryId: Int
+    let categoryId: String
 
     @Environment(CategoryDetailViewModel.self) private var viewModel
     @State private var showingEditSheet = false
@@ -104,7 +104,7 @@ struct CategoryDetailView: View {
 
 #Preview {
     NavigationStack {
-        CategoryDetailView(categoryId: 1)
+        CategoryDetailView(categoryId: "1")
             .environment(CategoryDetailViewModel())
     }
 }

@@ -2,7 +2,7 @@ import { z } from "zod";
 
 // Simplified schema for recent items in dashboard (subset of full item)
 export const DashboardRecentItemSchema = z.object({
-  id: z.number().int().describe("Item identifier"),
+  id: z.string().describe("Item identifier"),
   title: z.string().describe("Item title"),
   visibility: z.enum(["publicAccess", "privateAccess"]).describe("Item visibility"),
   categoryName: z.string().nullable().describe("Category name if assigned"),

@@ -1,8 +1,8 @@
 import { test, expect } from "@playwright/test";
 
 test.describe.serial("File Upload API", () => {
-  let fileId: number;
-  let itemId: number;
+  let fileId: string;
+  let itemId: string;
 
   test("POST /api/v1/upload/presigned - should return upload URL and file ID", async ({
     request,
@@ -110,7 +110,7 @@ test.describe.serial("File Upload API", () => {
     expect(body.data).toBeInstanceOf(Array);
 
     // Find our item with images
-    const itemWithImages = body.data.find((item: { id: number }) => item.id === itemId);
+    const itemWithImages = body.data.find((item: { id: string }) => item.id === itemId);
     expect(itemWithImages).toBeDefined();
     expect(itemWithImages.images).toHaveLength(1);
     expect(itemWithImages.images[0]).toHaveProperty("id");

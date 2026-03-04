@@ -10,7 +10,7 @@ import SwiftUI
 
 /// Searchable category picker sheet
 struct CategoryPickerSheet: View {
-    let selectedId: Int?
+    let selectedId: String?
     let onSelect: (RxStorageCore.Category?) -> Void
 
     @State private var viewModel = CategoryPickerViewModel()

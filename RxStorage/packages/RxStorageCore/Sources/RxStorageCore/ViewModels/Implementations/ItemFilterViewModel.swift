@@ -30,9 +30,9 @@ public final class ItemFilterViewModel {
     public private(set) var error: Error?
 
     // Current filter selections
-    public var selectedCategoryId: Int?
-    public var selectedLocationId: Int?
-    public var selectedAuthorId: Int?
+    public var selectedCategoryId: String?
+    public var selectedLocationId: String?
+    public var selectedAuthorId: String?
     public var selectedVisibility: Visibility?
 
     // MARK: - Dependencies

@@ -22,7 +22,7 @@ export const LocationUpdateSchema = z.object({
 
 // Explicit response schema for OpenAPI (properly exports to OpenAPI spec)
 export const LocationResponseSchema = z.object({
-  id: z.number().int().describe("Unique location identifier"),
+  id: z.string().describe("Unique location identifier"),
   userId: z.string().describe("Owner user ID"),
   title: z.string().describe("Location title"),
   latitude: z.number().describe("Latitude coordinate"),

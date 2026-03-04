@@ -35,7 +35,7 @@ import {
 import type { PositionSchema } from "@/lib/db";
 
 interface PositionFormProps {
-  itemId: number;
+  itemId: string;
   positions: PositionWithSchema[];
   positionSchemas: PositionSchema[];
   onUpdate?: () => void;
@@ -48,7 +48,7 @@ export function PositionForm({
   onUpdate,
 }: PositionFormProps) {
   const [loading, setLoading] = useState(false);
-  const [selectedSchemaId, setSelectedSchemaId] = useState<number | null>(null);
+  const [selectedSchemaId, setSelectedSchemaId] = useState<string | null>(null);
 
   const handleAddPosition = async () => {
     if (!selectedSchemaId) {
@@ -79,7 +79,7 @@ export function PositionForm({
   };
 
   const handleUpdatePosition = async (
-    positionId: number,
+    positionId: string,
     data: Record<string, unknown>,
   ) => {
     setLoading(true);
@@ -99,7 +99,7 @@ export function PositionForm({
     }
   };
 
-  const handleDeletePosition = async (positionId: number) => {
+  const handleDeletePosition = async (positionId: string) => {
     setLoading(true);
     try {
       const result = await deletePositionAction(positionId);
@@ -199,7 +199,7 @@ export function PositionForm({
                   <Select
                     value={selectedSchemaId?.toString() ?? ""}
                     onValueChange={(v) =>
-                      setSelectedSchemaId(v ? parseInt(v) : null)
+                      setSelectedSchemaId(v || null)
                     }
                   >
                     <SelectTrigger>

@@ -15,8 +15,8 @@ private let logger = Logger(label: "PositionService")
 
 /// Protocol for position service operations
 public protocol PositionServiceProtocol: Sendable {
-    func fetchItemPositions(itemId: Int) async throws -> [Position]
-    func deletePosition(id: Int) async throws
+    func fetchItemPositions(itemId: String) async throws -> [Position]
+    func deletePosition(id: String) async throws
 }
 
 // MARK: - Implementation
@@ -26,12 +26,12 @@ public struct PositionService: PositionServiceProtocol {
     public init() {}
 
     @APICall(.ok)
-    public func fetchItemPositions(itemId: Int) async throws -> [Position] {
-        try await StorageAPIClient.shared.client.getItemPositions(.init(path: .init(id: String(itemId))))
+    public func fetchItemPositions(itemId: String) async throws -> [Position] {
+        try await StorageAPIClient.shared.client.getItemPositions(.init(path: .init(id: itemId)))
     }
 
-    public func deletePosition(id: Int) async throws {
-        let response = try await StorageAPIClient.shared.client.deletePosition(.init(path: .init(id: String(id))))
+    public func deletePosition(id: String) async throws {
+        let response = try await StorageAPIClient.shared.client.deletePosition(.init(path: .init(id: id)))
 
         switch response {
         case .ok:

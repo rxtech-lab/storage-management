@@ -5,7 +5,7 @@ import { eq, and } from "drizzle-orm";
 import { db, itemWhitelists, type ItemWhitelist, type NewItemWhitelist } from "@/lib/db";
 import { ensureSchemaInitialized } from "@/lib/db/client";
 
-export async function getItemWhitelist(itemId: number): Promise<ItemWhitelist[]> {
+export async function getItemWhitelist(itemId: string): Promise<ItemWhitelist[]> {
   await ensureSchemaInitialized();
   return db
     .select()
@@ -14,7 +14,7 @@ export async function getItemWhitelist(itemId: number): Promise<ItemWhitelist[]>
     .orderBy(itemWhitelists.email);
 }
 
-export async function isEmailWhitelisted(itemId: number, email: string): Promise<boolean> {
+export async function isEmailWhitelisted(itemId: string, email: string): Promise<boolean> {
   const results = await db
     .select()
     .from(itemWhitelists)
@@ -66,7 +66,7 @@ export async function addToWhitelistAction(
 }
 
 export async function removeFromWhitelistAction(
-  id: number
+  id: string
 ): Promise<{ success: boolean; error?: string }> {
   try {
     const whitelist = await db
@@ -90,7 +90,7 @@ export async function removeFromWhitelistAction(
 }
 
 export async function bulkAddToWhitelistAction(
-  itemId: number,
+  itemId: string,
   emails: string[]
 ): Promise<{ success: boolean; added: number; error?: string }> {
   try {

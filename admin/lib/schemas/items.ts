@@ -8,7 +8,7 @@ export const ItemSelectSchema = createSelectSchema(items);
 
 // Position data for creating positions with items
 const NewPositionDataSchema = z.object({
-  positionSchemaId: z.number().int().describe("Position schema ID"),
+  positionSchemaId: z.string().describe("Position schema ID"),
   data: z.record(z.unknown()).describe("Position data"),
 });
 
@@ -22,26 +22,22 @@ export const ItemInsertSchema = z.object({
     .optional()
     .describe("Original QR code value"),
   categoryId: z
-    .number()
-    .int()
+    .string()
     .nullable()
     .optional()
     .describe("Category ID reference"),
   locationId: z
-    .number()
-    .int()
+    .string()
     .nullable()
     .optional()
     .describe("Location ID reference"),
   authorId: z
-    .number()
-    .int()
+    .string()
     .nullable()
     .optional()
     .describe("Author ID reference"),
   parentId: z
-    .number()
-    .int()
+    .string()
     .nullable()
     .optional()
     .describe("Parent item ID for hierarchy"),
@@ -74,26 +70,22 @@ export const ItemUpdateSchema = z.object({
     .optional()
     .describe("Original QR code value"),
   categoryId: z
-    .number()
-    .int()
+    .string()
     .nullable()
     .optional()
     .describe("Category ID reference"),
   locationId: z
-    .number()
-    .int()
+    .string()
     .nullable()
     .optional()
     .describe("Location ID reference"),
   authorId: z
-    .number()
-    .int()
+    .string()
     .nullable()
     .optional()
     .describe("Author ID reference"),
   parentId: z
-    .number()
-    .int()
+    .string()
     .nullable()
     .optional()
     .describe("Parent item ID for hierarchy"),
@@ -119,13 +111,13 @@ export const ItemUpdateSchema = z.object({
 
 // Category reference in item response (base object)
 export const CategoryRefSchema = z.object({
-  id: z.number().int().describe("Category ID"),
+  id: z.string().describe("Category ID"),
   name: z.string().describe("Category name"),
 });
 
 // Location reference in item response (base object)
 export const LocationRefSchema = z.object({
-  id: z.number().int().describe("Location ID"),
+  id: z.string().describe("Location ID"),
   title: z.string().describe("Location title"),
   latitude: z.number().describe("Latitude coordinate"),
   longitude: z.number().describe("Longitude coordinate"),
@@ -133,13 +125,13 @@ export const LocationRefSchema = z.object({
 
 // Author reference in item response (base object)
 export const AuthorRefSchema = z.object({
-  id: z.number().int().describe("Author ID"),
+  id: z.string().describe("Author ID"),
   name: z.string().describe("Author name"),
 });
 
 // Content in item detail response
 export const ContentRefSchema = z.object({
-  id: z.number().int().describe("Content ID"),
+  id: z.string().describe("Content ID"),
   type: z.enum(["file", "image", "video"]).describe("Content type"),
   data: z.record(z.unknown()).describe("Content data"),
   createdAt: z.coerce.date().describe("Creation timestamp"),
@@ -148,14 +140,14 @@ export const ContentRefSchema = z.object({
 
 // Position in item detail response
 export const PositionRefSchema = z.object({
-  id: z.number().int().describe("Position ID"),
-  positionSchemaId: z.number().int().describe("Position schema ID"),
+  id: z.string().describe("Position ID"),
+  positionSchemaId: z.string().describe("Position schema ID"),
   data: z.record(z.unknown()).describe("Position data"),
 });
 
 // Stock history entry in item detail response
 export const StockHistoryRefSchema = z.object({
-  id: z.number().int().describe("Stock history entry ID"),
+  id: z.string().describe("Stock history entry ID"),
   quantity: z.number().int().describe("Quantity change"),
   note: z.string().nullable().describe("Optional note"),
   createdAt: z.coerce.date().describe("Creation timestamp"),
@@ -163,23 +155,22 @@ export const StockHistoryRefSchema = z.object({
 
 // Signed image with ID and URL
 export const SignedImageSchema = z.object({
-  id: z.number().int().describe("File ID"),
+  id: z.string().describe("File ID"),
   url: z.string().url().describe("Signed image URL"),
 });
 
 // Extended response with relations and computed fields (defined inline to avoid extend issues with generator)
 export const ItemResponseSchema = z.object({
-  id: z.number().int().describe("Unique item identifier"),
+  id: z.string().describe("Unique item identifier"),
   userId: z.string().describe("Owner user ID"),
   title: z.string().describe("Item title"),
   description: z.string().nullable().describe("Item description"),
   originalQrCode: z.string().nullable().describe("Original QR code value"),
-  categoryId: z.number().int().nullable().describe("Category ID reference"),
-  locationId: z.number().int().nullable().describe("Location ID reference"),
-  authorId: z.number().int().nullable().describe("Author ID reference"),
+  categoryId: z.string().nullable().describe("Category ID reference"),
+  locationId: z.string().nullable().describe("Location ID reference"),
+  authorId: z.string().nullable().describe("Author ID reference"),
   parentId: z
-    .number()
-    .int()
+    .string()
     .nullable()
     .describe("Parent item ID for hierarchy"),
   price: z.number().nullable().describe("Item price"),
@@ -198,17 +189,16 @@ export const ItemResponseSchema = z.object({
 
 // Item detail response with children, contents, positions (defined inline to avoid extend issues with generator)
 export const ItemDetailResponseSchema = z.object({
-  id: z.number().int().describe("Unique item identifier"),
+  id: z.string().describe("Unique item identifier"),
   userId: z.string().describe("Owner user ID"),
   title: z.string().describe("Item title"),
   description: z.string().nullable().describe("Item description"),
   originalQrCode: z.string().nullable().describe("Original QR code value"),
-  categoryId: z.number().int().nullable().describe("Category ID reference"),
-  locationId: z.number().int().nullable().describe("Location ID reference"),
-  authorId: z.number().int().nullable().describe("Author ID reference"),
+  categoryId: z.string().nullable().describe("Category ID reference"),
+  locationId: z.string().nullable().describe("Location ID reference"),
+  authorId: z.string().nullable().describe("Author ID reference"),
   parentId: z
-    .number()
-    .int()
+    .string()
     .nullable()
     .describe("Parent item ID for hierarchy"),
   price: z.number().nullable().describe("Item price"),
@@ -235,19 +225,11 @@ export const ItemDetailResponseSchema = z.object({
 // Query params for items list
 export const ItemsQueryParams = PaginationQueryParams.extend({
   search: z.string().optional().describe("Search query for title/description"),
-  categoryId: z.coerce
-    .number()
-    .int()
-    .optional()
-    .describe("Filter by category ID"),
-  locationId: z.coerce
-    .number()
-    .int()
-    .optional()
-    .describe("Filter by location ID"),
-  authorId: z.coerce.number().int().optional().describe("Filter by author ID"),
+  categoryId: z.string().optional().describe("Filter by category ID"),
+  locationId: z.string().optional().describe("Filter by location ID"),
+  authorId: z.string().optional().describe("Filter by author ID"),
   parentId: z
-    .union([z.coerce.number().int(), z.literal("null")])
+    .union([z.string(), z.literal("null")])
     .optional()
     .describe("Filter by parent ID (use 'null' for root items)"),
   visibility: z
@@ -265,8 +247,7 @@ export const PaginatedItemsResponse = z.object({
 // Set parent request body
 export const SetParentRequestSchema = z.object({
   parentId: z
-    .number()
-    .int()
+    .string()
     .nullable()
     .describe("Parent item ID (null to remove parent)"),
 });

@@ -49,7 +49,7 @@ public final class ItemDetailViewModel: ItemDetailViewModelProtocol {
 
     // MARK: - Public Methods
 
-    public func fetchItem(id: Int) async {
+    public func fetchItem(id: String) async {
         isLoading = true
         error = nil
 
@@ -77,7 +77,7 @@ public final class ItemDetailViewModel: ItemDetailViewModelProtocol {
     /// - For public items: loads successfully without auth
     /// - For private items without auth: throws APIError.unauthorized
     /// - For private items with auth but not whitelisted: throws APIError.forbidden
-    public func fetchPreviewItem(id: Int) async {
+    public func fetchPreviewItem(id: String) async {
         isLoading = true
         error = nil
 
@@ -157,7 +157,7 @@ public final class ItemDetailViewModel: ItemDetailViewModelProtocol {
     /// Add a child item by its ID - fetches fresh data to avoid memory issues
     /// Returns tuple of (parentId, childId) for event emission
     @discardableResult
-    public func addChildById(_ childId: Int) async throws -> (parentId: Int, childId: Int) {
+    public func addChildById(_ childId: String) async throws -> (parentId: String, childId: String) {
         guard let currentItemId = item?.id else {
             throw ItemDetailError.noItemLoaded
         }
@@ -191,7 +191,7 @@ public final class ItemDetailViewModel: ItemDetailViewModelProtocol {
     /// Remove a child item by its ID
     /// Returns tuple of (parentId, childId) for event emission
     @discardableResult
-    public func removeChildById(_ childId: Int) async throws -> (parentId: Int, childId: Int) {
+    public func removeChildById(_ childId: String) async throws -> (parentId: String, childId: String) {
         guard let currentItemId = item?.id else {
             throw ItemDetailError.noItemLoaded
         }
@@ -229,7 +229,7 @@ public final class ItemDetailViewModel: ItemDetailViewModelProtocol {
     /// Create a new content for this item
     /// Returns tuple of (itemId, contentId) for event emission
     @discardableResult
-    public func createContent(type: ContentType, formData: [String: AnyCodable]) async throws -> (itemId: Int, contentId: Int) {
+    public func createContent(type: ContentType, formData: [String: AnyCodable]) async throws -> (itemId: String, contentId: String) {
         guard let itemId = item?.id else {
             throw ItemDetailError.noItemLoaded
         }
@@ -244,7 +244,7 @@ public final class ItemDetailViewModel: ItemDetailViewModelProtocol {
     /// Delete an existing content
     /// Returns tuple of (itemId, contentId) for event emission
     @discardableResult
-    public func deleteContent(id: Int) async throws -> (itemId: Int, contentId: Int) {
+    public func deleteContent(id: String) async throws -> (itemId: String, contentId: String) {
         guard let itemId = item?.id else {
             throw ItemDetailError.noItemLoaded
         }
@@ -256,7 +256,7 @@ public final class ItemDetailViewModel: ItemDetailViewModelProtocol {
     }
 
     /// Update an existing content
-    public func updateContent(id: Int, type: ContentType, formData: [String: AnyCodable]) async throws {
+    public func updateContent(id: String, type: ContentType, formData: [String: AnyCodable]) async throws {
         let contentData = ContentData(
             title: formData["title"]?.value as? String,
             description: formData["description"]?.value as? String,
@@ -299,7 +299,7 @@ public final class ItemDetailViewModel: ItemDetailViewModelProtocol {
     }
 
     /// Delete a stock history entry
-    public func deleteStockEntry(id: Int) async throws {
+    public func deleteStockEntry(id: String) async throws {
         guard item != nil else {
             throw ItemDetailError.noItemLoaded
         }

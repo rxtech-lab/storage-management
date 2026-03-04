@@ -24,7 +24,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
   }
 
   const { id } = await params;
-  const location = await getLocation(parseInt(id));
+  const location = await getLocation(id);
 
   if (!location) {
     return NextResponse.json({ error: "Location not found" }, { status: 404 });
@@ -60,7 +60,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 
   try {
     const body = await request.json();
-    const result = await updateLocationAction(parseInt(id), body, session.user.id);
+    const result = await updateLocationAction(id, body, session.user.id);
 
     if (result.success) {
       return NextResponse.json(result.data);
@@ -95,7 +95,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
   }
 
   const { id } = await params;
-  const result = await deleteLocationAction(parseInt(id), session.user.id);
+  const result = await deleteLocationAction(id, session.user.id);
 
   if (result.success) {
     return NextResponse.json({ success: true });

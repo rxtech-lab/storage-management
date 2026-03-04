@@ -430,14 +430,14 @@ import SwiftUI
 
     #Preview("Print Configuration") {
         let item = StorageItemDetail(
-            id: 1,
+            id: "1",
             userId: "preview",
             title: "Sample Item",
             description: "A sample item for preview",
             originalQrCode: nil,
-            categoryId: 1,
-            locationId: 1,
-            authorId: 1,
+            categoryId: "1",
+            locationId: "1",
+            authorId: "1",
             parentId: nil,
             price: 29.99,
             currency: "USD",
@@ -447,10 +447,10 @@ import SwiftUI
             previewUrl: "https://example.com/preview/1",
             images: [],
             category: StorageItemDetail.categoryPayload(
-                value1: CategoryRef(id: 1, name: "Electronics")
+                value1: CategoryRef(id: "1", name: "Electronics")
             ),
             location: StorageItemDetail.locationPayload(
-                value1: LocationRef(id: 1, title: "Office", latitude: 0, longitude: 0)
+                value1: LocationRef(id: "1", title: "Office", latitude: 0, longitude: 0)
             ),
             author: nil,
             children: [],

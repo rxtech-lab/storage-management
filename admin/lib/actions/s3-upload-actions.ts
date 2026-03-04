@@ -14,7 +14,7 @@ export interface PresignedUploadResult {
   uploadUrl: string;
   publicUrl: string;
   key: string;
-  fileId: number;
+  fileId: string;
   expiresAt: string;
 }
 
@@ -278,7 +278,7 @@ export async function signImageUrlsAction(
 // --- Sign URLs by File IDs ---
 
 export interface SignedFileUrlResult {
-  fileId: number;
+  fileId: string;
   signedUrl: string;
   expiresAt: string;
 }
@@ -288,12 +288,12 @@ export interface SignedFileUrlResult {
  * Returns signed URLs mapped to file IDs
  */
 export async function signFileUrlsAction(
-  fileIds: number[],
+  fileIds: string[],
   expiresIn: number = 3600
 ): Promise<{
   success: boolean;
   data?: SignedFileUrlResult[];
-  failed?: number[];
+  failed?: string[];
   error?: string;
 }> {
   if (fileIds.length === 0) {
@@ -316,7 +316,7 @@ export async function signFileUrlsAction(
 
   const files = await getFiles(fileIds);
   const results: SignedFileUrlResult[] = [];
-  const failed: number[] = [];
+  const failed: string[] = [];
 
   const promises = files.map(async (file) => {
     try {
@@ -372,16 +372,14 @@ export async function signImagesArray(
   }
 
   const signedUrls: string[] = new Array(validImages.length);
-  const fileIdIndices: { index: number; fileId: number }[] = [];
+  const fileIdIndices: { index: number; fileId: string }[] = [];
   const urlIndices: { index: number; url: string }[] = [];
 
   // Separate file IDs and legacy URLs
   validImages.forEach((image, index) => {
     if (isFileId(image)) {
-      const fileId = parseInt(image.substring(5), 10);
-      if (!isNaN(fileId)) {
-        fileIdIndices.push({ index, fileId });
-      }
+      const fileId = image.substring(5);
+      fileIdIndices.push({ index, fileId });
     } else {
       urlIndices.push({ index, url: image });
     }
@@ -417,7 +415,7 @@ export async function signImagesArray(
 // --- Sign Images with IDs (returns {id, url} objects) ---
 
 export interface SignedImage {
-  id: number;
+  id: string;
   url: string;
 }
 
@@ -442,10 +440,10 @@ export async function signImagesArrayWithIds(
   }
 
   // Extract file IDs
-  const fileIds: number[] = [];
+  const fileIds: string[] = [];
   for (const image of validImages) {
-    const id = parseInt(image.substring(5), 10);
-    if (!isNaN(id)) {
+    const id = image.substring(5);
+    if (id) {
       fileIds.push(id);
     }
   }

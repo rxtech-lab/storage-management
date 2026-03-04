@@ -20,7 +20,7 @@ export const CategoryUpdateSchema = z.object({
 
 // Explicit response schema for OpenAPI (properly exports to OpenAPI spec)
 export const CategoryResponseSchema = z.object({
-  id: z.number().int().describe("Unique category identifier"),
+  id: z.string().describe("Unique category identifier"),
   userId: z.string().describe("Owner user ID"),
   name: z.string().describe("Category name"),
   description: z.string().nullable().describe("Category description"),

@@ -1,7 +1,7 @@
 import { test, expect } from "@playwright/test";
 
 test.describe.serial("Categories API", () => {
-  let createdCategoryId: number;
+  let createdCategoryId: string;
 
   test("POST /api/v1/categories - should create a new category", async ({
     request,
@@ -98,7 +98,7 @@ test.describe.serial("Categories API", () => {
 test.describe.serial("Categories API - Multi-user Isolation", () => {
   const USER_1 = "category-test-user-1";
   const USER_2 = "category-test-user-2";
-  let user1CategoryId: number;
+  let user1CategoryId: string;
 
   test("User 1 creates a category", async ({ request }) => {
     const response = await request.post("/api/v1/categories", {
@@ -124,7 +124,7 @@ test.describe.serial("Categories API - Multi-user Isolation", () => {
     const body = await response.json();
     expect(body).toBeInstanceOf(Array);
     const user1Categories = body.filter(
-      (c: { id: number }) => c.id === user1CategoryId,
+      (c: { id: string }) => c.id === user1CategoryId,
     );
     expect(user1Categories.length).toBe(0);
   });

@@ -14,7 +14,7 @@ import { test, expect } from "@playwright/test";
  */
 
 test.describe.serial("Items Pagination API", () => {
-  const createdItemIds: number[] = [];
+  const createdItemIds: string[] = [];
   const PAGE_SIZE = 5;
 
   test.beforeAll(async ({ request }) => {
@@ -92,11 +92,11 @@ test.describe.serial("Items Pagination API", () => {
     const secondPage = await secondResponse.json();
 
     // Second page should have different items
-    const firstPageIds = firstPage.data.map((item: { id: number }) => item.id);
-    const secondPageIds = secondPage.data.map((item: { id: number }) => item.id);
+    const firstPageIds = firstPage.data.map((item: { id: string }) => item.id);
+    const secondPageIds = secondPage.data.map((item: { id: string }) => item.id);
 
     // No overlap between pages
-    const overlap = firstPageIds.filter((id: number) =>
+    const overlap = firstPageIds.filter((id: string) =>
       secondPageIds.includes(id)
     );
     expect(overlap.length).toBe(0);
@@ -132,8 +132,8 @@ test.describe.serial("Items Pagination API", () => {
     const backPage = await backResponse.json();
 
     // Should have same items as first page
-    const firstPageIds = firstPage.data.map((item: { id: number }) => item.id);
-    const backPageIds = backPage.data.map((item: { id: number }) => item.id);
+    const firstPageIds = firstPage.data.map((item: { id: string }) => item.id);
+    const backPageIds = backPage.data.map((item: { id: string }) => item.id);
 
     expect(backPageIds.sort()).toEqual(firstPageIds.sort());
   });
@@ -191,7 +191,7 @@ test.describe.serial("Items Pagination API", () => {
 });
 
 test.describe.serial("Categories Pagination API", () => {
-  const createdCategoryIds: number[] = [];
+  const createdCategoryIds: string[] = [];
   const PAGE_SIZE = 5;
 
   test.beforeAll(async ({ request }) => {
@@ -262,9 +262,9 @@ test.describe.serial("Categories Pagination API", () => {
     const secondPage = await secondResponse.json();
 
     // Verify no overlap
-    const firstIds = firstPage.data.map((c: { id: number }) => c.id);
-    const secondIds = secondPage.data.map((c: { id: number }) => c.id);
-    const overlap = firstIds.filter((id: number) => secondIds.includes(id));
+    const firstIds = firstPage.data.map((c: { id: string }) => c.id);
+    const secondIds = secondPage.data.map((c: { id: string }) => c.id);
+    const overlap = firstIds.filter((id: string) => secondIds.includes(id));
     expect(overlap.length).toBe(0);
   });
 
@@ -280,7 +280,7 @@ test.describe.serial("Categories Pagination API", () => {
 });
 
 test.describe.serial("Authors Pagination API", () => {
-  const createdAuthorIds: number[] = [];
+  const createdAuthorIds: string[] = [];
   const PAGE_SIZE = 5;
 
   test.beforeAll(async ({ request }) => {
@@ -338,7 +338,7 @@ test.describe.serial("Authors Pagination API", () => {
 });
 
 test.describe.serial("Locations Pagination API", () => {
-  const createdLocationIds: number[] = [];
+  const createdLocationIds: string[] = [];
   const PAGE_SIZE = 5;
 
   test.beforeAll(async ({ request }) => {
@@ -397,7 +397,7 @@ test.describe.serial("Locations Pagination API", () => {
 });
 
 test.describe.serial("Position Schemas Pagination API", () => {
-  const createdSchemaIds: number[] = [];
+  const createdSchemaIds: string[] = [];
   const PAGE_SIZE = 5;
 
   test.beforeAll(async ({ request }) => {
@@ -512,8 +512,8 @@ test.describe("Pagination Edge Cases", () => {
     const secondPage2 = await secondResponse2.json();
 
     // Both responses should have same items
-    const ids1 = secondPage1.data.map((item: { id: number }) => item.id);
-    const ids2 = secondPage2.data.map((item: { id: number }) => item.id);
+    const ids1 = secondPage1.data.map((item: { id: string }) => item.id);
+    const ids2 = secondPage2.data.map((item: { id: string }) => item.id);
 
     expect(ids1).toEqual(ids2);
   });

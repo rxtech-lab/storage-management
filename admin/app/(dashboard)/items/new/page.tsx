@@ -10,7 +10,7 @@ export default async function NewItemPage({ searchParams }: NewItemPageProps) {
   const params = await searchParams;
   const positionSchemas = await getPositionSchemas();
 
-  const defaultParentId = params.parentId ? parseInt(params.parentId) : undefined;
+  const defaultParentId = params.parentId || undefined;
 
   return (
     <div className="max-w-4xl">

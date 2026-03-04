@@ -21,7 +21,7 @@ final class RxStorageClipsUITests: XCTestCase {
 
     func testPublicItemLoadsSuccessfully() {
         // Use a known public item ID from test environment
-        let app = launchAppClip(withItemId: 1)
+        let app = launchAppClip(withItemId: "test-public-item")
 
         // Wait for loading to complete
         let loadingIndicator = app.staticTexts["Loading..."]
@@ -38,7 +38,7 @@ final class RxStorageClipsUITests: XCTestCase {
 
     func testPrivateItemRequiresSignIn() throws {
         // Use a known private item ID from test environment
-        let app = launchAppClip(withItemId: 2)
+        let app = launchAppClip(withItemId: "test-private-item")
 
         // Wait for auth check to complete and sign-in view to appear
         XCTAssertTrue(app.appClipsSignInRequired.waitForExistence(timeout: 10))
@@ -52,7 +52,7 @@ final class RxStorageClipsUITests: XCTestCase {
 
     func testAccessDenined() throws {
         // This test item created by different users
-        let app = launchAppClip(withItemId: 3)
+        let app = launchAppClip(withItemId: "test-other-user-item")
         try app.signInWithEmailAndPassword(isAppclips: true)
         XCTAssertTrue(app.appClipsAccessDenined.waitForExistence(timeout: 30))
     }
@@ -61,7 +61,7 @@ final class RxStorageClipsUITests: XCTestCase {
 
     func testSignOutNotShownWhenNotAuthenticated() {
         // Use a known public item ID - user should be able to view without signing in
-        let app = launchAppClip(withItemId: 1)
+        let app = launchAppClip(withItemId: "test-public-item")
 
         // Wait for item detail to load
         XCTAssertTrue(app.itemDetailTitle.waitForExistence(timeout: 15))
@@ -75,7 +75,7 @@ final class RxStorageClipsUITests: XCTestCase {
 
     func testSignOutShownWhenAuthenticated() throws {
         // Use a known private item ID that requires sign-in
-        let app = launchAppClip(withItemId: 2)
+        let app = launchAppClip(withItemId: "test-private-item")
 
         // Sign in
         try app.signInWithEmailAndPassword(isAppclips: true)

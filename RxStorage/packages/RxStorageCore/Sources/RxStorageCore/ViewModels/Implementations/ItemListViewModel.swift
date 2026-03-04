@@ -226,7 +226,7 @@ public final class ItemListViewModel: ItemListViewModelProtocol {
     }
 
     @discardableResult
-    public func deleteItem(_ item: StorageItem) async throws -> Int {
+    public func deleteItem(_ item: StorageItem) async throws -> String {
         let itemId = item.id
         try await itemService.deleteItem(id: itemId)
 

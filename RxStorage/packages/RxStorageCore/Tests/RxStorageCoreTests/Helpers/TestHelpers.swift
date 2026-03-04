@@ -18,15 +18,15 @@ enum TestHelpers {
 
     /// Create a StorageItem for testing
     static func makeStorageItem(
-        id: Int = 1,
+        id: String = "1",
         userId: String = defaultUserId,
         title: String = "Test Item",
         description: String? = nil,
         originalQrCode: String? = nil,
-        categoryId: Int? = nil,
-        locationId: Int? = nil,
-        authorId: Int? = nil,
-        parentId: Int? = nil,
+        categoryId: String? = nil,
+        locationId: String? = nil,
+        authorId: String? = nil,
+        parentId: String? = nil,
         price: Double? = nil,
         currency: String? = nil,
         visibility: StorageItem.visibilityPayload = .publicAccess,
@@ -39,9 +39,9 @@ enum TestHelpers {
         author: AuthorRef? = nil
     ) -> StorageItem {
         // Create default refs if not provided
-        let categoryRef = category ?? CategoryRef(id: categoryId ?? 0, name: "Default Category")
-        let locationRef = location ?? LocationRef(id: locationId ?? 0, title: "Default Location", latitude: 0.0, longitude: 0.0)
-        let authorRef = author ?? AuthorRef(id: authorId ?? 0, name: "Default Author")
+        let categoryRef = category ?? CategoryRef(id: categoryId ?? "0", name: "Default Category")
+        let locationRef = location ?? LocationRef(id: locationId ?? "0", title: "Default Location", latitude: 0.0, longitude: 0.0)
+        let authorRef = author ?? AuthorRef(id: authorId ?? "0", name: "Default Author")
 
         return StorageItem(
             id: id,
@@ -68,7 +68,7 @@ enum TestHelpers {
 
     /// Create a SignedImage for testing
     static func makeSignedImage(
-        id: Int = 1,
+        id: String = "1",
         url: String = "https://example.com/signed/image.jpg"
     ) -> SignedImage {
         SignedImage(id: id, url: url)
@@ -78,14 +78,14 @@ enum TestHelpers {
     static func makeImageReference(
         id: UUID = UUID(),
         url: String = "https://example.com/signed/image.jpg",
-        fileId: Int? = nil
+        fileId: String? = nil
     ) -> ImageReference {
         ImageReference(id: id, url: url, fileId: fileId)
     }
 
     /// Create a Category for testing
     static func makeCategory(
-        id: Int = 1,
+        id: String = "1",
         userId: String = defaultUserId,
         name: String = "Test Category",
         description: String? = nil,
@@ -104,7 +104,7 @@ enum TestHelpers {
 
     /// Create a Location for testing
     static func makeLocation(
-        id: Int = 1,
+        id: String = "1",
         userId: String = defaultUserId,
         title: String = "Test Location",
         latitude: Double = 0.0,
@@ -125,7 +125,7 @@ enum TestHelpers {
 
     /// Create an Author for testing
     static func makeAuthor(
-        id: Int = 1,
+        id: String = "1",
         userId: String = defaultUserId,
         name: String = "Test Author",
         bio: String? = nil,
@@ -144,7 +144,7 @@ enum TestHelpers {
 
     /// Create a CategoryRef for testing
     static func makeCategoryRef(
-        id: Int = 1,
+        id: String = "1",
         name: String = "Test Category"
     ) -> CategoryRef {
         CategoryRef(id: id, name: name)
@@ -152,7 +152,7 @@ enum TestHelpers {
 
     /// Create a LocationRef for testing
     static func makeLocationRef(
-        id: Int = 1,
+        id: String = "1",
         title: String = "Test Location",
         latitude: Double = 0.0,
         longitude: Double = 0.0
@@ -162,7 +162,7 @@ enum TestHelpers {
 
     /// Create an AuthorRef for testing
     static func makeAuthorRef(
-        id: Int = 1,
+        id: String = "1",
         name: String = "Test Author"
     ) -> AuthorRef {
         AuthorRef(id: id, name: name)
@@ -170,15 +170,15 @@ enum TestHelpers {
 
     /// Create a StorageItemDetail for testing
     static func makeStorageItemDetail(
-        id: Int = 1,
+        id: String = "1",
         userId: String = defaultUserId,
         title: String = "Test Item",
         description: String? = nil,
         originalQrCode: String? = nil,
-        categoryId: Int? = nil,
-        locationId: Int? = nil,
-        authorId: Int? = nil,
-        parentId: Int? = nil,
+        categoryId: String? = nil,
+        locationId: String? = nil,
+        authorId: String? = nil,
+        parentId: String? = nil,
         price: Double? = nil,
         currency: String? = nil,
         visibility: StorageItemDetail.visibilityPayload = .publicAccess,
@@ -196,9 +196,9 @@ enum TestHelpers {
         stockHistory: [StockHistoryRef] = []
     ) -> StorageItemDetail {
         // Create default refs if not provided
-        let categoryRef = category ?? CategoryRef(id: categoryId ?? 0, name: "Default Category")
-        let locationRef = location ?? LocationRef(id: locationId ?? 0, title: "Default Location", latitude: 0.0, longitude: 0.0)
-        let authorRef = author ?? AuthorRef(id: authorId ?? 0, name: "Default Author")
+        let categoryRef = category ?? CategoryRef(id: categoryId ?? "0", name: "Default Category")
+        let locationRef = location ?? LocationRef(id: locationId ?? "0", title: "Default Location", latitude: 0.0, longitude: 0.0)
+        let authorRef = author ?? AuthorRef(id: authorId ?? "0", name: "Default Author")
 
         return StorageItemDetail(
             id: id,
@@ -230,7 +230,7 @@ enum TestHelpers {
 
     /// Create a ContentRef for testing
     static func makeContentRef(
-        id: Int = 1,
+        id: String = "1",
         type: ContentRef._typePayload = .image,
         data: ContentRef.dataPayload = ContentRef.dataPayload(),
         createdAt: Date = defaultDate,

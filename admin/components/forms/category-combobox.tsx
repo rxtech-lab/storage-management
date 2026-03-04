@@ -9,12 +9,12 @@ import { SEARCH_DEBOUNCE_MS } from "@/lib/config";
 import { EntityCombobox } from "./entity-combobox";
 
 interface CategoryComboboxProps {
-  value: number | null;
-  onChange: (value: number | null) => void;
+  value: string | null;
+  onChange: (value: string | null) => void;
   disablePortal?: boolean;
 }
 
-type CategoryOption = { id: number; name: string };
+type CategoryOption = { id: string; name: string };
 
 export function CategoryCombobox({
   value,
@@ -69,7 +69,7 @@ export function CategoryCombobox({
   }, []);
 
   const handleEntityCreated = useCallback(
-    (entity: { id: number; name?: string }) => {
+    (entity: { id: string; name?: string }) => {
       if (entity.name) {
         const newOption: CategoryOption = { id: entity.id, name: entity.name };
         setItems((prev) => [...prev, newOption]);

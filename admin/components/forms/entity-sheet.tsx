@@ -25,7 +25,7 @@ export type EntityType = "category" | "location" | "author";
 
 interface EntitySheetProps {
   type: EntityType;
-  onCreated?: (entity: { id: number; name?: string; title?: string }) => void;
+  onCreated?: (entity: { id: string; name?: string; title?: string }) => void;
   trigger?: React.ReactNode;
 }
 
@@ -75,7 +75,7 @@ export function EntitySheet({ type, onCreated, trigger }: EntitySheetProps) {
           `${type.charAt(0).toUpperCase() + type.slice(1)} created`,
         );
         onCreated?.(
-          result.data as { id: number; name?: string; title?: string },
+          result.data as { id: string; name?: string; title?: string },
         );
         setOpen(false);
         setFormData({

@@ -2,8 +2,8 @@ import { z } from "zod";
 
 // Explicit response schema for OpenAPI (avoids drizzle-zod compatibility issues)
 export const WhitelistResponseSchema = z.object({
-  id: z.number().int().describe("Unique whitelist entry identifier"),
-  itemId: z.number().int().describe("Associated item ID"),
+  id: z.string().describe("Unique whitelist entry identifier"),
+  itemId: z.string().describe("Associated item ID"),
   email: z.string().describe("Whitelisted email address"),
   createdAt: z.coerce.date().describe("Creation timestamp"),
 });
@@ -15,7 +15,7 @@ export const WhitelistAddRequestSchema = z.object({
 
 // Request to remove email from whitelist
 export const WhitelistRemoveRequestSchema = z.object({
-  whitelistId: z.number().int().describe("Whitelist entry ID to remove"),
+  whitelistId: z.string().describe("Whitelist entry ID to remove"),
 });
 
 // Array of whitelist entries response

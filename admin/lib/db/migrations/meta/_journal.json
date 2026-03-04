@@ -22,6 +22,13 @@
       "when": 1770004082404,
       "tag": "0002_white_slayback",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1772561439798,
+      "tag": "0003_happy_the_initiative",
+      "breakpoints": true
     }
   ]
 }

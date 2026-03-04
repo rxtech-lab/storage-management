@@ -30,7 +30,7 @@ public final class PositionSchemaDetailViewModel {
 
     // MARK: - Public Methods
 
-    public func fetchPositionSchema(id: Int) async {
+    public func fetchPositionSchema(id: String) async {
         isLoading = true
         error = nil
 

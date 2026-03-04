@@ -6,7 +6,7 @@ import { db, stockHistories, items, type StockHistory, type NewStockHistory } fr
 import { ensureSchemaInitialized } from "@/lib/db/client";
 import { getSession } from "@/lib/auth-helper";
 
-export async function getItemStockHistory(itemId: number): Promise<StockHistory[]> {
+export async function getItemStockHistory(itemId: string): Promise<StockHistory[]> {
   await ensureSchemaInitialized();
   return db
     .select()
@@ -15,7 +15,7 @@ export async function getItemStockHistory(itemId: number): Promise<StockHistory[
     .orderBy(desc(stockHistories.createdAt));
 }
 
-export async function getItemQuantity(itemId: number): Promise<number> {
+export async function getItemQuantity(itemId: string): Promise<number> {
   await ensureSchemaInitialized();
   const result = await db
     .select({ total: sum(stockHistories.quantity) })
@@ -66,7 +66,7 @@ export async function createStockHistoryAction(
 }
 
 export async function deleteStockHistoryAction(
-  id: number,
+  id: string,
   userId?: string
 ): Promise<{ success: boolean; error?: string }> {
   try {

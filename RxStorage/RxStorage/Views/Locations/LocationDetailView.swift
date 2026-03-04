@@ -26,7 +26,7 @@ private enum LocationSheet: Identifiable, Equatable {
 
 /// Location detail view with full-screen map and bottom sheet for info
 struct LocationDetailView: View {
-    let locationId: Int
+    let locationId: String
 
     @Environment(LocationDetailViewModel.self) private var viewModel
     @State private var cameraPosition: MapCameraPosition = .automatic
@@ -183,7 +183,7 @@ private struct LocationInfoSheet: View {
 
 #Preview {
     NavigationStack {
-        LocationDetailView(locationId: 1)
+        LocationDetailView(locationId: "1")
             .environment(LocationDetailViewModel())
     }
 }

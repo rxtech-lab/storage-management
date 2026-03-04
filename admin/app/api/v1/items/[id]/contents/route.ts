@@ -25,19 +25,14 @@ export async function GET(
   }
 
   const { id } = await params;
-  const itemId = parseInt(id);
-
-  if (isNaN(itemId)) {
-    return NextResponse.json({ error: "Invalid item ID" }, { status: 400 });
-  }
 
   // Verify user owns the item
-  const item = await getItem(itemId);
+  const item = await getItem(id);
   if (!item || item.userId !== session.user.id) {
     return NextResponse.json({ error: "Item not found" }, { status: 404 });
   }
 
-  const contents = await getItemContents(itemId);
+  const contents = await getItemContents(id);
   return NextResponse.json(contents);
 }
 
@@ -63,14 +58,9 @@ export async function POST(
   }
 
   const { id } = await params;
-  const itemId = parseInt(id);
-
-  if (isNaN(itemId)) {
-    return NextResponse.json({ error: "Invalid item ID" }, { status: 400 });
-  }
 
   // Verify user owns the item
-  const item = await getItem(itemId);
+  const item = await getItem(id);
   if (!item || item.userId !== session.user.id) {
     return NextResponse.json({ error: "Item not found" }, { status: 404 });
   }
@@ -92,7 +82,7 @@ export async function POST(
     );
   }
 
-  const result = await createContentAction({ itemId, type, data });
+  const result = await createContentAction({ itemId: id, type, data });
 
   if (!result.success) {
     return NextResponse.json({ error: result.error }, { status: 500 });

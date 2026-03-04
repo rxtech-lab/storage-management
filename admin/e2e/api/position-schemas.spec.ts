@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 
 test.describe.serial('Position Schemas API', () => {
-  let createdSchemaId: number;
+  let createdSchemaId: string;
 
   test('POST /api/v1/position-schemas - should create a new position schema', async ({ request }) => {
     const response = await request.post('/api/v1/position-schemas', {

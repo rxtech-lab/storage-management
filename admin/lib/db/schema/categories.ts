@@ -1,7 +1,10 @@
 import { sqliteTable, text, integer } from "drizzle-orm/sqlite-core";
+import { nanoid } from "nanoid";
 
 export const categories = sqliteTable("categories", {
-  id: integer("id").primaryKey({ autoIncrement: true }),
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => nanoid()),
   userId: text("user_id").notNull(),
   name: text("name").notNull(),
   description: text("description"),

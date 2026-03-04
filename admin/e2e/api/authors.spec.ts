@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 
 test.describe.serial('Authors API', () => {
-  let createdAuthorId: number;
+  let createdAuthorId: string;
 
   test('POST /api/v1/authors - should create a new author', async ({ request }) => {
     const response = await request.post('/api/v1/authors', {

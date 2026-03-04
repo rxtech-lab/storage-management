@@ -6,7 +6,7 @@ import { DeleteConfirmButton } from "@/components/ui/delete-confirm-button";
 import { deletePositionSchemaAndRedirect } from "@/lib/actions/position-schema-actions";
 
 interface PositionSchemaDeleteButtonProps {
-  schemaId: number;
+  schemaId: string;
   schemaName: string;
 }
 

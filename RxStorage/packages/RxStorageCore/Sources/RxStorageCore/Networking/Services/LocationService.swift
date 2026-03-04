@@ -17,10 +17,10 @@ private let logger = Logger(label: "LocationService")
 public protocol LocationServiceProtocol: Sendable {
     func fetchLocations(filters: LocationFilters?) async throws -> [Location]
     func fetchLocationsPaginated(filters: LocationFilters?) async throws -> PaginatedResponse<Location>
-    func fetchLocation(id: Int) async throws -> Location
+    func fetchLocation(id: String) async throws -> Location
     func createLocation(_ request: NewLocationRequest) async throws -> Location
-    func updateLocation(id: Int, _ request: UpdateLocationRequest) async throws -> Location
-    func deleteLocation(id: Int) async throws
+    func updateLocation(id: String, _ request: UpdateLocationRequest) async throws -> Location
+    func deleteLocation(id: String) async throws
 }
 
 // MARK: - Implementation
@@ -54,8 +54,8 @@ public struct LocationService: LocationServiceProtocol {
     }
 
     @APICall(.ok)
-    public func fetchLocation(id: Int) async throws -> Location {
-        try await StorageAPIClient.shared.client.getLocation(.init(path: .init(id: String(id))))
+    public func fetchLocation(id: String) async throws -> Location {
+        try await StorageAPIClient.shared.client.getLocation(.init(path: .init(id: id)))
     }
 
     @APICall(.created)
@@ -64,12 +64,12 @@ public struct LocationService: LocationServiceProtocol {
     }
 
     @APICall(.ok)
-    public func updateLocation(id: Int, _ request: UpdateLocationRequest) async throws -> Location {
-        try await StorageAPIClient.shared.client.updateLocation(.init(path: .init(id: String(id)), body: .json(request)))
+    public func updateLocation(id: String, _ request: UpdateLocationRequest) async throws -> Location {
+        try await StorageAPIClient.shared.client.updateLocation(.init(path: .init(id: id), body: .json(request)))
     }
 
-    public func deleteLocation(id: Int) async throws {
-        let response = try await StorageAPIClient.shared.client.deleteLocation(.init(path: .init(id: String(id))))
+    public func deleteLocation(id: String) async throws {
+        let response = try await StorageAPIClient.shared.client.deleteLocation(.init(path: .init(id: id)))
 
         switch response {
         case .ok:

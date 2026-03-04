@@ -42,7 +42,7 @@ const contentIcons: Record<ContentType, typeof File> = {
 };
 
 interface ContentSheetProps {
-  itemId?: number;
+  itemId?: string;
   onContentCreated?: (content: Content) => void;
   onPendingContent?: (pending: PendingContent) => void;
   trigger?: React.ReactNode;

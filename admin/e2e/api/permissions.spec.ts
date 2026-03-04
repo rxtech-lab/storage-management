@@ -9,10 +9,10 @@ test.describe.serial("Permission Tests", () => {
   const USER_1 = `test-user-1-${crypto.randomUUID()}`;
   const USER_2 = `test-user-2-${crypto.randomUUID()}`;
 
-  let user1ItemId: number;
-  let user1CategoryId: number;
-  let user1LocationId: number;
-  let user1AuthorId: number;
+  let user1ItemId: string;
+  let user1CategoryId: string;
+  let user1LocationId: string;
+  let user1AuthorId: string;
 
   test.describe("User 1 creates resources", () => {
     test("should create category", async ({ request }) => {
@@ -288,12 +288,12 @@ test.describe.serial("Multi-User Item Isolation", () => {
   const USER_C_EMAIL = `user-c-${crypto.randomUUID()}@example.com`;
 
   // Track created item IDs
-  let userAPrivateItem1Id: number;
-  let userAPrivateItem2Id: number;
-  let userAPublicItemId: number;
-  let userBPrivateItemId: number;
-  let userBPublicItemId: number;
-  let userCPrivateItemId: number;
+  let userAPrivateItem1Id: string;
+  let userAPrivateItem2Id: string;
+  let userAPublicItemId: string;
+  let userBPrivateItemId: string;
+  let userBPublicItemId: string;
+  let userCPrivateItemId: string;
 
   test.describe("Setup - Create items for multiple users", () => {
     test("User A creates 2 private items and 1 public item", async ({ request }) => {

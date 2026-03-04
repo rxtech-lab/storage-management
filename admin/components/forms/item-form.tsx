@@ -44,10 +44,10 @@ const itemSchema = z.object({
   title: z.string().min(1, "Title is required"),
   description: z.string().optional(),
   originalQrCode: z.string().optional(),
-  categoryId: z.number().nullable().optional(),
-  locationId: z.number().nullable().optional(),
-  authorId: z.number().nullable().optional(),
-  parentId: z.number().nullable().optional(),
+  categoryId: z.string().nullable().optional(),
+  locationId: z.string().nullable().optional(),
+  authorId: z.string().nullable().optional(),
+  parentId: z.string().nullable().optional(),
   price: z.number().nullable().optional(),
   currency: z.string().optional(),
   visibility: z.enum(["publicAccess", "privateAccess"]),
@@ -60,7 +60,7 @@ interface ItemFormProps {
   item?: ItemWithRelations;
   positionSchemas: PositionSchema[];
   positions?: PositionWithSchema[];
-  defaultParentId?: number;
+  defaultParentId?: string;
 }
 
 export function ItemForm({
@@ -106,7 +106,7 @@ export function ItemForm({
   const parentId = watch("parentId");
   const images = watch("images");
 
-  const handleDeletePosition = async (positionId: number) => {
+  const handleDeletePosition = async (positionId: string) => {
     startTransition(async () => {
       try {
         const result = await deletePositionAction(positionId);

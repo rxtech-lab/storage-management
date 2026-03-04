@@ -29,14 +29,9 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
   }
 
   const { id } = await params;
-  const itemId = parseInt(id);
-
-  if (isNaN(itemId)) {
-    return NextResponse.json({ error: "Invalid item ID" }, { status: 400 });
-  }
 
   // Verify user owns the item
-  const item = await getItem(itemId);
+  const item = await getItem(id);
   if (!item) {
     return NextResponse.json({ error: "Item not found" }, { status: 404 });
   }
@@ -45,7 +40,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     return NextResponse.json({ error: "Permission denied" }, { status: 403 });
   }
 
-  const whitelist = await getItemWhitelist(itemId);
+  const whitelist = await getItemWhitelist(id);
   return NextResponse.json(whitelist);
 }
 
@@ -68,14 +63,9 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
   }
 
   const { id } = await params;
-  const itemId = parseInt(id);
-
-  if (isNaN(itemId)) {
-    return NextResponse.json({ error: "Invalid item ID" }, { status: 400 });
-  }
 
   // Verify user owns the item
-  const item = await getItem(itemId);
+  const item = await getItem(id);
   if (!item) {
     return NextResponse.json({ error: "Item not found" }, { status: 404 });
   }
@@ -94,7 +84,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     );
   }
 
-  const result = await addToWhitelistAction({ itemId, email });
+  const result = await addToWhitelistAction({ itemId: id, email });
 
   if (!result.success) {
     return NextResponse.json({ error: result.error }, { status: 500 });
@@ -122,14 +112,9 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
   }
 
   const { id } = await params;
-  const itemId = parseInt(id);
-
-  if (isNaN(itemId)) {
-    return NextResponse.json({ error: "Invalid item ID" }, { status: 400 });
-  }
 
   // Verify user owns the item
-  const item = await getItem(itemId);
+  const item = await getItem(id);
   if (!item) {
     return NextResponse.json({ error: "Item not found" }, { status: 404 });
   }
@@ -139,7 +124,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
   }
 
   const body = await request.json();
-  const { whitelistId } = body as { whitelistId: number };
+  const { whitelistId } = body as { whitelistId: string };
 
   if (!whitelistId) {
     return NextResponse.json(

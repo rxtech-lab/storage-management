@@ -165,7 +165,7 @@ export function ImageUpload({
 
       // Handle both file IDs and legacy URLs
       if (isFileId(imageRef)) {
-        const fileId = parseInt(imageRef.substring(5), 10);
+        const fileId = imageRef.substring(5);
         const result = await deleteFileAction(fileId);
         if (!result.success) {
           console.warn("Failed to delete file:", result.error);

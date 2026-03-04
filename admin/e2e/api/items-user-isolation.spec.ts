@@ -10,8 +10,8 @@ test.describe.serial("Items List User Isolation", () => {
   const USER_B = `user-b-${crypto.randomUUID()}`;
 
   // Track created item IDs
-  const userAItemIds: number[] = [];
-  const userBItemIds: number[] = [];
+  const userAItemIds: string[] = [];
+  const userBItemIds: string[] = [];
 
   // Helper to create items
   async function createItem(
@@ -101,7 +101,7 @@ test.describe.serial("Items List User Isolation", () => {
     expect(body.data.length).toBe(5);
 
     // All returned items should belong to User B
-    const returnedIds = body.data.map((item: { id: number }) => item.id);
+    const returnedIds = body.data.map((item: { id: string }) => item.id);
     for (const id of userBItemIds) {
       expect(returnedIds).toContain(id);
     }
@@ -139,7 +139,7 @@ test.describe.serial("Items List User Isolation", () => {
     expect(body.data.length).toBe(5);
 
     // All returned items should belong to User A
-    const returnedIds = body.data.map((item: { id: number }) => item.id);
+    const returnedIds = body.data.map((item: { id: string }) => item.id);
     for (const id of userAItemIds) {
       expect(returnedIds).toContain(id);
     }

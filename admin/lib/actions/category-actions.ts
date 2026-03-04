@@ -53,7 +53,7 @@ export async function getCategories(userId?: string, filters?: CategoryFilters):
   return query;
 }
 
-export async function getCategory(id: number): Promise<Category | undefined> {
+export async function getCategory(id: string): Promise<Category | undefined> {
   const results = await db
     .select()
     .from(categories)
@@ -98,7 +98,7 @@ export async function createCategoryAction(
 }
 
 export async function updateCategoryAction(
-  id: number,
+  id: string,
   data: Partial<Omit<NewCategory, "id" | "userId" | "createdAt" | "updatedAt">>,
   userId?: string
 ): Promise<{ success: boolean; data?: Category; error?: string }> {
@@ -141,7 +141,7 @@ export async function updateCategoryAction(
 }
 
 export async function deleteCategoryAction(
-  id: number,
+  id: string,
   userId?: string
 ): Promise<{ success: boolean; error?: string }> {
   try {
@@ -188,7 +188,7 @@ export async function createCategoryAndRedirect(
   return result;
 }
 
-export async function deleteCategoryAndRedirect(id: number, userId?: string) {
+export async function deleteCategoryAndRedirect(id: string, userId?: string) {
   const result = await deleteCategoryAction(id, userId);
   if (result.success) {
     redirect("/categories");
@@ -196,7 +196,7 @@ export async function deleteCategoryAndRedirect(id: number, userId?: string) {
   return result;
 }
 
-export async function deleteCategoryFormAction(id: number): Promise<void> {
+export async function deleteCategoryFormAction(id: string): Promise<void> {
   await deleteCategoryAction(id);
   revalidatePath("/categories");
 }
@@ -204,7 +204,7 @@ export async function deleteCategoryFormAction(id: number): Promise<void> {
 export async function searchCategories(
   query: string,
   limit: number = 20
-): Promise<{ id: number; name: string }[]> {
+): Promise<{ id: string; name: string }[]> {
   await ensureSchemaInitialized();
 
   const session = await getSession();

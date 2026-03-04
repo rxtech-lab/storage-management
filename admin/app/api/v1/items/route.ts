@@ -33,17 +33,17 @@ export async function GET(request: NextRequest) {
   };
 
   if (searchParams.has("categoryId")) {
-    filters.categoryId = parseInt(searchParams.get("categoryId")!);
+    filters.categoryId = searchParams.get("categoryId")!;
   }
   if (searchParams.has("locationId")) {
-    filters.locationId = parseInt(searchParams.get("locationId")!);
+    filters.locationId = searchParams.get("locationId")!;
   }
   if (searchParams.has("authorId")) {
-    filters.authorId = parseInt(searchParams.get("authorId")!);
+    filters.authorId = searchParams.get("authorId")!;
   }
   if (searchParams.has("parentId")) {
     const parentId = searchParams.get("parentId");
-    filters.parentId = parentId === "null" ? null : parseInt(parentId!);
+    filters.parentId = parentId === "null" ? null : parentId!;
   }
   if (searchParams.has("visibility")) {
     filters.visibility = searchParams.get("visibility") as "publicAccess" | "privateAccess";

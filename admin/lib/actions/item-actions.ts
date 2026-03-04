@@ -34,22 +34,22 @@ import {
 
 // Zod schema for position data
 const positionDataSchema = z.object({
-  positionSchemaId: z.number().int().positive(),
+  positionSchemaId: z.string().min(1),
   data: z.record(z.unknown()),
 });
 
 // Regex pattern for file:{id} format
-const fileIdPattern = /^file:\d+$/;
+const fileIdPattern = /^file:[\w-]+$/;
 
 // Zod schema for item validation
 const itemInsertSchema = z.object({
   title: z.string().min(1, "Title is required"),
   description: z.string().nullable().optional(),
   originalQrCode: z.string().nullable().optional(),
-  categoryId: z.number().int().positive().nullable().optional(),
-  locationId: z.number().int().positive().nullable().optional(),
-  authorId: z.number().int().positive().nullable().optional(),
-  parentId: z.number().int().positive().nullable().optional(),
+  categoryId: z.string().min(1).nullable().optional(),
+  locationId: z.string().min(1).nullable().optional(),
+  authorId: z.string().min(1).nullable().optional(),
+  parentId: z.string().min(1).nullable().optional(),
   price: z.number().nullable().optional(),
   currency: z.string().optional(),
   visibility: z.enum(["publicAccess", "privateAccess"]),
@@ -69,23 +69,23 @@ const itemUpdateSchema = itemInsertSchema
   });
 
 export interface ItemWithRelations extends Item {
-  category?: { id: number; name: string; description: string | null } | null;
+  category?: { id: string; name: string; description: string | null } | null;
   location?: {
-    id: number;
+    id: string;
     title: string;
     latitude: number | null;
     longitude: number | null;
   } | null;
-  author?: { id: number; name: string; bio: string | null } | null;
-  parent?: { id: number; title: string } | null;
+  author?: { id: string; name: string; bio: string | null } | null;
+  parent?: { id: string; title: string } | null;
 }
 
 export interface ItemFilters {
   userId?: string;
-  categoryId?: number;
-  locationId?: number;
-  authorId?: number;
-  parentId?: number | null; // null means get root items (no parent)
+  categoryId?: string;
+  locationId?: string;
+  authorId?: string;
+  parentId?: string | null; // null means get root items (no parent)
   visibility?: "publicAccess" | "privateAccess";
   search?: string;
 }
@@ -198,7 +198,7 @@ export async function getItems(
 }
 
 export async function getItem(
-  id: number,
+  id: string,
 ): Promise<ItemWithRelations | undefined> {
   await ensureSchemaInitialized();
   const results = await db
@@ -254,7 +254,7 @@ export async function getItem(
 }
 
 export async function getItemChildren(
-  parentId: number,
+  parentId: string,
   userId?: string,
 ): Promise<ItemWithRelations[]> {
   return getItems(userId, { parentId });
@@ -389,7 +389,7 @@ export async function createItemAction(
 }
 
 export async function updateItemAction(
-  id: number,
+  id: string,
   data: Partial<Omit<NewItem, "id" | "userId" | "createdAt" | "updatedAt">>,
   userId?: string,
 ): Promise<{ success: boolean; data?: Item; error?: string }> {
@@ -462,7 +462,7 @@ export async function updateItemAction(
     // Extract positions from data before updating item
     const { positions: positionsData, ...itemData } = data as typeof data & {
       positions?: Array<{
-        positionSchemaId: number;
+        positionSchemaId: string;
         data: Record<string, unknown>;
       }>;
     };
@@ -505,7 +505,7 @@ export async function updateItemAction(
 }
 
 export async function deleteItemAction(
-  id: number,
+  id: string,
   userId?: string,
 ): Promise<{ success: boolean; error?: string }> {
   try {
@@ -563,7 +563,7 @@ export async function createItemAndRedirect(
   return result;
 }
 
-export async function deleteItemAndRedirect(id: number, userId?: string) {
+export async function deleteItemAndRedirect(id: string, userId?: string) {
   const result = await deleteItemAction(id, userId);
   if (result.success) {
     redirect("/items");
@@ -572,7 +572,7 @@ export async function deleteItemAndRedirect(id: number, userId?: string) {
 }
 
 export async function deleteItemFormAction(
-  id: number,
+  id: string,
   userId?: string,
 ): Promise<void> {
   await deleteItemAction(id, userId);
@@ -580,8 +580,8 @@ export async function deleteItemFormAction(
 }
 
 export async function setItemParent(
-  childId: number,
-  parentId: number | null,
+  childId: string,
+  parentId: string | null,
   userId?: string,
 ): Promise<{ success: boolean; data?: Item; error?: string }> {
   try {
@@ -649,9 +649,9 @@ export async function setItemParent(
 export async function searchItems(
   query: string,
   userId?: string,
-  excludeId?: number,
+  excludeId?: string,
   limit: number = 20,
-): Promise<{ id: number; title: string }[]> {
+): Promise<{ id: string; title: string }[]> {
   // Get userId from session if not provided
   let resolvedUserId = userId;
   if (!resolvedUserId) {

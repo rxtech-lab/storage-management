@@ -32,7 +32,7 @@ public protocol ItemDetailViewModelProtocol: AnyObject, Observable {
     var error: Error? { get }
 
     /// Fetch item details (includes children)
-    func fetchItem(id: Int) async
+    func fetchItem(id: String) async
 
     /// Fetch item contents
     func fetchContents() async
@@ -43,25 +43,25 @@ public protocol ItemDetailViewModelProtocol: AnyObject, Observable {
     /// Add a child item by its ID (fetches fresh data to avoid memory issues)
     /// Returns tuple of (parentId, childId) for event emission
     @discardableResult
-    func addChildById(_ childId: Int) async throws -> (parentId: Int, childId: Int)
+    func addChildById(_ childId: String) async throws -> (parentId: String, childId: String)
 
     /// Remove a child item by its ID
     /// Returns tuple of (parentId, childId) for event emission
     @discardableResult
-    func removeChildById(_ childId: Int) async throws -> (parentId: Int, childId: Int)
+    func removeChildById(_ childId: String) async throws -> (parentId: String, childId: String)
 
     /// Create a new content for this item
     /// Returns tuple of (itemId, contentId) for event emission
     @discardableResult
-    func createContent(type: ContentType, formData: [String: AnyCodable]) async throws -> (itemId: Int, contentId: Int)
+    func createContent(type: ContentType, formData: [String: AnyCodable]) async throws -> (itemId: String, contentId: String)
 
     /// Delete an existing content
     /// Returns tuple of (itemId, contentId) for event emission
     @discardableResult
-    func deleteContent(id: Int) async throws -> (itemId: Int, contentId: Int)
+    func deleteContent(id: String) async throws -> (itemId: String, contentId: String)
 
     /// Update an existing content
-    func updateContent(id: Int, type: ContentType, formData: [String: AnyCodable]) async throws
+    func updateContent(id: String, type: ContentType, formData: [String: AnyCodable]) async throws
 
     /// Add a stock history entry
     /// Returns the created stock history entry
@@ -69,5 +69,5 @@ public protocol ItemDetailViewModelProtocol: AnyObject, Observable {
     func addStockEntry(quantity: Int, note: String?) async throws -> StockHistory
 
     /// Delete a stock history entry
-    func deleteStockEntry(id: Int) async throws
+    func deleteStockEntry(id: String) async throws
 }

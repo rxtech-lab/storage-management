@@ -17,10 +17,10 @@ private let logger = Logger(label: "CategoryService")
 public protocol CategoryServiceProtocol: Sendable {
     func fetchCategories(filters: CategoryFilters?) async throws -> [Category]
     func fetchCategoriesPaginated(filters: CategoryFilters?) async throws -> PaginatedResponse<Category>
-    func fetchCategory(id: Int) async throws -> Category
+    func fetchCategory(id: String) async throws -> Category
     func createCategory(_ request: NewCategoryRequest) async throws -> Category
-    func updateCategory(id: Int, _ request: UpdateCategoryRequest) async throws -> Category
-    func deleteCategory(id: Int) async throws
+    func updateCategory(id: String, _ request: UpdateCategoryRequest) async throws -> Category
+    func deleteCategory(id: String) async throws
 }
 
 // MARK: - Implementation
@@ -54,8 +54,8 @@ public struct CategoryService: CategoryServiceProtocol {
     }
 
     @APICall(.ok)
-    public func fetchCategory(id: Int) async throws -> Category {
-        try await StorageAPIClient.shared.client.getCategory(.init(path: .init(id: String(id))))
+    public func fetchCategory(id: String) async throws -> Category {
+        try await StorageAPIClient.shared.client.getCategory(.init(path: .init(id: id)))
     }
 
     @APICall(.created)
@@ -64,12 +64,12 @@ public struct CategoryService: CategoryServiceProtocol {
     }
 
     @APICall(.ok)
-    public func updateCategory(id: Int, _ request: UpdateCategoryRequest) async throws -> Category {
-        try await StorageAPIClient.shared.client.updateCategory(.init(path: .init(id: String(id)), body: .json(request)))
+    public func updateCategory(id: String, _ request: UpdateCategoryRequest) async throws -> Category {
+        try await StorageAPIClient.shared.client.updateCategory(.init(path: .init(id: id), body: .json(request)))
     }
 
-    public func deleteCategory(id: Int) async throws {
-        let response = try await StorageAPIClient.shared.client.deleteCategory(.init(path: .init(id: String(id))))
+    public func deleteCategory(id: String) async throws {
+        let response = try await StorageAPIClient.shared.client.deleteCategory(.init(path: .init(id: id)))
 
         switch response {
         case .ok:
