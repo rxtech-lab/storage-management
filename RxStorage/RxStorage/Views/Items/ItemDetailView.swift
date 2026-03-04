@@ -36,6 +36,7 @@ struct ItemDetailView: View {
     @State private var showingContentListSheet = false
     @State private var selectedImageIndex = 0
     @State private var selectedChildForEdit: StorageItem?
+    @State private var selectedChildForDetail: StorageItem?
     @State private var selectedContentForEdit: Content?
     @State private var selectedContentForDetail: Content?
     @State private var isRefreshing = false
@@ -157,6 +158,21 @@ struct ItemDetailView: View {
                     ItemFormSheet(item: child)
                 }
             }
+        #if os(macOS)
+            .sheet(item: $selectedChildForDetail) { child in
+                NavigationStack {
+                    ItemDetailView(itemId: child.id, isViewOnly: isViewOnly)
+                        .toolbar {
+                            ToolbarItem(placement: .cancellationAction) {
+                                Button("Close") {
+                                    selectedChildForDetail = nil
+                                }
+                            }
+                        }
+                        .frame(minWidth: 600, minHeight: 400, idealHeight: 800)
+                }
+            }
+        #endif
             .sheet(item: $selectedContentForEdit) { content in
                 NavigationStack {
                     ContentFormSheet(
@@ -219,7 +235,8 @@ struct ItemDetailView: View {
                         isViewOnly: isViewOnly,
                         onAddChild: { showingAddChildSheet = true },
                         onEditChild: { selectedChildForEdit = $0 },
-                        onRemoveChild: { await removeChild($0) }
+                        onRemoveChild: { await removeChild($0) },
+                        onSelectChild: { selectedChildForDetail = $0 }
                     )
                 }
                 .padding(.horizontal, 16)

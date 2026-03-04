@@ -7,6 +7,13 @@
 
 import RxStorageCore
 import SwiftUI
+#if os(macOS)
+    import Sparkle
+#endif
+
+#if os(macOS)
+    private var updaterController: SPUStandardUpdaterController?
+#endif
 
 @main
 struct RxStorageApp: App {
@@ -21,6 +28,14 @@ struct RxStorageApp: App {
     )
 
     init() {
+        #if os(macOS)
+            updaterController = SPUStandardUpdaterController(
+                startingUpdater: true,
+                updaterDelegate: nil,
+                userDriverDelegate: nil
+            )
+        #endif
+
         // Clear tokens if running UI tests with --reset-auth flag
         if CommandLine.arguments.contains("--reset-auth") {
             let tokenStorage = KeychainTokenStorage(serviceName: "com.rxlab.RxStorage")
@@ -55,6 +70,13 @@ struct RxStorageApp: App {
         #if os(macOS)
         .defaultSize(width: 500, height: 600)
         .windowResizability(.contentSize)
+        .commands {
+            CommandGroup(after: .appInfo) {
+                Button("Check for Updates...") {
+                    updaterController?.checkForUpdates(nil)
+                }
+            }
+        }
         #endif
     }
 }

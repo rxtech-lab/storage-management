@@ -43,11 +43,6 @@ jobs:
           chmod +x artifacts/RxStorageCli-linux-arm64/RxStorageCli
           tar czf RxStorageCli-linux-arm64.tar.gz -C artifacts/RxStorageCli-linux-arm64 RxStorageCli
 
-          # Windows x86_64
-          cd artifacts/RxStorageCli-windows-x86_64
-          zip ../../RxStorageCli-windows-x86_64.zip RxStorageCli.exe
-          cd ../..
-
       - name: Upload to GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
@@ -56,5 +51,4 @@ jobs:
             RxStorageCli-macos-universal.tar.gz \
             RxStorageCli-linux-x86_64.tar.gz \
             RxStorageCli-linux-arm64.tar.gz \
-            RxStorageCli-windows-x86_64.zip \
             --repo "${{ github.repository }}"

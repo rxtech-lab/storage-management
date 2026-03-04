@@ -114,6 +114,11 @@ struct ContentListSheet: View {
                 }
             }
         }
+        #if os(iOS)
         .listStyle(.plain)
+        #else
+        .listStyle(.inset)
+        .frame(minWidth: 400, minHeight: 300)
+        #endif
     }
 }

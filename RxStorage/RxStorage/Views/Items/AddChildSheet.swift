@@ -138,7 +138,12 @@ struct AddChildSheet: View {
             }
             .disabled(isAdded || isAdding)
         }
+        #if os(iOS)
         .listStyle(.plain)
+        #else
+        .listStyle(.inset)
+        .frame(minWidth: 400, minHeight: 300)
+        #endif
     }
 }
 
