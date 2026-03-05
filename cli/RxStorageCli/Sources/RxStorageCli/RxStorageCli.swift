@@ -1,9 +1,8 @@
-// The Swift Programming Language
-// https://docs.swift.org/swift-book
+import SwiftTUI
 
 @main
 struct RxStorageCli {
     static func main() {
-        print("Hello, world!")
+        Application(rootView: HomeView()).start()
     }
 }

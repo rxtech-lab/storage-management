@@ -19,6 +19,8 @@ jobs:
     name: macOS ${{ matrix.arch }}
     runs-on: macos-latest
     timeout-minutes: 30
+    env:
+      AUTH_CLIENT_ID: ${{ secrets.CLI_AUTH_CLIENT_ID }}
     strategy:
       matrix:
         include:
@@ -62,6 +64,8 @@ jobs:
     runs-on: ${{ matrix.runner }}
     container: swift:6.2
     timeout-minutes: 30
+    env:
+      AUTH_CLIENT_ID: ${{ secrets.CLI_AUTH_CLIENT_ID }}
     strategy:
       matrix:
         include:
@@ -102,6 +106,8 @@ jobs:
     name: Windows x86_64
     runs-on: windows-latest
     timeout-minutes: 30
+    env:
+      AUTH_CLIENT_ID: ${{ secrets.CLI_AUTH_CLIENT_ID }}
 
     steps:
       - name: Checkout code
