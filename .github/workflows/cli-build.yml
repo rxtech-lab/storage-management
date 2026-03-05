@@ -1,0 +1,112 @@
+name: CLI Build
+
+on:
+  workflow_call:
+    inputs:
+      configuration:
+        description: 'Build configuration (debug or release)'
+        required: false
+        type: string
+        default: 'debug'
+      upload-artifacts:
+        description: 'Whether to upload build artifacts'
+        required: false
+        type: boolean
+        default: false
+
+jobs:
+  build-macos:
+    name: macOS ${{ matrix.arch }}
+    runs-on: macos-latest
+    timeout-minutes: 30
+    strategy:
+      matrix:
+        include:
+          - arch: arm64
+            swift-build-arch: arm64
+          - arch: x86_64
+            swift-build-arch: x86_64
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Copy OpenAPI spec
+        run: cp admin/public/openapi.json cli/RxStorageCli/Sources/RxStorageCli/openapi.json
+
+      - name: Build CLI
+        run: |
+          cd cli/RxStorageCli
+          swift build -c ${{ inputs.configuration }} --arch ${{ matrix.swift-build-arch }}
+
+      - name: Upload binary artifact
+        if: ${{ inputs.upload-artifacts }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: RxStorageCli-macos-${{ matrix.arch }}
+          path: cli/RxStorageCli/.build/${{ inputs.configuration }}/RxStorageCli
+          retention-days: 1
+
+  build-linux:
+    name: Linux ${{ matrix.arch }}
+    runs-on: ${{ matrix.runner }}
+    container: swift:6.1
+    timeout-minutes: 30
+    strategy:
+      matrix:
+        include:
+          - arch: x86_64
+            runner: ubuntu-latest
+          - arch: arm64
+            runner: ubuntu-24.04-arm
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Copy OpenAPI spec
+        run: cp admin/public/openapi.json cli/RxStorageCli/Sources/RxStorageCli/openapi.json
+
+      - name: Build CLI
+        run: |
+          cd cli/RxStorageCli
+          swift build -c ${{ inputs.configuration }}
+
+      - name: Upload binary artifact
+        if: ${{ inputs.upload-artifacts }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: RxStorageCli-linux-${{ matrix.arch }}
+          path: cli/RxStorageCli/.build/${{ inputs.configuration }}/RxStorageCli
+          retention-days: 1
+
+  build-windows:
+    name: Windows x86_64
+    runs-on: windows-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Install Swift
+        uses: compnerd/gha-setup-swift@main
+        with:
+          branch: swift-6.1-release
+          tag: 6.1-RELEASE
+
+      - name: Copy OpenAPI spec
+        run: copy admin\public\openapi.json cli\RxStorageCli\Sources\RxStorageCli\openapi.json
+
+      - name: Build CLI
+        run: |
+          cd cli\RxStorageCli
+          swift build -c ${{ inputs.configuration }}
+
+      - name: Upload binary artifact
+        if: ${{ inputs.upload-artifacts }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: RxStorageCli-windows-x86_64
+          path: cli/RxStorageCli/.build/${{ inputs.configuration }}/RxStorageCli.exe
+          retention-days: 1

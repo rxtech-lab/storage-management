@@ -5,61 +5,48 @@ on:
     types: [released]
 
 jobs:
-  build-cli:
-    name: Build CLI (${{ matrix.arch }})
-    runs-on: macos-latest
-    strategy:
-      matrix:
-        include:
-          - arch: arm64
-            swift-build-arch: arm64
-          - arch: x86_64
-            swift-build-arch: x86_64
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v6
-
-      - name: Copy OpenAPI spec
-        run: cp admin/public/openapi.json cli/RxStorageCli/Sources/RxStorageCli/openapi.json
-
-      - name: Build CLI (Release)
-        run: |
-          cd cli/RxStorageCli
-          swift build -c release --arch ${{ matrix.swift-build-arch }}
-
-      - name: Upload binary artifact
-        uses: actions/upload-artifact@v7
-        with:
-          name: RxStorageCli-${{ matrix.arch }}
-          path: cli/RxStorageCli/.build/release/RxStorageCli
-          retention-days: 1
+  build:
+    name: Build CLI
+    uses: ./.github/workflows/cli-build.yml
+    with:
+      configuration: release
+      upload-artifacts: true
 
   upload-release:
     name: Upload to GitHub Release
     runs-on: macos-latest
-    needs: build-cli
+    needs: build
     permissions:
       contents: write
 
     steps:
-      - name: Download arm64 binary
+      - name: Download all artifacts
         uses: actions/download-artifact@v7
         with:
-          name: RxStorageCli-arm64
-          path: arm64
+          path: artifacts
 
-      - name: Download x86_64 binary
-        uses: actions/download-artifact@v7
-        with:
-          name: RxStorageCli-x86_64
-          path: x86_64
-
-      - name: Create universal binary
+      - name: Package binaries
         run: |
-          lipo -create arm64/RxStorageCli x86_64/RxStorageCli -output RxStorageCli
-          chmod +x RxStorageCli
-          tar czf RxStorageCli-macos-universal.tar.gz RxStorageCli
+          # macOS universal binary
+          lipo -create \
+            artifacts/RxStorageCli-macos-arm64/RxStorageCli \
+            artifacts/RxStorageCli-macos-x86_64/RxStorageCli \
+            -output RxStorageCli-macos
+          chmod +x RxStorageCli-macos
+          tar czf RxStorageCli-macos-universal.tar.gz RxStorageCli-macos
+
+          # Linux x86_64
+          chmod +x artifacts/RxStorageCli-linux-x86_64/RxStorageCli
+          tar czf RxStorageCli-linux-x86_64.tar.gz -C artifacts/RxStorageCli-linux-x86_64 RxStorageCli
+
+          # Linux arm64
+          chmod +x artifacts/RxStorageCli-linux-arm64/RxStorageCli
+          tar czf RxStorageCli-linux-arm64.tar.gz -C artifacts/RxStorageCli-linux-arm64 RxStorageCli
+
+          # Windows x86_64
+          cd artifacts/RxStorageCli-windows-x86_64
+          zip ../../RxStorageCli-windows-x86_64.zip RxStorageCli.exe
+          cd ../..
 
       - name: Upload to GitHub Release
         env:
@@ -67,4 +54,7 @@ jobs:
         run: |
           gh release upload "${{ github.event.release.tag_name }}" \
             RxStorageCli-macos-universal.tar.gz \
+            RxStorageCli-linux-x86_64.tar.gz \
+            RxStorageCli-linux-arm64.tar.gz \
+            RxStorageCli-windows-x86_64.zip \
             --repo "${{ github.repository }}"

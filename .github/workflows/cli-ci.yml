@@ -6,6 +6,7 @@ on:
       - 'cli/**'
       - 'admin/public/openapi.json'
       - '.github/workflows/cli-ci.yml'
+      - '.github/workflows/cli-build.yml'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -14,20 +15,9 @@ concurrency:
 jobs:
   build:
     name: Build CLI
-    runs-on: macos-latest
-    timeout-minutes: 15
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v6
-
-      - name: Copy OpenAPI spec
-        run: cp admin/public/openapi.json cli/RxStorageCli/Sources/RxStorageCli/openapi.json
-
-      - name: Build
-        run: |
-          cd cli/RxStorageCli
-          swift build
+    uses: ./.github/workflows/cli-build.yml
+    with:
+      configuration: debug
 
   test:
     name: Test CLI
