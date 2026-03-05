@@ -1,66 +1,65 @@
 import SwiftTUI
 
-struct HomeView: View {
-    @State private var authState: AuthState
-
-    init() {
-        // Check locally if we have a valid token (no network call)
-        let tokenStorage = FileTokenStorage()
-        if tokenStorage.getAccessToken() != nil, !tokenStorage.isTokenExpired() {
-            self._authState = State(initialValue: .hasToken)
-        } else {
-            self._authState = State(initialValue: .unauthenticated)
-        }
-    }
+struct HomeView: View, @unchecked Sendable {
+    @State private var authState: AuthState = .unauthenticated
 
     var body: some View {
         VStack {
-            Text("RxStorage CLI")
-
-            VStack {
-                switch authState {
-                case .unauthenticated:
-                    Text("Not signed in")
-                    Button("Sign In") {
-                        signIn()
-                    }
-                case .hasToken:
-                    Text("Signed in (token valid)")
-                    Button("Sign Out") {
-                        signOut()
-                    }
-                case .authenticated(let user):
-                    Text("Signed in as: \(user.name ?? user.email ?? user.id)")
-                    Button("Sign Out") {
-                        signOut()
-                    }
-                case .authenticating:
-                    Text("Opening browser for sign in...")
-                    Text("URL copied to clipboard - paste in browser if needed")
-                case .error(let message):
-                    Text("Error: \(message)")
-                    Button("Retry Sign In") {
-                        signIn()
-                    }
-                default:
-                    Text("...")
+            switch authState {
+            case .authenticated(let user):
+                Text("RxStorage CLI - \(user.name ?? user.email ?? user.id)")
+                Button("Sign Out") {
+                    signOut()
                 }
-            }.border(.blue)
+                .focusable(false)
+                Divider()
+                StorageItemList()
+            case .unauthenticated:
+                Text("RxStorage CLI")
+                Text("Not signed in")
+                Button("Sign In") {
+                    signIn()
+                }
+                .focusable(false)
+            case .authenticating:
+                Text("RxStorage CLI")
+                Text("Opening browser for sign in...")
+                Text("URL copied to clipboard - paste in browser if needed")
+            case .error(let message):
+                Text("RxStorage CLI")
+                Text("Error: \(message)")
+                Button("Retry Sign In") {
+                    signIn()
+                }
+                .focusable(false)
+            default:
+                Text("...")
+            }
+        }
+        .task {
+            let authManager = CLIOAuthManager(configuration: .fromEnvironment)
+            let state = await authManager.checkExistingAuth()
+            await MainActor.run {
+                authState = state
+            }
         }
     }
 
-    @MainActor
     private func signIn() {
         authState = .authenticating
-        Task { @MainActor in
+        Task {
             let authManager = CLIOAuthManager(configuration: .fromEnvironment)
             do {
                 let user = try await authManager.authenticate { url in
                     // URL is copied to clipboard by openBrowser
                 }
-                authState = .authenticated(user)
+                await MainActor.run {
+                    authState = .authenticated(user)
+                }
             } catch {
-                authState = .error(error.localizedDescription)
+                await MainActor.run {
+                    authState = .error(error.localizedDescription)
+                }
             }
         }
     }

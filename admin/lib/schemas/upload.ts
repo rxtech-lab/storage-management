@@ -28,9 +28,15 @@ export const ContentPreviewUploadItemSchema = z.object({
   video_length: z.number().nonnegative().optional().describe("Video length in seconds (required for video type)"),
 });
 
-// Content preview presigned upload - request (array)
-export const ContentPreviewUploadRequestSchema = z.array(ContentPreviewUploadItemSchema)
+// Content preview presigned upload - request (array of items)
+export const ContentPreviewUploadItemsSchema = z.array(ContentPreviewUploadItemSchema)
   .describe("Array of content items to generate preview upload URLs for");
+
+// Content preview presigned upload - request (wrapped with itemId)
+export const ContentPreviewUploadRequestSchema = z.object({
+  item_id: z.string().min(1).describe("ID of the item to associate content with"),
+  items: ContentPreviewUploadItemsSchema,
+}).describe("Content preview upload request with item ID and content items");
 
 // Content preview presigned upload - response item
 export const ContentPreviewUploadResponseItemSchema = z.object({

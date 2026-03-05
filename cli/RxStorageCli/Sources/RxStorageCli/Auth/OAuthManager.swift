@@ -32,7 +32,6 @@ struct AuthUser: Decodable, Sendable {
 enum AuthState: Sendable {
     case unknown
     case checking
-    case hasToken
     case authenticated(AuthUser)
     case unauthenticated
     case authenticating

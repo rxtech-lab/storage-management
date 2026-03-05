@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useMemo } from "react";
 import Link from "next/link";
 import {
   Collapsible,
@@ -51,7 +51,8 @@ import {
   createStockHistoryAction,
   deleteStockHistoryAction,
 } from "@/lib/actions/stock-history-actions";
-import type { Content, ContentData, ItemWhitelist, PositionSchema, StockHistory } from "@/lib/db";
+import { useSignedImages } from "@/lib/hooks/use-signed-images";
+import type { Content, ContentData, ImageContentData, VideoContentData, ItemWhitelist, PositionSchema, StockHistory } from "@/lib/db";
 import type { ItemWithRelations } from "@/lib/actions/item-actions";
 
 const contentIcons = {
@@ -91,6 +92,18 @@ export function ItemSections({
 
   // Content state
   const [contentLoading, setContentLoading] = useState(false);
+
+  // Collect all preview URLs from contents for signed URL resolution
+  const previewUrls = useMemo(() => {
+    const urls: string[] = [];
+    for (const content of contents) {
+      const data = content.data as ImageContentData | VideoContentData;
+      if (data.preview_image_url) urls.push(data.preview_image_url);
+      if ("preview_video_url" in data && data.preview_video_url) urls.push(data.preview_video_url);
+    }
+    return urls;
+  }, [contents]);
+  const { signedUrls } = useSignedImages(previewUrls);
 
   // Stock history state
   const [stockHistory, setStockHistory] = useState(initialStockHistory);
@@ -485,6 +498,9 @@ export function ItemSections({
             ) : (
               contents.map((content) => {
                 const Icon = contentIcons[content.type];
+                const data = content.data as ImageContentData | VideoContentData;
+                const previewImageSrc = data.preview_image_url ? signedUrls.get(data.preview_image_url) : undefined;
+                const previewVideoSrc = "preview_video_url" in data && data.preview_video_url ? signedUrls.get(data.preview_video_url) : undefined;
                 return (
                   <div key={content.id} className="border rounded-lg p-4 bg-muted/20">
                     <div className="flex items-center justify-between mb-4">
@@ -501,6 +517,24 @@ export function ItemSections({
                         <Trash className="h-4 w-4 text-destructive" />
                       </Button>
                     </div>
+                    {(previewImageSrc || previewVideoSrc) && (
+                      <div className="mb-4 flex gap-3 flex-wrap">
+                        {previewImageSrc && (
+                          <img
+                            src={previewImageSrc}
+                            alt={data.title || "Preview"}
+                            className="max-h-48 rounded-lg object-contain border"
+                          />
+                        )}
+                        {previewVideoSrc && (
+                          <video
+                            src={previewVideoSrc}
+                            controls
+                            className="max-h-48 rounded-lg border"
+                          />
+                        )}
+                      </div>
+                    )}
                     <Form
                       schema={contentSchemas[content.type]}
                       formData={content.data}

@@ -1,22 +1,40 @@
 import { test, expect } from "@playwright/test";
 
 test.describe.serial("Content Preview Upload API", () => {
+  let testItemId: string;
+
+  test("setup - create test item", async ({ request }) => {
+    const response = await request.post("/api/v1/items", {
+      data: {
+        title: "Content Preview Test Item",
+        description: "Item for content preview upload tests",
+        visibility: "publicAccess",
+      },
+    });
+    expect(response.status()).toBe(201);
+    const body = await response.json();
+    testItemId = body.id;
+  });
+
   test("POST /api/v1/upload/content-preview - video type returns imageUrl, videoUrl, and id", async ({
     request,
   }) => {
     const response = await request.post("/api/v1/upload/content-preview", {
-      data: [
-        {
-          filename: "test-video.mp4",
-          type: "video",
-          title: "Test Video",
-          description: "A test video",
-          mime_type: "video/mp4",
-          size: 1048576,
-          file_path: "videos/test-video.mp4",
-          video_length: 120,
-        },
-      ],
+      data: {
+        item_id: testItemId,
+        items: [
+          {
+            filename: "test-video.mp4",
+            type: "video",
+            title: "Test Video",
+            description: "A test video",
+            mime_type: "video/mp4",
+            size: 1048576,
+            file_path: "videos/test-video.mp4",
+            video_length: 120,
+          },
+        ],
+      },
     });
 
     expect(response.status()).toBe(201);
@@ -33,16 +51,19 @@ test.describe.serial("Content Preview Upload API", () => {
     request,
   }) => {
     const response = await request.post("/api/v1/upload/content-preview", {
-      data: [
-        {
-          filename: "test-photo.jpg",
-          type: "image",
-          title: "Test Photo",
-          mime_type: "image/jpeg",
-          size: 204800,
-          file_path: "images/test-photo.jpg",
-        },
-      ],
+      data: {
+        item_id: testItemId,
+        items: [
+          {
+            filename: "test-photo.jpg",
+            type: "image",
+            title: "Test Photo",
+            mime_type: "image/jpeg",
+            size: 204800,
+            file_path: "images/test-photo.jpg",
+          },
+        ],
+      },
     });
 
     expect(response.status()).toBe(201);
@@ -58,34 +79,37 @@ test.describe.serial("Content Preview Upload API", () => {
     request,
   }) => {
     const response = await request.post("/api/v1/upload/content-preview", {
-      data: [
-        {
-          filename: "clip.mp4",
-          type: "video",
-          title: "Video Clip",
-          mime_type: "video/mp4",
-          size: 2097152,
-          file_path: "videos/clip.mp4",
-          video_length: 30,
-        },
-        {
-          filename: "photo.png",
-          type: "image",
-          title: "Photo",
-          mime_type: "image/png",
-          size: 102400,
-          file_path: "images/photo.png",
-        },
-        {
-          filename: "another.mov",
-          type: "video",
-          title: "Another Video",
-          mime_type: "video/quicktime",
-          size: 5242880,
-          file_path: "videos/another.mov",
-          video_length: 60,
-        },
-      ],
+      data: {
+        item_id: testItemId,
+        items: [
+          {
+            filename: "clip.mp4",
+            type: "video",
+            title: "Video Clip",
+            mime_type: "video/mp4",
+            size: 2097152,
+            file_path: "videos/clip.mp4",
+            video_length: 30,
+          },
+          {
+            filename: "photo.png",
+            type: "image",
+            title: "Photo",
+            mime_type: "image/png",
+            size: 102400,
+            file_path: "images/photo.png",
+          },
+          {
+            filename: "another.mov",
+            type: "video",
+            title: "Another Video",
+            mime_type: "video/quicktime",
+            size: 5242880,
+            file_path: "videos/another.mov",
+            video_length: 60,
+          },
+        ],
+      },
     });
 
     expect(response.status()).toBe(201);
@@ -112,11 +136,14 @@ test.describe.serial("Content Preview Upload API", () => {
     expect(new Set(ids).size).toBe(3);
   });
 
-  test("POST /api/v1/upload/content-preview - empty array returns empty array", async ({
+  test("POST /api/v1/upload/content-preview - empty items array returns empty array", async ({
     request,
   }) => {
     const response = await request.post("/api/v1/upload/content-preview", {
-      data: [],
+      data: {
+        item_id: testItemId,
+        items: [],
+      },
     });
 
     expect(response.status()).toBe(201);
@@ -128,16 +155,19 @@ test.describe.serial("Content Preview Upload API", () => {
     request,
   }) => {
     const response = await request.post("/api/v1/upload/content-preview", {
-      data: [
-        {
-          filename: "test.pdf",
-          type: "file",
-          title: "Test File",
-          mime_type: "application/pdf",
-          size: 1024,
-          file_path: "files/test.pdf",
-        },
-      ],
+      data: {
+        item_id: testItemId,
+        items: [
+          {
+            filename: "test.pdf",
+            type: "file",
+            title: "Test File",
+            mime_type: "application/pdf",
+            size: 1024,
+            file_path: "files/test.pdf",
+          },
+        ],
+      },
     });
 
     expect(response.status()).toBe(400);
@@ -149,15 +179,18 @@ test.describe.serial("Content Preview Upload API", () => {
     request,
   }) => {
     const response = await request.post("/api/v1/upload/content-preview", {
-      data: [
-        {
-          type: "image",
-          title: "Test",
-          mime_type: "image/jpeg",
-          size: 1024,
-          file_path: "images/test.jpg",
-        },
-      ],
+      data: {
+        item_id: testItemId,
+        items: [
+          {
+            type: "image",
+            title: "Test",
+            mime_type: "image/jpeg",
+            size: 1024,
+            file_path: "images/test.jpg",
+          },
+        ],
+      },
     });
 
     expect(response.status()).toBe(400);
@@ -169,13 +202,16 @@ test.describe.serial("Content Preview Upload API", () => {
     request,
   }) => {
     const response = await request.post("/api/v1/upload/content-preview", {
-      data: [
-        {
-          filename: "test.jpg",
-          type: "image",
-          // missing title, mime_type, size, file_path
-        },
-      ],
+      data: {
+        item_id: testItemId,
+        items: [
+          {
+            filename: "test.jpg",
+            type: "image",
+            // missing title, mime_type, size, file_path
+          },
+        ],
+      },
     });
 
     expect(response.status()).toBe(400);
@@ -187,17 +223,20 @@ test.describe.serial("Content Preview Upload API", () => {
     request,
   }) => {
     const response = await request.post("/api/v1/upload/content-preview", {
-      data: [
-        {
-          filename: "test.mp4",
-          type: "video",
-          title: "Test Video",
-          mime_type: "video/mp4",
-          size: 1048576,
-          file_path: "videos/test.mp4",
-          // missing video_length
-        },
-      ],
+      data: {
+        item_id: testItemId,
+        items: [
+          {
+            filename: "test.mp4",
+            type: "video",
+            title: "Test Video",
+            mime_type: "video/mp4",
+            size: 1048576,
+            file_path: "videos/test.mp4",
+            // missing video_length
+          },
+        ],
+      },
     });
 
     expect(response.status()).toBe(400);

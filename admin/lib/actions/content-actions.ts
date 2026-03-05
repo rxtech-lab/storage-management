@@ -4,6 +4,8 @@ import { revalidatePath } from "next/cache";
 import { eq } from "drizzle-orm";
 import { db, contents, type Content, type NewContent, type ContentData } from "@/lib/db";
 import { ensureSchemaInitialized } from "@/lib/db/client";
+import { deleteFileAction } from "@/lib/actions/file-actions";
+import { isFileId } from "@/lib/utils/file-utils";
 
 export async function getItemContents(itemId: string): Promise<Content[]> {
   await ensureSchemaInitialized();
@@ -65,17 +67,31 @@ export async function deleteContentAction(
   id: string
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    const content = await db
-      .select({ itemId: contents.itemId })
+    const result = await db
+      .select()
       .from(contents)
       .where(eq(contents.id, id))
       .limit(1);
 
+    const content = result[0];
+    if (!content) {
+      return { success: false, error: "Content not found" };
+    }
+
+    // Extract file IDs from content data and delete associated files + S3 objects
+    const data = content.data as Record<string, unknown>;
+    const fileRefs = [data.preview_image_url, data.preview_video_url].filter(
+      (ref): ref is string => typeof ref === "string" && isFileId(ref)
+    );
+
+    for (const ref of fileRefs) {
+      const fileId = ref.substring(5);
+      await deleteFileAction(fileId);
+    }
+
     await db.delete(contents).where(eq(contents.id, id));
 
-    if (content[0]) {
-      revalidatePath(`/items/${content[0].itemId}`);
-    }
+    revalidatePath(`/items/${content.itemId}`);
     return { success: true };
   } catch (error) {
     return {

@@ -3,8 +3,10 @@ import { PutObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { getSession } from "@/lib/auth-helper";
 import { createFileRecordAction } from "@/lib/actions/file-actions";
+import { createContentAction } from "@/lib/actions/content-actions";
 import { s3Client, S3_BUCKET } from "@/lib/s3";
 import { ContentPreviewUploadRequestSchema } from "@/lib/schemas/upload";
+import type { ImageContentData, VideoContentData } from "@/lib/db/schema/contents";
 
 function generatePreviewKey(filename: string, suffix: string): string {
   const timestamp = Date.now();
@@ -50,7 +52,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const items = parsed.data;
+    const { item_id: itemId, items } = parsed.data;
 
     if (items.length === 0) {
       return NextResponse.json([], { status: 201 });
@@ -92,6 +94,8 @@ export async function POST(request: NextRequest) {
           imageUrl: `https://mock-s3.example.com/upload/${mockImageKey}`,
         };
 
+        let contentData: ImageContentData | VideoContentData;
+
         if (item.type === "video") {
           const mockVideoKey = `mock/previews/${Date.now()}-video-${item.filename.replace(/[^a-zA-Z0-9.-]/g, "_")}`;
           const videoFileRecord = await createFileRecordAction(
@@ -107,6 +111,39 @@ export async function POST(request: NextRequest) {
           }
 
           result.videoUrl = `https://mock-s3.example.com/upload/${mockVideoKey}`;
+
+          contentData = {
+            title: item.title,
+            description: item.description,
+            mime_type: item.mime_type,
+            size: item.size,
+            file_path: item.file_path,
+            preview_image_url: `file:${imageFileRecord.data.id}`,
+            preview_video_url: `file:${videoFileRecord.data.id}`,
+            video_length: item.video_length!,
+          } as VideoContentData;
+        } else {
+          contentData = {
+            title: item.title,
+            description: item.description,
+            mime_type: item.mime_type,
+            size: item.size,
+            file_path: item.file_path,
+            preview_image_url: `file:${imageFileRecord.data.id}`,
+          } as ImageContentData;
+        }
+
+        const contentResult = await createContentAction({
+          itemId,
+          type: item.type === "video" ? "video" : "image",
+          data: contentData,
+        });
+
+        if (!contentResult.success) {
+          return NextResponse.json(
+            { error: contentResult.error || "Failed to create content record" },
+            { status: 500 }
+          );
         }
 
         results.push(result);
@@ -131,6 +168,8 @@ export async function POST(request: NextRequest) {
           imageUrl,
         };
 
+        let contentData: ImageContentData | VideoContentData;
+
         if (item.type === "video") {
           const videoKey = generatePreviewKey(item.filename, "video");
           const videoFileRecord = await createFileRecordAction(
@@ -146,6 +185,39 @@ export async function POST(request: NextRequest) {
           }
 
           result.videoUrl = await generatePresignedPutUrl(videoKey, item.mime_type);
+
+          contentData = {
+            title: item.title,
+            description: item.description,
+            mime_type: item.mime_type,
+            size: item.size,
+            file_path: item.file_path,
+            preview_image_url: `file:${imageFileRecord.data.id}`,
+            preview_video_url: `file:${videoFileRecord.data.id}`,
+            video_length: item.video_length!,
+          } as VideoContentData;
+        } else {
+          contentData = {
+            title: item.title,
+            description: item.description,
+            mime_type: item.mime_type,
+            size: item.size,
+            file_path: item.file_path,
+            preview_image_url: `file:${imageFileRecord.data.id}`,
+          } as ImageContentData;
+        }
+
+        const contentResult = await createContentAction({
+          itemId,
+          type: item.type === "video" ? "video" : "image",
+          data: contentData,
+        });
+
+        if (!contentResult.success) {
+          return NextResponse.json(
+            { error: contentResult.error || "Failed to create content record" },
+            { status: 500 }
+          );
         }
 
         results.push(result);
