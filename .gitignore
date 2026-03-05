@@ -21,3 +21,4 @@ build.sh
 # User-specific Xcode data
 xcuserdata/
 .vercel
+cli/RxStorageCli/Sources/RxStorageCli/openapi.json

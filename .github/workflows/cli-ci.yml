@@ -1,0 +1,47 @@
+name: CLI CI
+
+on:
+  push:
+    paths:
+      - 'cli/**'
+      - 'admin/public/openapi.json'
+      - '.github/workflows/cli-ci.yml'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build CLI
+    runs-on: macos-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Copy OpenAPI spec
+        run: cp admin/public/openapi.json cli/RxStorageCli/Sources/RxStorageCli/openapi.json
+
+      - name: Build
+        run: |
+          cd cli/RxStorageCli
+          swift build
+
+  test:
+    name: Test CLI
+    runs-on: macos-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Copy OpenAPI spec
+        run: cp admin/public/openapi.json cli/RxStorageCli/Sources/RxStorageCli/openapi.json
+
+      - name: Test
+        run: |
+          cd cli/RxStorageCli
+          swift test

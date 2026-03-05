@@ -1,0 +1,70 @@
+name: CLI Release
+
+on:
+  release:
+    types: [released]
+
+jobs:
+  build-cli:
+    name: Build CLI (${{ matrix.arch }})
+    runs-on: macos-latest
+    strategy:
+      matrix:
+        include:
+          - arch: arm64
+            swift-build-arch: arm64
+          - arch: x86_64
+            swift-build-arch: x86_64
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Copy OpenAPI spec
+        run: cp admin/public/openapi.json cli/RxStorageCli/Sources/RxStorageCli/openapi.json
+
+      - name: Build CLI (Release)
+        run: |
+          cd cli/RxStorageCli
+          swift build -c release --arch ${{ matrix.swift-build-arch }}
+
+      - name: Upload binary artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: RxStorageCli-${{ matrix.arch }}
+          path: cli/RxStorageCli/.build/release/RxStorageCli
+          retention-days: 1
+
+  upload-release:
+    name: Upload to GitHub Release
+    runs-on: macos-latest
+    needs: build-cli
+    permissions:
+      contents: write
+
+    steps:
+      - name: Download arm64 binary
+        uses: actions/download-artifact@v7
+        with:
+          name: RxStorageCli-arm64
+          path: arm64
+
+      - name: Download x86_64 binary
+        uses: actions/download-artifact@v7
+        with:
+          name: RxStorageCli-x86_64
+          path: x86_64
+
+      - name: Create universal binary
+        run: |
+          lipo -create arm64/RxStorageCli x86_64/RxStorageCli -output RxStorageCli
+          chmod +x RxStorageCli
+          tar czf RxStorageCli-macos-universal.tar.gz RxStorageCli
+
+      - name: Upload to GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release upload "${{ github.event.release.tag_name }}" \
+            RxStorageCli-macos-universal.tar.gz \
+            --repo "${{ github.repository }}"
