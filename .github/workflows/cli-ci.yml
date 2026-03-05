@@ -28,8 +28,14 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v6
 
-      - name: Copy OpenAPI spec
-        run: cp admin/public/openapi.json cli/RxStorageCli/Sources/RxStorageCli/openapi.json
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Generate OpenAPI spec
+        run: |
+          cd admin && bun install && bun run openapi:generate && cd ..
+          cp admin/public/openapi.json cli/RxStorageCli/Sources/RxStorageCli/openapi.json
 
       - name: Test
         run: |

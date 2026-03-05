@@ -31,8 +31,14 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v6
 
-      - name: Copy OpenAPI spec
-        run: cp admin/public/openapi.json cli/RxStorageCli/Sources/RxStorageCli/openapi.json
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Generate OpenAPI spec
+        run: |
+          cd admin && bun install && bun run openapi:generate && cd ..
+          cp admin/public/openapi.json cli/RxStorageCli/Sources/RxStorageCli/openapi.json
 
       - name: Build CLI
         run: |
@@ -64,8 +70,16 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v6
 
-      - name: Copy OpenAPI spec
-        run: cp admin/public/openapi.json cli/RxStorageCli/Sources/RxStorageCli/openapi.json
+      - name: Install Bun
+        run: |
+          apt-get update && apt-get install -y curl unzip
+          curl -fsSL https://bun.sh/install | bash
+          echo "$HOME/.bun/bin" >> $GITHUB_PATH
+
+      - name: Generate OpenAPI spec
+        run: |
+          cd admin && $HOME/.bun/bin/bun install && $HOME/.bun/bin/bun run openapi:generate && cd ..
+          cp admin/public/openapi.json cli/RxStorageCli/Sources/RxStorageCli/openapi.json
 
       - name: Build CLI
         run: |
@@ -95,8 +109,17 @@ jobs:
           branch: swift-6.1-release
           tag: 6.1-RELEASE
 
-      - name: Copy OpenAPI spec
-        run: copy admin\public\openapi.json cli\RxStorageCli\Sources\RxStorageCli\openapi.json
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Generate OpenAPI spec
+        run: |
+          cd admin
+          bun install
+          bun run openapi:generate
+          cd ..
+          copy admin\public\openapi.json cli\RxStorageCli\Sources\RxStorageCli\openapi.json
 
       - name: Build CLI
         run: |
