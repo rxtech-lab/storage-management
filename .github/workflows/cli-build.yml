@@ -107,9 +107,10 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v6
 
-      - uses: swift-actions/setup-swift@v2
+      - uses: compnerd/gha-setup-swift@main
         with:
-          swift-version: '6.2'
+          branch: swift-6.2-release
+          tag: 6.2-RELEASE
 
       - uses: oven-sh/setup-bun@v2
         with:
