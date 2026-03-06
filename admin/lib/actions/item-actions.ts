@@ -759,25 +759,25 @@ export async function getItemsPaginated(
   }
 
   // Add cursor conditions for pagination
-  // Items are sorted by updatedAt DESC, id DESC
+  // Items are sorted by createdAt DESC, id DESC
   if (cursor) {
     const cursorDate = new Date(cursor.sortValue);
     const cursorId = cursor.id;
 
     if (direction === "next") {
       // Forward pagination: get items older than cursor
-      // WHERE (updatedAt < cursorDate) OR (updatedAt = cursorDate AND id < cursorId)
+      // WHERE (createdAt < cursorDate) OR (createdAt = cursorDate AND id < cursorId)
       const cursorCondition = or(
-        lt(items.updatedAt, cursorDate),
-        and(eq(items.updatedAt, cursorDate), lt(items.id, cursorId)),
+        lt(items.createdAt, cursorDate),
+        and(eq(items.createdAt, cursorDate), lt(items.id, cursorId)),
       );
       if (cursorCondition) conditions.push(cursorCondition);
     } else {
       // Backward pagination: get items newer than cursor
-      // WHERE (updatedAt > cursorDate) OR (updatedAt = cursorDate AND id > cursorId)
+      // WHERE (createdAt > cursorDate) OR (createdAt = cursorDate AND id > cursorId)
       const cursorCondition = or(
-        gt(items.updatedAt, cursorDate),
-        and(eq(items.updatedAt, cursorDate), gt(items.id, cursorId)),
+        gt(items.createdAt, cursorDate),
+        and(eq(items.createdAt, cursorDate), gt(items.id, cursorId)),
       );
       if (cursorCondition) conditions.push(cursorCondition);
     }
@@ -830,10 +830,10 @@ export async function getItemsPaginated(
 
   // Order depends on direction
   if (direction === "next") {
-    query = query.orderBy(desc(items.updatedAt), desc(items.id));
+    query = query.orderBy(desc(items.createdAt), desc(items.id));
   } else {
     // Reverse order for backward pagination
-    query = query.orderBy(asc(items.updatedAt), asc(items.id));
+    query = query.orderBy(asc(items.createdAt), asc(items.id));
   }
 
   // Fetch one extra to determine if there are more items
@@ -854,7 +854,7 @@ export async function getItemsPaginated(
     mappedResults,
     limit,
     direction,
-    (item) => item.updatedAt.toISOString(),
+    (item) => item.createdAt.toISOString(),
     !!cursor,
   );
 }

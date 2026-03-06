@@ -5,6 +5,7 @@ import {
   getContent,
   updateContentAction,
   deleteContentAction,
+  resolveContentFileRefs,
 } from "@/lib/actions/content-actions";
 import type { ContentData } from "@/lib/db";
 
@@ -41,7 +42,8 @@ export async function GET(
     return NextResponse.json({ error: "Content not found" }, { status: 404 });
   }
 
-  return NextResponse.json(content);
+  const [signed] = await resolveContentFileRefs([content]);
+  return NextResponse.json(signed);
 }
 
 /**
@@ -94,7 +96,8 @@ export async function PUT(
     return NextResponse.json({ error: result.error }, { status: 500 });
   }
 
-  return NextResponse.json(result.data);
+  const [signed] = await resolveContentFileRefs([result.data!]);
+  return NextResponse.json(signed);
 }
 
 /**

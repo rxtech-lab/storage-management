@@ -1,0 +1,60 @@
+name: CLI Release
+
+on:
+  release:
+    types: [released]
+
+jobs:
+  build:
+    name: Build CLI
+    uses: ./.github/workflows/cli-build.yml
+    with:
+      configuration: release
+      upload-artifacts: true
+
+  upload-release:
+    name: Upload to GitHub Release
+    runs-on: macos-latest
+    needs: build
+    permissions:
+      contents: write
+
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v7
+        with:
+          path: artifacts
+
+      - name: Package binaries
+        run: |
+          # macOS universal binary
+          lipo -create \
+            artifacts/RxStorageCli-macos-arm64/RxStorageCli \
+            artifacts/RxStorageCli-macos-x86_64/RxStorageCli \
+            -output RxStorageCli-macos
+          chmod +x RxStorageCli-macos
+          tar czf RxStorageCli-macos-universal.tar.gz RxStorageCli-macos
+
+          # Linux x86_64
+          chmod +x artifacts/RxStorageCli-linux-x86_64/RxStorageCli
+          tar czf RxStorageCli-linux-x86_64.tar.gz -C artifacts/RxStorageCli-linux-x86_64 RxStorageCli
+
+          # Linux arm64
+          chmod +x artifacts/RxStorageCli-linux-arm64/RxStorageCli
+          tar czf RxStorageCli-linux-arm64.tar.gz -C artifacts/RxStorageCli-linux-arm64 RxStorageCli
+
+          # Windows x86_64
+          cd artifacts/RxStorageCli-windows-x86_64
+          zip ../../RxStorageCli-windows-x86_64.zip RxStorageCli.exe
+          cd ../..
+
+      - name: Upload to GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release upload "${{ github.event.release.tag_name }}" \
+            RxStorageCli-macos-universal.tar.gz \
+            RxStorageCli-linux-x86_64.tar.gz \
+            RxStorageCli-linux-arm64.tar.gz \
+            RxStorageCli-windows-x86_64.zip \
+            --repo "${{ github.repository }}"

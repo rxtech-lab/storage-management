@@ -455,6 +455,7 @@ import SwiftUI
             author: nil,
             children: [],
             contents: [],
+            totalContents: 0,
             positions: [],
             quantity: 0,
             stockHistory: []

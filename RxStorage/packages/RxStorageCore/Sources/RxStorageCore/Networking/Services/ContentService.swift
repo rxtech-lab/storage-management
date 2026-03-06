@@ -16,6 +16,7 @@ private let logger = Logger(label: "ContentService")
 /// Protocol for content service operations
 public protocol ContentServiceProtocol: Sendable {
     func fetchItemContents(itemId: String) async throws -> [Content]
+    func fetchItemContentsPaginated(itemId: String, cursor: String?, search: String?, limit: Int?) async throws -> PaginatedResponse<Content>
     func createContent(itemId: String, _ request: ContentRequest) async throws -> Content
     func updateContent(id: String, _ request: ContentRequest) async throws -> Content
     func deleteContent(id: String) async throws
@@ -27,9 +28,28 @@ public protocol ContentServiceProtocol: Sendable {
 public struct ContentService: ContentServiceProtocol {
     public init() {}
 
-    @APICall(.ok)
+    @APICall(.ok, transform: "transformPaginatedContents")
+    public func fetchItemContentsPaginated(itemId: String, cursor: String?, search: String?, limit: Int?) async throws -> PaginatedResponse<Content> {
+        try await StorageAPIClient.shared.client.getItemContents(.init(
+            path: .init(id: itemId),
+            query: .init(
+                cursor: cursor,
+                direction: cursor != nil ? .next : nil,
+                limit: limit,
+                search: search
+            )
+        ))
+    }
+
+    /// Transforms paginated contents response to PaginatedResponse
+    private func transformPaginatedContents(_ body: Components.Schemas.PaginatedContentsResponse) -> PaginatedResponse<Content> {
+        let pagination = PaginationState(from: body.pagination)
+        return PaginatedResponse(data: body.data, pagination: pagination)
+    }
+
     public func fetchItemContents(itemId: String) async throws -> [Content] {
-        try await StorageAPIClient.shared.client.getItemContents(.init(path: .init(id: itemId)))
+        let result = try await fetchItemContentsPaginated(itemId: itemId, cursor: nil, search: nil, limit: 100)
+        return result.data
     }
 
     @APICall(.created)

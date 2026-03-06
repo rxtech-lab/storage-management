@@ -126,7 +126,10 @@
 				Views/Items/AddChildSheet.swift,
 				Views/Items/ContentDetailSheet.swift,
 				Views/Items/ContentFormSheet.swift,
+				Views/Items/ContentListSheet.swift,
 				Views/Items/ContentSectionView.swift,
+				Views/Items/ItemDetailCards.swift,
+				Views/Items/ItemDetailPreview.swift,
 				Views/Items/ItemDetailView.swift,
 				Views/Items/ItemFilterSheet.swift,
 				Views/Items/ItemFormSheet.swift,
@@ -134,7 +137,9 @@
 				Views/Items/ItemRow.swift,
 				Views/Items/NFCLockSheet.swift,
 				Views/Items/ParentItemPickerSheet.swift,
+				Views/Items/PlatformColors.swift,
 				Views/Items/PositionFormSheet.swift,
+				Views/Items/StockSheets.swift,
 				Views/Loading/LoadingOverlay.swift,
 				Views/Locations/LocationDetailView.swift,
 				Views/Locations/LocationFormSheet.swift,
@@ -150,6 +155,8 @@
 				Views/QRCode/QRPrintLayoutView.swift,
 				Views/Shared/AdaptiveList.swift,
 				Views/Shared/CameraPickerView.swift,
+				Views/Shared/MediaCarousel.swift,
+				Views/Shared/SwipeableRow.swift,
 			);
 			target = DF66258F2F29138300333552 /* RxStorageClips */;
 		};

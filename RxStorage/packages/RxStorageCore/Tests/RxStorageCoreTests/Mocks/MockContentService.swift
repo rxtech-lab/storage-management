@@ -48,6 +48,17 @@ public final class MockContentService: ContentServiceProtocol, @unchecked Sendab
         }
     }
 
+    public func fetchItemContentsPaginated(itemId: String, cursor _: String?, search _: String?, limit _: Int?) async throws -> PaginatedResponse<Content> {
+        fetchItemContentsCalled = true
+        lastFetchItemId = itemId
+        switch fetchItemContentsResult {
+        case let .success(contents):
+            return PaginatedResponse(data: contents, pagination: PaginationState(hasNextPage: false, hasPrevPage: false, nextCursor: nil, prevCursor: nil))
+        case let .failure(error):
+            throw error
+        }
+    }
+
     public func createContent(itemId: String, _ request: ContentRequest) async throws -> Content {
         createContentCalled = true
         lastCreateItemId = itemId

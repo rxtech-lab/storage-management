@@ -43,8 +43,12 @@ struct APICallMacroTests {
                     case .undocumented(let statusCode, _):
                         throw APIError.serverError("HTTP \\(statusCode)")
                     }
+                } catch is CancellationError {
+                    throw CancellationError()
                 } catch let clientError as ClientError {
-                    if let decodingError = clientError.underlyingError as? DecodingError {
+                    if clientError.underlyingError is CancellationError {
+                        throw CancellationError()
+                    } else if let decodingError = clientError.underlyingError as? DecodingError {
                         logger.error("Decoding error: \\(describeDecodingError(decodingError))")
                     } else {
                         logger.error("Client error: \\(clientError)")
@@ -93,8 +97,12 @@ struct APICallMacroTests {
                     case .undocumented(let statusCode, _):
                         throw APIError.serverError("HTTP \\(statusCode)")
                     }
+                } catch is CancellationError {
+                    throw CancellationError()
                 } catch let clientError as ClientError {
-                    if let decodingError = clientError.underlyingError as? DecodingError {
+                    if clientError.underlyingError is CancellationError {
+                        throw CancellationError()
+                    } else if let decodingError = clientError.underlyingError as? DecodingError {
                         logger.error("Decoding error: \\(describeDecodingError(decodingError))")
                     } else {
                         logger.error("Client error: \\(clientError)")
@@ -143,8 +151,12 @@ struct APICallMacroTests {
                     case .undocumented(let statusCode, _):
                         throw APIError.serverError("HTTP \\(statusCode)")
                     }
+                } catch is CancellationError {
+                    throw CancellationError()
                 } catch let clientError as ClientError {
-                    if let decodingError = clientError.underlyingError as? DecodingError {
+                    if clientError.underlyingError is CancellationError {
+                        throw CancellationError()
+                    } else if let decodingError = clientError.underlyingError as? DecodingError {
                         logger.error("Decoding error: \\(describeDecodingError(decodingError))")
                     } else {
                         logger.error("Client error: \\(clientError)")
@@ -195,8 +207,12 @@ struct APICallMacroTests {
                     case .undocumented(let statusCode, _):
                         throw APIError.serverError("HTTP \\(statusCode)")
                     }
+                } catch is CancellationError {
+                    throw CancellationError()
                 } catch let clientError as ClientError {
-                    if let decodingError = clientError.underlyingError as? DecodingError {
+                    if clientError.underlyingError is CancellationError {
+                        throw CancellationError()
+                    } else if let decodingError = clientError.underlyingError as? DecodingError {
                         logger.error("Decoding error: \\(describeDecodingError(decodingError))")
                     } else {
                         logger.error("Client error: \\(clientError)")

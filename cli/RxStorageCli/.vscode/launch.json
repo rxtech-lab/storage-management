@@ -1,0 +1,24 @@
+{
+    "configurations": [
+        {
+            "type": "swift",
+            "request": "launch",
+            "args": [],
+            "cwd": "${workspaceFolder:RxStorageCli}",
+            "name": "Debug RxStorageCli",
+            "target": "RxStorageCli",
+            "configuration": "debug",
+            "preLaunchTask": "swift: Build Debug RxStorageCli"
+        },
+        {
+            "type": "swift",
+            "request": "launch",
+            "args": [],
+            "cwd": "${workspaceFolder:RxStorageCli}",
+            "name": "Release RxStorageCli",
+            "target": "RxStorageCli",
+            "configuration": "release",
+            "preLaunchTask": "swift: Build Release RxStorageCli"
+        }
+    ]
+}

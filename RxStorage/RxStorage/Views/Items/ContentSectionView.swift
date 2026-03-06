@@ -41,10 +41,37 @@ struct ContentRowView: View {
 
     var body: some View {
         HStack(alignment: .top, spacing: 12) {
-            Image(systemName: content.type.icon)
-                .font(.title2)
-                .foregroundStyle(iconColor)
-                .frame(width: 32, height: 32)
+            // Thumbnail or icon
+            if let previewUrl = content.contentData.previewImageUrl,
+               let url = URL(string: previewUrl)
+            {
+                AsyncImage(url: url) { phase in
+                    switch phase {
+                    case let .success(image):
+                        image
+                            .resizable()
+                            .scaledToFill()
+                    case .failure:
+                        Image(systemName: content.type.icon)
+                            .font(.title2)
+                            .foregroundStyle(iconColor)
+                            .frame(width: 48, height: 48)
+                            .background(iconColor.opacity(0.1))
+                            .clipShape(RoundedRectangle(cornerRadius: 8))
+                    default:
+                        ProgressView()
+                    }
+                }
+                .frame(width: 48, height: 48)
+                .clipShape(RoundedRectangle(cornerRadius: 8))
+            } else {
+                Image(systemName: content.type.icon)
+                    .font(.title2)
+                    .foregroundStyle(iconColor)
+                    .frame(width: 48, height: 48)
+                    .background(iconColor.opacity(0.1))
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
+            }
 
             VStack(alignment: .leading, spacing: 4) {
                 Text(content.contentData.title ?? "Untitled")

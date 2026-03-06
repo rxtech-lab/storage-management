@@ -216,7 +216,11 @@ export const ItemDetailResponseSchema = z.object({
   children: z.array(ItemResponseSchema).describe("Child items"),
   contents: z
     .array(ContentRefSchema)
-    .describe("Associated content attachments"),
+    .describe("Associated content attachments (limited to first 10)"),
+  totalContents: z
+    .number()
+    .int()
+    .describe("Total number of content attachments for this item"),
   positions: z.array(PositionRefSchema).describe("Position data entries"),
   quantity: z.number().int().describe("Computed current stock quantity"),
   stockHistory: z.array(StockHistoryRefSchema).describe("Stock history entries"),
