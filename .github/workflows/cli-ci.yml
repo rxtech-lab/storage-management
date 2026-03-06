@@ -2,11 +2,6 @@ name: CLI CI
 
 on:
   push:
-    paths:
-      - 'cli/**'
-      - 'admin/public/openapi.json'
-      - '.github/workflows/cli-ci.yml'
-      - '.github/workflows/cli-build.yml'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
