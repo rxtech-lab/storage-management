@@ -1,7 +1,6 @@
 import Foundation
-#if canImport(FoundationNetworking)
-import FoundationNetworking
-#endif
+import AsyncHTTPClient
+import NIOFoundationCompat
 
 struct AuthUser: Decodable, Sendable {
     let id: String
@@ -130,9 +129,9 @@ final class CLIOAuthManager: Sendable {
             throw CLIOAuthError.invalidConfiguration
         }
 
-        var request = URLRequest(url: tokenURL)
-        request.httpMethod = "POST"
-        request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
+        var request = HTTPClientRequest(url: tokenURL.absoluteString)
+        request.method = .POST
+        request.headers.add(name: "Content-Type", value: "application/x-www-form-urlencoded")
 
         let body = [
             "grant_type=authorization_code",
@@ -141,13 +140,14 @@ final class CLIOAuthManager: Sendable {
             "client_id=\(configuration.clientID)",
             "code_verifier=\(codeVerifier)",
         ].joined(separator: "&")
-        request.httpBody = body.data(using: .utf8)
+        request.body = .bytes(Data(body.utf8))
 
-        let (data, response) = try await URLSession.shared.data(for: request)
-        guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
+        let response = try await HTTPClient.shared.execute(request, timeout: .seconds(30))
+        guard response.status == .ok else {
             throw CLIOAuthError.tokenExchangeFailed
         }
 
+        let data = Data(buffer: try await response.body.collect(upTo: 1024 * 1024))
         return try JSONDecoder().decode(TokenResponse.self, from: data)
     }
 
@@ -156,14 +156,15 @@ final class CLIOAuthManager: Sendable {
               let userInfoURL = configuration.userInfoURL
         else { throw CLIOAuthError.invalidConfiguration }
 
-        var request = URLRequest(url: userInfoURL)
-        request.setValue("Bearer \(accessToken)", forHTTPHeaderField: "Authorization")
+        var request = HTTPClientRequest(url: userInfoURL.absoluteString)
+        request.headers.add(name: "Authorization", value: "Bearer \(accessToken)")
 
-        let (data, response) = try await URLSession.shared.data(for: request)
-        guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
+        let response = try await HTTPClient.shared.execute(request, timeout: .seconds(30))
+        guard response.status == .ok else {
             throw CLIOAuthError.userInfoFailed
         }
 
+        let data = Data(buffer: try await response.body.collect(upTo: 1024 * 1024))
         return try JSONDecoder().decode(AuthUser.self, from: data)
     }
 
@@ -172,23 +173,23 @@ final class CLIOAuthManager: Sendable {
               let tokenURL = configuration.tokenURL
         else { throw CLIOAuthError.noRefreshToken }
 
-        var request = URLRequest(url: tokenURL)
-        request.httpMethod = "POST"
-        request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
+        var request = HTTPClientRequest(url: tokenURL.absoluteString)
+        request.method = .POST
+        request.headers.add(name: "Content-Type", value: "application/x-www-form-urlencoded")
 
         let body = [
             "grant_type=refresh_token",
             "refresh_token=\(refreshToken)",
             "client_id=\(configuration.clientID)",
         ].joined(separator: "&")
-        request.httpBody = body.data(using: .utf8)
+        request.body = .bytes(Data(body.utf8))
 
-        let (data, response) = try await URLSession.shared.data(for: request)
-        guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
+        let response = try await HTTPClient.shared.execute(request, timeout: .seconds(30))
+        guard response.status == .ok else {
             throw CLIOAuthError.tokenRefreshFailed
         }
 
-        let tokenResponse = try JSONDecoder().decode(TokenResponse.self, from: data)
+        let tokenResponse = try JSONDecoder().decode(TokenResponse.self, from: Data(buffer: try await response.body.collect(upTo: 1024 * 1024)))
         try saveTokens(tokenResponse)
         return try await fetchUserInfo()
     }

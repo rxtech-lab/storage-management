@@ -61,7 +61,7 @@ jobs:
   build-linux:
     name: Linux ${{ matrix.arch }}
     runs-on: ${{ matrix.runner }}
-    container: swift:6.2
+    container: swift:6.2.0
     timeout-minutes: 30
     env:
       AUTH_CLIENT_ID: ${{ secrets.CLI_AUTH_CLIENT_ID }}
@@ -70,12 +70,18 @@ jobs:
         include:
           - arch: x86_64
             runner: ubuntu-latest
+            swift-sdk-arch: x86_64
           - arch: arm64
             runner: ubuntu-24.04-arm
+            swift-sdk-arch: aarch64
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
+
+      - name: Install Swift Static Linux SDK
+        run: |
+          swift sdk install https://download.swift.org/swift-6.2-release/static-sdk/swift-6.2-RELEASE/swift-6.2-RELEASE_static-linux-0.0.1.artifactbundle.tar.gz --checksum d2225840e592389ca517bbf71652f7003dbf45ac35d1e57d98b9250368769378
 
       - name: Install Bun
         run: |
@@ -91,7 +97,7 @@ jobs:
       - name: Build CLI
         run: |
           cd cli/RxStorageCli
-          swift build -c ${{ inputs.configuration }}
+          swift build -c ${{ inputs.configuration }} --swift-sdk ${{ matrix.swift-sdk-arch }}-swift-linux-musl
 
       - name: Upload binary artifact
         if: ${{ inputs.upload-artifacts }}
