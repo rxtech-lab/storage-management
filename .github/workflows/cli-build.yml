@@ -45,6 +45,9 @@ jobs:
           cd admin && bun install && bun run openapi:generate && cd ..
           cp admin/public/openapi.json cli/RxStorageCli/Sources/RxStorageCli/openapi.json
 
+      - name: Generate build config
+        run: ./scripts/cli-generate-config.sh
+
       - name: Build CLI
         run: |
           cd cli/RxStorageCli
@@ -93,6 +96,9 @@ jobs:
         run: |
           cd admin && $HOME/.bun/bin/bun install && $HOME/.bun/bin/bun run openapi:generate && cd ..
           cp admin/public/openapi.json cli/RxStorageCli/Sources/RxStorageCli/openapi.json
+
+      - name: Generate build config
+        run: ./scripts/cli-generate-config.sh
 
       - name: Build CLI
         run: |
