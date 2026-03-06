@@ -77,7 +77,6 @@ jobs:
         run: ./scripts/ios-update-openapi.sh
 
       - name: Setup Python
-        if: github.event_name == 'release'
         uses: actions/setup-python@v6
         with:
           python-version: "3.x"
@@ -86,9 +85,8 @@ jobs:
         run: gem install xcpretty
 
       - name: Install dependencies
-        if: github.event_name == 'release'
         run: |
-          brew install create-dmg
+          npm install --global create-dmg
           python3 -m pip install --upgrade pip
           python3 -m pip install markdown
 
@@ -115,10 +113,13 @@ jobs:
         run: ./scripts/ci-set-manual-signing.sh "${{ secrets.SIGNING_CERTIFICATE_NAME }}" "${{ env.PP_NAME }}"
 
       - name: Derive release version
-        if: github.event_name == 'release'
         run: |
-          RAW_TAG="${{ github.event.release.tag_name }}"
-          VERSION="${RAW_TAG#v}"
+          if [ "${{ github.event_name }}" = "release" ]; then
+            RAW_TAG="${{ github.event.release.tag_name }}"
+            VERSION="${RAW_TAG#v}"
+          else
+            VERSION="dev"
+          fi
           echo "VERSION=$VERSION" >> "$GITHUB_ENV"
           echo "BUILD_NUMBER=${{ github.run_number }}" >> "$GITHUB_ENV"
 
@@ -146,15 +147,14 @@ jobs:
           SIGNING_CERTIFICATE_NAME: ${{ secrets.SIGNING_CERTIFICATE_NAME }}
 
       - name: Notarize and staple DMG
-        if: github.event_name == 'release'
         run: ./scripts/notary.sh
         env:
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_ID_PWD: ${{ secrets.APPLE_ID_PWD }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          SKIP_NOTARIZE: ${{ github.event_name != 'release' && 'true' || 'false' }}
 
       - name: Generate appcast and release notes
-        if: github.event_name == 'release'
         run: ./scripts/generate-appcast.sh
         env:
           SPARKLE_KEY: ${{ secrets.SPARKLE_KEY }}
