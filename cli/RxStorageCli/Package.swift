@@ -9,11 +9,11 @@ let package = Package(
         .macOS(.v15)
     ],
     dependencies: [
-        .package(url: "https://github.com/rxtech-lab/SwiftTUI", from: "1.0.4"),
+        .package(url: "https://github.com/rxtech-lab/SwiftTUI", from: "1.1.0"),
         .package(url: "https://github.com/apple/swift-openapi-generator.git", from: "1.4.0"),
         .package(url: "https://github.com/apple/swift-openapi-runtime.git", from: "1.6.0"),
         .package(url: "https://github.com/apple/swift-openapi-urlsession.git", from: "1.0.0"),
-        .package(url: "https://github.com/vapor/vapor.git", from: "4.100.0"),
+        .package(url: "https://github.com/apple/swift-nio.git", from: "2.65.0"),
         .package(url: "https://github.com/apple/swift-crypto.git", from: "3.0.0"),
         .package(url: "https://github.com/apple/swift-log.git", from: "1.5.0"),
     ],
@@ -24,7 +24,9 @@ let package = Package(
                 .product(name: "OpenAPIRuntime", package: "swift-openapi-runtime"),
                 .product(name: "OpenAPIURLSession", package: "swift-openapi-urlsession"),
                 .product(name: "SwiftTUI", package: "SwiftTUI"),
-                .product(name: "Vapor", package: "vapor"),
+                .product(name: "NIOCore", package: "swift-nio"),
+                .product(name: "NIOPosix", package: "swift-nio"),
+                .product(name: "NIOHTTP1", package: "swift-nio"),
                 .product(name: "Crypto", package: "swift-crypto"),
                 .product(name: "Logging", package: "swift-log"),
             ],
@@ -37,8 +39,6 @@ let package = Package(
             dependencies: [
                 "RxStorageCli",
                 .product(name: "Crypto", package: "swift-crypto"),
-                .product(name: "Vapor", package: "vapor"),
-                .product(name: "XCTVapor", package: "vapor"),
             ]
         ),
     ]

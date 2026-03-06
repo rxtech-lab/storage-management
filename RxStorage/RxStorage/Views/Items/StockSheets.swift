@@ -67,6 +67,9 @@ struct StockDetailSheet: View {
         }
         #if os(iOS)
         .listStyle(.insetGrouped)
+        #else
+        .listStyle(.inset)
+        .frame(minWidth: 400, minHeight: 300)
         #endif
         .navigationTitle("Stock")
         #if os(iOS)
@@ -124,6 +127,7 @@ struct StockEntrySheet: View {
                 Text("Use positive numbers to add stock, negative to remove.")
             }
         }
+        .formStyle(.grouped)
         .navigationTitle("Add Stock Entry")
         #if os(iOS)
             .navigationBarTitleDisplayMode(.inline)

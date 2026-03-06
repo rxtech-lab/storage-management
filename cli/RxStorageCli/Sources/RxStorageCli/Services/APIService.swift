@@ -1,10 +1,11 @@
 import Foundation
-#if canImport(FoundationNetworking)
-import FoundationNetworking
-#endif
 import HTTPTypes
 import OpenAPIRuntime
 import OpenAPIURLSession
+
+#if canImport(FoundationNetworking)
+    import FoundationNetworking
+#endif
 
 struct BearerAuthMiddleware: ClientMiddleware {
     let token: String
@@ -55,7 +56,6 @@ enum APIService {
         parentId: String? = nil
     ) async throws -> Components.Schemas.PaginatedItemsResponse {
         AppLogger.api.info("fetchItems: serverURL=\(serverURL.absoluteString)")
-        AppLogger.info("API", "fetchItems: serverURL=\(serverURL.absoluteString)")
         let client = try makeClient()
         do {
             let response = try await client.getItems(
@@ -67,28 +67,23 @@ enum APIService {
                 ))
             let result = try response.ok.body.json
             AppLogger.api.info("fetchItems: success, \(result.data.count) items")
-            AppLogger.info("API", "fetchItems: success, \(result.data.count) items")
             return result
         } catch {
             AppLogger.api.error("fetchItems failed: \(String(describing: error))")
-            AppLogger.error("API", "fetchItems failed: \(String(describing: error))")
             throw error
         }
     }
 
     static func fetchItem(id: String) async throws -> Components.Schemas.ItemDetailResponseSchema {
         AppLogger.api.info("fetchItem: id=\(id)")
-        AppLogger.info("API", "fetchItem: id=\(id)")
         let client = try makeClient()
         do {
             let response = try await client.getItem(path: .init(id: id))
             let result = try response.ok.body.json
             AppLogger.api.info("fetchItem: success for \(id)")
-            AppLogger.info("API", "fetchItem: success for \(id)")
             return result
         } catch {
             AppLogger.api.error("fetchItem failed: \(String(describing: error))")
-            AppLogger.error("API", "fetchItem failed: \(String(describing: error))")
             throw error
         }
     }
@@ -96,7 +91,7 @@ enum APIService {
         itemId: String,
         items: [ContentPreviewUploadItem]
     ) async throws -> [Components.Schemas.ContentPreviewUploadResponseItemSchema] {
-        AppLogger.info("API", "getContentPreviewUploadUrls: \(items.count) items for item \(itemId)")
+        AppLogger.api.info("getContentPreviewUploadUrls: \(items.count) items for item \(itemId)")
         let client = try makeClient()
 
         let schemaItems = items.map { item in
@@ -115,7 +110,7 @@ enum APIService {
             body: .json(.init(item_id: itemId, items: schemaItems))
         )
         let result = try response.created.body.json
-        AppLogger.info("API", "getContentPreviewUploadUrls: success, \(result.count) URLs")
+        AppLogger.api.info("getContentPreviewUploadUrls: success, \(result.count) URLs")
         return result
     }
 
@@ -130,11 +125,12 @@ enum APIService {
 
         let (_, response) = try await URLSession.shared.upload(for: request, from: data)
         guard let httpResponse = response as? HTTPURLResponse,
-              (200...299).contains(httpResponse.statusCode) else {
+            (200...299).contains(httpResponse.statusCode)
+        else {
             let statusCode = (response as? HTTPURLResponse)?.statusCode ?? -1
             throw APIServiceError.uploadFailed(statusCode: statusCode)
         }
-        AppLogger.info("API", "uploadToPresignedUrl: success for \(url.prefix(60))...")
+        AppLogger.api.info("uploadToPresignedUrl: success for \(url.prefix(60))...")
     }
 }
 

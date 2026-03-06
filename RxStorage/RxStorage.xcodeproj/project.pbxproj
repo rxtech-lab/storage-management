@@ -23,6 +23,7 @@
 		DF6628342F2E327300333552 /* JsonSchemaEditor in Frameworks */ = {isa = PBXBuildFile; productRef = DF6628332F2E327300333552 /* JsonSchemaEditor */; };
 		DF6628362F2E327300333552 /* RxStorageCore in Frameworks */ = {isa = PBXBuildFile; productRef = DF6628352F2E327300333552 /* RxStorageCore */; };
 		DF6628382F2E327300333552 /* JSONSchema in Frameworks */ = {isa = PBXBuildFile; productRef = DF6628372F2E327300333552 /* JSONSchema */; };
+		DFA1B2013A8E4F0100AA1001 /* Sparkle in Frameworks */ = {isa = PBXBuildFile; platformFilters = (macos, ); productRef = DFA1B2023A8E4F0100AA1001 /* Sparkle */; };
 		DFE7DB8A2F49610900018A97 /* RxAuthSwift in Frameworks */ = {isa = PBXBuildFile; productRef = DFE7DB892F49610900018A97 /* RxAuthSwift */; };
 		DFE7DB8C2F49610900018A97 /* RxAuthSwiftUI in Frameworks */ = {isa = PBXBuildFile; productRef = DFE7DB8B2F49610900018A97 /* RxAuthSwiftUI */; };
 /* End PBXBuildFile section */
@@ -219,6 +220,7 @@
 				DF66265B2F2B821600333552 /* JsonSchemaEditor in Frameworks */,
 				DF6626562F2B803300333552 /* JSONSchemaForm in Frameworks */,
 				DF66265E2F2B826C00333552 /* JsonSchemaEditor in Frameworks */,
+				DFA1B2013A8E4F0100AA1001 /* Sparkle in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -330,6 +332,7 @@
 				DF6626632F2B892800333552 /* JSONSchema */,
 				DFE7DB892F49610900018A97 /* RxAuthSwift */,
 				DFE7DB8B2F49610900018A97 /* RxAuthSwiftUI */,
+				DFA1B2023A8E4F0100AA1001 /* Sparkle */,
 			);
 			productName = RxStorage;
 			productReference = DF66255D2F29136F00333552 /* RxStorage.app */;
@@ -502,6 +505,7 @@
 				DF66265F2F2B828600333552 /* XCLocalSwiftPackageReference "packages/RxStorageCore" */,
 				DF6626622F2B892800333552 /* XCRemoteSwiftPackageReference "swift-json-schema" */,
 				DFE7DB882F49610900018A97 /* XCRemoteSwiftPackageReference "RxAuthSwift" */,
+				DFA1B2033A8E4F0100AA1001 /* XCRemoteSwiftPackageReference "Sparkle" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = DF66255E2F29136F00333552 /* Products */;
@@ -672,6 +676,7 @@
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
+					"@executable_path/../Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = rxlab.RxStorage;
@@ -710,6 +715,7 @@
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
+					"@executable_path/../Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = rxlab.RxStorage;
@@ -1209,6 +1215,14 @@
 				minimumVersion = 1.0.2;
 			};
 		};
+		DFA1B2033A8E4F0100AA1001 /* XCRemoteSwiftPackageReference "Sparkle" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/sparkle-project/Sparkle";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.8.0;
+			};
+		};
 		DFE7DB882F49610900018A97 /* XCRemoteSwiftPackageReference "RxAuthSwift" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/rxtech-lab/RxAuthSwift";
@@ -1270,6 +1284,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = DF6626622F2B892800333552 /* XCRemoteSwiftPackageReference "swift-json-schema" */;
 			productName = JSONSchema;
+		};
+		DFA1B2023A8E4F0100AA1001 /* Sparkle */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = DFA1B2033A8E4F0100AA1001 /* XCRemoteSwiftPackageReference "Sparkle" */;
+			productName = Sparkle;
 		};
 		DFE7DB892F49610900018A97 /* RxAuthSwift */ = {
 			isa = XCSwiftPackageProductDependency;

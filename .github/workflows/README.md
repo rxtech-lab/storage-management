@@ -23,6 +23,23 @@ Builds and tests the iOS app on every push to `main` or `mobile-app` branches, a
 
 Runs end-to-end tests for the admin web application.
 
+### macOS Release (`macos-release.yml`)
+
+Builds and publishes the macOS release when a GitHub release is published (`release: released`).
+
+**Features:**
+- Archives the macOS app in Release configuration
+- Re-signs Sparkle framework artifacts
+- Creates a notarized and stapled `RxStorage.dmg`
+- Uploads the DMG to the existing GitHub release tag
+- Generates Sparkle `appcast.xml` and `release_notes.html`
+- Deploys appcast metadata to GitHub Pages with custom domain `storageapp.rxlab.app`
+
+**Requirements:**
+- GitHub release must already exist (created by `create-release.yaml`)
+- GitHub Pages source set to GitHub Actions
+- DNS CNAME for `storageapp.rxlab.app` pointing to GitHub Pages
+
 ## GitHub Secrets Setup
 
 ### SECRETS_XCCONFIG_BASE64
@@ -100,6 +117,22 @@ The workflow decodes the secret and creates the `Secrets.xcconfig` file before b
 ```
 
 If the secret is not set, the workflow creates a placeholder file with dummy values so the build doesn't fail, but the app won't be functional.
+
+### macOS release secrets
+
+`macos-release.yml` requires the following repository secrets:
+
+- `BUILD_CERTIFICATE_BASE64`: Base64-encoded Developer ID Application certificate (`.p12`)
+- `P12_PASSWORD`: Password for the `.p12` certificate
+- `SIGNING_CERTIFICATE_NAME`: Certificate common name used by `codesign`
+- `APPLE_ID`: Apple account email for notarization
+- `APPLE_ID_PWD`: App-specific password for notarization
+- `APPLE_TEAM_ID`: Apple Developer Team ID
+- `SPARKLE_KEY`: Sparkle private EdDSA key used to sign appcast entries
+
+Release creation continues to use:
+
+- `RELEASE_TOKEN`: token used by `create-release.yaml` for semantic release
 
 ## Local Development
 

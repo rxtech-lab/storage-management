@@ -127,6 +127,7 @@ struct ItemDetailChildrenCard: View {
     let onAddChild: () -> Void
     let onEditChild: (StorageItem) -> Void
     let onRemoveChild: (String) async -> Void
+    var onSelectChild: ((StorageItem) -> Void)?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -204,25 +205,49 @@ struct ItemDetailChildrenCard: View {
     }
 
     private func childRow(_ child: StorageItem) -> some View {
-        NavigationLink(value: child) {
-            ItemRow(item: child)
-        }
-        .buttonStyle(.plain)
-        .contentShape(Rectangle())
-        .contextMenu {
-            if !isViewOnly {
-                Button {
-                    onEditChild(child)
-                } label: {
-                    Label("Edit", systemImage: "pencil")
-                }
-                Button(role: .destructive) {
-                    Task { await onRemoveChild(child.id) }
-                } label: {
-                    Label("Remove from Parent", systemImage: "minus.circle")
+        #if os(macOS)
+            Button {
+                onSelectChild?(child)
+            } label: {
+                ItemRow(item: child)
+            }
+            .buttonStyle(.plain)
+            .contentShape(Rectangle())
+            .contextMenu {
+                if !isViewOnly {
+                    Button {
+                        onEditChild(child)
+                    } label: {
+                        Label("Edit", systemImage: "pencil")
+                    }
+                    Button(role: .destructive) {
+                        Task { await onRemoveChild(child.id) }
+                    } label: {
+                        Label("Remove from Parent", systemImage: "minus.circle")
+                    }
                 }
             }
-        }
+        #else
+            NavigationLink(value: child) {
+                ItemRow(item: child)
+            }
+            .buttonStyle(.plain)
+            .contentShape(Rectangle())
+            .contextMenu {
+                if !isViewOnly {
+                    Button {
+                        onEditChild(child)
+                    } label: {
+                        Label("Edit", systemImage: "pencil")
+                    }
+                    Button(role: .destructive) {
+                        Task { await onRemoveChild(child.id) }
+                    } label: {
+                        Label("Remove from Parent", systemImage: "minus.circle")
+                    }
+                }
+            }
+        #endif
     }
 }
 

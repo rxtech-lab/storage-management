@@ -1,7 +1,9 @@
 import Foundation
-import Vapor
+import NIOCore
+import NIOPosix
+import NIOHTTP1
 
-// Actor-based bridge to safely pass the callback code from Vapor route to caller
+// Actor-based bridge to safely pass the callback code from NIO route to caller
 actor CallbackBridge {
     private var continuation: CheckedContinuation<String, any Error>?
     private var receivedCode: String?
@@ -40,44 +42,30 @@ actor CallbackBridge {
 
 final class OAuthCallbackServer: Sendable {
     let bridge = CallbackBridge()
-    private nonisolated(unsafe) var app: Application?
+    private nonisolated(unsafe) var channel: Channel?
+    private nonisolated(unsafe) var group: EventLoopGroup?
     private(set) nonisolated(unsafe) var port: Int = 0
 
     func start() async throws {
-        let app = try await Application.make(.development)
-        app.http.server.configuration.hostname = "127.0.0.1"
-        app.http.server.configuration.port = 0
-        app.logger.logLevel = .critical
-        app.http.server.configuration.logger.logLevel = .critical
-
+        let group = MultiThreadedEventLoopGroup(numberOfThreads: 1)
+        self.group = group
         let bridge = self.bridge
 
-        app.get("oauth", "callback") { req -> Response in
-            guard let code = req.query[String.self, at: "code"] else {
-                await bridge.setError(OAuthCallbackError.missingCode)
-                return Response(
-                    status: .badRequest,
-                    body: .init(string: "<html><body><h1>Error</h1><p>Missing authorization code.</p></body></html>")
-                )
+        let bootstrap = ServerBootstrap(group: group)
+            .serverChannelOption(.backlog, value: 256)
+            .childChannelInitializer { channel in
+                channel.pipeline.configureHTTPServerPipeline().flatMap {
+                    channel.pipeline.addHandler(OAuthHTTPHandler(bridge: bridge))
+                }
             }
+            .childChannelOption(.maxMessagesPerRead, value: 1)
 
-            await bridge.setCode(code)
+        let channel = try await bootstrap.bind(host: "127.0.0.1", port: 0).get()
+        self.channel = channel
 
-            return Response(
-                status: .ok,
-                headers: ["Content-Type": "text/html"],
-                body: .init(string: """
-                    <html><body style="font-family: system-ui; text-align: center; padding: 60px;">
-                    <h1>Authentication Successful</h1>
-                    <p>You can close this tab and return to the terminal.</p>
-                    </body></html>
-                    """)
-            )
+        if let localAddress = channel.localAddress {
+            self.port = localAddress.port ?? 0
         }
-
-        try await app.server.start()
-        self.port = app.http.server.shared.localAddress?.port ?? 0
-        self.app = app
     }
 
     func waitForCallback() async throws -> String {
@@ -85,11 +73,94 @@ final class OAuthCallbackServer: Sendable {
     }
 
     func shutdown() async {
-        if let app {
-            await app.server.shutdown()
-            try? await app.asyncShutdown()
-            self.app = nil
+        try? await channel?.close()
+        try? await group?.shutdownGracefully()
+        self.channel = nil
+        self.group = nil
+    }
+}
+
+private final class OAuthHTTPHandler: ChannelInboundHandler, RemovableChannelHandler {
+    typealias InboundIn = HTTPServerRequestPart
+    typealias OutboundOut = HTTPServerResponsePart
+
+    let bridge: CallbackBridge
+    private var uri: String = ""
+
+    init(bridge: CallbackBridge) {
+        self.bridge = bridge
+    }
+
+    func channelRead(context: ChannelHandlerContext, data: NIOAny) {
+        let part = unwrapInboundIn(data)
+
+        switch part {
+        case .head(let head):
+            self.uri = head.uri
+        case .body:
+            break
+        case .end:
+            handleRequest(context: context)
         }
+    }
+
+    private func handleRequest(context: ChannelHandlerContext) {
+        let uri = self.uri
+
+        guard uri.hasPrefix("/oauth/callback") else {
+            sendResponse(context: context, status: .notFound, body: "<html><body><h1>Not Found</h1></body></html>")
+            return
+        }
+
+        let queryParams = parseQuery(from: uri)
+
+        guard let code = queryParams["code"] else {
+            let bridge = self.bridge
+            Task { await bridge.setError(OAuthCallbackError.missingCode) }
+            sendResponse(context: context, status: .badRequest, body: "<html><body><h1>Error</h1><p>Missing authorization code.</p></body></html>")
+            return
+        }
+
+        let bridge = self.bridge
+        Task { await bridge.setCode(code) }
+        sendResponse(context: context, status: .ok, body: """
+            <html><body style="font-family: system-ui; text-align: center; padding: 60px;">
+            <h1>Authentication Successful</h1>
+            <p>You can close this tab and return to the terminal.</p>
+            </body></html>
+            """)
+    }
+
+    private func sendResponse(context: ChannelHandlerContext, status: HTTPResponseStatus, body: String) {
+        var headers = HTTPHeaders()
+        headers.add(name: "Content-Type", value: "text/html; charset=utf-8")
+        let bodyData = ByteBuffer(string: body)
+        headers.add(name: "Content-Length", value: "\(bodyData.readableBytes)")
+        headers.add(name: "Connection", value: "close")
+
+        let head = HTTPResponseHead(version: .http1_1, status: status, headers: headers)
+        context.write(wrapOutboundOut(.head(head)), promise: nil)
+        context.write(wrapOutboundOut(.body(.byteBuffer(bodyData))), promise: nil)
+        // ChannelHandlerContext is safe to use in whenComplete on the same event loop
+        nonisolated(unsafe) let ctx = context
+        context.writeAndFlush(wrapOutboundOut(.end(nil))).whenComplete { _ in
+            ctx.close(promise: nil)
+        }
+    }
+
+    private func parseQuery(from uri: String) -> [String: String] {
+        guard let queryStart = uri.firstIndex(of: "?") else { return [:] }
+        let query = String(uri[uri.index(after: queryStart)...])
+        var params: [String: String] = [:]
+        for pair in query.split(separator: "&") {
+            let kv = pair.split(separator: "=", maxSplits: 1)
+            if kv.count == 2 {
+                let key = String(kv[0]).removingPercentEncoding ?? String(kv[0])
+                let value = String(kv[1]).removingPercentEncoding ?? String(kv[1])
+                params[key] = value
+            }
+        }
+        return params
     }
 }
 

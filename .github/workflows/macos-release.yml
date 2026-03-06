@@ -1,0 +1,151 @@
+name: macOS Release
+
+on:
+  release:
+    types: [released]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.release.tag_name }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build, Sign, Notarize
+    runs-on: macos-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Setup Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.x"
+
+      - name: Install dependencies
+        run: |
+          brew install create-dmg
+          python3 -m pip install --upgrade pip
+          python3 -m pip install markdown
+
+      - name: Import code signing certificate
+        uses: apple-actions/import-codesign-certs@v6
+        with:
+          p12-file-base64: ${{ secrets.BUILD_CERTIFICATE_BASE64 }}
+          p12-password: ${{ secrets.P12_PASSWORD }}
+
+      - name: Derive release version
+        run: |
+          RAW_TAG="${{ github.event.release.tag_name }}"
+          VERSION="${RAW_TAG#v}"
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+          echo "BUILD_NUMBER=${{ github.run_number }}" >> "$GITHUB_ENV"
+
+      - name: Update project versions
+        run: ./scripts/update-version.sh "$VERSION" "$BUILD_NUMBER"
+
+      - name: Archive macOS app
+        run: |
+          xcodebuild archive \
+            -project RxStorage/RxStorage.xcodeproj \
+            -scheme RxStorage \
+            -configuration Release \
+            -destination "platform=macOS" \
+            -archivePath output/output.xcarchive \
+            -allowProvisioningUpdates \
+            CODE_SIGN_IDENTITY="${{ secrets.SIGNING_CERTIFICATE_NAME }}" \
+            CODE_SIGN_STYLE=Manual \
+            OTHER_CODE_SIGN_FLAGS="--options=runtime --timestamp"
+
+      - name: Sign Sparkle artifacts
+        run: ./scripts/sign-sparkle.sh
+        env:
+          SIGNING_CERTIFICATE_NAME: ${{ secrets.SIGNING_CERTIFICATE_NAME }}
+
+      - name: Notarize and staple DMG
+        run: ./scripts/notary.sh
+        env:
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_ID_PWD: ${{ secrets.APPLE_ID_PWD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+
+      - name: Generate appcast and release notes
+        run: ./scripts/generate-appcast.sh
+        env:
+          SPARKLE_KEY: ${{ secrets.SPARKLE_KEY }}
+          VERSION: ${{ env.VERSION }}
+          BUILD_NUMBER: ${{ env.BUILD_NUMBER }}
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+          RELEASE_NOTE: ${{ github.event.release.body }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+
+      - name: Upload DMG to GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release upload "${{ github.event.release.tag_name }}" \
+            RxStorage.dmg \
+            --repo "${{ github.repository }}" \
+            --clobber
+
+      - name: Upload appcast artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: macos-appcast-${{ github.sha }}
+          path: appcast.xml
+          retention-days: 1
+
+      - name: Upload release notes artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: macos-release-notes-${{ github.sha }}
+          path: release_notes.html
+          retention-days: 1
+
+  deploy:
+    name: Deploy Sparkle Metadata to Pages
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Download appcast artifact
+        uses: actions/download-artifact@v7
+        with:
+          name: macos-appcast-${{ github.sha }}
+
+      - name: Download release notes artifact
+        uses: actions/download-artifact@v7
+        with:
+          name: macos-release-notes-${{ github.sha }}
+
+      - name: Prepare Pages payload
+        run: |
+          mkdir -p pages
+          cp appcast.xml pages/appcast.xml
+          cp release_notes.html pages/release_notes.html
+          printf '%s\n' 'storageapp.rxlab.app' > pages/CNAME
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: pages
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

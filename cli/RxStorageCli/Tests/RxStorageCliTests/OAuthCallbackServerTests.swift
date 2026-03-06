@@ -3,8 +3,6 @@ import Foundation
 import FoundationNetworking
 #endif
 import Testing
-import Vapor
-import XCTVapor
 @testable import RxStorageCli
 
 @Suite("OAuthCallbackServer Tests", .serialized)
