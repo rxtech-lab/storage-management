@@ -47,7 +47,7 @@ struct AuthConfiguration: Sendable {
         let env = DotEnv.load()
         return AuthConfiguration(
             issuer: env["AUTH_ISSUER"] ?? ProcessInfo.processInfo.environment["AUTH_ISSUER"] ?? "https://auth.rxlab.app",
-            clientID: env["AUTH_CLIENT_ID"] ?? ProcessInfo.processInfo.environment["AUTH_CLIENT_ID"] ?? ""
+            clientID: env["AUTH_CLIENT_ID"] ?? ProcessInfo.processInfo.environment["AUTH_CLIENT_ID"] ?? BuildConfig.authClientID ?? ""
         )
     }
 }
