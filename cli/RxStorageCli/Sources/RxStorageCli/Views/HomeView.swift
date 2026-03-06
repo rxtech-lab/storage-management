@@ -2,6 +2,7 @@ import SwiftTUI
 
 struct HomeView: View, @unchecked Sendable {
     @State private var authState: AuthState = .unauthenticated
+    @State private var authURL: String? = nil
 
     var body: some View {
         VStack {
@@ -20,6 +21,9 @@ struct HomeView: View, @unchecked Sendable {
             case .authenticating:
                 Text("RxStorage CLI")
                 Text("Opening browser for sign in...")
+                if let authURL {
+                    Text(authURL)
+                }
                 Text("URL copied to clipboard - paste in browser if needed")
             case .error(let message):
                 Text("RxStorage CLI")
@@ -45,7 +49,7 @@ struct HomeView: View, @unchecked Sendable {
             let authManager = CLIOAuthManager(configuration: .fromEnvironment)
             do {
                 let user = try await authManager.authenticate { url in
-                    // URL is copied to clipboard by openBrowser
+                    self.authURL = url.absoluteString
                 }
                 authState = .authenticated(user)
             } catch {

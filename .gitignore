@@ -29,3 +29,4 @@ xcuserdata/
 cli/RxStorageCli/Sources/RxStorageCli/openapi.json
 test-assets
 output
+cli/RxStorageCli/Sources/RxStorageCli/BuildConfig.swift
