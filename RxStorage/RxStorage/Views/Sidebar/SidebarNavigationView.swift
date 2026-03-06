@@ -240,11 +240,13 @@ struct DetailColumn: View {
             )
         case .items:
             if let item = nav.selectedItem {
-                ItemDetailView(itemId: item.id)
-                    .navigationDestination(for: StorageItem.self) { child in
-                        ItemDetailView(itemId: child.id)
-                    }
-                    .id(item.id) // Forces clean NavigationStack recreation on item change
+                NavigationStack {
+                    ItemDetailView(itemId: item.id)
+                        .navigationDestination(for: StorageItem.self) { child in
+                            ItemDetailView(itemId: child.id)
+                        }
+                }
+                .id(item.id) // Forces clean NavigationStack recreation on item change
             } else {
                 ContentUnavailableView(
                     "Select an item",

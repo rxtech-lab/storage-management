@@ -8,12 +8,8 @@ struct HomeView: View, @unchecked Sendable {
             switch authState {
             case .authenticated(let user):
                 Text("RxStorage CLI - \(user.name ?? user.email ?? user.id)")
-                Button("Sign Out") {
-                    signOut()
-                }
-                .focusable(false)
                 Divider()
-                StorageItemList()
+                StorageItemList(onSignOut: signOut)
             case .unauthenticated:
                 Text("RxStorage CLI")
                 Text("Not signed in")
@@ -39,9 +35,7 @@ struct HomeView: View, @unchecked Sendable {
         .task {
             let authManager = CLIOAuthManager(configuration: .fromEnvironment)
             let state = await authManager.checkExistingAuth()
-            await MainActor.run {
-                authState = state
-            }
+            authState = state
         }
     }
 
@@ -53,13 +47,9 @@ struct HomeView: View, @unchecked Sendable {
                 let user = try await authManager.authenticate { url in
                     // URL is copied to clipboard by openBrowser
                 }
-                await MainActor.run {
-                    authState = .authenticated(user)
-                }
+                authState = .authenticated(user)
             } catch {
-                await MainActor.run {
-                    authState = .error(error.localizedDescription)
-                }
+                authState = .error(String(describing: error))
             }
         }
     }

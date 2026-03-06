@@ -77,6 +77,12 @@ public actor LoggingMiddleware: ClientMiddleware {
                 ]
             )
             throw error
+        } catch is CancellationError {
+            // Don't log cancellation errors - these are expected during view lifecycle changes
+            throw CancellationError()
+        } catch let clientError as ClientError where clientError.underlyingError is CancellationError {
+            // Don't log cancellation errors wrapped in ClientError
+            throw CancellationError()
         } catch {
             logger.error(
                 "Request error",

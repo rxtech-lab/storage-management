@@ -22,4 +22,4 @@ build.sh
 xcuserdata/
 .vercel
 cli/RxStorageCli/Sources/RxStorageCli/openapi.json
-*.png
+test-assets

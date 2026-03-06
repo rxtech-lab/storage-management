@@ -1,15 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth-helper";
 import { getItem } from "@/lib/actions/item-actions";
-import { getItemContents, createContentAction } from "@/lib/actions/content-actions";
+import { getItemContentsPaginated, createContentAction, resolveContentFileRefs } from "@/lib/actions/content-actions";
+import { parsePaginationParams } from "@/lib/utils/pagination";
+import { PaginatedContentsResponse } from "@/lib/schemas/contents";
 import type { ContentData } from "@/lib/db";
 
 /**
  * List item contents
  * @operationId getItemContents
- * @description Returns all content attachments (files, images, videos) for an item
+ * @description Returns paginated content attachments (files, images, videos) for an item with optional search
  * @pathParams IdPathParams
- * @response ContentsListResponse
+ * @params ContentsQueryParams
+ * @response PaginatedContentsResponse
  * @auth bearer
  * @tag Contents
  * @responseSet auth
@@ -32,8 +35,26 @@ export async function GET(
     return NextResponse.json({ error: "Item not found" }, { status: 404 });
   }
 
-  const contents = await getItemContents(id);
-  return NextResponse.json(contents);
+  const searchParams = request.nextUrl.searchParams;
+  const paginationParams = parsePaginationParams({
+    cursor: searchParams.get("cursor"),
+    direction: searchParams.get("direction"),
+    limit: searchParams.get("limit"),
+  });
+
+  const result = await getItemContentsPaginated(id, {
+    ...paginationParams,
+    search: searchParams.get("search") ?? undefined,
+  });
+
+  const signedData = await resolveContentFileRefs(result.data);
+  const response = { data: signedData, pagination: result.pagination };
+  const validated = PaginatedContentsResponse.safeParse(response);
+  if (!validated.success) {
+    console.error("Validation error:", validated.error.errors);
+    return NextResponse.json({ error: "Invalid response data" }, { status: 500 });
+  }
+  return NextResponse.json(validated.data);
 }
 
 /**
@@ -88,5 +109,6 @@ export async function POST(
     return NextResponse.json({ error: result.error }, { status: 500 });
   }
 
-  return NextResponse.json(result.data, { status: 201 });
+  const [signed] = await resolveContentFileRefs([result.data!]);
+  return NextResponse.json(signed, { status: 201 });
 }

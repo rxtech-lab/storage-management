@@ -2,6 +2,8 @@ import OpenAPIRuntime
 import SwiftTUI
 
 struct StorageItemList: View, @unchecked Sendable {
+    var onSignOut: (() -> Void)?
+
     @State private var items: [Components.Schemas.ItemResponseSchema] = []
     @State private var selectedItemId: Int?
     @State private var isLoading = true
@@ -33,6 +35,13 @@ struct StorageItemList: View, @unchecked Sendable {
                 }
             }
         }
+        .toolbar {
+            ToolbarItem(placement: .primaryAction) {
+                Button("Sign Out") {
+                    onSignOut?()
+                }
+            }
+        }
         .task {
             await fetchItems()
         }
@@ -41,15 +50,11 @@ struct StorageItemList: View, @unchecked Sendable {
     private func fetchItems() async {
         do {
             let response = try await APIService.fetchItems()
-            await MainActor.run {
-                items = response.data
-                isLoading = false
-            }
+            items = response.data
+            isLoading = false
         } catch {
-            await MainActor.run {
-                errorMessage = String(describing: error)
-                isLoading = false
-            }
+            errorMessage = String(describing: error)
+            isLoading = false
         }
     }
 }

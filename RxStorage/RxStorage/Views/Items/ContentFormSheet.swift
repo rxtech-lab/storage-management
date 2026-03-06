@@ -102,6 +102,14 @@ struct ContentFormSheet: View {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") { dismiss() }
                 }
+                #if os(macOS)
+                    ToolbarItem(placement: .confirmationAction) {
+                        Button(isEditing ? "Save" : "Add") {
+                            handleSubmit()
+                        }
+                        .disabled(selectedType == nil || !hasFormData)
+                    }
+                #endif
             }
             .onAppear {
                 if let content = existingContent {

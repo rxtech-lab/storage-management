@@ -134,10 +134,8 @@ extension UploadContentView {
 
             guard presignedResults.count == previews.count else {
                 AppLogger.error("Upload", "Presigned URL count mismatch: got \(presignedResults.count), expected \(previews.count)")
-                await MainActor.run {
-                    errorMessage = "Mismatched presigned URL count"
-                    step = .done
-                }
+                errorMessage = "Mismatched presigned URL count"
+                step = .done
                 return
             }
 
@@ -185,25 +183,19 @@ extension UploadContentView {
             }
         } catch {
             AppLogger.error("Upload", "API error: \(error)")
-            await MainActor.run {
-                errorMessage = "API error: \(error.localizedDescription)"
-                uploadResults = results
-                step = .done
-            }
+            errorMessage = "API error: \(String(describing: error))"
+            uploadResults = results
+            step = .done
             return
         }
 
         AppLogger.info("Upload", "Upload complete. \(results.filter { $0.success }.count)/\(results.count) succeeded")
-        await MainActor.run {
-            uploadResults = results
-            step = .done
-        }
+        uploadResults = results
+        step = .done
     }
 
     func updateProgress(results: [UploadResult]) async {
-        await MainActor.run {
-            uploadProgress = results.count
-            uploadResults = results
-        }
+        uploadProgress = results.count
+        uploadResults = results
     }
 }

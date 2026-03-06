@@ -104,6 +104,10 @@ struct TabBarView: View {
             .tag(AppTab.settings)
             .accessibilityIdentifier("tab-settings")
         }
+        #if os(macOS)
+        .tabViewStyle(.automatic)
+        .padding(.top, 8)
+        #endif
         #if os(iOS)
         .sheet(isPresented: $showQrCodeScanner) {
             NavigationStack {

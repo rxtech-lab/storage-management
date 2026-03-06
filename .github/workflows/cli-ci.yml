@@ -21,24 +21,23 @@ jobs:
 
   test:
     name: Test CLI
-    runs-on: macos-latest
+    runs-on: blacksmith-4vcpu-ubuntu-2404
+    container: swift:6.2
     timeout-minutes: 15
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
 
-      - uses: swift-actions/setup-swift@v2
-        with:
-          swift-version: '6.2'
-
-      - uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: latest
+      - name: Install Bun
+        run: |
+          apt-get update && apt-get install -y curl unzip
+          curl -fsSL https://bun.sh/install | bash
+          echo "$HOME/.bun/bin" >> $GITHUB_PATH
 
       - name: Generate OpenAPI spec
         run: |
-          cd admin && bun install && bun run openapi:generate && cd ..
+          cd admin && $HOME/.bun/bin/bun install && $HOME/.bun/bin/bun run openapi:generate && cd ..
           cp admin/public/openapi.json cli/RxStorageCli/Sources/RxStorageCli/openapi.json
 
       - name: Test

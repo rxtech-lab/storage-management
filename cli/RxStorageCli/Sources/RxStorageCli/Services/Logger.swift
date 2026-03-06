@@ -1,11 +1,10 @@
 import Foundation
-import os
+import Logging
 
 enum AppLogger {
-    private static let subsystem = "app.rxlab.RxStorageCli"
-    static let api = Logger(subsystem: subsystem, category: "API")
-    static let auth = Logger(subsystem: subsystem, category: "Auth")
-    static let general = Logger(subsystem: subsystem, category: "General")
+    static let api = Logger(label: "app.rxlab.RxStorageCli.API")
+    static let auth = Logger(label: "app.rxlab.RxStorageCli.Auth")
+    static let general = Logger(label: "app.rxlab.RxStorageCli.General")
 
     private static let logFileURL: URL = {
         let dir = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent(".rxstorage/logs")

@@ -9,12 +9,13 @@ let package = Package(
         .macOS(.v15)
     ],
     dependencies: [
-        .package(url: "https://github.com/rxtech-lab/SwiftTUI", from: "1.0.2"),
+        .package(url: "https://github.com/rxtech-lab/SwiftTUI", from: "1.0.4"),
         .package(url: "https://github.com/apple/swift-openapi-generator.git", from: "1.4.0"),
         .package(url: "https://github.com/apple/swift-openapi-runtime.git", from: "1.6.0"),
         .package(url: "https://github.com/apple/swift-openapi-urlsession.git", from: "1.0.0"),
         .package(url: "https://github.com/vapor/vapor.git", from: "4.100.0"),
         .package(url: "https://github.com/apple/swift-crypto.git", from: "3.0.0"),
+        .package(url: "https://github.com/apple/swift-log.git", from: "1.5.0"),
     ],
     targets: [
         .executableTarget(
@@ -25,6 +26,7 @@ let package = Package(
                 .product(name: "SwiftTUI", package: "SwiftTUI"),
                 .product(name: "Vapor", package: "vapor"),
                 .product(name: "Crypto", package: "swift-crypto"),
+                .product(name: "Logging", package: "swift-log"),
             ],
             plugins: [
                 .plugin(name: "OpenAPIGenerator", package: "swift-openapi-generator")

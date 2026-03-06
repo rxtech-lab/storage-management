@@ -27,16 +27,14 @@ jobs:
         include:
           - arch: arm64
             swift-build-arch: arm64
-          - arch: x86_64
-            swift-build-arch: x86_64
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
 
-      - uses: swift-actions/setup-swift@v2
+      - uses: maxim-lobanov/setup-xcode@v1
         with:
-          swift-version: '6.2'
+          xcode-version: latest
 
       - uses: oven-sh/setup-bun@v2
         with:

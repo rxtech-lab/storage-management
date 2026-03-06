@@ -62,15 +62,11 @@ struct StorageItemDetail: View, @unchecked Sendable {
     private func fetchItem() async {
         do {
             let detail = try await APIService.fetchItem(id: itemId)
-            await MainActor.run {
-                item = detail
-                isLoading = false
-            }
+            item = detail
+            isLoading = false
         } catch {
-            await MainActor.run {
-                errorMessage = error.localizedDescription
-                isLoading = false
-            }
+            errorMessage = String(describing: error)
+            isLoading = false
         }
     }
 }

@@ -1,5 +1,5 @@
 {
-  "originHash" : "824c1562eb5084942405656ca2131688c0a7b939c76dcc190309ea00c581d07f",
+  "originHash" : "282b7652a716fdc2ef441c0f7b2fddd11349e2be80801b617732c940c2eb5330",
   "pins" : [
     {
       "identity" : "async-http-client",
@@ -294,8 +294,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/rxtech-lab/SwiftTUI",
       "state" : {
-        "revision" : "6ba868ce7ed21714400744c1c1ddba91d05280e2",
-        "version" : "1.0.2"
+        "revision" : "ab36fbea60453d582d498faf02f7205be75deee6",
+        "version" : "1.0.4"
       }
     },
     {
