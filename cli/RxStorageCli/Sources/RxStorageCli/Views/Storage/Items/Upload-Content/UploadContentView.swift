@@ -125,7 +125,7 @@ struct UploadContentView: View, @unchecked Sendable {
                 String(repeating: "#", count: filled)
                 + String(repeating: "-", count: barWidth - filled)
             Text("[\(bar)]")
-            Text("Logs: \(AppLogger.logFilePath)")
+            Text("Logs: \(AppLogger.logFileURL.path)")
             if let error = errorMessage {
                 Text("Error: \(error)")
             }

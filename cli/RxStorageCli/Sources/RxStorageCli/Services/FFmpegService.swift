@@ -8,7 +8,8 @@ enum FFmpegService {
         do {
             try process.run()
         } catch {
-            AppLogger.error("FFmpeg", "\(label): failed to launch: \(error)")
+            AppLogger.ffmpeg.error("\(label): failed to launch: \(error)")
+
             return false
         }
 
@@ -18,7 +19,7 @@ enum FFmpegService {
             Thread.sleep(forTimeInterval: 0.1)
         }
         if process.isRunning {
-            AppLogger.error("FFmpeg", "\(label): timed out after \(effectiveTimeout)s, terminating")
+            AppLogger.ffmpeg.error("\(label): timed out after \(effectiveTimeout)s, terminating")
             process.terminate()
             return false
         }
@@ -44,7 +45,7 @@ enum FFmpegService {
         let stderrData = stderrPipe.fileHandleForReading.readDataToEndOfFile()
         if process.terminationStatus != 0 {
             let stderr = String(data: stderrData, encoding: .utf8) ?? ""
-            AppLogger.error("FFmpeg", "generateVideoThumbnail exit \(process.terminationStatus): \(stderr.suffix(500))")
+            AppLogger.ffmpeg.error("generateVideoThumbnail exit \(process.terminationStatus): \(stderr.suffix(500))")
         }
         return process.terminationStatus == 0
     }
@@ -68,7 +69,7 @@ enum FFmpegService {
         let stderrData = stderrPipe.fileHandleForReading.readDataToEndOfFile()
         if process.terminationStatus != 0 {
             let stderr = String(data: stderrData, encoding: .utf8) ?? ""
-            AppLogger.error("FFmpeg", "generateImagePreview exit \(process.terminationStatus): \(stderr.suffix(500))")
+            AppLogger.ffmpeg.error("generateImagePreview exit \(process.terminationStatus): \(stderr.suffix(500))")
         }
         return process.terminationStatus == 0
     }
@@ -120,7 +121,7 @@ enum FFmpegService {
         let stderrData = stderrPipe.fileHandleForReading.readDataToEndOfFile()
         if process.terminationStatus != 0 {
             let stderr = String(data: stderrData, encoding: .utf8) ?? ""
-            AppLogger.error("FFmpeg", "compressVideo exit \(process.terminationStatus): \(stderr.suffix(500))")
+            AppLogger.ffmpeg.error("compressVideo exit \(process.terminationStatus): \(stderr.suffix(500))")
         }
         return process.terminationStatus == 0
     }

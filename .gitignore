@@ -17,6 +17,11 @@ build.sh
 *.d
 *.dia
 *.log
+*.dmg
+appcast.xml
+release_notes.md
+release_notes.html
+sparkle.key
 
 # User-specific Xcode data
 xcuserdata/
