@@ -1,11 +1,8 @@
 import Foundation
 import HTTPTypes
 import OpenAPIRuntime
-import OpenAPIURLSession
-
-#if canImport(FoundationNetworking)
-    import FoundationNetworking
-#endif
+import OpenAPIAsyncHTTPClient
+import AsyncHTTPClient
 
 struct BearerAuthMiddleware: ClientMiddleware {
     let token: String
@@ -44,7 +41,7 @@ enum APIService {
         return Client(
             serverURL: serverURL,
             configuration: .init(dateTranscoder: .iso8601WithFractionalSeconds),
-            transport: URLSessionTransport(),
+            transport: AsyncHTTPClientTransport(),
             middlewares: [BearerAuthMiddleware(token: accessToken)]
         )
     }
@@ -115,20 +112,15 @@ enum APIService {
     }
 
     static func uploadToPresignedUrl(url: String, data: Data, contentType: String) async throws {
-        guard let uploadURL = URL(string: url) else {
-            throw APIServiceError.invalidURL
-        }
-        var request = URLRequest(url: uploadURL)
-        request.httpMethod = "PUT"
-        request.setValue(contentType, forHTTPHeaderField: "Content-Type")
-        request.setValue("\(data.count)", forHTTPHeaderField: "Content-Length")
+        var request = HTTPClientRequest(url: url)
+        request.method = .PUT
+        request.headers.add(name: "Content-Type", value: contentType)
+        request.headers.add(name: "Content-Length", value: "\(data.count)")
+        request.body = .bytes(data)
 
-        let (_, response) = try await URLSession.shared.upload(for: request, from: data)
-        guard let httpResponse = response as? HTTPURLResponse,
-            (200...299).contains(httpResponse.statusCode)
-        else {
-            let statusCode = (response as? HTTPURLResponse)?.statusCode ?? -1
-            throw APIServiceError.uploadFailed(statusCode: statusCode)
+        let response = try await HTTPClient.shared.execute(request, timeout: .seconds(120))
+        guard (200...299).contains(response.status.code) else {
+            throw APIServiceError.uploadFailed(statusCode: Int(response.status.code))
         }
         AppLogger.api.info("uploadToPresignedUrl: success for \(url.prefix(60))...")
     }
