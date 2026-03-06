@@ -127,6 +127,9 @@ public typealias PaginatedAuthorsResponse = Components.Schemas.PaginatedAuthorsR
 /// Paginated position schemas response
 public typealias PaginatedPositionSchemasResponse = Components.Schemas.PaginatedPositionSchemasResponse
 
+/// Paginated contents response
+public typealias PaginatedContentsResponse = Components.Schemas.PaginatedContentsResponse
+
 /// Pagination info
 public typealias PaginationInfo = Components.Schemas.PaginationInfo
 

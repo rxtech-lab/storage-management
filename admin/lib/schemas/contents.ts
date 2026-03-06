@@ -1,6 +1,7 @@
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from "zod";
 import { contents } from "@/lib/db/schema";
+import { PaginationInfo, PaginationQueryParams } from "./common";
 
 // File content data schema
 export const FileContentDataSchema = z.object({
@@ -54,3 +55,14 @@ export const ContentResponseSchema = z.object({
 
 // Array of contents response
 export const ContentsListResponse = z.array(ContentResponseSchema);
+
+// Query params for paginated contents list
+export const ContentsQueryParams = PaginationQueryParams.extend({
+  search: z.string().optional().describe("Search query for content title"),
+});
+
+// Paginated contents response
+export const PaginatedContentsResponse = z.object({
+  data: z.array(ContentResponseSchema).describe("Array of contents"),
+  pagination: PaginationInfo,
+});

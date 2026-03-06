@@ -6,7 +6,7 @@ import {
   updateItemAction,
   deleteItemAction,
 } from "@/lib/actions/item-actions";
-import { getItemContents } from "@/lib/actions/content-actions";
+import { getItemContents, getItemContentsCount, resolveContentFileRefs } from "@/lib/actions/content-actions";
 import { getItemPositions } from "@/lib/actions/position-actions";
 import { getItemStockHistory, getItemQuantity } from "@/lib/actions/stock-history-actions";
 import { signImagesArrayWithIds } from "@/lib/actions/s3-upload-actions";
@@ -75,13 +75,16 @@ async function buildItemResponse(
 ) {
   const previewUrl = `${process.env.NEXT_PUBLIC_URL}/preview/item?id=${item.id}`;
 
+  const CONTENTS_LIMIT = 10;
+
   // Fetch item images, children, contents, positions, and stock in parallel
-  const [images, children, contents, positions, stockHistory, quantity] = await Promise.all([
+  const [images, children, contents, totalContents, positions, stockHistory, quantity] = await Promise.all([
     item.images && item.images.length > 0
       ? signImagesArrayWithIds(item.images)
       : Promise.resolve([]),
     getItemChildren(itemId, userId ?? undefined),
-    getItemContents(itemId),
+    getItemContents(itemId, CONTENTS_LIMIT),
+    getItemContentsCount(itemId),
     getItemPositions(itemId),
     getItemStockHistory(itemId),
     getItemQuantity(itemId),
@@ -102,12 +105,16 @@ async function buildItemResponse(
     }),
   );
 
+  // Sign file references in content data (preview_image_url, preview_video_url, file_path)
+  const signedContents = await resolveContentFileRefs(contents);
+
   const responseData = {
     ...item,
     images,
     previewUrl,
     children: childrenWithSignedImages,
-    contents,
+    contents: signedContents,
+    totalContents,
     positions,
     quantity,
     stockHistory,

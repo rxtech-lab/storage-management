@@ -20,6 +20,7 @@ public final class ItemDetailViewModel: ItemDetailViewModelProtocol {
     public private(set) var item: StorageItemDetail?
     public private(set) var children: [StorageItem] = []
     public private(set) var contents: [Content] = []
+    public private(set) var totalContents: Int = 0
     public private(set) var stockHistory: [StockHistoryRef] = []
     public private(set) var quantity: Int = 0
     public var contentSchemas: [ContentSchema] = []
@@ -63,9 +64,12 @@ public final class ItemDetailViewModel: ItemDetailViewModelProtocol {
             // Use contents from item response (no separate API call needed)
             if let item = item {
                 contents = item.contents.map { $0.toContent(itemId: item.id) }
+                totalContents = item.totalContents
                 stockHistory = item.stockHistory
                 quantity = item.quantity
             }
+        } catch is CancellationError {
+            // Ignore cancellation - view was dismissed
         } catch {
             self.error = error
             isLoading = false
@@ -91,9 +95,12 @@ public final class ItemDetailViewModel: ItemDetailViewModelProtocol {
             // Use contents from item response (no separate API call needed)
             if let item = item {
                 contents = item.contents.map { $0.toContent(itemId: item.id) }
+                totalContents = item.totalContents
                 stockHistory = item.stockHistory
                 quantity = item.quantity
             }
+        } catch is CancellationError {
+            // Ignore cancellation - view was dismissed
         } catch {
             self.error = error
             isLoading = false
@@ -118,9 +125,12 @@ public final class ItemDetailViewModel: ItemDetailViewModelProtocol {
             // Use contents from item response (no separate API call needed)
             if let item = item {
                 contents = item.contents.map { $0.toContent(itemId: item.id) }
+                totalContents = item.totalContents
                 stockHistory = item.stockHistory
                 quantity = item.quantity
             }
+        } catch is CancellationError {
+            // Ignore cancellation - view was dismissed
         } catch {
             logger.error("Failed to fetch item using URL: \(error.localizedDescription, privacy: .public) - url: \(url, privacy: .public)")
             self.error = error

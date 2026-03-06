@@ -1,0 +1,46 @@
+name: CLI CI
+
+on:
+  push:
+    paths:
+      - 'cli/**'
+      - 'admin/public/openapi.json'
+      - '.github/workflows/cli-ci.yml'
+      - '.github/workflows/cli-build.yml'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build CLI
+    uses: ./.github/workflows/cli-build.yml
+    with:
+      configuration: debug
+
+  test:
+    name: Test CLI
+    runs-on: blacksmith-4vcpu-ubuntu-2404
+    container: swift:6.2
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Install Bun
+        run: |
+          apt-get update && apt-get install -y curl unzip
+          curl -fsSL https://bun.sh/install | bash
+          echo "$HOME/.bun/bin" >> $GITHUB_PATH
+
+      - name: Generate OpenAPI spec
+        run: |
+          cd admin && $HOME/.bun/bin/bun install && $HOME/.bun/bin/bun run openapi:generate && cd ..
+          cp admin/public/openapi.json cli/RxStorageCli/Sources/RxStorageCli/openapi.json
+
+      - name: Test
+        run: |
+          cd cli/RxStorageCli
+          swift test
