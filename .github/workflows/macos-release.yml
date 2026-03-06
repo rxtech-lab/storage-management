@@ -88,7 +88,7 @@ jobs:
       - name: Install dependencies
         if: github.event_name == 'release'
         run: |
-          brew install create-dmg
+          npm install --global create-dmg
           python3 -m pip install --upgrade pip
           python3 -m pip install markdown
 
