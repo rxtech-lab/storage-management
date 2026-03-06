@@ -28,3 +28,4 @@ xcuserdata/
 .vercel
 cli/RxStorageCli/Sources/RxStorageCli/openapi.json
 test-assets
+output
