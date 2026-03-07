@@ -17,7 +17,7 @@ on:
 jobs:
   build-macos:
     name: macOS ${{ matrix.arch }}
-    runs-on: macos-latest
+    runs-on: self-hosted
     timeout-minutes: 30
     env:
       AUTH_CLIENT_ID: ${{ secrets.CLI_AUTH_CLIENT_ID }}
@@ -73,10 +73,10 @@ jobs:
       matrix:
         include:
           - arch: x86_64
-            runner: ubuntu-latest
+            runner: blacksmith-4vcpu-ubuntu-2404
             swift-sdk-arch: x86_64
           - arch: arm64
-            runner: ubuntu-24.04-arm
+            runner: blacksmith-4vcpu-ubuntu-2404-arm
             swift-sdk-arch: aarch64
 
     steps:
