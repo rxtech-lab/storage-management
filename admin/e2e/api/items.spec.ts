@@ -6,10 +6,13 @@ import {
 } from "@/lib/schemas/items";
 
 test.describe.serial("Items API", () => {
+  const USER_ID = `items-api-test-user-${crypto.randomUUID()}`;
+  const headers = { "X-Test-User-Id": USER_ID };
   let createdItemId: string;
 
   test("POST /api/v1/items - should create a new item", async ({ request }) => {
     const response = await request.post("/api/v1/items", {
+      headers,
       data: {
         title: "Test Item from API",
         description: "Created via API test",
@@ -33,7 +36,7 @@ test.describe.serial("Items API", () => {
   });
 
   test("GET /api/v1/items - should list all items", async ({ request }) => {
-    const response = await request.get("/api/v1/items");
+    const response = await request.get("/api/v1/items", { headers });
 
     expect(response.status()).toBe(200);
     const body = await response.json();
@@ -49,7 +52,7 @@ test.describe.serial("Items API", () => {
   test("GET /api/v1/items?search=Test - should filter items by search", async ({
     request,
   }) => {
-    const response = await request.get("/api/v1/items?search=Test");
+    const response = await request.get("/api/v1/items?search=Test", { headers });
 
     expect(response.status()).toBe(200);
     const body = await response.json();
@@ -69,7 +72,7 @@ test.describe.serial("Items API", () => {
   test("GET /api/v1/items/{id} - should get item by ID", async ({
     request,
   }) => {
-    const response = await request.get(`/api/v1/items/${createdItemId}`);
+    const response = await request.get(`/api/v1/items/${createdItemId}`, { headers });
 
     expect(response.status()).toBe(200);
     const body = await response.json();
@@ -88,7 +91,7 @@ test.describe.serial("Items API", () => {
   test("GET /api/v1/items/999999 - should return 404 for non-existent item", async ({
     request,
   }) => {
-    const response = await request.get("/api/v1/items/999999");
+    const response = await request.get("/api/v1/items/999999", { headers });
 
     expect(response.status()).toBe(404);
     const body = await response.json();
@@ -97,6 +100,7 @@ test.describe.serial("Items API", () => {
 
   test("PUT /api/v1/items/{id} - should update item", async ({ request }) => {
     const response = await request.put(`/api/v1/items/${createdItemId}`, {
+      headers,
       data: {
         title: "Updated Test Item",
         description: "Updated via API test",
@@ -120,6 +124,7 @@ test.describe.serial("Items API", () => {
   }) => {
     // Create a child item for the parent
     const childResponse = await request.post("/api/v1/items", {
+      headers,
       data: {
         title: "Child Item",
         description: "Child of test item",
@@ -131,7 +136,7 @@ test.describe.serial("Items API", () => {
     const childItem = ItemResponseSchema.parse(await childResponse.json());
 
     // Fetch the parent item and verify children are included
-    const response = await request.get(`/api/v1/items/${createdItemId}`);
+    const response = await request.get(`/api/v1/items/${createdItemId}`, { headers });
     expect(response.status()).toBe(200);
     const body = await response.json();
 
@@ -145,18 +150,18 @@ test.describe.serial("Items API", () => {
     expect(validated.children[0].previewUrl).toBeDefined();
 
     // Clean up child item
-    await request.delete(`/api/v1/items/${childItem.id}`);
+    await request.delete(`/api/v1/items/${childItem.id}`, { headers });
   });
 
   test("DELETE /api/v1/items/{id} - should delete item", async ({
     request,
   }) => {
-    const response = await request.delete(`/api/v1/items/${createdItemId}`);
+    const response = await request.delete(`/api/v1/items/${createdItemId}`, { headers });
 
     expect(response.status()).toBe(204);
 
     // Verify item is deleted
-    const getResponse = await request.get(`/api/v1/items/${createdItemId}`);
+    const getResponse = await request.get(`/api/v1/items/${createdItemId}`, { headers });
     expect(getResponse.status()).toBe(404);
   });
 
@@ -164,6 +169,7 @@ test.describe.serial("Items API", () => {
     request,
   }) => {
     const response = await request.post("/api/v1/items", {
+      headers,
       data: {
         description: "Missing title",
       },
@@ -178,6 +184,7 @@ test.describe.serial("Items API", () => {
     request,
   }) => {
     const response = await request.post("/api/v1/items", {
+      headers,
       data: {
         title: "Test Item with Invalid Images",
         visibility: "privateAccess",
@@ -195,6 +202,7 @@ test.describe.serial("Items API", () => {
     request,
   }) => {
     const response = await request.post("/api/v1/items", {
+      headers,
       data: {
         title: "Test Item with Mixed Images",
         visibility: "privateAccess",
@@ -210,7 +218,7 @@ test.describe.serial("Items API", () => {
   test("GET /api/v1/items - images should be objects with id and url", async ({
     request,
   }) => {
-    const response = await request.get("/api/v1/items");
+    const response = await request.get("/api/v1/items", { headers });
 
     expect(response.status()).toBe(200);
     const body = await response.json();

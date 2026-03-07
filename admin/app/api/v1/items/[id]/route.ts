@@ -168,6 +168,8 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       return NextResponse.json(validated);
     } else if (result.error === "Permission denied") {
       return NextResponse.json({ error: result.error }, { status: 403 });
+    } else if (result.error === "An item with this title already exists") {
+      return NextResponse.json({ error: result.error }, { status: 409 });
     } else {
       return NextResponse.json({ error: result.error }, { status: 400 });
     }

@@ -129,6 +129,8 @@ export async function POST(request: NextRequest) {
       const response = ItemResponseSchema.parse({ ...result.data, images, previewUrl });
 
       return NextResponse.json(response, { status: 201 });
+    } else if (result.error === "An item with this title already exists") {
+      return NextResponse.json({ error: result.error }, { status: 409 });
     } else {
       return NextResponse.json({ error: result.error }, { status: 400 });
     }

@@ -1,6 +1,8 @@
 import { test, expect } from "@playwright/test";
 
 test.describe.serial("Items API - Children in Detail Response", () => {
+  const USER_ID = `children-test-user-${crypto.randomUUID()}`;
+  const headers = { "X-Test-User-Id": USER_ID };
   let parentId: string;
   let childId: string;
   let otherUserParentId: string;
@@ -9,6 +11,7 @@ test.describe.serial("Items API - Children in Detail Response", () => {
   test("Setup - create parent and child items", async ({ request }) => {
     // Create parent item
     const parentResponse = await request.post("/api/v1/items", {
+      headers,
       data: { title: "Parent Item", visibility: "privateAccess" },
     });
     expect(parentResponse.status()).toBe(201);
@@ -16,6 +19,7 @@ test.describe.serial("Items API - Children in Detail Response", () => {
 
     // Create child item with parentId
     const childResponse = await request.post("/api/v1/items", {
+      headers,
       data: {
         title: "Child Item",
         parentId,
@@ -29,7 +33,7 @@ test.describe.serial("Items API - Children in Detail Response", () => {
   test("GET /api/v1/items/{parentId} - should include child in children array", async ({
     request,
   }) => {
-    const response = await request.get(`/api/v1/items/${parentId}`);
+    const response = await request.get(`/api/v1/items/${parentId}`, { headers });
     expect(response.status()).toBe(200);
     const body = await response.json();
 
@@ -41,7 +45,7 @@ test.describe.serial("Items API - Children in Detail Response", () => {
   test("GET /api/v1/items/{childId} - should have parentId set", async ({
     request,
   }) => {
-    const response = await request.get(`/api/v1/items/${childId}`);
+    const response = await request.get(`/api/v1/items/${childId}`, { headers });
     expect(response.status()).toBe(200);
     const body = await response.json();
 
@@ -54,10 +58,11 @@ test.describe.serial("Items API - Children in Detail Response", () => {
   }) => {
     // Make parent public
     await request.put(`/api/v1/items/${parentId}`, {
+      headers,
       data: { title: "Parent Item", visibility: "publicAccess" },
     });
 
-    const response = await request.get(`/api/v1/items/${parentId}`);
+    const response = await request.get(`/api/v1/items/${parentId}`, { headers });
     expect(response.status()).toBe(200);
     const body = await response.json();
 
@@ -71,6 +76,7 @@ test.describe.serial("Items API - Children in Detail Response", () => {
   }) => {
     // Create another item to add as child
     const newChildResponse = await request.post("/api/v1/items", {
+      headers,
       data: { title: "New Child", visibility: "privateAccess" },
     });
     expect(newChildResponse.status()).toBe(201);
@@ -79,12 +85,12 @@ test.describe.serial("Items API - Children in Detail Response", () => {
     // Set parent via dedicated endpoint
     const setParentResponse = await request.put(
       `/api/v1/items/${newChildId}/parent`,
-      { data: { parentId } },
+      { headers, data: { parentId } },
     );
     expect(setParentResponse.status()).toBe(200);
 
     // Verify parent now has 2 children
-    const parentResponse = await request.get(`/api/v1/items/${parentId}`);
+    const parentResponse = await request.get(`/api/v1/items/${parentId}`, { headers });
     expect(parentResponse.status()).toBe(200);
     const body = await parentResponse.json();
 
@@ -94,13 +100,13 @@ test.describe.serial("Items API - Children in Detail Response", () => {
     expect(childIds).toContain(newChildId);
 
     // Cleanup extra child
-    await request.delete(`/api/v1/items/${newChildId}`);
+    await request.delete(`/api/v1/items/${newChildId}`, { headers });
   });
 
   test("GET /api/v1/items?parentId=null - should only return root items", async ({
     request,
   }) => {
-    const response = await request.get("/api/v1/items?parentId=null");
+    const response = await request.get("/api/v1/items?parentId=null", { headers });
     expect(response.status()).toBe(200);
     const body = await response.json();
 
@@ -113,9 +119,11 @@ test.describe.serial("Items API - Children in Detail Response", () => {
   test("Other user cannot add items from a different user as children", async ({
     request,
   }) => {
+    const OTHER_USER_ID = `children-other-user-${crypto.randomUUID()}`;
+    const otherHeaders = { "X-Test-User-Id": OTHER_USER_ID };
     // Create items as other user
     const otherParentResponse = await request.post("/api/v1/items", {
-      headers: { "X-Test-User-Id": "other-user" },
+      headers: otherHeaders,
       data: { title: "Other Parent", visibility: "privateAccess" },
     });
     expect(otherParentResponse.status()).toBe(201);
@@ -125,7 +133,7 @@ test.describe.serial("Items API - Children in Detail Response", () => {
     const setParentResponse = await request.put(
       `/api/v1/items/${childId}/parent`,
       {
-        headers: { "X-Test-User-Id": "other-user" },
+        headers: otherHeaders,
         data: { parentId: otherUserParentId },
       },
     );
@@ -138,14 +146,16 @@ test.describe.serial("Items API - Children in Detail Response", () => {
   }) => {
     // Make first user's parent public
     await request.put(`/api/v1/items/${parentId}`, {
+      headers,
       data: { title: "Parent Item", visibility: "publicAccess" },
     });
 
+    const otherHeaders = { "X-Test-User-Id": `children-other-user-2-${crypto.randomUUID()}` };
     // Other user tries to set first user's public item as child of their parent
     const setParentResponse = await request.put(
       `/api/v1/items/${parentId}/parent`,
       {
-        headers: { "X-Test-User-Id": "other-user" },
+        headers: otherHeaders,
         data: { parentId: otherUserParentId },
       },
     );
@@ -154,6 +164,7 @@ test.describe.serial("Items API - Children in Detail Response", () => {
 
     // Revert visibility
     await request.put(`/api/v1/items/${parentId}`, {
+      headers,
       data: { title: "Parent Item", visibility: "privateAccess" },
     });
   });
@@ -161,11 +172,12 @@ test.describe.serial("Items API - Children in Detail Response", () => {
   test("User cannot add another user's private item as child via setParent", async ({
     request,
   }) => {
+    const otherHeaders = { "X-Test-User-Id": `children-other-user-3-${crypto.randomUUID()}` };
     // Other user tries to set first user's private item as child of their parent
     const setParentResponse = await request.put(
       `/api/v1/items/${childId}/parent`,
       {
-        headers: { "X-Test-User-Id": "other-user" },
+        headers: otherHeaders,
         data: { parentId: otherUserParentId },
       },
     );
@@ -176,9 +188,10 @@ test.describe.serial("Items API - Children in Detail Response", () => {
   test("User cannot create item with another user's item as parent", async ({
     request,
   }) => {
+    const otherHeaders = { "X-Test-User-Id": `children-other-user-4-${crypto.randomUUID()}` };
     // Other user tries to create an item with first user's item as parent
     const response = await request.post("/api/v1/items", {
-      headers: { "X-Test-User-Id": "other-user" },
+      headers: otherHeaders,
       data: {
         title: "Cross-user Child",
         parentId: parentId,
@@ -192,12 +205,21 @@ test.describe.serial("Items API - Children in Detail Response", () => {
   test("Other user's parent detail should not show first user's children", async ({
     request,
   }) => {
+    const otherHeaders = { "X-Test-User-Id": `children-other-user-5-${crypto.randomUUID()}` };
+    // Create parent for other user first
+    const otherParentResponse = await request.post("/api/v1/items", {
+      headers: otherHeaders,
+      data: { title: "Other Parent Detail", visibility: "privateAccess" },
+    });
+    expect(otherParentResponse.status()).toBe(201);
+    const otherParent = (await otherParentResponse.json()).id;
+
     // Create a child for other user
     const otherChildResponse = await request.post("/api/v1/items", {
-      headers: { "X-Test-User-Id": "other-user" },
+      headers: otherHeaders,
       data: {
         title: "Other Child",
-        parentId: otherUserParentId,
+        parentId: otherParent,
         visibility: "privateAccess",
       },
     });
@@ -205,8 +227,8 @@ test.describe.serial("Items API - Children in Detail Response", () => {
     otherUserChildId = (await otherChildResponse.json()).id;
 
     // Fetch other user's parent - should only show their own child
-    const response = await request.get(`/api/v1/items/${otherUserParentId}`, {
-      headers: { "X-Test-User-Id": "other-user" },
+    const response = await request.get(`/api/v1/items/${otherParent}`, {
+      headers: otherHeaders,
     });
     expect(response.status()).toBe(200);
     const body = await response.json();
@@ -216,16 +238,14 @@ test.describe.serial("Items API - Children in Detail Response", () => {
     // Should NOT contain first user's child
     const childIds = body.children.map((c: { id: string }) => c.id);
     expect(childIds).not.toContain(childId);
+
+    // Cleanup other user items
+    await request.delete(`/api/v1/items/${otherUserChildId}`, { headers: otherHeaders });
+    await request.delete(`/api/v1/items/${otherParent}`, { headers: otherHeaders });
   });
 
   test("Cleanup", async ({ request }) => {
-    await request.delete(`/api/v1/items/${childId}`);
-    await request.delete(`/api/v1/items/${parentId}`);
-    await request.delete(`/api/v1/items/${otherUserChildId}`, {
-      headers: { "X-Test-User-Id": "other-user" },
-    });
-    await request.delete(`/api/v1/items/${otherUserParentId}`, {
-      headers: { "X-Test-User-Id": "other-user" },
-    });
+    await request.delete(`/api/v1/items/${childId}`, { headers });
+    await request.delete(`/api/v1/items/${parentId}`, { headers });
   });
 });
