@@ -25,6 +25,8 @@ public final class ItemFormViewModel: ItemFormViewModelProtocol {
     public var selectedParentId: String?
     public var price = ""
     public var visibility: Visibility = .publicAccess
+    public var itemDate: Date?
+    public var expiresAt: Date?
     public var existingImages: [ImageReference] = []
 
     // Position data
@@ -170,6 +172,8 @@ public final class ItemFormViewModel: ItemFormViewModelProtocol {
                     parentId: selectedParentId,
                     price: priceValue,
                     visibility: updateVisibility,
+                    itemDate: itemDate,
+                    expiresAt: expiresAt,
                     images: allImageReferences,
                     positions: positionsData
                 )
@@ -187,6 +191,8 @@ public final class ItemFormViewModel: ItemFormViewModelProtocol {
                     parentId: selectedParentId,
                     price: priceValue,
                     visibility: insertVisibility,
+                    itemDate: itemDate,
+                    expiresAt: expiresAt,
                     images: allImageReferences,
                     positions: positionsData
                 )
@@ -362,6 +368,8 @@ public final class ItemFormViewModel: ItemFormViewModelProtocol {
         selectedParentId = item.parentId
         price = item.price.map { String($0) } ?? ""
         visibility = item.visibility
+        itemDate = item.itemDate
+        expiresAt = item.expiresAt
         // Convert signed images to ImageReference objects
         existingImages = item.images.map { ImageReference(url: $0.url, fileId: $0.id) }
 

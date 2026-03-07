@@ -41,6 +41,7 @@ struct ItemDetailView: View {
     @State private var selectedContentForDetail: Content?
     @State private var isRefreshing = false
     @State private var showingStockDetailSheet = false
+    @State private var showingTagPickerSheet = false
     private let imageHeight: CGFloat = 400
 
     init(itemId: String, isViewOnly: Bool = false) {
@@ -194,6 +195,16 @@ struct ItemDetailView: View {
                     )
                 }
             }
+            .sheet(isPresented: $showingTagPickerSheet) {
+                NavigationStack {
+                    TagPickerSheet(
+                        existingTagIds: Set(viewModel.tags.map { $0.id }),
+                        onSelect: { tag in
+                            Task { await addTag(tag.id) }
+                        }
+                    )
+                }
+            }
             .sheet(isPresented: $showingContentListSheet) {
                 ContentListSheet(
                     itemId: itemId,
@@ -229,6 +240,12 @@ struct ItemDetailView: View {
                         onEditContent: { selectedContentForEdit = $0 },
                         onDeleteContent: { await deleteContent($0) },
                         onSelectContent: { selectedContentForDetail = $0 }
+                    )
+                    ItemDetailTagsCard(
+                        tags: viewModel.tags,
+                        isViewOnly: isViewOnly,
+                        onAddTag: { showingTagPickerSheet = true },
+                        onRemoveTag: { await removeTag($0) }
                     )
                     ItemDetailChildrenCard(
                         children: viewModel.children,
@@ -416,6 +433,24 @@ struct ItemDetailView: View {
         do {
             let (parentId, childId) = try await viewModel.removeChildById(childId)
             eventViewModel.emit(.childRemoved(parentId: parentId, childId: childId))
+        } catch {
+            errorViewModel.showError(error)
+        }
+    }
+
+    // MARK: - Tag Management
+
+    private func addTag(_ tagId: String) async {
+        do {
+            try await viewModel.addTag(tagId)
+        } catch {
+            errorViewModel.showError(error)
+        }
+    }
+
+    private func removeTag(_ tagId: String) async {
+        do {
+            try await viewModel.removeTag(tagId)
         } catch {
             errorViewModel.showError(error)
         }

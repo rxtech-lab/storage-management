@@ -30,6 +30,8 @@ export const items = sqliteTable("items", {
     .notNull()
     .$defaultFn(() => new Date()),
   lastUsedAsParent: integer("last_used_as_parent", { mode: "timestamp" }),
+  itemDate: integer("item_date", { mode: "timestamp" }),
+  expiresAt: integer("expires_at", { mode: "timestamp" }),
 });
 
 export const itemsRelations = relations(items, ({ one, many }) => ({

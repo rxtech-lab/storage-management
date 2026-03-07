@@ -53,6 +53,8 @@ const itemInsertSchema = z.object({
   price: z.number().nullable().optional(),
   currency: z.string().optional(),
   visibility: z.enum(["publicAccess", "privateAccess"]),
+  itemDate: z.coerce.date().nullable().optional(),
+  expiresAt: z.coerce.date().nullable().optional(),
   images: z
     .array(
       z.string().regex(fileIdPattern, "Images must be in 'file:{id}' format"),
@@ -124,6 +126,8 @@ export async function getItems(
       createdAt: items.createdAt,
       updatedAt: items.updatedAt,
       lastUsedAsParent: items.lastUsedAsParent,
+      itemDate: items.itemDate,
+      expiresAt: items.expiresAt,
       category: {
         id: categories.id,
         name: categories.name,
@@ -218,6 +222,8 @@ export async function getItem(
       createdAt: items.createdAt,
       updatedAt: items.updatedAt,
       lastUsedAsParent: items.lastUsedAsParent,
+      itemDate: items.itemDate,
+      expiresAt: items.expiresAt,
       category: {
         id: categories.id,
         name: categories.name,
@@ -363,6 +369,8 @@ export async function createItemAction(
       price: validatedData.price ?? null,
       currency: validatedData.currency || "USD",
       visibility: validatedData.visibility,
+      itemDate: validatedData.itemDate ?? null,
+      expiresAt: validatedData.expiresAt ?? null,
       images,
       createdAt: now,
       updatedAt: now,
@@ -926,6 +934,8 @@ export async function getItemsPaginated(
       createdAt: items.createdAt,
       updatedAt: items.updatedAt,
       lastUsedAsParent: items.lastUsedAsParent,
+      itemDate: items.itemDate,
+      expiresAt: items.expiresAt,
       category: {
         id: categories.id,
         name: categories.name,

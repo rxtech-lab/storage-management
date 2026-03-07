@@ -51,6 +51,8 @@ const itemSchema = z.object({
   price: z.number().nullable().optional(),
   currency: z.string().optional(),
   visibility: z.enum(["publicAccess", "privateAccess"]),
+  itemDate: z.string().nullable().optional(),
+  expiresAt: z.string().nullable().optional(),
   images: z.array(z.string()).optional(),
 });
 
@@ -94,6 +96,8 @@ export function ItemForm({
       price: item?.price ?? null,
       currency: item?.currency ?? "USD",
       visibility: item?.visibility ?? "privateAccess",
+      itemDate: item?.itemDate ? new Date(item.itemDate).toISOString().split("T")[0] : null,
+      expiresAt: item?.expiresAt ? new Date(item.expiresAt).toISOString().split("T")[0] : null,
       images: item?.images ?? [],
     },
   });
@@ -129,9 +133,14 @@ export function ItemForm({
   const onSubmit = (data: ItemFormData) => {
     startTransition(async () => {
       try {
+        const submitData = {
+          ...data,
+          itemDate: data.itemDate ? new Date(data.itemDate) : null,
+          expiresAt: data.expiresAt ? new Date(data.expiresAt) : null,
+        };
         const result = item
-          ? await updateItemAction(item.id, data)
-          : await createItemAction(data);
+          ? await updateItemAction(item.id, submitData)
+          : await createItemAction(submitData);
 
         if (result.success) {
           // If creating a new item and there are pending positions, create them
@@ -237,6 +246,36 @@ export function ItemForm({
                 {...register("originalQrCode")}
                 placeholder="Original QR code value"
               />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="itemDate">Item Date</Label>
+              <Input
+                id="itemDate"
+                type="date"
+                {...register("itemDate", {
+                  setValueAs: (v) => (v === "" ? null : v),
+                })}
+              />
+              <p className="text-xs text-muted-foreground">
+                Optional date for the item (if different from creation date)
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="expiresAt">Deadline / Expires</Label>
+              <Input
+                id="expiresAt"
+                type="date"
+                {...register("expiresAt", {
+                  setValueAs: (v) => (v === "" ? null : v),
+                })}
+              />
+              <p className="text-xs text-muted-foreground">
+                Optional deadline or expiration date
+              </p>
             </div>
           </div>
 
