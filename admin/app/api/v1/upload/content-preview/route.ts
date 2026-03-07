@@ -3,7 +3,7 @@ import { PutObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { getSession } from "@/lib/auth-helper";
 import { createFileRecordAction } from "@/lib/actions/file-actions";
-import { createContentAction } from "@/lib/actions/content-actions";
+import { createContentAction, getItemContents } from "@/lib/actions/content-actions";
 import { s3Client, S3_BUCKET } from "@/lib/s3";
 import { ContentPreviewUploadRequestSchema } from "@/lib/schemas/upload";
 import type { ImageContentData, VideoContentData } from "@/lib/db/schema/contents";
@@ -66,6 +66,32 @@ export async function POST(request: NextRequest) {
           { status: 400 }
         );
       }
+    }
+
+    // Check for duplicate filenames within the batch
+    const filenames = items.map((item) => item.filename);
+    const uniqueFilenames = new Set(filenames);
+    if (uniqueFilenames.size !== filenames.length) {
+      const duplicates = filenames.filter((name, index) => filenames.indexOf(name) !== index);
+      return NextResponse.json(
+        { error: `Duplicate filenames in upload: ${[...new Set(duplicates)].join(", ")}` },
+        { status: 400 }
+      );
+    }
+
+    // Check for duplicate titles against existing content for the item
+    const existingContents = await getItemContents(itemId);
+    const existingTitles = new Set(
+      existingContents
+        .map((c) => (c.data as unknown as Record<string, unknown>)?.title)
+        .filter((title): title is string => typeof title === "string")
+    );
+    const duplicateWithExisting = items.filter((item) => existingTitles.has(item.title));
+    if (duplicateWithExisting.length > 0) {
+      return NextResponse.json(
+        { error: `Content with the same name already exists: ${duplicateWithExisting.map((i) => i.title).join(", ")}` },
+        { status: 400 }
+      );
     }
 
     const isE2E = process.env.IS_E2E === "true";
