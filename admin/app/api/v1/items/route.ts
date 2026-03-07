@@ -57,6 +57,18 @@ export async function GET(request: NextRequest) {
       filters.sortBy = sortBy;
     }
   }
+  if (searchParams.has("tagIds")) {
+    const tagIds = searchParams.get("tagIds")!;
+    filters.tagIds = tagIds.split(",").filter(Boolean);
+  }
+  if (searchParams.has("itemDateOp") && searchParams.has("itemDateValue")) {
+    filters.itemDateOp = searchParams.get("itemDateOp") as "gt" | "gte" | "lt" | "lte" | "eq";
+    filters.itemDateValue = searchParams.get("itemDateValue")!;
+  }
+  if (searchParams.has("expiresAtOp") && searchParams.has("expiresAtValue")) {
+    filters.expiresAtOp = searchParams.get("expiresAtOp") as "gt" | "gte" | "lt" | "lte" | "eq";
+    filters.expiresAtValue = searchParams.get("expiresAtValue")!;
+  }
 
   const paginationParams = parsePaginationParams({
     cursor: searchParams.get("cursor"),

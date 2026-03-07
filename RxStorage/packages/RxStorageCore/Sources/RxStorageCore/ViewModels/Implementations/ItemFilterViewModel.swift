@@ -34,6 +34,11 @@ public final class ItemFilterViewModel {
     public var selectedLocationId: String?
     public var selectedAuthorId: String?
     public var selectedVisibility: Visibility?
+    public var selectedTagIds: Set<String> = []
+    public var itemDateOp: ComparisonOperator?
+    public var itemDateValue: Date?
+    public var expiresAtOp: ComparisonOperator?
+    public var expiresAtValue: Date?
 
     // MARK: - Dependencies
 
@@ -58,11 +63,16 @@ public final class ItemFilterViewModel {
         selectedLocationId = initialFilters.locationId
         selectedAuthorId = initialFilters.authorId
         selectedVisibility = initialFilters.visibility
+        selectedTagIds = Set(initialFilters.tagIds ?? [])
+        itemDateOp = initialFilters.itemDateOp
+        itemDateValue = initialFilters.itemDateValue
+        expiresAtOp = initialFilters.expiresAtOp
+        expiresAtValue = initialFilters.expiresAtValue
     }
 
     // MARK: - Public Methods
 
-    /// Load filter options (categories, locations, authors)
+    /// Load filter options (categories, locations, authors, tags)
     public func loadFilterOptions() async {
         isLoading = true
         error = nil
@@ -94,7 +104,12 @@ public final class ItemFilterViewModel {
             categoryId: selectedCategoryId,
             locationId: selectedLocationId,
             authorId: selectedAuthorId,
-            visibility: selectedVisibility
+            visibility: selectedVisibility,
+            tagIds: selectedTagIds.isEmpty ? nil : Array(selectedTagIds),
+            itemDateOp: itemDateOp,
+            itemDateValue: itemDateValue,
+            expiresAtOp: expiresAtOp,
+            expiresAtValue: expiresAtValue
         )
     }
 
@@ -103,7 +118,10 @@ public final class ItemFilterViewModel {
         selectedCategoryId != nil ||
             selectedLocationId != nil ||
             selectedAuthorId != nil ||
-            selectedVisibility != nil
+            selectedVisibility != nil ||
+            !selectedTagIds.isEmpty ||
+            itemDateOp != nil ||
+            expiresAtOp != nil
     }
 
     /// Clear all filter selections
@@ -112,5 +130,19 @@ public final class ItemFilterViewModel {
         selectedLocationId = nil
         selectedAuthorId = nil
         selectedVisibility = nil
+        selectedTagIds = []
+        itemDateOp = nil
+        itemDateValue = nil
+        expiresAtOp = nil
+        expiresAtValue = nil
+    }
+
+    /// Toggle a tag selection
+    public func toggleTag(_ tagId: String) {
+        if selectedTagIds.contains(tagId) {
+            selectedTagIds.remove(tagId)
+        } else {
+            selectedTagIds.insert(tagId)
+        }
     }
 }

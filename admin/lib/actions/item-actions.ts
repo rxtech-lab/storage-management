@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { eq, like, or, desc, asc, isNull, and, ne, lt, gt, sql } from "drizzle-orm";
+import { eq, like, or, desc, asc, isNull, and, ne, lt, gt, gte, lte, sql, inArray, count } from "drizzle-orm";
 import { z } from "zod";
 import {
   db,
@@ -11,6 +11,7 @@ import {
   locations,
   authors,
   positions,
+  itemTags,
   type Item,
   type NewItem,
 } from "@/lib/db";
@@ -82,6 +83,8 @@ export interface ItemWithRelations extends Item {
   parent?: { id: string; title: string } | null;
 }
 
+export type ComparisonOp = "gt" | "gte" | "lt" | "lte" | "eq";
+
 export interface ItemFilters {
   userId?: string;
   categoryId?: string;
@@ -91,6 +94,11 @@ export interface ItemFilters {
   visibility?: "publicAccess" | "privateAccess";
   search?: string;
   sortBy?: "createdAt" | "lastUsedAsParent";
+  tagIds?: string[];
+  itemDateOp?: ComparisonOp;
+  itemDateValue?: string;
+  expiresAtOp?: ComparisonOp;
+  expiresAtValue?: string;
 }
 
 export interface PaginatedItemFilters extends ItemFilters, PaginationParams {}
@@ -805,6 +813,16 @@ export async function searchItems(
   return results;
 }
 
+function applyDateComparison(column: typeof items.itemDate | typeof items.expiresAt, op: ComparisonOp, value: Date) {
+  switch (op) {
+    case "gt": return gt(column, value);
+    case "gte": return gte(column, value);
+    case "lt": return lt(column, value);
+    case "lte": return lte(column, value);
+    case "eq": return eq(column, value);
+  }
+}
+
 export async function getItemsPaginated(
   userId?: string,
   filters?: PaginatedItemFilters,
@@ -861,6 +879,41 @@ export async function getItemsPaginated(
     if (searchCondition) {
       conditions.push(searchCondition);
     }
+  }
+
+  // Date comparison filters
+  if (filters?.itemDateOp && filters?.itemDateValue) {
+    const dateValue = new Date(filters.itemDateValue);
+    conditions.push(applyDateComparison(items.itemDate, filters.itemDateOp, dateValue));
+  }
+  if (filters?.expiresAtOp && filters?.expiresAtValue) {
+    const dateValue = new Date(filters.expiresAtValue);
+    conditions.push(applyDateComparison(items.expiresAt, filters.expiresAtOp, dateValue));
+  }
+
+  // Tag filtering (AND logic): items must have ALL specified tags
+  const filterByTags = filters?.tagIds && filters.tagIds.length > 0;
+  let tagMatchingItemIds: string[] | undefined;
+  if (filterByTags) {
+    const tagResults = await db
+      .select({ itemId: itemTags.itemId })
+      .from(itemTags)
+      .where(inArray(itemTags.tagId, filters.tagIds!))
+      .groupBy(itemTags.itemId)
+      .having(sql`count(distinct ${itemTags.tagId}) = ${filters.tagIds!.length}`);
+    tagMatchingItemIds = tagResults.map((r) => r.itemId);
+    if (tagMatchingItemIds.length === 0) {
+      return {
+        data: [],
+        pagination: {
+          nextCursor: null,
+          prevCursor: null,
+          hasNextPage: false,
+          hasPrevPage: false,
+        },
+      };
+    }
+    conditions.push(inArray(items.id, tagMatchingItemIds));
   }
 
   const sortByLastUsed = filters?.sortBy === "lastUsedAsParent";

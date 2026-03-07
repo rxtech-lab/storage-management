@@ -272,7 +272,10 @@ extension ItemFilters {
             authorId == nil &&
             parentId == nil &&
             visibility == nil &&
-            search == nil
+            search == nil &&
+            (tagIds == nil || tagIds!.isEmpty) &&
+            itemDateOp == nil &&
+            expiresAtOp == nil
     }
 
     /// Check if there are active filters (excluding search)
@@ -281,6 +284,9 @@ extension ItemFilters {
             locationId != nil ||
             authorId != nil ||
             parentId != nil ||
-            visibility != nil
+            visibility != nil ||
+            (tagIds != nil && !tagIds!.isEmpty) ||
+            itemDateOp != nil ||
+            expiresAtOp != nil
     }
 }
