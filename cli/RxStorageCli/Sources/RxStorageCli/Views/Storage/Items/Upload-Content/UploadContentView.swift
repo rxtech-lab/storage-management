@@ -76,8 +76,11 @@ struct UploadContentView: View, @unchecked Sendable {
         VStack(alignment: .leading) {
             Text("Found \(matchedFiles.count) file(s):")
             Divider()
-            ForEach(matchedFiles, id: \.path) { file in
+            ForEach(matchedFiles.prefix(5), id: \.path) { file in
                 Text("  [\(file.type.rawValue)] \(file.filename)")
+            }
+            if matchedFiles.count > 5 {
+                Text("  ... and \(matchedFiles.count - 5) more")
             }
 
             if matchedFiles.isEmpty {

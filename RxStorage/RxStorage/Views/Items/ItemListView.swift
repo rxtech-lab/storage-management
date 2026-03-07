@@ -163,7 +163,8 @@ struct ItemListView: View {
                 NavigationLink(value: item) {
                     ItemRow(item: item)
                 }
-                .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                #if os(macOS)
+                .contextMenu {
                     Button(role: .destructive) {
                         itemToDelete = item
                         showDeleteConfirmation = true
@@ -171,13 +172,23 @@ struct ItemListView: View {
                         Label("Delete", systemImage: "trash")
                     }
                 }
-                .onAppear {
-                    if shouldLoadMore(for: item) {
-                        Task {
-                            await viewModel.loadMoreItems()
+                #else
+                .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                            Button(role: .destructive) {
+                                itemToDelete = item
+                                showDeleteConfirmation = true
+                            } label: {
+                                Label("Delete", systemImage: "trash")
+                            }
                         }
-                    }
-                }
+                #endif
+                        .onAppear {
+                            if shouldLoadMore(for: item) {
+                                Task {
+                                    await viewModel.loadMoreItems()
+                                }
+                            }
+                        }
             }
 
             // Loading more indicator
