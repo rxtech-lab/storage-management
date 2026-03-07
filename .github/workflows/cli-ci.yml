@@ -13,6 +13,7 @@ jobs:
     uses: ./.github/workflows/cli-build.yml
     with:
       configuration: debug
+    secrets: inherit
 
   test:
     name: Test CLI
