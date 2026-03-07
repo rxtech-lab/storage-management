@@ -26,6 +26,7 @@ enum APIService {
         let urlString =
             env["API_BASE_URL"]
             ?? ProcessInfo.processInfo.environment["API_BASE_URL"]
+            ?? BuildConfig.apiBaseURL
             ?? "http://localhost:3000/api"
         return URL(string: urlString)!
     }()
