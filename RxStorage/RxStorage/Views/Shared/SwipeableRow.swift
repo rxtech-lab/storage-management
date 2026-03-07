@@ -25,6 +25,7 @@ struct SwipeableRow<Content: View>: View {
 
     @State private var offset: CGFloat = 0
     @State private var contentHeight: CGFloat = 0
+    @State private var isHorizontalDrag: Bool?
 
     private let actionWidth: CGFloat = 70
     private let threshold: CGFloat = 50
@@ -106,8 +107,19 @@ struct SwipeableRow<Content: View>: View {
                 }
                 .offset(x: offset)
                 .gesture(
-                    DragGesture(minimumDistance: 10)
+                    DragGesture(minimumDistance: 20)
                         .onChanged { value in
+                            let horizontal = abs(value.translation.width)
+                            let vertical = abs(value.translation.height)
+
+                            // Determine drag direction on first significant movement
+                            if isHorizontalDrag == nil, horizontal > 10 || vertical > 10 {
+                                isHorizontalDrag = horizontal > vertical
+                            }
+
+                            // Only apply offset for horizontal drags
+                            guard isHorizontalDrag == true else { return }
+
                             let translation = value.translation.width
 
                             // Limit swipe based on available actions
@@ -123,6 +135,11 @@ struct SwipeableRow<Content: View>: View {
                             }
                         }
                         .onEnded { value in
+                            defer { isHorizontalDrag = nil }
+
+                            // Only process if this was a horizontal drag
+                            guard isHorizontalDrag == true else { return }
+
                             let translation = value.translation.width
 
                             withAnimation(.easeOut(duration: 0.2)) {

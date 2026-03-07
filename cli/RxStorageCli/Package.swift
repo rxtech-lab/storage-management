@@ -9,7 +9,7 @@ let package = Package(
         .macOS(.v15)
     ],
     dependencies: [
-        .package(url: "https://github.com/rxtech-lab/SwiftTUI", from: "1.1.0"),
+        .package(url: "https://github.com/rxtech-lab/SwiftTUI", from: "1.1.1"),
         .package(url: "https://github.com/apple/swift-openapi-generator.git", from: "1.4.0"),
         .package(url: "https://github.com/apple/swift-openapi-runtime.git", from: "1.6.0"),
         .package(url: "https://github.com/swift-server/async-http-client.git", from: "1.23.0"),

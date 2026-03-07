@@ -47,7 +47,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
           : [];
 
       return NextResponse.json({ ...result.data, images, previewUrl });
-    } else if (result.error === "Permission denied") {
+    } else if (result.error === "Permission denied" || result.error?.includes("permission denied")) {
       return NextResponse.json({ error: result.error }, { status: 403 });
     } else {
       return NextResponse.json({ error: result.error }, { status: 400 });
