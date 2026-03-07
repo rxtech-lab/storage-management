@@ -243,4 +243,125 @@ test.describe.serial("Content Preview Upload API", () => {
     const body = await response.json();
     expect(body).toHaveProperty("error");
   });
+
+  test("POST /api/v1/upload/content-preview - duplicate filenames in batch returns 400", async ({
+    request,
+  }) => {
+    const response = await request.post("/api/v1/upload/content-preview", {
+      data: {
+        item_id: testItemId,
+        items: [
+          {
+            filename: "duplicate.jpg",
+            type: "image",
+            title: "First Image",
+            mime_type: "image/jpeg",
+            size: 1024,
+            file_path: "images/duplicate.jpg",
+          },
+          {
+            filename: "duplicate.jpg",
+            type: "image",
+            title: "Second Image",
+            mime_type: "image/jpeg",
+            size: 2048,
+            file_path: "images/duplicate2.jpg",
+          },
+        ],
+      },
+    });
+
+    expect(response.status()).toBe(400);
+    const body = await response.json();
+    expect(body).toHaveProperty("error");
+    expect(body.error).toContain("Duplicate filenames");
+    expect(body.error).toContain("duplicate.jpg");
+  });
+
+  test("POST /api/v1/upload/content-preview - duplicate title with existing content returns 400", async ({
+    request,
+  }) => {
+    // First upload a content item
+    const firstUpload = await request.post("/api/v1/upload/content-preview", {
+      data: {
+        item_id: testItemId,
+        items: [
+          {
+            filename: "existing-file.jpg",
+            type: "image",
+            title: "Existing Content Title",
+            mime_type: "image/jpeg",
+            size: 1024,
+            file_path: "images/existing-file.jpg",
+          },
+        ],
+      },
+    });
+    expect(firstUpload.status()).toBe(201);
+
+    // Try to upload another content with the same title
+    const response = await request.post("/api/v1/upload/content-preview", {
+      data: {
+        item_id: testItemId,
+        items: [
+          {
+            filename: "different-file.jpg",
+            type: "image",
+            title: "Existing Content Title",
+            mime_type: "image/jpeg",
+            size: 2048,
+            file_path: "images/different-file.jpg",
+          },
+        ],
+      },
+    });
+
+    expect(response.status()).toBe(400);
+    const body = await response.json();
+    expect(body).toHaveProperty("error");
+    expect(body.error).toContain("already exists");
+    expect(body.error).toContain("Existing Content Title");
+  });
+
+  test("POST /api/v1/upload/content-preview - multiple duplicates in batch returns 400", async ({
+    request,
+  }) => {
+    const response = await request.post("/api/v1/upload/content-preview", {
+      data: {
+        item_id: testItemId,
+        items: [
+          {
+            filename: "fileA.jpg",
+            type: "image",
+            title: "Image A",
+            mime_type: "image/jpeg",
+            size: 1024,
+            file_path: "images/fileA.jpg",
+          },
+          {
+            filename: "fileB.jpg",
+            type: "image",
+            title: "Image B",
+            mime_type: "image/jpeg",
+            size: 2048,
+            file_path: "images/fileB.jpg",
+          },
+          {
+            filename: "fileA.jpg",
+            type: "image",
+            title: "Image C",
+            mime_type: "image/jpeg",
+            size: 3072,
+            file_path: "images/fileA-copy.jpg",
+          },
+        ],
+      },
+    });
+
+    expect(response.status()).toBe(400);
+    const body = await response.json();
+    expect(body).toHaveProperty("error");
+    expect(body.error).toContain("Duplicate filenames");
+    expect(body.error).toContain("fileA.jpg");
+  });
 });
