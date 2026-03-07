@@ -11,6 +11,7 @@ jobs:
     with:
       configuration: release
       upload-artifacts: true
+    secrets: inherit
 
   upload-release:
     name: Upload to GitHub Release
