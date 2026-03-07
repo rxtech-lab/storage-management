@@ -1,21 +1,18 @@
 //
-//  TagPickerSheet.swift
+//  TagFilterPickerSheet.swift
 //  RxStorage
 //
-//  Searchable tag picker sheet with pagination
+//  Multi-select tag picker for item filtering
 //
 
 import RxStorageCore
 import SwiftUI
 
-/// Searchable tag picker sheet for adding tags to items
-struct TagPickerSheet: View {
-    let existingTagIds: Set<String>
-    let onSelect: (Tag) -> Void
+/// Multi-select tag picker sheet for filtering items by tags
+struct TagFilterPickerSheet: View {
+    @Binding var selectedTagIds: Set<String>
 
     @State private var viewModel = TagPickerViewModel()
-    @State private var showingCreateSheet = false
-    @State private var selectedTagIds: Set<String> = []
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
@@ -24,37 +21,40 @@ struct TagPickerSheet: View {
                 ProgressView("Loading tags...")
             } else if viewModel.isSearching {
                 ProgressView("Searching...")
-            } else if viewModel.availableTags.isEmpty && !viewModel.searchText.isEmpty {
+            } else if viewModel.displayItems.isEmpty && !viewModel.searchText.isEmpty {
                 ContentUnavailableView(
                     "No Matching Tags",
                     systemImage: "tag",
                     description: Text("No tags found matching your search")
                 )
-            } else if viewModel.availableTags.isEmpty {
+            } else if viewModel.displayItems.isEmpty {
                 ContentUnavailableView(
                     "No Tags Available",
                     systemImage: "tag",
-                    description: Text("Create a tag from the Tags page first")
+                    description: Text("No tags to filter by")
                 )
             } else {
                 tagList
             }
         }
-        .navigationTitle("Add Tag")
+        .navigationTitle("Filter by Tags")
         #if os(iOS)
             .navigationBarTitleDisplayMode(.inline)
         #endif
             .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Done") {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button {
                         dismiss()
+                    } label: {
+                        Label("Done", systemImage: "checkmark")
                     }
                 }
-                ToolbarItem(placement: .primaryAction) {
+
+                ToolbarItem(placement: .cancellationAction) {
                     Button {
-                        showingCreateSheet = true
+                        selectedTagIds.removeAll()
                     } label: {
-                        Image(systemName: "plus")
+                        Label("Clear", systemImage: "xmark")
                     }
                 }
             }
@@ -63,25 +63,21 @@ struct TagPickerSheet: View {
                 viewModel.search(newValue)
             }
             .task {
-                viewModel.existingTagIds = existingTagIds
+                // Don't filter out any tags - show all for selection
+                viewModel.existingTagIds = []
                 await viewModel.loadTags()
-            }
-            .sheet(isPresented: $showingCreateSheet) {
-                NavigationStack {
-                    TagFormSheet { _ in
-                        Task { await viewModel.loadTags() }
-                    }
-                }
             }
     }
 
     private var tagList: some View {
         List {
-            ForEach(viewModel.availableTags) { tag in
+            ForEach(viewModel.displayItems) { tag in
                 Button {
-                    onSelect(tag)
-                    selectedTagIds.insert(tag.id)
-                    viewModel.existingTagIds = existingTagIds.union(selectedTagIds)
+                    if selectedTagIds.contains(tag.id) {
+                        selectedTagIds.remove(tag.id)
+                    } else {
+                        selectedTagIds.insert(tag.id)
+                    }
                 } label: {
                     HStack(spacing: 10) {
                         Circle()
@@ -93,14 +89,11 @@ struct TagPickerSheet: View {
 
                         Spacer()
 
-                        Text(tag.title)
-                            .font(.caption)
-                            .fontWeight(.medium)
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 4)
-                            .foregroundStyle(isLightColor(tag.color) ? .black : .white)
-                            .background(Color(hex: tag.color) ?? .gray)
-                            .clipShape(Capsule())
+                        if selectedTagIds.contains(tag.id) {
+                            Image(systemName: "checkmark")
+                                .foregroundStyle(.blue)
+                                .fontWeight(.semibold)
+                        }
                     }
                 }
                 .onAppear {
@@ -128,17 +121,6 @@ struct TagPickerSheet: View {
         .listStyle(.inset)
         .frame(minWidth: 400, minHeight: 300)
         #endif
-    }
-
-    private func isLightColor(_ hex: String) -> Bool {
-        let color = hex.replacingOccurrences(of: "#", with: "")
-        guard color.count == 6 else { return true }
-        guard let r = UInt8(color.prefix(2), radix: 16),
-              let g = UInt8(color.dropFirst(2).prefix(2), radix: 16),
-              let b = UInt8(color.dropFirst(4).prefix(2), radix: 16)
-        else { return true }
-        let luminance = 0.2126 * Double(r) / 255.0 + 0.7152 * Double(g) / 255.0 + 0.0722 * Double(b) / 255.0
-        return luminance > 0.5
     }
 }
 

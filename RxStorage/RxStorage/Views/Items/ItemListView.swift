@@ -81,9 +81,7 @@ struct ItemListView: View {
             .sheet(isPresented: $showingFilterSheet) {
                 NavigationStack {
                     ItemFilterSheet(filters: $viewModel.filters) {
-                        Task {
-                            await viewModel.fetchItems()
-                        }
+                        await viewModel.fetchItems()
                     }
                 }
             }

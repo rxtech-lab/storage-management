@@ -7,8 +7,12 @@
   },
   "servers": [
     {
-      "url": "http://localhost:3000",
-      "description": "Current server"
+      "url": "http://localhost:3000/api",
+      "description": "Development server"
+    },
+    {
+      "url": "https://storage.rxlab.app/api",
+      "description": "Production server"
     }
   ],
   "components": {
@@ -1232,8 +1236,43 @@
             ],
             "nullable": true,
             "description": "Sort field (default: createdAt)"
+          },
+          "tagIds": {
+            "type": "string",
+            "nullable": true,
+            "description": "Comma-separated tag IDs to filter by (AND logic)"
+          },
+          "itemDateOp": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ComparisonOpSchema"
+              }
+            ],
+            "description": "Comparison operator for item date filter"
+          },
+          "itemDateValue": {
+            "type": "string",
+            "nullable": true,
+            "description": "ISO date string for item date filter"
+          },
+          "expiresAtOp": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ComparisonOpSchema"
+              }
+            ],
+            "description": "Comparison operator for deadline filter"
+          },
+          "expiresAtValue": {
+            "type": "string",
+            "nullable": true,
+            "description": "ISO date string for deadline filter"
           }
-        }
+        },
+        "required": [
+          "itemDateOp",
+          "expiresAtOp"
+        ]
       },
       "PaginatedItemsResponse": {
         "type": "object",
@@ -2435,6 +2474,16 @@
         "required": [
           "id",
           "url"
+        ]
+      },
+      "ComparisonOpSchema": {
+        "type": "string",
+        "enum": [
+          "gt",
+          "gte",
+          "lt",
+          "lte",
+          "eq"
         ]
       },
       "TagRefSchema": {
@@ -4099,6 +4148,54 @@
             },
             "required": false,
             "description": "Sort field (default: createdAt)"
+          },
+          {
+            "in": "query",
+            "name": "tagIds",
+            "schema": {
+              "type": "string",
+              "description": "Comma-separated tag IDs to filter by (AND logic)"
+            },
+            "required": false,
+            "description": "Comma-separated tag IDs to filter by (AND logic)"
+          },
+          {
+            "in": "query",
+            "name": "itemDateOp",
+            "schema": {
+              "description": "Comparison operator for item date filter"
+            },
+            "required": false,
+            "description": "Comparison operator for item date filter"
+          },
+          {
+            "in": "query",
+            "name": "itemDateValue",
+            "schema": {
+              "type": "string",
+              "description": "ISO date string for item date filter"
+            },
+            "required": false,
+            "description": "ISO date string for item date filter"
+          },
+          {
+            "in": "query",
+            "name": "expiresAtOp",
+            "schema": {
+              "description": "Comparison operator for deadline filter"
+            },
+            "required": false,
+            "description": "Comparison operator for deadline filter"
+          },
+          {
+            "in": "query",
+            "name": "expiresAtValue",
+            "schema": {
+              "type": "string",
+              "description": "ISO date string for deadline filter"
+            },
+            "required": false,
+            "description": "ISO date string for deadline filter"
           }
         ],
         "security": [

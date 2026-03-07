@@ -46,6 +46,21 @@ public struct ItemService: ItemServiceProtocol {
             try? OpenAPIValueContainer(unvalidatedValue: parentId)
         }
         let sortBy = filters?.sortBy.flatMap { Operations.getItems.Input.Query.sortByPayload(rawValue: $0) }
+        let tagIdsString = filters?.tagIds.flatMap { ids in
+            ids.isEmpty ? nil : ids.joined(separator: ",")
+        }
+        let itemDateOpContainer: OpenAPIValueContainer? = filters?.itemDateOp.flatMap { op in
+            try? OpenAPIValueContainer(unvalidatedValue: op.rawValue)
+        }
+        let itemDateValueString: String? = filters?.itemDateValue.flatMap { date in
+            ISO8601DateFormatter().string(from: date)
+        }
+        let expiresAtOpContainer: OpenAPIValueContainer? = filters?.expiresAtOp.flatMap { op in
+            try? OpenAPIValueContainer(unvalidatedValue: op.rawValue)
+        }
+        let expiresAtValueString: String? = filters?.expiresAtValue.flatMap { date in
+            ISO8601DateFormatter().string(from: date)
+        }
         let query = Operations.getItems.Input.Query(
             cursor: filters?.cursor,
             direction: direction,
@@ -56,7 +71,12 @@ public struct ItemService: ItemServiceProtocol {
             authorId: filters?.authorId,
             parentId: parentIdContainer,
             visibility: queryVisibility,
-            sortBy: sortBy
+            sortBy: sortBy,
+            tagIds: tagIdsString,
+            itemDateOp: itemDateOpContainer,
+            itemDateValue: itemDateValueString,
+            expiresAtOp: expiresAtOpContainer,
+            expiresAtValue: expiresAtValueString
         )
 
         try await StorageAPIClient.shared.client.getItems(.init(query: query))

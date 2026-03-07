@@ -8,6 +8,7 @@ struct StorageItemList: View, @unchecked Sendable {
     @State private var selectedItemId: Int?
     @State private var isLoading = true
     @State private var errorMessage: String?
+    @State private var pagination: Components.Schemas.PaginationInfo?
 
     var body: some View {
         NavigationStack {
@@ -18,10 +19,30 @@ struct StorageItemList: View, @unchecked Sendable {
             } else if items.isEmpty {
                 Text("No items found")
             } else {
-                List(selection: $selectedItemId) {
-                    ForEach(items, id: \.id) { item in
-                        NavigationLink(value: StorageRoute.itemDetail(id: item.id)) {
-                            Text("Item: \(item.title) [\(item.visibility.rawValue)]")
+                VStack {
+                    List(selection: $selectedItemId) {
+                        ForEach(items, id: \.id) { item in
+                            NavigationLink(value: StorageRoute.itemDetail(id: item.id)) {
+                                Text("Item: \(item.title) [\(item.visibility.rawValue)]")
+                            }
+                        }
+                    }
+                    if let pagination {
+                        HStack {
+                            if pagination.hasPrevPage {
+                                Button("← Prev") {
+                                    Task {
+                                        await fetchItems(cursor: pagination.prevCursor)
+                                    }
+                                }
+                            }
+                            if pagination.hasNextPage {
+                                Button("Next →") {
+                                    Task {
+                                        await fetchItems(cursor: pagination.nextCursor)
+                                    }
+                                }
+                            }
                         }
                     }
                 }
@@ -29,8 +50,8 @@ struct StorageItemList: View, @unchecked Sendable {
                     switch route {
                     case .itemDetail(let id):
                         StorageItemDetail(itemId: id)
-                    case .uploadContent(let itemId):
-                        UploadContentView(itemId: itemId)
+                    case .uploadContent(let itemId, let itemTitle):
+                        UploadContentView(itemId: itemId, itemTitle: itemTitle)
                     }
                 }
             }
@@ -56,10 +77,11 @@ struct StorageItemList: View, @unchecked Sendable {
         }
     }
 
-    private func fetchItems() async {
+    private func fetchItems(cursor: String? = nil) async {
         do {
-            let response = try await APIService.fetchItems()
+            let response = try await APIService.fetchItems(cursor: cursor)
             items = response.data
+            pagination = response.pagination
             isLoading = false
         } catch {
             errorMessage = String(describing: error)

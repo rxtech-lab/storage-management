@@ -51,7 +51,7 @@ struct StorageItemDetail: View, @unchecked Sendable {
 
             Divider()
             Text("Actions:").bold()
-            NavigationLink("Upload file content", value: StorageRoute.uploadContent(itemId: itemId))
+            NavigationLink("Upload file content", value: StorageRoute.uploadContent(itemId: itemId, itemTitle: item?.title ?? ""))
                 .background(.brightBlue)
         }
         .task(id: itemId) {
