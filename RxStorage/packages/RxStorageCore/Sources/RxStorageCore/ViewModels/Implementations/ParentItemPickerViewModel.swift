@@ -82,7 +82,7 @@ public final class ParentItemPickerViewModel {
         isSearching = true
 
         do {
-            let filters = ItemFilters(search: trimmedQuery, limit: PaginationDefaults.pageSize)
+            let filters = ItemFilters(search: trimmedQuery, sortBy: "lastUsedAsParent", limit: PaginationDefaults.pageSize)
             let response = try await itemService.fetchItemsPaginated(filters: filters)
             searchResults = filterExcluded(response.data)
             nextCursor = response.pagination.nextCursor
@@ -107,7 +107,7 @@ public final class ParentItemPickerViewModel {
         hasNextPage = true
 
         do {
-            let filters = ItemFilters(limit: PaginationDefaults.pageSize)
+            let filters = ItemFilters(sortBy: "lastUsedAsParent", limit: PaginationDefaults.pageSize)
             let response = try await itemService.fetchItemsPaginated(filters: filters)
             items = filterExcluded(response.data)
             nextCursor = response.pagination.nextCursor
@@ -127,7 +127,7 @@ public final class ParentItemPickerViewModel {
         isLoadingMore = true
 
         do {
-            var filters = ItemFilters()
+            var filters = ItemFilters(sortBy: "lastUsedAsParent")
             if !searchText.isEmpty {
                 filters.search = searchText
             }

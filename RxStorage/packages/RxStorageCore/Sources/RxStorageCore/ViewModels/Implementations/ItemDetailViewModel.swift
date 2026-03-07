@@ -164,7 +164,7 @@ public final class ItemDetailViewModel: ItemDetailViewModelProtocol {
 
     // MARK: - Child Management
 
-    /// Add a child item by its ID - fetches fresh data to avoid memory issues
+    /// Add a child item by setting its parent to this item
     /// Returns tuple of (parentId, childId) for event emission
     @discardableResult
     public func addChildById(_ childId: String) async throws -> (parentId: String, childId: String) {
@@ -172,33 +172,20 @@ public final class ItemDetailViewModel: ItemDetailViewModelProtocol {
             throw ItemDetailError.noItemLoaded
         }
 
-        // Fetch the item fresh from API to avoid memory issues with passed objects
-        let childItem = try await itemService.fetchItem(id: childId)
+        logger.info("Adding child \(childId, privacy: .public) to parent \(currentItemId, privacy: .public)")
 
-        // Create update request with new parentId
-        // Convert visibility from response schema to update schema type
-        let updateVisibility = UpdateVisibility(rawValue: childItem.visibility.rawValue)
-        let request = UpdateItemRequest(
-            title: childItem.title,
-            description: childItem.description,
-            categoryId: childItem.categoryId,
-            locationId: childItem.locationId,
-            authorId: childItem.authorId,
-            parentId: currentItemId,
-            price: childItem.price,
-            visibility: updateVisibility,
-            images: [] // Don't modify images - they contain signed URLs, not file IDs
-        )
-
-        let updatedChild = try await itemService.updateItem(id: childId, request)
-
-        // Add to local children list
-        children.append(updatedChild)
-
-        return (parentId: currentItemId, childId: childId)
+        do {
+            let updatedChild = try await itemService.setParent(itemId: childId, parentId: currentItemId)
+            children.append(updatedChild)
+            logger.info("Successfully added child \(childId, privacy: .public) to parent \(currentItemId, privacy: .public)")
+            return (parentId: currentItemId, childId: childId)
+        } catch {
+            logger.error("Failed to add child \(childId, privacy: .public) to parent \(currentItemId, privacy: .public): \(error.localizedDescription, privacy: .public)")
+            throw error
+        }
     }
 
-    /// Remove a child item by its ID
+    /// Remove a child item by clearing its parent
     /// Returns tuple of (parentId, childId) for event emission
     @discardableResult
     public func removeChildById(_ childId: String) async throws -> (parentId: String, childId: String) {
@@ -206,32 +193,21 @@ public final class ItemDetailViewModel: ItemDetailViewModelProtocol {
             throw ItemDetailError.noItemLoaded
         }
 
-        // Find the child in our local list to get its data
-        guard let childItem = children.first(where: { $0.id == childId }) else {
+        guard children.contains(where: { $0.id == childId }) else {
             throw ItemDetailError.childNotFound
         }
 
-        // Create update request with nil parentId
-        // Convert visibility from response schema to update schema type
-        let updateVisibility = UpdateVisibility(rawValue: childItem.visibility.rawValue)
-        let request = UpdateItemRequest(
-            title: childItem.title,
-            description: childItem.description,
-            categoryId: childItem.categoryId,
-            locationId: childItem.locationId,
-            authorId: childItem.authorId,
-            parentId: nil,
-            price: childItem.price,
-            visibility: updateVisibility,
-            images: [] // Don't modify images - they contain signed URLs, not file IDs
-        )
+        logger.info("Removing child \(childId, privacy: .public) from parent \(currentItemId, privacy: .public)")
 
-        _ = try await itemService.updateItem(id: childId, request)
-
-        // Remove from local children list
-        children.removeAll { $0.id == childId }
-
-        return (parentId: currentItemId, childId: childId)
+        do {
+            _ = try await itemService.setParent(itemId: childId, parentId: nil)
+            children.removeAll { $0.id == childId }
+            logger.info("Successfully removed child \(childId, privacy: .public) from parent \(currentItemId, privacy: .public)")
+            return (parentId: currentItemId, childId: childId)
+        } catch {
+            logger.error("Failed to remove child \(childId, privacy: .public) from parent \(currentItemId, privacy: .public): \(error.localizedDescription, privacy: .public)")
+            throw error
+        }
     }
 
     // MARK: - Content Management

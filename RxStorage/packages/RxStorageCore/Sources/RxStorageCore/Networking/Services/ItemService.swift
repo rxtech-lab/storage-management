@@ -45,6 +45,7 @@ public struct ItemService: ItemServiceProtocol {
         let parentIdContainer: OpenAPIValueContainer? = filters?.parentId.flatMap { parentId in
             try? OpenAPIValueContainer(unvalidatedValue: parentId)
         }
+        let sortBy = filters?.sortBy.flatMap { Operations.getItems.Input.Query.sortByPayload(rawValue: $0) }
         let query = Operations.getItems.Input.Query(
             cursor: filters?.cursor,
             direction: direction,
@@ -54,7 +55,8 @@ public struct ItemService: ItemServiceProtocol {
             locationId: filters?.locationId,
             authorId: filters?.authorId,
             parentId: parentIdContainer,
-            visibility: queryVisibility
+            visibility: queryVisibility,
+            sortBy: sortBy
         )
 
         try await StorageAPIClient.shared.client.getItems(.init(query: query))

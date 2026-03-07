@@ -17,6 +17,7 @@ public struct ItemFilters: Sendable {
     public var parentId: String?
     public var visibility: Visibility?
     public var search: String?
+    public var sortBy: String?
     public var cursor: String?
     public var direction: PaginationDirection?
     public var limit: Int?
@@ -28,6 +29,7 @@ public struct ItemFilters: Sendable {
         parentId: String? = nil,
         visibility: Visibility? = nil,
         search: String? = nil,
+        sortBy: String? = nil,
         cursor: String? = nil,
         direction: PaginationDirection? = nil,
         limit: Int? = nil
@@ -38,6 +40,7 @@ public struct ItemFilters: Sendable {
         self.parentId = parentId
         self.visibility = visibility
         self.search = search
+        self.sortBy = sortBy
         self.cursor = cursor
         self.direction = direction
         self.limit = limit

@@ -50,6 +50,7 @@ CREATE TABLE `items` (
 	`images` text DEFAULT '[]',
 	`created_at` integer NOT NULL,
 	`updated_at` integer NOT NULL,
+	`last_used_as_parent` integer,
 	FOREIGN KEY (`category_id`) REFERENCES `categories`(`id`) ON UPDATE no action ON DELETE no action,
 	FOREIGN KEY (`location_id`) REFERENCES `locations`(`id`) ON UPDATE no action ON DELETE no action,
 	FOREIGN KEY (`author_id`) REFERENCES `authors`(`id`) ON UPDATE no action ON DELETE no action

@@ -29,6 +29,7 @@ export const items = sqliteTable("items", {
   updatedAt: integer("updated_at", { mode: "timestamp" })
     .notNull()
     .$defaultFn(() => new Date()),
+  lastUsedAsParent: integer("last_used_as_parent", { mode: "timestamp" }),
 });
 
 export const itemsRelations = relations(items, ({ one, many }) => ({

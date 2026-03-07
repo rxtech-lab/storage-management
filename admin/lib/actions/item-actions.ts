@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { eq, like, or, desc, asc, isNull, and, ne, lt, gt } from "drizzle-orm";
+import { eq, like, or, desc, asc, isNull, and, ne, lt, gt, sql } from "drizzle-orm";
 import { z } from "zod";
 import {
   db,
@@ -88,6 +88,7 @@ export interface ItemFilters {
   parentId?: string | null; // null means get root items (no parent)
   visibility?: "publicAccess" | "privateAccess";
   search?: string;
+  sortBy?: "createdAt" | "lastUsedAsParent";
 }
 
 export interface PaginatedItemFilters extends ItemFilters, PaginationParams {}
@@ -98,12 +99,9 @@ export async function getItems(
 ): Promise<ItemWithRelations[]> {
   await ensureSchemaInitialized();
 
-  // Get userId from session
-  const session = await getSession();
-  if (!session?.user?.id && !userId) {
-    return [];
-  }
-  const sessionUserId = session?.user.id ?? userId;
+  // Use explicitly passed userId first, fall back to session
+  const session = !userId ? await getSession() : null;
+  const sessionUserId = userId ?? session?.user?.id;
   if (!sessionUserId) {
     return [];
   }
@@ -125,6 +123,7 @@ export async function getItems(
       images: items.images,
       createdAt: items.createdAt,
       updatedAt: items.updatedAt,
+      lastUsedAsParent: items.lastUsedAsParent,
       category: {
         id: categories.id,
         name: categories.name,
@@ -218,6 +217,7 @@ export async function getItem(
       images: items.images,
       createdAt: items.createdAt,
       updatedAt: items.updatedAt,
+      lastUsedAsParent: items.lastUsedAsParent,
       category: {
         id: categories.id,
         name: categories.name,
@@ -349,6 +349,18 @@ export async function createItemAction(
       updatedAt: now,
     };
 
+    // Validate parent ownership if parentId is set
+    if (insertData.parentId) {
+      const parent = await db
+        .select({ userId: items.userId })
+        .from(items)
+        .where(eq(items.id, insertData.parentId))
+        .limit(1);
+      if (!parent[0] || parent[0].userId !== resolvedUserId) {
+        return { success: false, error: "Parent item not found or not owned by user" };
+      }
+    }
+
     const result = await db.insert(items).values(insertData).returning();
 
     // Associate files with the created item
@@ -370,6 +382,14 @@ export async function createItemAction(
           updatedAt: now,
         });
       }
+    }
+
+    // Update parent's lastUsedAsParent timestamp
+    if (insertData.parentId) {
+      await db
+        .update(items)
+        .set({ lastUsedAsParent: now })
+        .where(eq(items.id, insertData.parentId));
     }
 
     revalidatePath("/items");
@@ -467,14 +487,23 @@ export async function updateItemAction(
       }>;
     };
 
+    const now = new Date();
+
     await db
       .update(items)
-      .set({ ...itemData, updatedAt: new Date() })
+      .set({ ...itemData, updatedAt: now })
       .where(eq(items.id, id));
+
+    // Update parent's lastUsedAsParent timestamp if parentId is set
+    if (itemData.parentId) {
+      await db
+        .update(items)
+        .set({ lastUsedAsParent: now })
+        .where(eq(items.id, itemData.parentId));
+    }
 
     // Create new positions if provided
     if (positionsData && positionsData.length > 0) {
-      const now = new Date();
       for (const pos of positionsData) {
         await db.insert(positions).values({
           userId: resolvedUserId,
@@ -625,11 +654,20 @@ export async function setItemParent(
     }
 
     // Update only the parentId
+    const now = new Date();
     const result = await db
       .update(items)
-      .set({ parentId, updatedAt: new Date() })
+      .set({ parentId, updatedAt: now })
       .where(eq(items.id, childId))
       .returning();
+
+    // Update parent's lastUsedAsParent timestamp
+    if (parentId) {
+      await db
+        .update(items)
+        .set({ lastUsedAsParent: now })
+        .where(eq(items.id, parentId));
+    }
 
     revalidatePath("/items");
     revalidatePath(`/items/${childId}`);
@@ -651,6 +689,7 @@ export async function searchItems(
   userId?: string,
   excludeId?: string,
   limit: number = 20,
+  sortBy?: "createdAt" | "lastUsedAsParent",
 ): Promise<{ id: string; title: string }[]> {
   // Get userId from session if not provided
   let resolvedUserId = userId;
@@ -687,6 +726,14 @@ export async function searchItems(
     conditions.push(ne(items.id, excludeId));
   }
 
+  const orderByClause = sortBy === "lastUsedAsParent"
+    ? [
+        sql`CASE WHEN ${items.lastUsedAsParent} IS NULL THEN 1 ELSE 0 END`,
+        desc(items.lastUsedAsParent),
+        desc(items.id),
+      ]
+    : [desc(items.updatedAt)];
+
   const results = await db
     .select({
       id: items.id,
@@ -694,7 +741,7 @@ export async function searchItems(
     })
     .from(items)
     .where(conditions.length > 0 ? and(...conditions) : undefined)
-    .orderBy(desc(items.updatedAt))
+    .orderBy(...orderByClause)
     .limit(limit);
 
   return results;
@@ -758,28 +805,65 @@ export async function getItemsPaginated(
     }
   }
 
+  const sortByLastUsed = filters?.sortBy === "lastUsedAsParent";
+
   // Add cursor conditions for pagination
-  // Items are sorted by createdAt DESC, id DESC
   if (cursor) {
-    const cursorDate = new Date(cursor.sortValue);
     const cursorId = cursor.id;
 
-    if (direction === "next") {
-      // Forward pagination: get items older than cursor
-      // WHERE (createdAt < cursorDate) OR (createdAt = cursorDate AND id < cursorId)
-      const cursorCondition = or(
-        lt(items.createdAt, cursorDate),
-        and(eq(items.createdAt, cursorDate), lt(items.id, cursorId)),
-      );
-      if (cursorCondition) conditions.push(cursorCondition);
+    if (sortByLastUsed) {
+      // For lastUsedAsParent sort: cursor sortValue may be "" for null timestamps
+      const cursorHasValue = cursor.sortValue !== "";
+      const cursorTimestamp = cursorHasValue ? new Date(cursor.sortValue) : null;
+
+      if (direction === "next") {
+        // NULLS LAST ordering: items with timestamps come first (DESC), then nulls
+        if (cursorTimestamp) {
+          // Cursor has a timestamp: get items with smaller timestamp, OR same timestamp and smaller id, OR null timestamp
+          const cursorCondition = or(
+            and(isNull(items.lastUsedAsParent)),
+            lt(items.lastUsedAsParent, cursorTimestamp),
+            and(eq(items.lastUsedAsParent, cursorTimestamp), lt(items.id, cursorId)),
+          );
+          if (cursorCondition) conditions.push(cursorCondition);
+        } else {
+          // Cursor is in the null section: only get nulls with smaller id
+          conditions.push(
+            and(isNull(items.lastUsedAsParent), lt(items.id, cursorId))!,
+          );
+        }
+      } else {
+        if (cursorTimestamp) {
+          const cursorCondition = or(
+            gt(items.lastUsedAsParent, cursorTimestamp),
+            and(eq(items.lastUsedAsParent, cursorTimestamp), gt(items.id, cursorId)),
+          );
+          if (cursorCondition) conditions.push(cursorCondition);
+        } else {
+          // Cursor is in the null section: get nulls with larger id, or any with timestamp
+          const cursorCondition = or(
+            sql`${items.lastUsedAsParent} IS NOT NULL`,
+            and(isNull(items.lastUsedAsParent), gt(items.id, cursorId)),
+          );
+          if (cursorCondition) conditions.push(cursorCondition);
+        }
+      }
     } else {
-      // Backward pagination: get items newer than cursor
-      // WHERE (createdAt > cursorDate) OR (createdAt = cursorDate AND id > cursorId)
-      const cursorCondition = or(
-        gt(items.createdAt, cursorDate),
-        and(eq(items.createdAt, cursorDate), gt(items.id, cursorId)),
-      );
-      if (cursorCondition) conditions.push(cursorCondition);
+      const cursorDate = new Date(cursor.sortValue);
+
+      if (direction === "next") {
+        const cursorCondition = or(
+          lt(items.createdAt, cursorDate),
+          and(eq(items.createdAt, cursorDate), lt(items.id, cursorId)),
+        );
+        if (cursorCondition) conditions.push(cursorCondition);
+      } else {
+        const cursorCondition = or(
+          gt(items.createdAt, cursorDate),
+          and(eq(items.createdAt, cursorDate), gt(items.id, cursorId)),
+        );
+        if (cursorCondition) conditions.push(cursorCondition);
+      }
     }
   }
 
@@ -801,6 +885,7 @@ export async function getItemsPaginated(
       images: items.images,
       createdAt: items.createdAt,
       updatedAt: items.updatedAt,
+      lastUsedAsParent: items.lastUsedAsParent,
       category: {
         id: categories.id,
         name: categories.name,
@@ -828,12 +913,28 @@ export async function getItemsPaginated(
     query = query.where(and(...conditions));
   }
 
-  // Order depends on direction
-  if (direction === "next") {
-    query = query.orderBy(desc(items.createdAt), desc(items.id));
+  // Order depends on direction and sort field
+  if (sortByLastUsed) {
+    // NULLS LAST: items with lastUsedAsParent come first (DESC), then nulls sorted by id DESC
+    if (direction === "next") {
+      query = query.orderBy(
+        sql`CASE WHEN ${items.lastUsedAsParent} IS NULL THEN 1 ELSE 0 END`,
+        desc(items.lastUsedAsParent),
+        desc(items.id),
+      );
+    } else {
+      query = query.orderBy(
+        sql`CASE WHEN ${items.lastUsedAsParent} IS NULL THEN 0 ELSE 1 END`,
+        asc(items.lastUsedAsParent),
+        asc(items.id),
+      );
+    }
   } else {
-    // Reverse order for backward pagination
-    query = query.orderBy(asc(items.createdAt), asc(items.id));
+    if (direction === "next") {
+      query = query.orderBy(desc(items.createdAt), desc(items.id));
+    } else {
+      query = query.orderBy(asc(items.createdAt), asc(items.id));
+    }
   }
 
   // Fetch one extra to determine if there are more items
@@ -854,7 +955,10 @@ export async function getItemsPaginated(
     mappedResults,
     limit,
     direction,
-    (item) => item.createdAt.toISOString(),
+    (item) =>
+      sortByLastUsed
+        ? (item.lastUsedAsParent?.toISOString() ?? "")
+        : item.createdAt.toISOString(),
     !!cursor,
   );
 }

@@ -546,14 +546,19 @@ private struct FullscreenMediaViewer: View {
                                 scale = lastScale * value
                             }
                             .onEnded { _ in
-                                lastScale = scale
-                                if scale < 1.0 {
+                                // Dismiss if pinched out below threshold
+                                if scale < 0.7 {
+                                    onDismiss()
+                                } else if scale < 1.0 {
+                                    // Snap back to normal scale
                                     withAnimation(.spring()) {
                                         scale = 1.0
                                         lastScale = 1.0
                                         offset = .zero
                                         lastOffset = .zero
                                     }
+                                } else {
+                                    lastScale = scale
                                 }
                             }
                     )
@@ -608,6 +613,27 @@ private struct FullscreenMediaViewer: View {
     private func videoViewer(url: URL) -> some View {
         VideoPlayer(player: player ?? AVPlayer(url: url))
             .ignoresSafeArea()
+            .scaleEffect(scale)
+            .gesture(
+                MagnificationGesture()
+                    .onChanged { value in
+                        scale = lastScale * value
+                    }
+                    .onEnded { _ in
+                        // Dismiss if pinched out below threshold
+                        if scale < 0.7 {
+                            onDismiss()
+                        } else if scale < 1.0 {
+                            // Snap back to normal scale
+                            withAnimation(.spring()) {
+                                scale = 1.0
+                                lastScale = 1.0
+                            }
+                        } else {
+                            lastScale = scale
+                        }
+                    }
+            )
             .onAppear {
                 player = AVPlayer(url: url)
                 player?.play()
