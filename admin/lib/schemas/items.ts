@@ -240,6 +240,10 @@ export const ItemsQueryParams = PaginationQueryParams.extend({
     .enum(["publicAccess", "privateAccess"])
     .optional()
     .describe("Filter by visibility"),
+  sortBy: z
+    .enum(["createdAt", "lastUsedAsParent"])
+    .optional()
+    .describe("Sort field (default: createdAt)"),
 });
 
 // Paginated items response

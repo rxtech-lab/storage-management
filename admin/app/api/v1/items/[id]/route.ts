@@ -39,7 +39,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
   // Public items can be accessed without authentication
   if (item.visibility === "publicAccess") {
-    return buildItemResponse(item, id, null);
+    return buildItemResponse(item, id);
   }
 
   // Private items require authentication
@@ -65,13 +65,12 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     }
   }
 
-  return buildItemResponse(item, id, session.user.id);
+  return buildItemResponse(item, id);
 }
 
 async function buildItemResponse(
   item: NonNullable<Awaited<ReturnType<typeof getItem>>>,
   itemId: string,
-  userId: string | null,
 ) {
   const previewUrl = `${process.env.NEXT_PUBLIC_URL}/preview/item?id=${item.id}`;
 
@@ -82,7 +81,7 @@ async function buildItemResponse(
     item.images && item.images.length > 0
       ? signImagesArrayWithIds(item.images)
       : Promise.resolve([]),
-    getItemChildren(itemId, userId ?? undefined),
+    getItemChildren(itemId, item.userId),
     getItemContents(itemId, CONTENTS_LIMIT),
     getItemContentsCount(itemId),
     getItemPositions(itemId),

@@ -7,8 +7,12 @@
   },
   "servers": [
     {
-      "url": "http://localhost:3000",
-      "description": "Current server"
+      "url": "http://localhost:3000/api",
+      "description": "Development server"
+    },
+    {
+      "url": "https://storage.rxlab.app/api",
+      "description": "Production server"
     }
   ],
   "components": {
@@ -1107,6 +1111,15 @@
             ],
             "nullable": true,
             "description": "Filter by visibility"
+          },
+          "sortBy": {
+            "type": "string",
+            "enum": [
+              "createdAt",
+              "lastUsedAsParent"
+            ],
+            "nullable": true,
+            "description": "Sort field (default: createdAt)"
           }
         }
       },
@@ -3805,6 +3818,20 @@
             },
             "required": false,
             "description": "Filter by visibility"
+          },
+          {
+            "in": "query",
+            "name": "sortBy",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "createdAt",
+                "lastUsedAsParent"
+              ],
+              "description": "Sort field (default: createdAt)"
+            },
+            "required": false,
+            "description": "Sort field (default: createdAt)"
           }
         ],
         "security": [

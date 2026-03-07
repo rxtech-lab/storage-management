@@ -51,6 +51,12 @@ export async function GET(request: NextRequest) {
   if (searchParams.has("search")) {
     filters.search = searchParams.get("search")!;
   }
+  if (searchParams.has("sortBy")) {
+    const sortBy = searchParams.get("sortBy");
+    if (sortBy === "createdAt" || sortBy === "lastUsedAsParent") {
+      filters.sortBy = sortBy;
+    }
+  }
 
   const paginationParams = parsePaginationParams({
     cursor: searchParams.get("cursor"),
