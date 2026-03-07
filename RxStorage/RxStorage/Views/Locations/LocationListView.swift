@@ -124,7 +124,8 @@ struct LocationListView: View {
                 NavigationLink(value: location) {
                     LocationRow(location: location)
                 }
-                .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                #if os(macOS)
+                .contextMenu {
                     Button(role: .destructive) {
                         locationToDelete = location
                         showDeleteConfirmation = true
@@ -132,13 +133,23 @@ struct LocationListView: View {
                         Label("Delete", systemImage: "trash")
                     }
                 }
-                .onAppear {
-                    if shouldLoadMore(for: location) {
-                        Task {
-                            await viewModel.loadMoreLocations()
+                #else
+                .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                            Button(role: .destructive) {
+                                locationToDelete = location
+                                showDeleteConfirmation = true
+                            } label: {
+                                Label("Delete", systemImage: "trash")
+                            }
                         }
-                    }
-                }
+                #endif
+                        .onAppear {
+                            if shouldLoadMore(for: location) {
+                                Task {
+                                    await viewModel.loadMoreLocations()
+                                }
+                            }
+                        }
             }
 
             // Loading more indicator

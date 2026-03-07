@@ -126,7 +126,8 @@ struct PositionSchemaListView: View {
                 NavigationLink(value: schema) {
                     PositionSchemaRow(schema: schema)
                 }
-                .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                #if os(macOS)
+                .contextMenu {
                     Button(role: .destructive) {
                         schemaToDelete = schema
                         showDeleteConfirmation = true
@@ -134,13 +135,23 @@ struct PositionSchemaListView: View {
                         Label("Delete", systemImage: "trash")
                     }
                 }
-                .onAppear {
-                    if shouldLoadMore(for: schema) {
-                        Task {
-                            await viewModel.loadMoreSchemas()
+                #else
+                .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                            Button(role: .destructive) {
+                                schemaToDelete = schema
+                                showDeleteConfirmation = true
+                            } label: {
+                                Label("Delete", systemImage: "trash")
+                            }
                         }
-                    }
-                }
+                #endif
+                        .onAppear {
+                            if shouldLoadMore(for: schema) {
+                                Task {
+                                    await viewModel.loadMoreSchemas()
+                                }
+                            }
+                        }
             }
 
             // Loading more indicator
