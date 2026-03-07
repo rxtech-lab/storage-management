@@ -2,6 +2,8 @@ import { test, expect } from "@playwright/test";
 import { PaginatedItemsResponse } from "@/lib/schemas/items";
 
 test.describe.serial("Items API - sortBy lastUsedAsParent", () => {
+  const USER_ID = `sort-test-user-${crypto.randomUUID()}`;
+  const headers = { "X-Test-User-Id": USER_ID };
   let itemAId: string;
   let itemBId: string;
   let itemCId: string;
@@ -11,18 +13,21 @@ test.describe.serial("Items API - sortBy lastUsedAsParent", () => {
   test("Setup - create 3 parent items", async ({ request }) => {
     // Create items A, B, C with slight delay between to ensure different createdAt
     const responseA = await request.post("/api/v1/items", {
+      headers,
       data: { title: "Parent A", visibility: "privateAccess" },
     });
     expect(responseA.status()).toBe(201);
     itemAId = (await responseA.json()).id;
 
     const responseB = await request.post("/api/v1/items", {
+      headers,
       data: { title: "Parent B", visibility: "privateAccess" },
     });
     expect(responseB.status()).toBe(201);
     itemBId = (await responseB.json()).id;
 
     const responseC = await request.post("/api/v1/items", {
+      headers,
       data: { title: "Parent C", visibility: "privateAccess" },
     });
     expect(responseC.status()).toBe(201);
@@ -34,6 +39,7 @@ test.describe.serial("Items API - sortBy lastUsedAsParent", () => {
   }) => {
     // Create child1 with parent B (B gets lastUsedAsParent timestamp first)
     const child1Response = await request.post("/api/v1/items", {
+      headers,
       data: {
         title: "Child of B",
         parentId: itemBId,
@@ -48,6 +54,7 @@ test.describe.serial("Items API - sortBy lastUsedAsParent", () => {
 
     // Create child2 with parent A (A gets lastUsedAsParent timestamp second, more recent)
     const child2Response = await request.post("/api/v1/items", {
+      headers,
       data: {
         title: "Child of A",
         parentId: itemAId,
@@ -63,6 +70,7 @@ test.describe.serial("Items API - sortBy lastUsedAsParent", () => {
   }) => {
     const response = await request.get(
       "/api/v1/items?sortBy=lastUsedAsParent",
+      { headers },
     );
     expect(response.status()).toBe(200);
     const body = await response.json();
@@ -82,8 +90,12 @@ test.describe.serial("Items API - sortBy lastUsedAsParent", () => {
   test("PUT /api/v1/items/{id}/parent - setItemParent updates lastUsedAsParent", async ({
     request,
   }) => {
+    // Delay >1s to ensure C gets a different timestamp than A (SQLite stores seconds)
+    await new Promise((resolve) => setTimeout(resolve, 1100));
+
     // Set child1's parent to C via setItemParent API
     const response = await request.put(`/api/v1/items/${child1Id}/parent`, {
+      headers,
       data: { parentId: itemCId },
     });
     expect(response.status()).toBe(200);
@@ -91,6 +103,7 @@ test.describe.serial("Items API - sortBy lastUsedAsParent", () => {
     // Now C should be the most recently used parent
     const listResponse = await request.get(
       "/api/v1/items?sortBy=lastUsedAsParent",
+      { headers },
     );
     expect(listResponse.status()).toBe(200);
     const body = await listResponse.json();
@@ -107,7 +120,7 @@ test.describe.serial("Items API - sortBy lastUsedAsParent", () => {
   test("GET /api/v1/items - default sort is still createdAt DESC", async ({
     request,
   }) => {
-    const response = await request.get("/api/v1/items");
+    const response = await request.get("/api/v1/items", { headers });
     expect(response.status()).toBe(200);
     const body = await response.json();
     const validated = PaginatedItemsResponse.parse(body);
@@ -122,10 +135,10 @@ test.describe.serial("Items API - sortBy lastUsedAsParent", () => {
 
   test("Cleanup - delete test items", async ({ request }) => {
     // Delete children first (they reference parents)
-    await request.delete(`/api/v1/items/${child1Id}`);
-    await request.delete(`/api/v1/items/${child2Id}`);
-    await request.delete(`/api/v1/items/${itemAId}`);
-    await request.delete(`/api/v1/items/${itemBId}`);
-    await request.delete(`/api/v1/items/${itemCId}`);
+    await request.delete(`/api/v1/items/${child1Id}`, { headers });
+    await request.delete(`/api/v1/items/${child2Id}`, { headers });
+    await request.delete(`/api/v1/items/${itemAId}`, { headers });
+    await request.delete(`/api/v1/items/${itemBId}`, { headers });
+    await request.delete(`/api/v1/items/${itemCId}`, { headers });
   });
 });
