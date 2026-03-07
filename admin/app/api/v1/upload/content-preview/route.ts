@@ -79,10 +79,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check for duplicate filenames against existing content for the item
+    // Check for duplicate titles against existing content for the item
     const existingContents = await getItemContents(itemId);
     const existingTitles = new Set(
-      existingContents.map((c) => (c.data as unknown as { title: string }).title)
+      existingContents
+        .map((c) => (c.data as unknown as Record<string, unknown>)?.title)
+        .filter((title): title is string => typeof title === "string")
     );
     const duplicateWithExisting = items.filter((item) => existingTitles.has(item.title));
     if (duplicateWithExisting.length > 0) {
