@@ -1,14 +1,6 @@
 import Foundation
-import OpenAPIRuntime
 
 extension UploadContentView {
-    struct PreviewFile {
-        let original: FileEntry
-        let thumbnailPath: String
-        let videoPath: String?
-        let videoLength: Double?
-    }
-
     func scanFiles() {
         let extList = extensions.split(separator: ",").map {
             $0.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
@@ -72,18 +64,17 @@ extension UploadContentView {
 
         AppLogger.upload.info("Starting upload for \(matchedFiles.count) file(s), tempDir: \(tempDir)")
 
-        var previews: [PreviewFile] = []
-
-        for file in matchedFiles {
+        for (index, file) in matchedFiles.enumerated() {
             let thumbPath = tempDir + "\(file.filename).thumb.jpg"
+            var videoPath: String? = nil
+            var videoLength: Double? = nil
 
+            // Step 1: Compress / generate preview with ffmpeg
             if file.type == .video {
-                AppLogger.upload.info("Processing video: \(file.filename) (\(file.size) bytes)")
-                AppLogger.upload.info("Getting video duration for: \(file.path)")
-                let duration = FFmpegService.getVideoDuration(file.path)
-                AppLogger.upload.info("Video duration: \(duration.map { String($0) } ?? "nil")")
+                AppLogger.upload.info("[\(index+1)/\(matchedFiles.count)] Processing video: \(file.filename) (\(file.size) bytes)")
+                videoLength = FFmpegService.getVideoDuration(file.path)
+                AppLogger.upload.info("Video duration: \(videoLength.map { String($0) } ?? "nil")")
 
-                AppLogger.upload.info("Generating video thumbnail -> \(thumbPath)")
                 let success = FFmpegService.generateVideoThumbnail(inputPath: file.path, outputPath: thumbPath)
                 AppLogger.upload.info("Video thumbnail result: \(success)")
                 if !success {
@@ -91,7 +82,6 @@ extension UploadContentView {
                     await updateProgress(results: results)
                     continue
                 }
-                var videoPath: String? = nil
                 if videoUploadMode == .videoAndImage {
                     let compressedPath = tempDir + "\(file.filename).compressed.mp4"
                     AppLogger.upload.info("Compressing video -> \(compressedPath)")
@@ -99,94 +89,67 @@ extension UploadContentView {
                     AppLogger.upload.info("Video compression result: \(compressSuccess)")
                     videoPath = compressSuccess ? compressedPath : file.path
                 }
-                previews.append(PreviewFile(original: file, thumbnailPath: thumbPath, videoPath: videoPath, videoLength: duration))
             } else {
-                AppLogger.upload.info("Processing image: \(file.filename) (\(file.size) bytes)")
-                AppLogger.upload.info("Generating image preview -> \(thumbPath)")
+                AppLogger.upload.info("[\(index+1)/\(matchedFiles.count)] Processing image: \(file.filename) (\(file.size) bytes)")
                 let success = FFmpegService.generateImagePreview(inputPath: file.path, outputPath: thumbPath)
                 AppLogger.upload.info("Image preview result: \(success)")
                 if !success {
                     AppLogger.upload.info("Falling back to file copy for: \(file.filename)")
                     try? FileManager.default.copyItem(atPath: file.path, toPath: thumbPath)
                 }
-                previews.append(PreviewFile(original: file, thumbnailPath: thumbPath, videoPath: nil, videoLength: nil))
-            }
-        }
-
-        AppLogger.upload.info("Preview generation done. \(previews.count) preview(s) ready, \(results.count) failed")
-
-        do {
-            let uploadItems = previews.map { preview in
-                ContentPreviewUploadItem(
-                    filename: preview.original.filename,
-                    type: preview.original.type == .video ? .video : .image,
-                    title: preview.original.filename,
-                    mimeType: preview.original.mimeType,
-                    size: preview.original.size,
-                    filePath: preview.original.path,
-                    videoLength: preview.videoLength
-                )
             }
 
-            AppLogger.upload.info("Requesting \(uploadItems.count) presigned URL(s)...")
-            let presignedResults = try await APIService.getContentPreviewUploadUrls(itemId: itemId, items: uploadItems)
-            AppLogger.upload.info("Got \(presignedResults.count) presigned URL(s)")
+            // Step 2: Get presigned URL for this single file
+            let uploadItem = ContentPreviewUploadItem(
+                filename: file.filename,
+                type: file.type == .video ? .video : .image,
+                title: file.filename,
+                mimeType: file.mimeType,
+                size: file.size,
+                filePath: file.path,
+                videoLength: videoLength
+            )
 
-            guard presignedResults.count == previews.count else {
-                AppLogger.upload.error("Presigned URL count mismatch: got \(presignedResults.count), expected \(previews.count)")
-                errorMessage = "Mismatched presigned URL count"
-                step = .done
-                return
-            }
-
-            for (index, preview) in previews.enumerated() {
-                let presigned = presignedResults[index]
-
-                do {
-                    AppLogger.upload.info("[\(index+1)/\(previews.count)] Uploading thumbnail for: \(preview.original.filename)")
-                    let thumbData = try Data(contentsOf: URL(fileURLWithPath: preview.thumbnailPath))
-                    AppLogger.upload.info("Thumbnail size: \(thumbData.count) bytes, uploading to: \(presigned.imageUrl.prefix(80))...")
-                    try await APIService.uploadToPresignedUrl(
-                        url: presigned.imageUrl,
-                        data: thumbData,
-                        contentType: "image/jpeg"
-                    )
-                    AppLogger.upload.info("Thumbnail upload success for: \(preview.original.filename)")
-                } catch {
-                    AppLogger.upload.error("Thumbnail upload failed for \(preview.original.filename): \(error)")
-                    results.append(UploadResult(filename: preview.original.filename, success: false, error: "Image upload: \(error.localizedDescription)"))
+            do {
+                AppLogger.upload.info("[\(index+1)/\(matchedFiles.count)] Requesting presigned URL for: \(file.filename)")
+                let presignedResults = try await APIService.getContentPreviewUploadUrls(itemId: itemId, items: [uploadItem])
+                guard let presigned = presignedResults.first else {
+                    results.append(UploadResult(filename: file.filename, success: false, error: "No presigned URL returned"))
                     await updateProgress(results: results)
                     continue
                 }
 
-                if let videoPath = preview.videoPath, let videoUrl = presigned.videoUrl {
-                    do {
-                        AppLogger.upload.info("[\(index+1)/\(previews.count)] Uploading video for: \(preview.original.filename)")
-                        let videoData = try Data(contentsOf: URL(fileURLWithPath: videoPath))
-                        AppLogger.upload.info("Video size: \(videoData.count) bytes, uploading to: \(videoUrl.prefix(80))...")
-                        try await APIService.uploadToPresignedUrl(
-                            url: videoUrl,
-                            data: videoData,
-                            contentType: preview.original.mimeType
-                        )
-                        AppLogger.upload.info("Video upload success for: \(preview.original.filename)")
-                    } catch {
-                        AppLogger.upload.error("Video upload failed for \(preview.original.filename): \(error)")
-                        results.append(UploadResult(filename: preview.original.filename, success: false, error: "Video upload: \(error.localizedDescription)"))
-                        await updateProgress(results: results)
-                        continue
-                    }
+                // Step 3: Upload thumbnail
+                AppLogger.upload.info("[\(index+1)/\(matchedFiles.count)] Uploading thumbnail for: \(file.filename)")
+                let thumbData = try Data(contentsOf: URL(fileURLWithPath: thumbPath))
+                AppLogger.upload.info("Thumbnail size: \(thumbData.count) bytes")
+                try await APIService.uploadToPresignedUrl(
+                    url: presigned.imageUrl,
+                    data: thumbData,
+                    contentType: "image/jpeg"
+                )
+                AppLogger.upload.info("Thumbnail upload success for: \(file.filename)")
+
+                // Step 4: Upload video if applicable
+                if let vPath = videoPath, let videoUrl = presigned.videoUrl {
+                    AppLogger.upload.info("[\(index+1)/\(matchedFiles.count)] Uploading video for: \(file.filename)")
+                    let videoData = try Data(contentsOf: URL(fileURLWithPath: vPath))
+                    AppLogger.upload.info("Video size: \(videoData.count) bytes")
+                    try await APIService.uploadToPresignedUrl(
+                        url: videoUrl,
+                        data: videoData,
+                        contentType: file.mimeType
+                    )
+                    AppLogger.upload.info("Video upload success for: \(file.filename)")
                 }
 
-                results.append(UploadResult(filename: preview.original.filename, success: true, error: nil))
-                await updateProgress(results: results)
+                results.append(UploadResult(filename: file.filename, success: true, error: nil))
+            } catch {
+                AppLogger.upload.error("Upload failed for \(file.filename): \(error)")
+                results.append(UploadResult(filename: file.filename, success: false, error: error.localizedDescription))
             }
-        } catch {
-            AppLogger.upload.error("API error: \(error)")
-            errorMessage = "API error: \(String(describing: error))"
-            uploadResults = results
-            step = .done
-            return
+
+            await updateProgress(results: results)
         }
 
         AppLogger.upload.info("Upload complete. \(results.filter { $0.success }.count)/\(results.count) succeeded")

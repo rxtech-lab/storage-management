@@ -124,7 +124,8 @@ struct CategoryListView: View {
                 NavigationLink(value: category) {
                     CategoryRow(category: category)
                 }
-                .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                #if os(macOS)
+                .contextMenu {
                     Button(role: .destructive) {
                         categoryToDelete = category
                         showDeleteConfirmation = true
@@ -132,13 +133,23 @@ struct CategoryListView: View {
                         Label("Delete", systemImage: "trash")
                     }
                 }
-                .onAppear {
-                    if shouldLoadMore(for: category) {
-                        Task {
-                            await viewModel.loadMoreCategories()
+                #else
+                .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                            Button(role: .destructive) {
+                                categoryToDelete = category
+                                showDeleteConfirmation = true
+                            } label: {
+                                Label("Delete", systemImage: "trash")
+                            }
                         }
-                    }
-                }
+                #endif
+                        .onAppear {
+                            if shouldLoadMore(for: category) {
+                                Task {
+                                    await viewModel.loadMoreCategories()
+                                }
+                            }
+                        }
             }
 
             // Loading more indicator

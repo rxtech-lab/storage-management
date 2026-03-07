@@ -263,6 +263,9 @@ struct ItemDetailContentsCard: View {
     let onDeleteContent: (String) async -> Void
     let onSelectContent: (Content) -> Void
 
+    @State private var contentToDelete: Content?
+    @State private var showDeleteConfirmation = false
+
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             Button {
@@ -331,6 +334,19 @@ struct ItemDetailContentsCard: View {
         }
         .background(Color.secondarySystemGroupedBackground)
         .clipShape(RoundedRectangle(cornerRadius: 12))
+        .confirmationDialog(
+            title: "Delete Content",
+            message: "Are you sure you want to delete \"\(contentToDelete?.contentData.title ?? "this content")\"? This action cannot be undone.",
+            confirmButtonTitle: "Delete",
+            isPresented: $showDeleteConfirmation,
+            onConfirm: {
+                if let content = contentToDelete {
+                    Task { await onDeleteContent(content.id) }
+                    contentToDelete = nil
+                }
+            },
+            onCancel: { contentToDelete = nil }
+        )
     }
 
     @ViewBuilder
@@ -348,7 +364,8 @@ struct ItemDetailContentsCard: View {
                 ],
                 trailingActions: [
                     SwipeAction(title: "Delete", icon: "trash", color: .red) {
-                        Task { await onDeleteContent(content.id) }
+                        contentToDelete = content
+                        showDeleteConfirmation = true
                     },
                 ]
             ) {
@@ -429,7 +446,8 @@ struct ItemDetailContentsCard: View {
                     Label("Edit", systemImage: "pencil")
                 }
                 Button(role: .destructive) {
-                    Task { await onDeleteContent(content.id) }
+                    contentToDelete = content
+                    showDeleteConfirmation = true
                 } label: {
                     Label("Delete", systemImage: "trash")
                 }

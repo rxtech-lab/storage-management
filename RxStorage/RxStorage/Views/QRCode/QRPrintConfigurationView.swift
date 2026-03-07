@@ -14,16 +14,19 @@ import SwiftUI
     struct QRPrintConfigurationView: View {
         let item: StorageItemDetail
         let qrImage: UIImage
+        let printMode: QRPrintMode
 
         @State private var configuration = QRPrintConfiguration.loadSaved()
         @State private var customWidth: String
         @State private var customHeight: String
         @State private var isCustomSize: Bool
         @Environment(\.dismiss) private var dismiss
+        @Environment(EventViewModel.self) private var eventViewModel
 
-        init(item: StorageItemDetail, qrImage: UIImage) {
+        init(item: StorageItemDetail, qrImage: UIImage, printMode: QRPrintMode = .viewOnly) {
             self.item = item
             self.qrImage = qrImage
+            self.printMode = printMode
             let saved = QRPrintConfiguration.loadSaved()
             let unit = saved.sizeUnit
             if case let .custom(w, h) = saved.pageSize {
@@ -338,7 +341,26 @@ import SwiftUI
             printDelegate = delegate
             printController.delegate = delegate
 
-            printController.present(animated: true)
+            let shouldAddStock = printMode == .addStock
+            let itemId = item.id
+            let eventVM = eventViewModel
+
+            printController.present(animated: true) { _, completed, error in
+                if completed, shouldAddStock, error == nil {
+                    Task {
+                        let service = StockHistoryService()
+                        let request = NewStockHistoryRequest(
+                            itemId: itemId,
+                            quantity: 1,
+                            note: "Added via QR print"
+                        )
+                        _ = try? await service.createStockHistory(itemId: itemId, request)
+                        await MainActor.run {
+                            eventVM.emit(.itemUpdated(id: itemId))
+                        }
+                    }
+                }
+            }
         }
     }
 

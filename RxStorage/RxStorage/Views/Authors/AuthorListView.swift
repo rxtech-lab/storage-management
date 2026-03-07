@@ -124,7 +124,8 @@ struct AuthorListView: View {
                 NavigationLink(value: author) {
                     AuthorRow(author: author)
                 }
-                .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                #if os(macOS)
+                .contextMenu {
                     Button(role: .destructive) {
                         authorToDelete = author
                         showDeleteConfirmation = true
@@ -132,13 +133,23 @@ struct AuthorListView: View {
                         Label("Delete", systemImage: "trash")
                     }
                 }
-                .onAppear {
-                    if shouldLoadMore(for: author) {
-                        Task {
-                            await viewModel.loadMoreAuthors()
+                #else
+                .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                            Button(role: .destructive) {
+                                authorToDelete = author
+                                showDeleteConfirmation = true
+                            } label: {
+                                Label("Delete", systemImage: "trash")
+                            }
                         }
-                    }
-                }
+                #endif
+                        .onAppear {
+                            if shouldLoadMore(for: author) {
+                                Task {
+                                    await viewModel.loadMoreAuthors()
+                                }
+                            }
+                        }
             }
 
             // Loading more indicator

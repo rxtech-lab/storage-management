@@ -491,20 +491,35 @@ private struct FullscreenMediaViewer: View {
                     videoViewer(url: url)
                 }
 
-                // Close button
+                // Close button - positioned on left for videos to avoid overlap with volume control
                 VStack {
                     HStack {
-                        Spacer()
-                        Button {
-                            onDismiss()
-                        } label: {
-                            Image(systemName: "xmark.circle.fill")
-                                .font(.system(size: 30))
-                                .foregroundStyle(.white.opacity(0.8))
-                                .shadow(radius: 2)
+                        if case .video = mediaItem {
+                            Button {
+                                onDismiss()
+                            } label: {
+                                Image(systemName: "xmark.circle.fill")
+                                    .font(.system(size: 30))
+                                    .foregroundStyle(.white.opacity(0.8))
+                                    .shadow(radius: 2)
+                            }
+                            .buttonStyle(.plain)
+                            .padding(.top, 12)
+                            .padding(.leading, 62)
+                            Spacer()
+                        } else {
+                            Spacer()
+                            Button {
+                                onDismiss()
+                            } label: {
+                                Image(systemName: "xmark.circle.fill")
+                                    .font(.system(size: 30))
+                                    .foregroundStyle(.white.opacity(0.8))
+                                    .shadow(radius: 2)
+                            }
+                            .buttonStyle(.plain)
+                            .padding()
                         }
-                        .buttonStyle(.plain)
-                        .padding()
                     }
                     Spacer()
                 }

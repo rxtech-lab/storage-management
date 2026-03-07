@@ -14,6 +14,12 @@ import SwiftUI
     import AppKit
 #endif
 
+/// Print mode for QR code printing
+enum QRPrintMode {
+    case viewOnly
+    case addStock
+}
+
 /// Simple QR code view that displays a QR code from a URL string
 struct QRCodeView: View {
     let urlString: String
@@ -22,6 +28,7 @@ struct QRCodeView: View {
     #if os(iOS)
         @State private var qrImage: UIImage?
         @State private var showingPrintConfig = false
+        @State private var selectedPrintMode: QRPrintMode = .viewOnly
     #elseif os(macOS)
         @State private var qrImage: NSImage?
     #endif
@@ -86,15 +93,31 @@ struct QRCodeView: View {
                 #if os(iOS)
                     if let image = qrImage {
                         ToolbarItemGroup(placement: .bottomBar) {
-                            Button {
-                                if item != nil {
-                                    showingPrintConfig = true
-                                } else {
-                                    printQRCode(image)
+                            if item != nil {
+                                Menu {
+                                    Button {
+                                        selectedPrintMode = .viewOnly
+                                        showingPrintConfig = true
+                                    } label: {
+                                        Label("Print QR Code", systemImage: "qrcode")
+                                    }
+                                    Button {
+                                        selectedPrintMode = .addStock
+                                        showingPrintConfig = true
+                                    } label: {
+                                        Label("Print and Add Stock (+1)", systemImage: "plus.circle")
+                                    }
+                                } label: {
+                                    Label("Print QR Code", systemImage: "printer")
+                                        .frame(maxWidth: .infinity)
                                 }
-                            } label: {
-                                Label("Print QR Code", systemImage: "printer")
-                                    .frame(maxWidth: .infinity)
+                            } else {
+                                Button {
+                                    printQRCode(image)
+                                } label: {
+                                    Label("Print QR Code", systemImage: "printer")
+                                        .frame(maxWidth: .infinity)
+                                }
                             }
                             ShareLink(item: Image(uiImage: image), preview: SharePreview("QR Code", image: Image(uiImage: image))) {
                                 Label("Share QR Code", systemImage: "square.and.arrow.up")
@@ -125,7 +148,7 @@ struct QRCodeView: View {
         #if os(iOS)
             .sheet(isPresented: $showingPrintConfig) {
                 if let item, let qrImage {
-                    QRPrintConfigurationView(item: item, qrImage: qrImage)
+                    QRPrintConfigurationView(item: item, qrImage: qrImage, printMode: selectedPrintMode)
                 }
             }
         #endif
