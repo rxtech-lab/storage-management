@@ -158,6 +158,8 @@
 				Views/Shared/CameraPickerView.swift,
 				Views/Shared/MediaCarousel.swift,
 				Views/Shared/SwipeableRow.swift,
+				Views/Tags/TagFormSheet.swift,
+				Views/Tags/TagPickerSheet.swift,
 			);
 			target = DF66258F2F29138300333552 /* RxStorageClips */;
 		};

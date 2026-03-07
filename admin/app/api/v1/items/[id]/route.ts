@@ -11,6 +11,7 @@ import { getItemPositions } from "@/lib/actions/position-actions";
 import { getItemStockHistory, getItemQuantity } from "@/lib/actions/stock-history-actions";
 import { signImagesArrayWithIds } from "@/lib/actions/s3-upload-actions";
 import { isEmailWhitelisted } from "@/lib/actions/whitelist-actions";
+import { getItemTags } from "@/lib/actions/tag-actions";
 import {
   ItemDetailResponseSchema,
   ItemResponseSchema,
@@ -77,7 +78,7 @@ async function buildItemResponse(
   const CONTENTS_LIMIT = 10;
 
   // Fetch item images, children, contents, positions, and stock in parallel
-  const [images, children, contents, totalContents, positions, stockHistory, quantity] = await Promise.all([
+  const [images, children, contents, totalContents, positions, stockHistory, quantity, itemTags] = await Promise.all([
     item.images && item.images.length > 0
       ? signImagesArrayWithIds(item.images)
       : Promise.resolve([]),
@@ -87,6 +88,7 @@ async function buildItemResponse(
     getItemPositions(itemId),
     getItemStockHistory(itemId),
     getItemQuantity(itemId),
+    getItemTags(itemId),
   ]);
 
   // Sign images for each child
@@ -117,6 +119,7 @@ async function buildItemResponse(
     positions,
     quantity,
     stockHistory,
+    tags: itemTags,
   };
 
   const validated = ItemDetailResponseSchema.safeParse(responseData);

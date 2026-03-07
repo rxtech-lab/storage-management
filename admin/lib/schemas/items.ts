@@ -2,6 +2,7 @@ import { items } from "@/lib/db/schema";
 import { createSelectSchema } from "drizzle-zod";
 import { z } from "zod";
 import { PaginationInfo, PaginationQueryParams } from "./common";
+import { TagRefSchema } from "./tags";
 
 // Base schemas from Drizzle (for internal validation)
 export const ItemSelectSchema = createSelectSchema(items);
@@ -50,6 +51,16 @@ export const ItemInsertSchema = z.object({
   visibility: z
     .enum(["publicAccess", "privateAccess"])
     .describe("Visibility setting"),
+  itemDate: z.coerce
+    .date()
+    .nullable()
+    .optional()
+    .describe("Item date (when different from creation date)"),
+  expiresAt: z.coerce
+    .date()
+    .nullable()
+    .optional()
+    .describe("Deadline or expiration date"),
   images: z
     .array(z.string())
     .optional()
@@ -99,6 +110,16 @@ export const ItemUpdateSchema = z.object({
     .enum(["publicAccess", "privateAccess"])
     .optional()
     .describe("Visibility setting"),
+  itemDate: z.coerce
+    .date()
+    .nullable()
+    .optional()
+    .describe("Item date (when different from creation date)"),
+  expiresAt: z.coerce
+    .date()
+    .nullable()
+    .optional()
+    .describe("Deadline or expiration date"),
   images: z
     .array(z.string())
     .optional()
@@ -180,6 +201,8 @@ export const ItemResponseSchema = z.object({
     .describe("Visibility setting: publicAccess or privateAccess"),
   createdAt: z.coerce.date().describe("Creation timestamp"),
   updatedAt: z.coerce.date().describe("Last update timestamp"),
+  itemDate: z.coerce.date().nullable().describe("Item date (when different from creation date)"),
+  expiresAt: z.coerce.date().nullable().describe("Deadline or expiration date"),
   previewUrl: z.string().url().describe("Public preview URL for the item"),
   images: z.array(SignedImageSchema).describe("Signed images with IDs and URLs"),
   category: CategoryRefSchema.nullable().describe("Associated category"),
@@ -208,6 +231,8 @@ export const ItemDetailResponseSchema = z.object({
     .describe("Visibility setting: publicAccess or privateAccess"),
   createdAt: z.coerce.date().describe("Creation timestamp"),
   updatedAt: z.coerce.date().describe("Last update timestamp"),
+  itemDate: z.coerce.date().nullable().describe("Item date (when different from creation date)"),
+  expiresAt: z.coerce.date().nullable().describe("Deadline or expiration date"),
   previewUrl: z.string().url().describe("Public preview URL for the item"),
   images: z.array(SignedImageSchema).describe("Signed images with IDs and URLs"),
   category: CategoryRefSchema.nullable().describe("Associated category"),
@@ -224,6 +249,7 @@ export const ItemDetailResponseSchema = z.object({
   positions: z.array(PositionRefSchema).describe("Position data entries"),
   quantity: z.number().int().describe("Computed current stock quantity"),
   stockHistory: z.array(StockHistoryRefSchema).describe("Stock history entries"),
+  tags: z.array(TagRefSchema).describe("Tags associated with this item"),
 });
 
 // Query params for items list

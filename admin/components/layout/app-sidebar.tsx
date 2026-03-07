@@ -9,6 +9,7 @@ import {
   User,
   FileJson,
   LayoutDashboard,
+  Tag,
 } from "lucide-react";
 import {
   Sidebar,
@@ -34,6 +35,7 @@ const entityNavItems = [
   { title: "Locations", href: "/locations", icon: MapPin },
   { title: "Authors", href: "/authors", icon: User },
   { title: "Position Schemas", href: "/position-schemas", icon: FileJson },
+  { title: "Tags", href: "/tags", icon: Tag },
 ];
 
 interface AppSidebarProps {

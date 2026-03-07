@@ -480,7 +480,8 @@ import SwiftUI
             totalContents: 0,
             positions: [],
             quantity: 0,
-            stockHistory: []
+            stockHistory: [],
+            tags: []
         )
 
         // Generate a simple QR code image for preview

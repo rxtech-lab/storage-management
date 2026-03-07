@@ -22,6 +22,8 @@ public protocol ItemFormViewModelProtocol: AnyObject, Observable {
     var selectedParentId: String? { get set }
     var price: String { get set }
     var visibility: Visibility { get set }
+    var itemDate: Date? { get set }
+    var expiresAt: Date? { get set }
     var existingImages: [ImageReference] { get set }
 
     /// State

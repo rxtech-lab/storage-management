@@ -98,6 +98,23 @@ struct ItemDetailDetailsCard: View {
                     }
                 }
 
+                if let itemDate = item.itemDate {
+                    LabeledContent {
+                        Text(itemDate, style: .date)
+                    } label: {
+                        Label("Item Date", systemImage: "calendar")
+                    }
+                }
+
+                if let expiresAt = item.expiresAt {
+                    LabeledContent {
+                        Text(expiresAt, style: .date)
+                            .foregroundStyle(expiresAt < Date() ? .red : .primary)
+                    } label: {
+                        Label("Expires", systemImage: "clock")
+                    }
+                }
+
                 Button {
                     onStockTapped()
                 } label: {
@@ -473,6 +490,160 @@ struct ItemDetailContentsCard: View {
         case .video:
             return .purple
         }
+    }
+}
+
+// MARK: - Tags Card
+
+struct ItemDetailTagsCard: View {
+    let tags: [TagRef]
+    let isViewOnly: Bool
+    let onAddTag: () -> Void
+    let onRemoveTag: (String) async -> Void
+
+    @State private var tagToRemove: TagRef?
+    @State private var showRemoveConfirmation = false
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            Label("Tags", systemImage: "tag")
+                .font(.headline)
+                .foregroundStyle(.secondary)
+                .padding(.horizontal, 16)
+                .padding(.top, 16)
+                .padding(.bottom, 12)
+
+            Divider()
+                .padding(.leading, 16)
+
+            if tags.isEmpty {
+                Text("No tags")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 12)
+            } else {
+                ForEach(Array(tags.enumerated()), id: \.element.id) { index, tag in
+                    tagRowWithSwipe(tag)
+                    if index < tags.count - 1 {
+                        Divider()
+                            .padding(.leading, 16)
+                    }
+                }
+            }
+
+            if !isViewOnly {
+                Divider()
+                    .padding(.leading, 16)
+                Button {
+                    onAddTag()
+                } label: {
+                    HStack {
+                        Image(systemName: "plus.circle")
+                            .foregroundStyle(.blue)
+                        Text("Add Tag")
+                            .foregroundStyle(.blue)
+                    }
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 12)
+            }
+        }
+        .background(Color.secondarySystemGroupedBackground)
+        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .confirmationDialog(
+            title: "Remove Tag",
+            message: "Are you sure you want to remove \"\(tagToRemove?.title ?? "this tag")\" from this item?",
+            confirmButtonTitle: "Remove",
+            isPresented: $showRemoveConfirmation,
+            onConfirm: {
+                if let tag = tagToRemove {
+                    Task { await onRemoveTag(tag.id) }
+                    tagToRemove = nil
+                }
+            },
+            onCancel: { tagToRemove = nil }
+        )
+    }
+
+    @ViewBuilder
+    private func tagRowWithSwipe(_ tag: TagRef) -> some View {
+        if isViewOnly {
+            tagRow(tag)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 12)
+        } else {
+            SwipeableRow(
+                trailingActions: [
+                    SwipeAction(title: "Remove", icon: "minus.circle", color: .red) {
+                        tagToRemove = tag
+                        showRemoveConfirmation = true
+                    },
+                ]
+            ) {
+                tagRow(tag)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 12)
+            }
+        }
+    }
+
+    private func tagRow(_ tag: TagRef) -> some View {
+        HStack(spacing: 10) {
+            Circle()
+                .fill(Color(hex: tag.color) ?? .gray)
+                .frame(width: 12, height: 12)
+
+            Text(tag.title)
+                .font(.subheadline)
+                .fontWeight(.medium)
+
+            Spacer()
+
+            Text(tag.title)
+                .font(.caption)
+                .fontWeight(.medium)
+                .padding(.horizontal, 8)
+                .padding(.vertical, 4)
+                .foregroundStyle(isLightColor(tag.color) ? .black : .white)
+                .background(Color(hex: tag.color) ?? .gray)
+                .clipShape(Capsule())
+        }
+        .contextMenu {
+            if !isViewOnly {
+                Button(role: .destructive) {
+                    tagToRemove = tag
+                    showRemoveConfirmation = true
+                } label: {
+                    Label("Remove Tag", systemImage: "minus.circle")
+                }
+            }
+        }
+    }
+
+    private func isLightColor(_ hex: String) -> Bool {
+        let color = hex.replacingOccurrences(of: "#", with: "")
+        guard color.count == 6 else { return true }
+        guard let r = UInt8(color.prefix(2), radix: 16),
+              let g = UInt8(color.dropFirst(2).prefix(2), radix: 16),
+              let b = UInt8(color.dropFirst(4).prefix(2), radix: 16)
+        else { return true }
+        let luminance = 0.2126 * Double(r) / 255.0 + 0.7152 * Double(g) / 255.0 + 0.0722 * Double(b) / 255.0
+        return luminance > 0.5
+    }
+}
+
+// MARK: - Color Extension
+
+private extension Color {
+    init?(hex: String) {
+        let hex = hex.replacingOccurrences(of: "#", with: "")
+        guard hex.count == 6,
+              let r = UInt8(hex.prefix(2), radix: 16),
+              let g = UInt8(hex.dropFirst(2).prefix(2), radix: 16),
+              let b = UInt8(hex.dropFirst(4).prefix(2), radix: 16)
+        else { return nil }
+        self.init(red: Double(r) / 255.0, green: Double(g) / 255.0, blue: Double(b) / 255.0)
     }
 }
 
