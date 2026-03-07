@@ -308,6 +308,25 @@ export async function createItemAction(
     }
 
     const validatedData = validationResult.data;
+
+    // Check for duplicate item title for this user
+    const existingItem = await db
+      .select({ id: items.id })
+      .from(items)
+      .where(
+        and(
+          eq(items.userId, resolvedUserId),
+          eq(items.title, validatedData.title),
+        ),
+      )
+      .limit(1);
+    if (existingItem[0]) {
+      return {
+        success: false,
+        error: "An item with this title already exists",
+      };
+    }
+
     const images = validatedData.images || [];
 
     // Validate file IDs if present
@@ -435,6 +454,27 @@ export async function updateItemAction(
 
     if (!existing[0] || existing[0].userId !== resolvedUserId) {
       return { success: false, error: "Permission denied" };
+    }
+
+    // Check for duplicate item title for this user (if title is being updated)
+    if (data.title) {
+      const duplicateItem = await db
+        .select({ id: items.id })
+        .from(items)
+        .where(
+          and(
+            eq(items.userId, resolvedUserId),
+            eq(items.title, data.title),
+            ne(items.id, id),
+          ),
+        )
+        .limit(1);
+      if (duplicateItem[0]) {
+        return {
+          success: false,
+          error: "An item with this title already exists",
+        };
+      }
     }
 
     // Handle image file ID changes if images are being updated
