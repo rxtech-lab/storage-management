@@ -154,11 +154,19 @@ extension UploadContentView {
 
         AppLogger.upload.info("Upload complete. \(results.filter { $0.success }.count)/\(results.count) succeeded")
         uploadResults = results
+        cleanupISO()
         step = .done
     }
 
     func updateProgress(results: [UploadResult]) async {
         uploadProgress = results.count
         uploadResults = results
+    }
+
+    func cleanupISO() {
+        if let mountPoint = isoMountPoint {
+            ISOService.unmount(mountPoint: mountPoint)
+            isoMountPoint = nil
+        }
     }
 }

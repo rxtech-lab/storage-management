@@ -37,6 +37,15 @@ struct StorageItemList: View, @unchecked Sendable {
         }
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
+                Button("Refresh") {
+                    isLoading = true
+                    errorMessage = nil
+                    Task {
+                        await fetchItems()
+                    }
+                }
+            }
+            ToolbarItem(placement: .primaryAction) {
                 Button("Sign Out") {
                     onSignOut?()
                 }

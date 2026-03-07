@@ -14,6 +14,7 @@ struct UploadContentView: View, @unchecked Sendable {
     @State var uploadTotal = 0
     @State var errorMessage: String?
     @State var uploadResults: [UploadResult] = []
+    @State var isoMountPoint: String?
 
     var body: some View {
         VStack(alignment: .leading) {
@@ -42,17 +43,31 @@ struct UploadContentView: View, @unchecked Sendable {
 
     private var enterPathView: some View {
         VStack(alignment: .leading) {
-            Text("Enter directory path:")
-            TextField(placeholder: "/path/to/content") { path in
+            Text("Enter directory or ISO path:")
+            TextField(placeholder: "/path/to/content or /path/to/file.iso") { path in
                 let trimmed = path.trimmingCharacters(in: .whitespacesAndNewlines)
-                var isDir: ObjCBool = false
-                if FileManager.default.fileExists(atPath: trimmed, isDirectory: &isDir),
-                    isDir.boolValue
-                {
-                    directoryPath = trimmed
-                    step = .enterExtensions
+                if trimmed.lowercased().hasSuffix(".iso") {
+                    if FileManager.default.fileExists(atPath: trimmed) {
+                        if let mountPoint = ISOService.mount(isoPath: trimmed) {
+                            isoMountPoint = mountPoint
+                            directoryPath = mountPoint
+                            step = .enterExtensions
+                        } else {
+                            errorMessage = "Failed to mount ISO: \(trimmed)"
+                        }
+                    } else {
+                        errorMessage = "ISO file does not exist: \(trimmed)"
+                    }
                 } else {
-                    errorMessage = "Path does not exist or is not a directory: \(trimmed)"
+                    var isDir: ObjCBool = false
+                    if FileManager.default.fileExists(atPath: trimmed, isDirectory: &isDir),
+                        isDir.boolValue
+                    {
+                        directoryPath = trimmed
+                        step = .enterExtensions
+                    } else {
+                        errorMessage = "Path does not exist or is not a directory: \(trimmed)"
+                    }
                 }
             }
             if let error = errorMessage {
