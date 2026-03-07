@@ -51,6 +51,7 @@ struct ItemFormSheet: View {
     var body: some View {
         Form {
             basicInfoSection
+            datesSection
             categorySection
             locationSection
             authorSection
@@ -199,6 +200,42 @@ struct ItemFormSheet: View {
                 .keyboardType(.decimalPad)
             #endif
                 .accessibilityIdentifier("item-form-price-field")
+        }
+    }
+
+    private var datesSection: some View {
+        Section("Dates") {
+            Toggle("Set Item Date", isOn: Binding(
+                get: { viewModel.itemDate != nil },
+                set: { viewModel.itemDate = $0 ? Date() : nil }
+            ))
+            if viewModel.itemDate != nil {
+                DatePicker(
+                    "Item Date",
+                    selection: Binding(
+                        get: { viewModel.itemDate ?? Date() },
+                        set: { viewModel.itemDate = $0 }
+                    ),
+                    displayedComponents: .date
+                )
+                .accessibilityIdentifier("item-form-item-date-picker")
+            }
+
+            Toggle("Set Deadline / Expires", isOn: Binding(
+                get: { viewModel.expiresAt != nil },
+                set: { viewModel.expiresAt = $0 ? Date() : nil }
+            ))
+            if viewModel.expiresAt != nil {
+                DatePicker(
+                    "Deadline / Expires",
+                    selection: Binding(
+                        get: { viewModel.expiresAt ?? Date() },
+                        set: { viewModel.expiresAt = $0 }
+                    ),
+                    displayedComponents: .date
+                )
+                .accessibilityIdentifier("item-form-expires-at-picker")
+            }
         }
     }
 

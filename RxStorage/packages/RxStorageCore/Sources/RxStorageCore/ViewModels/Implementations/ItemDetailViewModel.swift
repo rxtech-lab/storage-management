@@ -21,6 +21,7 @@ public final class ItemDetailViewModel: ItemDetailViewModelProtocol {
     public private(set) var children: [StorageItem] = []
     public private(set) var contents: [Content] = []
     public private(set) var totalContents: Int = 0
+    public private(set) var tags: [TagRef] = []
     public private(set) var stockHistory: [StockHistoryRef] = []
     public private(set) var quantity: Int = 0
     public var contentSchemas: [ContentSchema] = []
@@ -33,6 +34,7 @@ public final class ItemDetailViewModel: ItemDetailViewModelProtocol {
     private let contentService: ContentServiceProtocol
     private let contentSchemaService: ContentSchemaServiceProtocol
     private let stockHistoryService: StockHistoryServiceProtocol
+    private let tagService: TagServiceProtocol
 
     // MARK: - Initialization
 
@@ -40,12 +42,14 @@ public final class ItemDetailViewModel: ItemDetailViewModelProtocol {
         itemService: ItemServiceProtocol = ItemService(),
         contentService: ContentServiceProtocol = ContentService(),
         contentSchemaService: ContentSchemaServiceProtocol = ContentSchemaService(),
-        stockHistoryService: StockHistoryServiceProtocol = StockHistoryService()
+        stockHistoryService: StockHistoryServiceProtocol = StockHistoryService(),
+        tagService: TagServiceProtocol = TagService()
     ) {
         self.itemService = itemService
         self.contentService = contentService
         self.contentSchemaService = contentSchemaService
         self.stockHistoryService = stockHistoryService
+        self.tagService = tagService
     }
 
     // MARK: - Public Methods
@@ -67,6 +71,7 @@ public final class ItemDetailViewModel: ItemDetailViewModelProtocol {
                 totalContents = item.totalContents
                 stockHistory = item.stockHistory
                 quantity = item.quantity
+                tags = item.tags
             }
         } catch is CancellationError {
             // Ignore cancellation - view was dismissed
@@ -98,6 +103,7 @@ public final class ItemDetailViewModel: ItemDetailViewModelProtocol {
                 totalContents = item.totalContents
                 stockHistory = item.stockHistory
                 quantity = item.quantity
+                tags = item.tags
             }
         } catch is CancellationError {
             // Ignore cancellation - view was dismissed
@@ -128,6 +134,7 @@ public final class ItemDetailViewModel: ItemDetailViewModelProtocol {
                 totalContents = item.totalContents
                 stockHistory = item.stockHistory
                 quantity = item.quantity
+                tags = item.tags
             }
         } catch is CancellationError {
             // Ignore cancellation - view was dismissed
@@ -260,6 +267,30 @@ public final class ItemDetailViewModel: ItemDetailViewModelProtocol {
         if let index = contents.firstIndex(where: { $0.id == id }) {
             contents[index] = updated
         }
+    }
+
+    // MARK: - Tag Management
+
+    /// Add a tag to this item
+    public func addTag(_ tagId: String) async throws {
+        guard let itemId = item?.id else {
+            throw ItemDetailError.noItemLoaded
+        }
+
+        try await tagService.addTagToItem(itemId: itemId, tagId: tagId)
+        // Refresh to get updated tags
+        let itemTags = try await tagService.fetchItemTags(itemId: itemId)
+        tags = itemTags
+    }
+
+    /// Remove a tag from this item
+    public func removeTag(_ tagId: String) async throws {
+        guard let itemId = item?.id else {
+            throw ItemDetailError.noItemLoaded
+        }
+
+        try await tagService.removeTagFromItem(itemId: itemId, tagId: tagId)
+        tags.removeAll { $0.id == tagId }
     }
 
     // MARK: - Stock History Management

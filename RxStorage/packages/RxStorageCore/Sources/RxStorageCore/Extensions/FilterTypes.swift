@@ -129,6 +129,26 @@ public struct PositionSchemaFilters: Sendable {
     }
 }
 
+/// Filters for tag queries
+public struct TagFilters: Sendable {
+    public var search: String?
+    public var cursor: String?
+    public var direction: PaginationDirection?
+    public var limit: Int?
+
+    public init(
+        search: String? = nil,
+        cursor: String? = nil,
+        direction: PaginationDirection? = nil,
+        limit: Int? = nil
+    ) {
+        self.search = search
+        self.cursor = cursor
+        self.direction = direction
+        self.limit = limit
+    }
+}
+
 // MARK: - Paginated Response
 
 /// Generic paginated response wrapper

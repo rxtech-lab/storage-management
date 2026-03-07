@@ -7,12 +7,8 @@
   },
   "servers": [
     {
-      "url": "http://localhost:3000/api",
-      "description": "Development server"
-    },
-    {
-      "url": "https://storage.rxlab.app/api",
-      "description": "Production server"
+      "url": "http://localhost:3000",
+      "description": "Current server"
     }
   ],
   "components": {
@@ -626,6 +622,18 @@
             "format": "date-time",
             "description": "Last update timestamp"
           },
+          "itemDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Item date (when different from creation date)"
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Deadline or expiration date"
+          },
           "previewUrl": {
             "type": "string",
             "format": "uri",
@@ -753,6 +761,18 @@
             "format": "date-time",
             "description": "Last update timestamp"
           },
+          "itemDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Item date (when different from creation date)"
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Deadline or expiration date"
+          },
           "previewUrl": {
             "type": "string",
             "format": "uri",
@@ -824,6 +844,13 @@
               "$ref": "#/components/schemas/StockHistoryRefSchema"
             },
             "description": "Stock history entries"
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TagRefSchema"
+            },
+            "description": "Tags associated with this item"
           }
         },
         "required": [
@@ -840,7 +867,8 @@
           "totalContents",
           "positions",
           "quantity",
-          "stockHistory"
+          "stockHistory",
+          "tags"
         ]
       },
       "ItemUpdateSchema": {
@@ -899,6 +927,18 @@
             ],
             "nullable": true,
             "description": "Visibility setting"
+          },
+          "itemDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Item date (when different from creation date)"
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Deadline or expiration date"
           },
           "images": {
             "type": "array",
@@ -982,6 +1022,78 @@
           "userId",
           "itemId",
           "quantity",
+          "createdAt"
+        ]
+      },
+      "ItemTagPathParams": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Item ID"
+          },
+          "tagId": {
+            "type": "string",
+            "description": "Tag ID"
+          }
+        },
+        "required": [
+          "id",
+          "tagId"
+        ]
+      },
+      "ItemTagsListResponse": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/TagRefSchema"
+        }
+      },
+      "ItemTagInsertSchema": {
+        "type": "object",
+        "properties": {
+          "tagId": {
+            "type": "string",
+            "description": "Tag ID to add to the item"
+          }
+        },
+        "required": [
+          "tagId"
+        ]
+      },
+      "ItemTagResponseSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Item-tag relation ID"
+          },
+          "itemId": {
+            "type": "string",
+            "description": "Item ID"
+          },
+          "tagId": {
+            "type": "string",
+            "description": "Tag ID"
+          },
+          "tag": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TagRefSchema"
+              }
+            ],
+            "description": "Tag details"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Creation timestamp"
+          }
+        },
+        "required": [
+          "id",
+          "itemId",
+          "tagId",
+          "tag",
           "createdAt"
         ]
       },
@@ -1196,6 +1308,18 @@
               "privateAccess"
             ],
             "description": "Visibility setting"
+          },
+          "itemDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Item date (when different from creation date)"
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Deadline or expiration date"
           },
           "images": {
             "type": "array",
@@ -1579,6 +1703,127 @@
         "required": [
           "type",
           "url"
+        ]
+      },
+      "TagResponseSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique tag identifier"
+          },
+          "userId": {
+            "type": "string",
+            "description": "Owner user ID"
+          },
+          "title": {
+            "type": "string",
+            "description": "Tag title"
+          },
+          "color": {
+            "type": "string",
+            "description": "Tag color as hex string (e.g. #FF5733)"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Creation timestamp"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Last update timestamp"
+          }
+        },
+        "required": [
+          "id",
+          "userId",
+          "title",
+          "color",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "TagUpdateSchema": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "nullable": true,
+            "description": "Tag title"
+          },
+          "color": {
+            "type": "string",
+            "nullable": true,
+            "description": "Tag color as hex string (e.g. #FF5733)"
+          }
+        }
+      },
+      "TagsQueryParams": {
+        "type": "object",
+        "properties": {
+          "cursor": {
+            "type": "string",
+            "nullable": true,
+            "description": "Base64 encoded cursor for pagination"
+          },
+          "direction": {
+            "type": "string",
+            "enum": [
+              "next",
+              "prev"
+            ],
+            "nullable": true,
+            "description": "Pagination direction"
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "nullable": true,
+            "description": "Items per page (default: 20, max: 100)"
+          },
+          "search": {
+            "type": "string",
+            "nullable": true,
+            "description": "Search query string"
+          }
+        }
+      },
+      "PaginatedTagsResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TagResponseSchema"
+            },
+            "description": "Array of tags"
+          },
+          "pagination": {
+            "$ref": "#/components/schemas/PaginationInfo"
+          }
+        },
+        "required": [
+          "data",
+          "pagination"
+        ]
+      },
+      "TagInsertSchema": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "Tag title"
+          },
+          "color": {
+            "type": "string",
+            "description": "Tag color as hex string (e.g. #FF5733)"
+          }
+        },
+        "required": [
+          "title",
+          "color"
         ]
       },
       "ContentPreviewUploadRequestSchema": {
@@ -2190,6 +2435,28 @@
         "required": [
           "id",
           "url"
+        ]
+      },
+      "TagRefSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Tag ID"
+          },
+          "title": {
+            "type": "string",
+            "description": "Tag title"
+          },
+          "color": {
+            "type": "string",
+            "description": "Tag color as hex string"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "color"
         ]
       },
       "LocationSelectSchema": {
@@ -5149,6 +5416,497 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/StockHistoryResponseSchema"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/400"
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404"
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        }
+      }
+    },
+    "/v1/tags": {
+      "get": {
+        "operationId": "getTags",
+        "summary": "List tags",
+        "description": "Retrieve a paginated list of tags",
+        "tags": [
+          "Tags"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "cursor",
+            "schema": {
+              "type": "string",
+              "description": "Base64 encoded cursor for pagination"
+            },
+            "required": false,
+            "description": "Base64 encoded cursor for pagination"
+          },
+          {
+            "in": "query",
+            "name": "direction",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "next",
+                "prev"
+              ],
+              "description": "Pagination direction"
+            },
+            "required": false,
+            "description": "Pagination direction"
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "type": "integer",
+              "description": "Items per page (default: 20, max: 100)"
+            },
+            "required": false,
+            "description": "Items per page (default: 20, max: 100)"
+          },
+          {
+            "in": "query",
+            "name": "search",
+            "schema": {
+              "type": "string",
+              "description": "Search query string"
+            },
+            "required": false,
+            "description": "Search query string"
+          }
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedTagsResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/400"
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404"
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        }
+      },
+      "post": {
+        "operationId": "createTag",
+        "summary": "Create tag",
+        "description": "Create a new tag",
+        "tags": [
+          "Tags"
+        ],
+        "parameters": [],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TagInsertSchema"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TagResponseSchema"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/400"
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404"
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        }
+      }
+    },
+    "/v1/tags/{id}": {
+      "get": {
+        "operationId": "getTag",
+        "summary": "Get tag by ID",
+        "description": "Retrieve a single tag by its ID",
+        "tags": [
+          "Tags"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "schema": {
+              "type": "string",
+              "description": "Resource ID"
+            },
+            "required": true,
+            "description": "Resource ID",
+            "example": "123"
+          }
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TagResponseSchema"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/400"
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404"
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        }
+      },
+      "put": {
+        "operationId": "updateTag",
+        "summary": "Update tag",
+        "description": "Update an existing tag",
+        "tags": [
+          "Tags"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "schema": {
+              "type": "string",
+              "description": "Resource ID"
+            },
+            "required": true,
+            "description": "Resource ID",
+            "example": "123"
+          }
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TagUpdateSchema"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TagResponseSchema"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/400"
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404"
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        }
+      },
+      "delete": {
+        "operationId": "deleteTag",
+        "summary": "Delete tag",
+        "description": "Delete a tag by ID",
+        "tags": [
+          "Tags"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "schema": {
+              "type": "string",
+              "description": "Resource ID"
+            },
+            "required": true,
+            "description": "Resource ID",
+            "example": "123"
+          }
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/400"
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404"
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        }
+      }
+    },
+    "/v1/items/{id}/tags": {
+      "get": {
+        "operationId": "getItemTags",
+        "summary": "List item tags",
+        "description": "Get all tags associated with an item",
+        "tags": [
+          "Tags"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "schema": {
+              "type": "string",
+              "description": "Resource ID"
+            },
+            "required": true,
+            "description": "Resource ID",
+            "example": "123"
+          }
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ItemTagsListResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/400"
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404"
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        }
+      },
+      "post": {
+        "operationId": "addItemTag",
+        "summary": "Add tag to item",
+        "description": "Add a tag to an item",
+        "tags": [
+          "Tags"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "schema": {
+              "type": "string",
+              "description": "Resource ID"
+            },
+            "required": true,
+            "description": "Resource ID",
+            "example": "123"
+          }
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ItemTagInsertSchema"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ItemTagResponseSchema"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/400"
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404"
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        }
+      }
+    },
+    "/v1/items/{id}/tags/{tagId}": {
+      "delete": {
+        "operationId": "removeItemTag",
+        "summary": "Remove tag from item",
+        "description": "Remove a tag from an item",
+        "tags": [
+          "Tags"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "schema": {
+              "type": "string",
+              "description": "Item ID"
+            },
+            "required": true,
+            "description": "Item ID",
+            "example": "123"
+          },
+          {
+            "in": "path",
+            "name": "tagId",
+            "schema": {
+              "type": "string",
+              "description": "Tag ID"
+            },
+            "required": true,
+            "description": "Tag ID",
+            "example": "123"
+          }
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
                 }
               }
             }

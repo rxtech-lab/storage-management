@@ -48,3 +48,14 @@ export {
   type AccountDeletion,
   type NewAccountDeletion,
 } from "./account-deletions";
+export {
+  tags,
+  type Tag,
+  type NewTag,
+} from "./tags";
+export {
+  itemTags,
+  itemTagsRelations,
+  type ItemTag,
+  type NewItemTag,
+} from "./item-tags";

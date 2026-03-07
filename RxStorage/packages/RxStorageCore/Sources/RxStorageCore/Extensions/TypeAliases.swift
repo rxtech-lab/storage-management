@@ -60,6 +60,9 @@ public typealias AccountDeletionRequestResponse = Components.Schemas.AccountDele
 /// Account deletion record
 public typealias AccountDeletion = Components.Schemas.AccountDeletionResponseSchema
 
+/// Tag entity
+public typealias Tag = Components.Schemas.TagResponseSchema
+
 // MARK: - Request Schema Type Aliases
 
 /// Request to create an item
@@ -110,6 +113,15 @@ public typealias WhitelistAddRequest = Components.Schemas.WhitelistAddRequestSch
 /// Request to create a stock history entry
 public typealias NewStockHistoryRequest = Components.Schemas.StockHistoryInsertSchema
 
+/// Request to create a tag
+public typealias NewTagRequest = Components.Schemas.TagInsertSchema
+
+/// Request to update a tag
+public typealias UpdateTagRequest = Components.Schemas.TagUpdateSchema
+
+/// Request to add a tag to an item
+public typealias ItemTagInsertRequest = Components.Schemas.ItemTagInsertSchema
+
 // MARK: - Paginated Response Type Aliases
 
 /// Paginated items response
@@ -129,6 +141,9 @@ public typealias PaginatedPositionSchemasResponse = Components.Schemas.Paginated
 
 /// Paginated contents response
 public typealias PaginatedContentsResponse = Components.Schemas.PaginatedContentsResponse
+
+/// Paginated tags response
+public typealias PaginatedTagsResponse = Components.Schemas.PaginatedTagsResponse
 
 /// Pagination info
 public typealias PaginationInfo = Components.Schemas.PaginationInfo
@@ -152,6 +167,9 @@ public typealias PositionRef = Components.Schemas.PositionRefSchema
 
 /// Stock history reference in item detail
 public typealias StockHistoryRef = Components.Schemas.StockHistoryRefSchema
+
+/// Tag reference in item detail
+public typealias TagRef = Components.Schemas.TagRefSchema
 
 /// Signed image with id and URL
 public typealias SignedImage = Components.Schemas.SignedImageSchema
@@ -196,6 +214,7 @@ extension Components.Schemas.PositionResponseSchema: Identifiable {}
 extension Components.Schemas.ContentResponseSchema: Identifiable {}
 extension Components.Schemas.DashboardRecentItemSchema: Identifiable {}
 extension Components.Schemas.StockHistoryResponseSchema: Identifiable {}
+extension Components.Schemas.TagResponseSchema: Identifiable {}
 
 // Reference schemas also need Identifiable
 extension Components.Schemas.CategoryRefSchema: Identifiable {}
@@ -204,6 +223,7 @@ extension Components.Schemas.AuthorRefSchema: Identifiable {}
 extension Components.Schemas.ContentRefSchema: Identifiable {}
 extension Components.Schemas.PositionRefSchema: Identifiable {}
 extension Components.Schemas.StockHistoryRefSchema: Identifiable {}
+extension Components.Schemas.TagRefSchema: Identifiable {}
 
 // MARK: - Content Convenience Extensions
 
@@ -254,6 +274,8 @@ public extension Components.Schemas.ItemDetailResponseSchema {
             visibility: StorageItem.visibilityPayload(rawValue: visibility.rawValue) ?? .publicAccess,
             createdAt: createdAt,
             updatedAt: updatedAt,
+            itemDate: itemDate,
+            expiresAt: expiresAt,
             previewUrl: previewUrl,
             images: images,
             category: categoryPayload,

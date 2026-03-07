@@ -53,6 +53,8 @@ const itemInsertSchema = z.object({
   price: z.number().nullable().optional(),
   currency: z.string().optional(),
   visibility: z.enum(["publicAccess", "privateAccess"]),
+  itemDate: z.coerce.date().nullable().optional(),
+  expiresAt: z.coerce.date().nullable().optional(),
   images: z
     .array(
       z.string().regex(fileIdPattern, "Images must be in 'file:{id}' format"),
@@ -124,6 +126,8 @@ export async function getItems(
       createdAt: items.createdAt,
       updatedAt: items.updatedAt,
       lastUsedAsParent: items.lastUsedAsParent,
+      itemDate: items.itemDate,
+      expiresAt: items.expiresAt,
       category: {
         id: categories.id,
         name: categories.name,
@@ -218,6 +222,8 @@ export async function getItem(
       createdAt: items.createdAt,
       updatedAt: items.updatedAt,
       lastUsedAsParent: items.lastUsedAsParent,
+      itemDate: items.itemDate,
+      expiresAt: items.expiresAt,
       category: {
         id: categories.id,
         name: categories.name,
@@ -363,6 +369,8 @@ export async function createItemAction(
       price: validatedData.price ?? null,
       currency: validatedData.currency || "USD",
       visibility: validatedData.visibility,
+      itemDate: validatedData.itemDate ?? null,
+      expiresAt: validatedData.expiresAt ?? null,
       images,
       createdAt: now,
       updatedAt: now,
@@ -434,6 +442,16 @@ export async function updateItemAction(
 ): Promise<{ success: boolean; data?: Item; error?: string }> {
   try {
     await ensureSchemaInitialized();
+
+    // Validate input data through schema (coerces date strings to Date objects)
+    const validationResult = itemUpdateSchema.safeParse(data);
+    if (!validationResult.success) {
+      const errors = validationResult.error.errors
+        .map((e) => `${e.path.join(".")}: ${e.message}`)
+        .join(", ");
+      return { success: false, error: `Validation failed: ${errors}` };
+    }
+    data = validationResult.data;
 
     // Get userId from session if not provided
     let resolvedUserId = userId;
@@ -926,6 +944,8 @@ export async function getItemsPaginated(
       createdAt: items.createdAt,
       updatedAt: items.updatedAt,
       lastUsedAsParent: items.lastUsedAsParent,
+      itemDate: items.itemDate,
+      expiresAt: items.expiresAt,
       category: {
         id: categories.id,
         name: categories.name,

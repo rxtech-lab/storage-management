@@ -9,6 +9,8 @@ import {
   User,
   DollarSign,
   Calendar,
+  CalendarClock,
+  Clock,
   Box,
 } from "lucide-react";
 import { useSignedImages, getSignedUrl } from "@/lib/hooks/use-signed-images";
@@ -76,6 +78,22 @@ export function ItemDetailView({ item }: ItemDetailViewProps) {
               <span className="text-sm font-medium">{item.parent.title}</span>
             </div>
           </Link>
+        )}
+        {item.itemDate && (
+          <div className="shrink-0 flex items-center gap-2 px-3 py-1.5 rounded-full bg-secondary/80 border border-border/50">
+            <CalendarClock className="h-3.5 w-3.5 text-muted-foreground" />
+            <span className="text-sm">
+              {new Date(item.itemDate).toLocaleDateString()}
+            </span>
+          </div>
+        )}
+        {item.expiresAt && (
+          <div className={`shrink-0 flex items-center gap-2 px-3 py-1.5 rounded-full border border-border/50 ${new Date(item.expiresAt) < new Date() ? "bg-destructive/10" : "bg-secondary/80"}`}>
+            <Clock className={`h-3.5 w-3.5 ${new Date(item.expiresAt) < new Date() ? "text-destructive" : "text-muted-foreground"}`} />
+            <span className={`text-sm ${new Date(item.expiresAt) < new Date() ? "text-destructive" : ""}`}>
+              Expires {new Date(item.expiresAt).toLocaleDateString()}
+            </span>
+          </div>
         )}
         <div className="shrink-0 flex items-center gap-2 px-3 py-1.5 rounded-full bg-secondary/80 border border-border/50">
           <Calendar className="h-3.5 w-3.5 text-muted-foreground" />

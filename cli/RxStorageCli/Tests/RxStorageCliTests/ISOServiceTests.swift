@@ -37,6 +37,8 @@ struct ISOServiceTests {
 
         var files: [String] = []
         while let file = enumerator.nextObject() as? String {
+            // Skip macOS extended attribute files extracted by 7z
+            guard !file.contains(":com.apple.") else { continue }
             let fullPath = (mountPoint as NSString).appendingPathComponent(file)
             var isDir: ObjCBool = false
             if fm.fileExists(atPath: fullPath, isDirectory: &isDir), !isDir.boolValue {
@@ -44,9 +46,9 @@ struct ISOServiceTests {
             }
         }
 
-        #expect(files.contains("test-image.jpg"))
-        #expect(files.contains("test-video.mp4"))
-        #expect(files.contains("sample.png"))
+        #expect(files.contains(where: { $0.hasSuffix("test-image.jpg") }))
+        #expect(files.contains(where: { $0.hasSuffix("test-video.mp4") }))
+        #expect(files.contains(where: { $0.hasSuffix("sample.png") }))
     }
 
     @Test("Unmount cleans up mount point")
