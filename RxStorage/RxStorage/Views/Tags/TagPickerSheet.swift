@@ -24,33 +24,17 @@ struct TagPickerSheet: View {
             } else if viewModel.isSearching {
                 ProgressView("Searching...")
             } else if viewModel.availableTags.isEmpty && !viewModel.searchText.isEmpty {
-                VStack(spacing: 16) {
-                    ContentUnavailableView(
-                        "No Matching Tags",
-                        systemImage: "tag",
-                        description: Text("No tags found matching your search")
-                    )
-                    Button {
-                        showingCreateSheet = true
-                    } label: {
-                        Label("Create \"\(viewModel.searchText)\"", systemImage: "plus.circle")
-                    }
-                    .buttonStyle(.borderedProminent)
-                }
+                ContentUnavailableView(
+                    "No Matching Tags",
+                    systemImage: "tag",
+                    description: Text("No tags found matching your search")
+                )
             } else if viewModel.availableTags.isEmpty {
-                VStack(spacing: 16) {
-                    ContentUnavailableView(
-                        "No Tags Available",
-                        systemImage: "tag",
-                        description: Text("Create a tag to get started")
-                    )
-                    Button {
-                        showingCreateSheet = true
-                    } label: {
-                        Label("Create New Tag", systemImage: "plus.circle")
-                    }
-                    .buttonStyle(.borderedProminent)
-                }
+                ContentUnavailableView(
+                    "No Tags Available",
+                    systemImage: "tag",
+                    description: Text("Create a tag from the Tags page first")
+                )
             } else {
                 tagList
             }
@@ -83,9 +67,8 @@ struct TagPickerSheet: View {
             }
             .sheet(isPresented: $showingCreateSheet) {
                 NavigationStack {
-                    TagFormSheet(initialTitle: viewModel.searchText) { tag in
-                        onSelect(tag)
-                        dismiss()
+                    TagFormSheet { _ in
+                        Task { await viewModel.loadTags() }
                     }
                 }
             }

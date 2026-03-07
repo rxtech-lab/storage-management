@@ -501,6 +501,9 @@ struct ItemDetailTagsCard: View {
     let onAddTag: () -> Void
     let onRemoveTag: (String) async -> Void
 
+    @State private var tagToRemove: TagRef?
+    @State private var showRemoveConfirmation = false
+
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             Label("Tags", systemImage: "tag")
@@ -548,6 +551,19 @@ struct ItemDetailTagsCard: View {
         }
         .background(Color.secondarySystemGroupedBackground)
         .clipShape(RoundedRectangle(cornerRadius: 12))
+        .confirmationDialog(
+            title: "Remove Tag",
+            message: "Are you sure you want to remove \"\(tagToRemove?.title ?? "this tag")\" from this item?",
+            confirmButtonTitle: "Remove",
+            isPresented: $showRemoveConfirmation,
+            onConfirm: {
+                if let tag = tagToRemove {
+                    Task { await onRemoveTag(tag.id) }
+                    tagToRemove = nil
+                }
+            },
+            onCancel: { tagToRemove = nil }
+        )
     }
 
     @ViewBuilder
@@ -560,7 +576,8 @@ struct ItemDetailTagsCard: View {
             SwipeableRow(
                 trailingActions: [
                     SwipeAction(title: "Remove", icon: "minus.circle", color: .red) {
-                        Task { await onRemoveTag(tag.id) }
+                        tagToRemove = tag
+                        showRemoveConfirmation = true
                     },
                 ]
             ) {
@@ -595,7 +612,8 @@ struct ItemDetailTagsCard: View {
         .contextMenu {
             if !isViewOnly {
                 Button(role: .destructive) {
-                    Task { await onRemoveTag(tag.id) }
+                    tagToRemove = tag
+                    showRemoveConfirmation = true
                 } label: {
                     Label("Remove Tag", systemImage: "minus.circle")
                 }

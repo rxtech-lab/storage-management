@@ -87,7 +87,13 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     }
 
     return NextResponse.json(
-      { id: tag.id, title: tag.title, color: tag.color },
+      {
+        id: `${id}_${tag.id}`,
+        itemId: id,
+        tagId: tag.id,
+        tag: { id: tag.id, title: tag.title, color: tag.color },
+        createdAt: new Date().toISOString(),
+      },
       { status: 201 }
     );
   } catch (error) {
