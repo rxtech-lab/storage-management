@@ -1,6 +1,8 @@
 import { test, expect } from "@playwright/test";
 
 test.describe.serial("Items API with Relations", () => {
+  const USER_ID = `relations-test-user-${crypto.randomUUID()}`;
+  const headers = { "X-Test-User-Id": USER_ID };
   let categoryId: string;
   let locationId: string;
   let authorId: string;
@@ -10,6 +12,7 @@ test.describe.serial("Items API with Relations", () => {
   test("Setup - create related entities", async ({ request }) => {
     // Create category
     const categoryResponse = await request.post("/api/v1/categories", {
+      headers,
       data: { name: "Electronics", description: "Electronic devices" },
     });
     const categoryBody = await categoryResponse.json();
@@ -17,6 +20,7 @@ test.describe.serial("Items API with Relations", () => {
 
     // Create location
     const locationResponse = await request.post("/api/v1/locations", {
+      headers,
       data: { title: "Warehouse A", latitude: 37.7749, longitude: -122.4194 },
     });
     const locationBody = await locationResponse.json();
@@ -24,6 +28,7 @@ test.describe.serial("Items API with Relations", () => {
 
     // Create author
     const authorResponse = await request.post("/api/v1/authors", {
+      headers,
       data: { name: "John Doe", bio: "Storage manager" },
     });
     const authorBody = await authorResponse.json();
@@ -34,6 +39,7 @@ test.describe.serial("Items API with Relations", () => {
     request,
   }) => {
     const response = await request.post("/api/v1/items", {
+      headers,
       data: {
         title: "Laptop with Relations",
         description: "A laptop with category, location, and author",
@@ -59,7 +65,7 @@ test.describe.serial("Items API with Relations", () => {
   test("GET /api/v1/items/{id} - should return item with relation details", async ({
     request,
   }) => {
-    const response = await request.get(`/api/v1/items/${parentItemId}`);
+    const response = await request.get(`/api/v1/items/${parentItemId}`, { headers });
 
     expect(response.status()).toBe(200);
     const body = await response.json();
@@ -78,6 +84,7 @@ test.describe.serial("Items API with Relations", () => {
   }) => {
     const response = await request.get(
       `/api/v1/items?categoryId=${categoryId}`,
+      { headers },
     );
 
     expect(response.status()).toBe(200);
@@ -93,6 +100,7 @@ test.describe.serial("Items API with Relations", () => {
   }) => {
     const response = await request.get(
       `/api/v1/items?locationId=${locationId}`,
+      { headers },
     );
 
     expect(response.status()).toBe(200);
@@ -106,7 +114,7 @@ test.describe.serial("Items API with Relations", () => {
   test("GET /api/v1/items?authorId={id} - should filter by author", async ({
     request,
   }) => {
-    const response = await request.get(`/api/v1/items?authorId=${authorId}`);
+    const response = await request.get(`/api/v1/items?authorId=${authorId}`, { headers });
 
     expect(response.status()).toBe(200);
     const body = await response.json();
@@ -118,6 +126,7 @@ test.describe.serial("Items API with Relations", () => {
     request,
   }) => {
     const response = await request.post("/api/v1/items", {
+      headers,
       data: {
         title: "Laptop Charger",
         description: "Charger for the laptop",
@@ -137,7 +146,7 @@ test.describe.serial("Items API with Relations", () => {
   test("GET /api/v1/items?visibility=public - should filter by visibility", async ({
     request,
   }) => {
-    const response = await request.get("/api/v1/items?visibility=publicAccess");
+    const response = await request.get("/api/v1/items?visibility=publicAccess", { headers });
 
     expect(response.status()).toBe(200);
     const body = await response.json();
@@ -149,12 +158,12 @@ test.describe.serial("Items API with Relations", () => {
 
   test("Cleanup - delete test data", async ({ request }) => {
     // Delete items
-    await request.delete(`/api/v1/items/${childItemId}`);
-    await request.delete(`/api/v1/items/${parentItemId}`);
+    await request.delete(`/api/v1/items/${childItemId}`, { headers });
+    await request.delete(`/api/v1/items/${parentItemId}`, { headers });
 
     // Delete relations
-    await request.delete(`/api/v1/categories/${categoryId}`);
-    await request.delete(`/api/v1/locations/${locationId}`);
-    await request.delete(`/api/v1/authors/${authorId}`);
+    await request.delete(`/api/v1/categories/${categoryId}`, { headers });
+    await request.delete(`/api/v1/locations/${locationId}`, { headers });
+    await request.delete(`/api/v1/authors/${authorId}`, { headers });
   });
 });
