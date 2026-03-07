@@ -193,7 +193,8 @@ enum TestHelpers {
         contents: [ContentRef] = [],
         positions: [PositionRef] = [],
         quantity: Int = 0,
-        stockHistory: [StockHistoryRef] = []
+        stockHistory: [StockHistoryRef] = [],
+        tags: [TagRef] = []
     ) -> StorageItemDetail {
         // Create default refs if not provided
         let categoryRef = category ?? CategoryRef(id: categoryId ?? "0", name: "Default Category")
@@ -225,7 +226,8 @@ enum TestHelpers {
             totalContents: contents.count,
             positions: positions,
             quantity: quantity,
-            stockHistory: stockHistory
+            stockHistory: stockHistory,
+            tags: tags
         )
     }
 

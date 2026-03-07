@@ -28,5 +28,6 @@ xcuserdata/
 .vercel
 cli/RxStorageCli/Sources/RxStorageCli/openapi.json
 test-assets
+!cli/RxStorageCli/Tests/RxStorageCliTests/test-assets/
 output
 cli/RxStorageCli/Sources/RxStorageCli/BuildConfig.swift

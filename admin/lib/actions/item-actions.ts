@@ -443,6 +443,16 @@ export async function updateItemAction(
   try {
     await ensureSchemaInitialized();
 
+    // Validate input data through schema (coerces date strings to Date objects)
+    const validationResult = itemUpdateSchema.safeParse(data);
+    if (!validationResult.success) {
+      const errors = validationResult.error.errors
+        .map((e) => `${e.path.join(".")}: ${e.message}`)
+        .join(", ");
+      return { success: false, error: `Validation failed: ${errors}` };
+    }
+    data = validationResult.data;
+
     // Get userId from session if not provided
     let resolvedUserId = userId;
     if (!resolvedUserId) {
