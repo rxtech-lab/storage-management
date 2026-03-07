@@ -133,6 +133,7 @@
 				Views/Items/ItemDetailPreview.swift,
 				Views/Items/ItemDetailView.swift,
 				Views/Items/ItemFilterSheet.swift,
+				Views/Items/TagFilterPickerSheet.swift,
 				Views/Items/ItemFormSheet.swift,
 				Views/Items/ItemListView.swift,
 				Views/Items/ItemRow.swift,

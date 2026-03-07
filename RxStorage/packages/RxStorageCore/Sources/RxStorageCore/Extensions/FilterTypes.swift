@@ -7,6 +7,31 @@
 
 import Foundation
 
+// MARK: - Comparison Operator
+
+/// Comparison operator for date filters
+public enum ComparisonOperator: String, Sendable, CaseIterable, Identifiable {
+    case gt
+    case gte
+    case lt
+    case lte
+    case eq
+
+    public var id: String {
+        rawValue
+    }
+
+    public var displayName: String {
+        switch self {
+        case .gt: "After"
+        case .gte: "On or After"
+        case .lt: "Before"
+        case .lte: "On or Before"
+        case .eq: "Exactly"
+        }
+    }
+}
+
 // MARK: - Item Filters
 
 /// Filters for item queries
@@ -21,6 +46,11 @@ public struct ItemFilters: Sendable {
     public var cursor: String?
     public var direction: PaginationDirection?
     public var limit: Int?
+    public var tagIds: [String]?
+    public var itemDateOp: ComparisonOperator?
+    public var itemDateValue: Date?
+    public var expiresAtOp: ComparisonOperator?
+    public var expiresAtValue: Date?
 
     public init(
         categoryId: String? = nil,
@@ -32,7 +62,12 @@ public struct ItemFilters: Sendable {
         sortBy: String? = nil,
         cursor: String? = nil,
         direction: PaginationDirection? = nil,
-        limit: Int? = nil
+        limit: Int? = nil,
+        tagIds: [String]? = nil,
+        itemDateOp: ComparisonOperator? = nil,
+        itemDateValue: Date? = nil,
+        expiresAtOp: ComparisonOperator? = nil,
+        expiresAtValue: Date? = nil
     ) {
         self.categoryId = categoryId
         self.locationId = locationId
@@ -44,6 +79,11 @@ public struct ItemFilters: Sendable {
         self.cursor = cursor
         self.direction = direction
         self.limit = limit
+        self.tagIds = tagIds
+        self.itemDateOp = itemDateOp
+        self.itemDateValue = itemDateValue
+        self.expiresAtOp = expiresAtOp
+        self.expiresAtValue = expiresAtValue
     }
 }
 

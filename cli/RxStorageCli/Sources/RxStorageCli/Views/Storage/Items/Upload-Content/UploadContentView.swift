@@ -4,9 +4,11 @@ import SwiftTUI
 
 struct UploadContentView: View, @unchecked Sendable {
     let itemId: String
+    let itemTitle: String
 
     @State var step: UploadStep = .enterPath
     @State var directoryPath = ""
+    @State var sourcePath = ""
     @State var extensions = ""
     @State var matchedFiles: [FileEntry] = []
     @State var videoUploadMode: VideoUploadMode = .imageOnly
@@ -19,7 +21,10 @@ struct UploadContentView: View, @unchecked Sendable {
     var body: some View {
         VStack(alignment: .leading) {
             Text("Upload Content Preview").bold()
-            Text("Item: \(itemId)")
+            Text("Item: \(itemTitle)")
+            if !sourcePath.isEmpty {
+                Text("Source: \((sourcePath as NSString).lastPathComponent)")
+            }
             Divider()
 
             switch step {
@@ -46,6 +51,7 @@ struct UploadContentView: View, @unchecked Sendable {
             Text("Enter directory or ISO path:")
             TextField(placeholder: "/path/to/content or /path/to/file.iso") { path in
                 let trimmed = path.trimmingCharacters(in: .whitespacesAndNewlines)
+                sourcePath = trimmed
                 if trimmed.lowercased().hasSuffix(".iso") {
                     if FileManager.default.fileExists(atPath: trimmed) {
                         if let mountPoint = ISOService.mount(isoPath: trimmed) {

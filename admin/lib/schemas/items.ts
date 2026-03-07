@@ -252,6 +252,9 @@ export const ItemDetailResponseSchema = z.object({
   tags: z.array(TagRefSchema).describe("Tags associated with this item"),
 });
 
+// Comparison operator for date filters
+const ComparisonOpSchema = z.enum(["gt", "gte", "lt", "lte", "eq"]);
+
 // Query params for items list
 export const ItemsQueryParams = PaginationQueryParams.extend({
   search: z.string().optional().describe("Search query for title/description"),
@@ -270,6 +273,24 @@ export const ItemsQueryParams = PaginationQueryParams.extend({
     .enum(["createdAt", "lastUsedAsParent"])
     .optional()
     .describe("Sort field (default: createdAt)"),
+  tagIds: z
+    .string()
+    .optional()
+    .describe("Comma-separated tag IDs to filter by (AND logic)"),
+  itemDateOp: ComparisonOpSchema.optional().describe(
+    "Comparison operator for item date filter"
+  ),
+  itemDateValue: z
+    .string()
+    .optional()
+    .describe("ISO date string for item date filter"),
+  expiresAtOp: ComparisonOpSchema.optional().describe(
+    "Comparison operator for deadline filter"
+  ),
+  expiresAtValue: z
+    .string()
+    .optional()
+    .describe("ISO date string for deadline filter"),
 });
 
 // Paginated items response
