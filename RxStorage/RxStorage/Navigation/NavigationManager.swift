@@ -100,6 +100,14 @@ final class NavigationManager {
     var deepLinkError: Error?
     var showDeepLinkError = false
 
+    // MARK: - Sidebar Badge Counts
+
+    var itemsCount: Int = 0
+    var categoriesCount: Int = 0
+    var locationsCount: Int = 0
+    var authorsCount: Int = 0
+    var positionSchemasCount: Int = 0
+
     // MARK: - Column Visibility (iPad)
 
     var columnVisibility: NavigationSplitViewVisibility = .automatic
@@ -108,6 +116,23 @@ final class NavigationManager {
 
     private let itemService = ItemService()
     private let qrCodeService = QrCodeService()
+    private let dashboardService = DashboardService()
+
+    // MARK: - Sidebar Badge Counts (Initial Load)
+
+    /// Load initial counts from dashboard stats API
+    func loadInitialCounts() async {
+        do {
+            let stats = try await dashboardService.fetchStats()
+            itemsCount = stats.totalItems
+            categoriesCount = stats.totalCategories
+            locationsCount = stats.totalLocations
+            authorsCount = stats.totalAuthors
+            positionSchemasCount = stats.totalPositionSchemas
+        } catch {
+            // Silently fail - counts will update when list views load
+        }
+    }
 
     // MARK: - Navigation Methods
 

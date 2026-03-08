@@ -18,6 +18,7 @@ struct AuthorListView: View {
     @State private var isRefreshing = false
     @State private var errorViewModel = ErrorViewModel()
     @Environment(EventViewModel.self) private var eventViewModel
+    @Environment(NavigationManager.self) private var navigationManager
 
     // Delete confirmation state
     @State private var authorToDelete: Author?
@@ -114,6 +115,9 @@ struct AuthorListView: View {
             }
         }
         .showViewModelError(errorViewModel)
+        .onChange(of: viewModel.totalCount) { _, newCount in
+            navigationManager.authorsCount = newCount
+        }
     }
 
     // MARK: - Authors List

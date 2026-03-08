@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { DashboardStatsResponseSchema, DashboardRecentItemSchema } from '../../lib/schemas/dashboard';
+import { DashboardStatsResponseSchema, DashboardRecentItemSchema, DashboardChartsResponseSchema } from '../../lib/schemas/dashboard';
 import { z } from 'zod';
 
 /**
@@ -249,5 +249,52 @@ test.describe('Dashboard API', () => {
         expect(current.getTime()).toBeGreaterThanOrEqual(next.getTime());
       }
     }
+  });
+});
+
+test.describe('Dashboard Charts API', () => {
+  test('GET /api/v1/dashboard/charts - should return valid chart data', async ({ request }) => {
+    const response = await request.get('/api/v1/dashboard/charts');
+
+    expect(response.status()).toBe(200);
+    const body = await response.json();
+
+    // Validate response against Zod schema
+    const result = DashboardChartsResponseSchema.safeParse(body);
+    if (!result.success) {
+      console.error('Validation errors:', result.error.format());
+    }
+    expect(result.success).toBe(true);
+  });
+
+  test('GET /api/v1/dashboard/charts - should have all expected fields as arrays', async ({ request }) => {
+    const response = await request.get('/api/v1/dashboard/charts');
+
+    expect(response.status()).toBe(200);
+    const body = await response.json();
+
+    expect(body.itemsByLocation).toBeInstanceOf(Array);
+    expect(body.itemsByTag).toBeInstanceOf(Array);
+    expect(body.itemsByMonth).toBeInstanceOf(Array);
+    expect(body.itemsByCategory).toBeInstanceOf(Array);
+    expect(body.itemsByVisibility).toBeInstanceOf(Array);
+    expect(body.itemsByAuthor).toBeInstanceOf(Array);
+  });
+
+  test('GET /api/v1/dashboard/charts - fresh user with no items returns empty arrays', async ({ request }) => {
+    const freshUser = `charts-fresh-user-${crypto.randomUUID()}`;
+    const response = await request.get('/api/v1/dashboard/charts', {
+      headers: { 'X-Test-User-Id': freshUser },
+    });
+
+    expect(response.status()).toBe(200);
+    const body = await response.json();
+
+    expect(body.itemsByLocation).toHaveLength(0);
+    expect(body.itemsByTag).toHaveLength(0);
+    expect(body.itemsByMonth).toHaveLength(0);
+    expect(body.itemsByCategory).toHaveLength(0);
+    expect(body.itemsByVisibility).toHaveLength(0);
+    expect(body.itemsByAuthor).toHaveLength(0);
   });
 });

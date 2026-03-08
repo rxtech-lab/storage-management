@@ -2,29 +2,46 @@
 //  TagFormSheet.swift
 //  RxStorage
 //
-//  Form sheet for creating new tags
+//  Form sheet for creating and editing tags
 //
 
 import RxStorageCore
 import SwiftUI
 
-/// Form sheet for creating a new tag with title and color picker
+/// Form sheet for creating or editing a tag with title and color picker
 struct TagFormSheet: View {
-    let initialTitle: String
-    let onCreated: (Tag) -> Void
+    let editingTag: Tag?
+    let onCreated: ((Tag) -> Void)?
+    let onUpdated: ((Tag) -> Void)?
 
     @State private var title: String
-    @State private var color: Color = .blue
+    @State private var color: Color
     @State private var isSaving = false
     @State private var errorMessage: String?
     @Environment(\.dismiss) private var dismiss
 
     private let tagService = TagService()
 
+    private var isEditing: Bool {
+        editingTag != nil
+    }
+
+    /// Create mode initializer
     init(initialTitle: String = "", onCreated: @escaping (Tag) -> Void) {
-        self.initialTitle = initialTitle
+        editingTag = nil
         self.onCreated = onCreated
+        onUpdated = nil
         _title = State(initialValue: initialTitle)
+        _color = State(initialValue: .blue)
+    }
+
+    /// Edit mode initializer
+    init(tag: Tag, onUpdated: @escaping (Tag) -> Void) {
+        editingTag = tag
+        onCreated = nil
+        self.onUpdated = onUpdated
+        _title = State(initialValue: tag.title)
+        _color = State(initialValue: Color(hex: tag.color) ?? .blue)
     }
 
     var body: some View {
@@ -58,7 +75,7 @@ struct TagFormSheet: View {
                 }
             }
         }
-        .navigationTitle("New Tag")
+        .navigationTitle(isEditing ? "Edit Tag" : "New Tag")
         #if os(iOS)
             .navigationBarTitleDisplayMode(.inline)
         #endif
@@ -69,24 +86,31 @@ struct TagFormSheet: View {
                     }
                 }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Create") {
-                        Task { await createTag() }
+                    Button(isEditing ? "Save" : "Create") {
+                        Task { await saveTag() }
                     }
                     .disabled(title.trimmingCharacters(in: .whitespaces).isEmpty || isSaving)
                 }
             }
     }
 
-    private func createTag() async {
+    private func saveTag() async {
         isSaving = true
         errorMessage = nil
 
         let hexColor = color.toHex()
-        let request = NewTagRequest(title: title.trimmingCharacters(in: .whitespaces), color: hexColor)
+        let trimmedTitle = title.trimmingCharacters(in: .whitespaces)
 
         do {
-            let tag = try await tagService.createTag(request)
-            onCreated(tag)
+            if let editingTag {
+                let request = UpdateTagRequest(title: trimmedTitle, color: hexColor)
+                let updated = try await tagService.updateTag(id: editingTag.id, request)
+                onUpdated?(updated)
+            } else {
+                let request = NewTagRequest(title: trimmedTitle, color: hexColor)
+                let created = try await tagService.createTag(request)
+                onCreated?(created)
+            }
             dismiss()
         } catch {
             errorMessage = error.localizedDescription
@@ -110,9 +134,19 @@ struct TagFormSheet: View {
     }
 }
 
-// MARK: - Color to Hex Extension
+// MARK: - Color Extensions
 
 private extension Color {
+    init?(hex: String) {
+        let hex = hex.replacingOccurrences(of: "#", with: "")
+        guard hex.count == 6,
+              let r = UInt8(hex.prefix(2), radix: 16),
+              let g = UInt8(hex.dropFirst(2).prefix(2), radix: 16),
+              let b = UInt8(hex.dropFirst(4).prefix(2), radix: 16)
+        else { return nil }
+        self.init(red: Double(r) / 255.0, green: Double(g) / 255.0, blue: Double(b) / 255.0)
+    }
+
     func toHex() -> String {
         #if os(iOS)
             let uiColor = UIColor(self)

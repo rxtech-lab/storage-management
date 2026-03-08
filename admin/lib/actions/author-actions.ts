@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { eq, like, or, and, asc, desc, gt, lt } from "drizzle-orm";
+import { eq, like, or, and, asc, desc, gt, lt, count } from "drizzle-orm";
 import { db, authors, type Author, type NewAuthor } from "@/lib/db";
 import { ensureSchemaInitialized } from "@/lib/db/client";
 import { getSession } from "@/lib/auth-helper";
@@ -255,6 +255,7 @@ export async function getAuthorsPaginated(
         prevCursor: null,
         hasNextPage: false,
         hasPrevPage: false,
+        totalCount: 0,
       },
     };
   }
@@ -274,6 +275,9 @@ export async function getAuthorsPaginated(
       conditions.push(searchCondition);
     }
   }
+
+  // Capture base conditions before cursor conditions are added
+  const baseConditions = [...conditions];
 
   // Add cursor conditions for pagination
   // Authors are sorted by name ASC, id ASC
@@ -310,13 +314,18 @@ export async function getAuthorsPaginated(
 
   query = query.limit(limit + 1);
 
-  const results = await query;
+  const [results, countResult] = await Promise.all([
+    query,
+    db.select({ count: count() }).from(authors).where(and(...baseConditions)),
+  ]);
+  const totalCount = countResult[0]?.count ?? 0;
 
   return buildPaginatedResponse(
     results,
     limit,
     direction,
     (item) => item.name,
-    !!cursor
+    !!cursor,
+    totalCount
   );
 }

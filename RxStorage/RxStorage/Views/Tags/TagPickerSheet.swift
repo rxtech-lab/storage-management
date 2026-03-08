@@ -16,9 +16,14 @@ struct TagPickerSheet: View {
 
     @State private var viewModel = TagPickerViewModel()
     @State private var showingCreateSheet = false
+    @State private var editingTag: Tag?
+    @State private var tagToDelete: Tag?
+    @State private var showDeleteConfirmation = false
     @State private var selectedTagIds: Set<String> = []
     @State private var isUpdating = false
     @Environment(\.dismiss) private var dismiss
+
+    private let tagService = TagService()
 
     var body: some View {
         ZStack {
@@ -80,6 +85,31 @@ struct TagPickerSheet: View {
                     }
                 }
             }
+            .sheet(item: $editingTag) { tag in
+                NavigationStack {
+                    TagFormSheet(tag: tag) { _ in
+                        Task { await viewModel.loadTags() }
+                    }
+                }
+            }
+            .confirmationDialog(
+                title: "Delete Tag",
+                message: "Are you sure you want to delete \"\(tagToDelete?.title ?? "")\"? This will remove it from all items.",
+                confirmButtonTitle: "Delete",
+                isPresented: $showDeleteConfirmation,
+                onConfirm: {
+                    guard let tag = tagToDelete else { return }
+                    Task {
+                        isUpdating = true
+                        defer { isUpdating = false }
+                        do {
+                            try await tagService.deleteTag(id: tag.id)
+                            await viewModel.loadTags()
+                        } catch {}
+                    }
+                },
+                onCancel: { tagToDelete = nil }
+            )
     }
 
     private func isTagAdded(_ tag: Tag) -> Bool {
@@ -123,6 +153,21 @@ struct TagPickerSheet: View {
                                 .font(.title3)
                         }
                     }
+                }
+                .swipeActions(edge: .trailing) {
+                    Button(role: .destructive) {
+                        tagToDelete = tag
+                        showDeleteConfirmation = true
+                    } label: {
+                        Label("Delete", systemImage: "trash")
+                    }
+
+                    Button {
+                        editingTag = tag
+                    } label: {
+                        Label("Edit", systemImage: "pencil")
+                    }
+                    .tint(.orange)
                 }
                 .disabled(isUpdating)
                 .onAppear {

@@ -857,6 +857,7 @@ export async function getItemsPaginated(
         prevCursor: null,
         hasNextPage: false,
         hasPrevPage: false,
+        totalCount: 0,
       },
     };
   }
@@ -926,6 +927,7 @@ export async function getItemsPaginated(
           prevCursor: null,
           hasNextPage: false,
           hasPrevPage: false,
+          totalCount: 0,
         },
       };
     }
@@ -933,6 +935,9 @@ export async function getItemsPaginated(
   }
 
   const sortByLastUsed = filters?.sortBy === "lastUsedAsParent";
+
+  // Capture base conditions length before cursor conditions are added (for count query)
+  const baseConditionsLength = conditions.length;
 
   // Add cursor conditions for pagination
   if (cursor) {
@@ -1069,7 +1074,14 @@ export async function getItemsPaginated(
   // Fetch one extra to determine if there are more items
   query = query.limit(limit + 1);
 
-  const results = await query;
+  // Run data query and count query in parallel
+  // Count query uses only base conditions (without cursor pagination conditions)
+  const baseConditions = conditions.slice(0, baseConditionsLength);
+  const [results, countResult] = await Promise.all([
+    query,
+    db.select({ count: count() }).from(items).where(and(...baseConditions)),
+  ]);
+  const totalCount = countResult[0]?.count ?? 0;
 
   // Map results to proper format
   const mappedResults = results.map((row) => ({
@@ -1089,5 +1101,6 @@ export async function getItemsPaginated(
         ? (item.lastUsedAsParent?.toISOString() ?? "")
         : item.createdAt.toISOString(),
     !!cursor,
+    totalCount,
   );
 }

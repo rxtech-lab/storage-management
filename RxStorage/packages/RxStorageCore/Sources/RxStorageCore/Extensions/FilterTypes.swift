@@ -208,17 +208,20 @@ public struct PaginationState: Sendable {
     public let hasPrevPage: Bool
     public let nextCursor: String?
     public let prevCursor: String?
+    public let totalCount: Int
 
     public init(
         hasNextPage: Bool,
         hasPrevPage: Bool,
         nextCursor: String?,
-        prevCursor: String?
+        prevCursor: String?,
+        totalCount: Int = 0
     ) {
         self.hasNextPage = hasNextPage
         self.hasPrevPage = hasPrevPage
         self.nextCursor = nextCursor
         self.prevCursor = prevCursor
+        self.totalCount = totalCount
     }
 
     /// Create from generated PaginationInfo
@@ -227,5 +230,6 @@ public struct PaginationState: Sendable {
         hasPrevPage = info.hasPrevPage
         nextCursor = info.nextCursor
         prevCursor = info.prevCursor
+        totalCount = info.totalCount
     }
 }

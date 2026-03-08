@@ -27,6 +27,7 @@ public final class ItemListViewModel: ItemListViewModelProtocol {
 
     public private(set) var isLoadingMore = false
     public private(set) var hasNextPage = true
+    public private(set) var totalCount: Int = 0
     private var nextCursor: String?
 
     // MARK: - Combine
@@ -119,6 +120,7 @@ public final class ItemListViewModel: ItemListViewModelProtocol {
             items = response.data
             nextCursor = response.pagination.nextCursor
             hasNextPage = response.pagination.hasNextPage
+            totalCount = response.pagination.totalCount
             isSearching = false
         } catch is CancellationError {
             isSearching = false
@@ -159,6 +161,7 @@ public final class ItemListViewModel: ItemListViewModelProtocol {
             items = response.data
             nextCursor = response.pagination.nextCursor
             hasNextPage = response.pagination.hasNextPage
+            totalCount = response.pagination.totalCount
             isLoading = false
         } catch is CancellationError {
             // Task was cancelled (e.g., view dismissed) - ignore silently
@@ -201,6 +204,7 @@ public final class ItemListViewModel: ItemListViewModelProtocol {
 
             nextCursor = response.pagination.nextCursor
             hasNextPage = response.pagination.hasNextPage
+            totalCount = response.pagination.totalCount
             isLoadingMore = false
         } catch is CancellationError {
             isLoadingMore = false

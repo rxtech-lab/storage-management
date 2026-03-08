@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-**You don't have access to cd cmd, please write a script in the root and run it when command needs cd**
+**You don't have access to cd cmd, please write a script in the root and run it when command needs cd. Find the script in scripts folder first before writing new script**
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 

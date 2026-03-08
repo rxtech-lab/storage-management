@@ -18,6 +18,7 @@ struct CategoryListView: View {
     @State private var isRefreshing = false
     @State private var errorViewModel = ErrorViewModel()
     @Environment(EventViewModel.self) private var eventViewModel
+    @Environment(NavigationManager.self) private var navigationManager
 
     // Delete confirmation state
     @State private var categoryToDelete: RxStorageCore.Category?
@@ -114,6 +115,9 @@ struct CategoryListView: View {
             }
         }
         .showViewModelError(errorViewModel)
+        .onChange(of: viewModel.totalCount) { _, newCount in
+            navigationManager.categoriesCount = newCount
+        }
     }
 
     // MARK: - Categories List

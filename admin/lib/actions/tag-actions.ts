@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { eq, like, or, and, asc, desc, gt, lt } from "drizzle-orm";
+import { eq, like, or, and, asc, desc, gt, lt, count } from "drizzle-orm";
 import { db, tags, itemTags, type Tag, type NewTag } from "@/lib/db";
 import { ensureSchemaInitialized } from "@/lib/db/client";
 import { getSession } from "@/lib/auth-helper";
@@ -214,6 +214,7 @@ export async function getTagsPaginated(
         prevCursor: null,
         hasNextPage: false,
         hasPrevPage: false,
+        totalCount: 0,
       },
     };
   }
@@ -227,6 +228,9 @@ export async function getTagsPaginated(
   if (filters?.search) {
     conditions.push(like(tags.title, `%${filters.search}%`));
   }
+
+  // Capture base conditions before cursor conditions are added
+  const baseConditions = [...conditions];
 
   if (cursor) {
     const cursorTitle = String(cursor.sortValue);
@@ -261,14 +265,19 @@ export async function getTagsPaginated(
 
   query = query.limit(limit + 1);
 
-  const results = await query;
+  const [results, countResult] = await Promise.all([
+    query,
+    db.select({ count: count() }).from(tags).where(and(...baseConditions)),
+  ]);
+  const totalCount = countResult[0]?.count ?? 0;
 
   return buildPaginatedResponse(
     results,
     limit,
     direction,
     (item) => item.title,
-    !!cursor
+    !!cursor,
+    totalCount
   );
 }
 

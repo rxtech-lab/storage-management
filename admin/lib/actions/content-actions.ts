@@ -64,6 +64,9 @@ export async function getItemContentsPaginated(
     conditions.push(searchCondition as ReturnType<typeof eq>);
   }
 
+  // Capture base conditions before cursor conditions are added
+  const baseConditions = [...conditions];
+
   // Cursor-based pagination (sorted by createdAt ASC, id ASC)
   if (cursor) {
     const cursorDate = new Date(cursor.sortValue);
@@ -86,12 +89,16 @@ export async function getItemContentsPaginated(
 
   const orderDir = direction === "next" ? asc : desc;
 
-  const data = await db
-    .select()
-    .from(contents)
-    .where(and(...conditions))
-    .orderBy(orderDir(contents.createdAt), orderDir(contents.id))
-    .limit(limit + 1);
+  const [data, countResult] = await Promise.all([
+    db
+      .select()
+      .from(contents)
+      .where(and(...conditions))
+      .orderBy(orderDir(contents.createdAt), orderDir(contents.id))
+      .limit(limit + 1),
+    db.select({ count: drizzleCount() }).from(contents).where(and(...baseConditions)),
+  ]);
+  const totalCount = countResult[0]?.count ?? 0;
 
   return buildPaginatedResponse(
     data,
@@ -99,6 +106,7 @@ export async function getItemContentsPaginated(
     direction,
     (item) => item.createdAt.toISOString(),
     !!cursor,
+    totalCount,
   );
 }
 

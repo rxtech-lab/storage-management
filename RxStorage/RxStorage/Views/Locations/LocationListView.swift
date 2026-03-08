@@ -18,6 +18,7 @@ struct LocationListView: View {
     @State private var isRefreshing = false
     @State private var errorViewModel = ErrorViewModel()
     @Environment(EventViewModel.self) private var eventViewModel
+    @Environment(NavigationManager.self) private var navigationManager
 
     // Delete confirmation state
     @State private var locationToDelete: Location?
@@ -114,6 +115,9 @@ struct LocationListView: View {
             }
         }
         .showViewModelError(errorViewModel)
+        .onChange(of: viewModel.totalCount) { _, newCount in
+            navigationManager.locationsCount = newCount
+        }
     }
 
     // MARK: - Locations List

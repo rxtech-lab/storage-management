@@ -31,6 +31,8 @@ export interface PaginationInfo {
   hasNextPage: boolean;
   /** Whether there are items before the current page */
   hasPrevPage: boolean;
+  /** Total number of items matching the current filters */
+  totalCount: number;
 }
 
 export interface PaginatedResult<T> {
@@ -86,7 +88,8 @@ export function buildPaginatedResponse<T extends { id: string }>(
   limit: number,
   direction: "next" | "prev",
   getSortValue: (item: T) => string | number,
-  hasCursor: boolean
+  hasCursor: boolean,
+  totalCount: number = 0
 ): PaginatedResult<T> {
   // Check if we have more items than requested
   const hasMore = data.length > limit;
@@ -143,6 +146,7 @@ export function buildPaginatedResponse<T extends { id: string }>(
       prevCursor,
       hasNextPage,
       hasPrevPage,
+      totalCount,
     },
   };
 }

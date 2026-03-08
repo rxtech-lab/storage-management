@@ -7,8 +7,12 @@
   },
   "servers": [
     {
-      "url": "http://localhost:3000",
-      "description": "Current server"
+      "url": "http://localhost:3000/api",
+      "description": "Development server"
+    },
+    {
+      "url": "https://storage.rxlab.app/api",
+      "description": "Production server"
     }
   ],
   "components": {
@@ -418,6 +422,61 @@
           }
         }
       },
+      "DashboardChartsResponseSchema": {
+        "type": "object",
+        "properties": {
+          "itemsByLocation": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DashboardChartDataPointSchema"
+            },
+            "description": "Top 5 locations by item count"
+          },
+          "itemsByTag": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DashboardChartDataPointSchema"
+            },
+            "description": "Top 5 tags by item count"
+          },
+          "itemsByMonth": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DashboardChartDataPointSchema"
+            },
+            "description": "Items grouped by month (most recent 5)"
+          },
+          "itemsByCategory": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DashboardChartDataPointSchema"
+            },
+            "description": "Top 5 categories by item count"
+          },
+          "itemsByVisibility": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DashboardChartDataPointSchema"
+            },
+            "description": "Items grouped by visibility"
+          },
+          "itemsByAuthor": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DashboardChartDataPointSchema"
+            },
+            "description": "Top 5 authors by item count"
+          }
+        },
+        "required": [
+          "itemsByLocation",
+          "itemsByTag",
+          "itemsByMonth",
+          "itemsByCategory",
+          "itemsByVisibility",
+          "itemsByAuthor"
+        ]
+      },
       "DashboardStatsResponseSchema": {
         "type": "object",
         "properties": {
@@ -445,6 +504,10 @@
             "type": "integer",
             "description": "Total number of authors"
           },
+          "totalPositionSchemas": {
+            "type": "integer",
+            "description": "Total number of position schemas"
+          },
           "recentItems": {
             "type": "array",
             "items": {
@@ -460,6 +523,7 @@
           "totalCategories",
           "totalLocations",
           "totalAuthors",
+          "totalPositionSchemas",
           "recentItems"
         ]
       },
@@ -2119,11 +2183,16 @@
           "hasPrevPage": {
             "type": "boolean",
             "description": "Whether items exist before current page"
+          },
+          "totalCount": {
+            "type": "integer",
+            "description": "Total number of items matching the current filters"
           }
         },
         "required": [
           "hasNextPage",
-          "hasPrevPage"
+          "hasPrevPage",
+          "totalCount"
         ]
       },
       "ErrorResponse": {
@@ -2572,6 +2641,28 @@
           "title",
           "visibility",
           "updatedAt"
+        ]
+      },
+      "DashboardChartDataPointSchema": {
+        "type": "object",
+        "properties": {
+          "label": {
+            "type": "string",
+            "description": "Label for the data point"
+          },
+          "value": {
+            "type": "integer",
+            "description": "Count value"
+          },
+          "color": {
+            "type": "string",
+            "nullable": true,
+            "description": "Optional color (e.g. for tags)"
+          }
+        },
+        "required": [
+          "label",
+          "value"
         ]
       },
       "PositionSelectSchema": {
@@ -3927,6 +4018,49 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ContentSchemasResponseSchema"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/400"
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404"
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        }
+      }
+    },
+    "/v1/dashboard/charts": {
+      "get": {
+        "operationId": "getDashboardCharts",
+        "summary": "Get dashboard chart data",
+        "description": "Returns aggregated chart data for items by location, tag, month, category, and visibility",
+        "tags": [
+          "Dashboard"
+        ],
+        "parameters": [],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardChartsResponseSchema"
                 }
               }
             }
