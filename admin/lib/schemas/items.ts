@@ -238,7 +238,11 @@ export const ItemDetailResponseSchema = z.object({
   category: CategoryRefSchema.nullable().describe("Associated category"),
   location: LocationRefSchema.nullable().describe("Associated location"),
   author: AuthorRefSchema.nullable().describe("Associated author"),
-  children: z.array(ItemResponseSchema).describe("Child items"),
+  children: z.array(ItemResponseSchema).describe("Child items (limited to first 10)"),
+  totalChildren: z
+    .number()
+    .int()
+    .describe("Total number of child items"),
   contents: z
     .array(ContentRefSchema)
     .describe("Associated content attachments (limited to first 10)"),

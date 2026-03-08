@@ -34,6 +34,7 @@ struct ItemDetailView: View {
     @State private var isAddingChild = false
     @State private var showingContentSheet = false
     @State private var showingContentListSheet = false
+    @State private var showingChildrenListSheet = false
     @State private var selectedImageIndex = 0
     @State private var selectedChildForEdit: StorageItem?
     @State private var selectedChildForDetail: StorageItem?
@@ -215,6 +216,12 @@ struct ItemDetailView: View {
                     isViewOnly: isViewOnly
                 )
             }
+            .sheet(isPresented: $showingChildrenListSheet) {
+                ChildrenListSheet(
+                    parentId: itemId,
+                    isViewOnly: isViewOnly
+                )
+            }
             .showViewModelError(errorViewModel)
     }
 
@@ -252,7 +259,9 @@ struct ItemDetailView: View {
                     )
                     ItemDetailChildrenCard(
                         children: viewModel.children,
+                        totalChildren: viewModel.totalChildren,
                         isViewOnly: isViewOnly,
+                        onSeeAll: { showingChildrenListSheet = true },
                         onAddChild: { showingAddChildSheet = true },
                         onEditChild: { selectedChildForEdit = $0 },
                         onRemoveChild: { await removeChild($0) },

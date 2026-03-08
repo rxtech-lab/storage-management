@@ -482,6 +482,7 @@ import SwiftUI
             ),
             author: nil,
             children: [],
+            totalChildren: 0,
             contents: [],
             totalContents: 0,
             positions: [],

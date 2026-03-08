@@ -34,6 +34,10 @@ struct ItemFormSheet: View {
     @State private var showingCamera = false
     @State private var showingPhotoPicker = false
 
+    // Error alert
+    @State private var showingErrorAlert = false
+    @State private var errorMessage = ""
+
     // Selected entities from pickers (for display names)
     @State private var selectedCategory: RxStorageCore.Category?
     @State private var selectedLocation: RxStorageCore.Location?
@@ -171,6 +175,12 @@ struct ItemFormSheet: View {
                 .accessibilityIdentifier("camera-picker-view")
             }
         #endif
+            .interactiveDismissDisabled(true)
+            .alert("Error", isPresented: $showingErrorAlert) {
+                Button("OK", role: .cancel) {}
+            } message: {
+                Text(errorMessage)
+            }
             .task {
                 await viewModel.loadReferenceData()
             }
@@ -631,7 +641,8 @@ struct ItemFormSheet: View {
             }
             dismiss()
         } catch {
-            // Error is already tracked in viewModel.error
+            errorMessage = error.localizedDescription
+            showingErrorAlert = true
         }
     }
 
