@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth-helper";
 import { getLocation, updateLocationAction, deleteLocationAction } from "@/lib/actions/location-actions";
+import { getItemsPaginated } from "@/lib/actions/item-actions";
+import { signImagesArrayWithIds } from "@/lib/actions/s3-upload-actions";
+import { LocationDetailResponseSchema } from "@/lib/schemas/locations";
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -9,9 +12,9 @@ interface RouteParams {
 /**
  * Get location by ID
  * @operationId getLocation
- * @description Retrieve a single location by its ID
+ * @description Retrieve a single location by its ID, including related items
  * @pathParams IdPathParams
- * @response LocationResponseSchema
+ * @response LocationDetailResponseSchema
  * @auth bearer
  * @tag Locations
  * @responseSet auth
@@ -35,7 +38,34 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     return NextResponse.json({ error: "Permission denied" }, { status: 403 });
   }
 
-  return NextResponse.json(location);
+  // Fetch related items (limited to 10)
+  const itemsResult = await getItemsPaginated(session.user.id, {
+    locationId: id,
+    limit: 10,
+  });
+
+  // Sign images for each item
+  const itemsWithSignedImages = await Promise.all(
+    itemsResult.data.map(async (item) => {
+      const images =
+        item.images && item.images.length > 0
+          ? await signImagesArrayWithIds(item.images)
+          : [];
+      return {
+        ...item,
+        images,
+        previewUrl: `${process.env.NEXT_PUBLIC_URL}/preview/item?id=${item.id}`,
+      };
+    })
+  );
+
+  const response = LocationDetailResponseSchema.parse({
+    ...location,
+    items: itemsWithSignedImages,
+    totalItems: itemsResult.pagination.totalCount,
+  });
+
+  return NextResponse.json(response);
 }
 
 /**

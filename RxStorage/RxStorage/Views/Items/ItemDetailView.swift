@@ -276,6 +276,16 @@ struct ItemDetailView: View {
         }
         .ignoresSafeArea(edges: item.images.isEmpty ? [] : .top)
         .background(Color.systemGroupedBackground)
+        .navigationDestination(for: EntityNavigation.self) { nav in
+            switch nav {
+            case let .category(id):
+                CategoryDetailView(categoryId: id)
+            case let .location(id):
+                LocationDetailView(locationId: id)
+            case let .author(id):
+                AuthorDetailView(authorId: id)
+            }
+        }
         .overlay {
             if isRefreshing {
                 LoadingOverlay(title: "Refreshing...")

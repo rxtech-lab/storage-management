@@ -14,6 +14,7 @@ struct CategoryDetailView: View {
 
     @Environment(CategoryDetailViewModel.self) private var viewModel
     @State private var showingEditSheet = false
+    @State private var showingItemsSheet = false
 
     var body: some View {
         Group {
@@ -21,16 +22,27 @@ struct CategoryDetailView: View {
                 ProgressView("Loading...")
             } else if let category = viewModel.category {
                 ScrollView {
-                    VStack(alignment: .leading, spacing: 20) {
+                    VStack(alignment: .leading, spacing: 16) {
                         // Header
                         categoryHeader(category)
-
-                        Divider()
+                            .cardStyle()
 
                         // Details
                         categoryDetails(category)
+                            .cardStyle()
+
+                        // Items
+                        EntityItemsCard(
+                            items: viewModel.items,
+                            totalItems: viewModel.totalItems,
+                            onSeeAll: { showingItemsSheet = true }
+                        )
                     }
                     .padding()
+                }
+                .background(Color.systemGroupedBackground)
+                .navigationDestination(for: StorageItem.self) { item in
+                    ItemDetailView(itemId: item.id)
                 }
             } else if let error = viewModel.error {
                 ContentUnavailableView(
@@ -61,6 +73,9 @@ struct CategoryDetailView: View {
                         CategoryFormSheet(category: category)
                     }
                 }
+            }
+            .sheet(isPresented: $showingItemsSheet) {
+                EntityItemsListSheet(filter: .category(id: categoryId))
             }
             .task(id: categoryId) {
                 await viewModel.fetchCategory(id: categoryId)

@@ -14,6 +14,7 @@ struct AuthorDetailView: View {
 
     @Environment(AuthorDetailViewModel.self) private var viewModel
     @State private var showingEditSheet = false
+    @State private var showingItemsSheet = false
 
     var body: some View {
         Group {
@@ -21,16 +22,27 @@ struct AuthorDetailView: View {
                 ProgressView("Loading...")
             } else if let author = viewModel.author {
                 ScrollView {
-                    VStack(alignment: .leading, spacing: 20) {
+                    VStack(alignment: .leading, spacing: 16) {
                         // Header
                         authorHeader(author)
-
-                        Divider()
+                            .cardStyle()
 
                         // Details
                         authorDetails(author)
+                            .cardStyle()
+
+                        // Items
+                        EntityItemsCard(
+                            items: viewModel.items,
+                            totalItems: viewModel.totalItems,
+                            onSeeAll: { showingItemsSheet = true }
+                        )
                     }
                     .padding()
+                }
+                .background(Color.systemGroupedBackground)
+                .navigationDestination(for: StorageItem.self) { item in
+                    ItemDetailView(itemId: item.id)
                 }
             } else if let error = viewModel.error {
                 ContentUnavailableView(
@@ -61,6 +73,9 @@ struct AuthorDetailView: View {
                         AuthorFormSheet(author: author)
                     }
                 }
+            }
+            .sheet(isPresented: $showingItemsSheet) {
+                EntityItemsListSheet(filter: .author(id: authorId))
             }
             .task(id: authorId) {
                 await viewModel.fetchAuthor(id: authorId)

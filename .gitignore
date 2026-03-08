@@ -33,3 +33,4 @@ output
 cli/RxStorageCli/Sources/RxStorageCli/BuildConfig.swift
 *.o
 *.o
+cli/RxStorageCli/Sources/RxStorageCli/openapi.json

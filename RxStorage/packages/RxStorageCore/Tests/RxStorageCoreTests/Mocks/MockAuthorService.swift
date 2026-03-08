@@ -16,6 +16,7 @@ public final class MockAuthorService: AuthorServiceProtocol {
     public var fetchAuthorsResult: Result<[Author], Error> = .success([])
     public var fetchAuthorsPaginatedResult: Result<PaginatedResponse<Author>, Error>?
     public var fetchAuthorResult: Result<Author, Error>?
+    public var fetchAuthorDetailResult: Result<AuthorDetail, Error>?
     public var createAuthorResult: Result<Author, Error>?
     public var updateAuthorResult: Result<Author, Error>?
     public var deleteAuthorResult: Result<Void, Error>?
@@ -24,6 +25,7 @@ public final class MockAuthorService: AuthorServiceProtocol {
     public var fetchAuthorsCalled = false
     public var fetchAuthorsPaginatedCalled = false
     public var fetchAuthorCalled = false
+    public var fetchAuthorDetailCalled = false
     public var lastFetchAuthorId: String?
     public var createAuthorCalled = false
     public var updateAuthorCalled = false
@@ -76,6 +78,32 @@ public final class MockAuthorService: AuthorServiceProtocol {
             switch result {
             case let .success(author):
                 return author
+            case let .failure(error):
+                throw error
+            }
+        }
+
+        throw APIError.notFound
+    }
+
+    public func fetchAuthorDetail(id: String) async throws -> AuthorDetail {
+        fetchAuthorDetailCalled = true
+        lastFetchAuthorId = id
+
+        if let result = fetchAuthorDetailResult {
+            switch result {
+            case let .success(detail):
+                return detail
+            case let .failure(error):
+                throw error
+            }
+        }
+
+        // Fall back to fetchAuthorResult, wrapping in AuthorDetail with empty items
+        if let result = fetchAuthorResult {
+            switch result {
+            case let .success(author):
+                return AuthorDetail(id: author.id, userId: author.userId, name: author.name, bio: author.bio, createdAt: author.createdAt, updatedAt: author.updatedAt, items: [], totalItems: 0)
             case let .failure(error):
                 throw error
             }

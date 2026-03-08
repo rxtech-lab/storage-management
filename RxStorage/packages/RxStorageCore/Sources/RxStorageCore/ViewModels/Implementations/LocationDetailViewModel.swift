@@ -18,6 +18,11 @@ public final class LocationDetailViewModel {
     public private(set) var isLoading = false
     public private(set) var error: Error?
 
+    // MARK: - Items Properties
+
+    public private(set) var items: [StorageItem] = []
+    public private(set) var totalItems: Int = 0
+
     // MARK: - Dependencies
 
     private let locationService: LocationServiceProtocol
@@ -35,7 +40,10 @@ public final class LocationDetailViewModel {
         error = nil
 
         do {
-            location = try await locationService.fetchLocation(id: id)
+            let detail = try await locationService.fetchLocationDetail(id: id)
+            location = Location(id: detail.id, userId: detail.userId, title: detail.title, latitude: detail.latitude, longitude: detail.longitude, createdAt: detail.createdAt, updatedAt: detail.updatedAt)
+            items = detail.items
+            totalItems = detail.totalItems
             isLoading = false
         } catch {
             self.error = error

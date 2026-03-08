@@ -18,6 +18,11 @@ public final class AuthorDetailViewModel {
     public private(set) var isLoading = false
     public private(set) var error: Error?
 
+    // MARK: - Items Properties
+
+    public private(set) var items: [StorageItem] = []
+    public private(set) var totalItems: Int = 0
+
     // MARK: - Dependencies
 
     private let authorService: AuthorServiceProtocol
@@ -35,7 +40,10 @@ public final class AuthorDetailViewModel {
         error = nil
 
         do {
-            author = try await authorService.fetchAuthor(id: id)
+            let detail = try await authorService.fetchAuthorDetail(id: id)
+            author = Author(id: detail.id, userId: detail.userId, name: detail.name, bio: detail.bio, createdAt: detail.createdAt, updatedAt: detail.updatedAt)
+            items = detail.items
+            totalItems = detail.totalItems
             isLoading = false
         } catch {
             self.error = error

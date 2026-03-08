@@ -103,6 +103,8 @@ struct SidebarContent: View {
         }
         .navigationTitle("RxStorage")
         .listStyle(.sidebar)
+        .scrollContentBackground(.hidden)
+        .background(Color.clear)
         .task {
             await navigationManager.loadInitialCounts()
         }
@@ -158,12 +160,12 @@ struct SidebarButton: View {
             navigationManager.selectedTab = tab
         } label: {
             Label(tab.rawValue, systemImage: tab.systemImage)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .contentShape(Rectangle())
         }
-        .listRowBackground(isSelected ? Color.accentColor.opacity(0.2) : nil)
-        .foregroundStyle(isSelected ? .primary : .secondary)
-        #if os(macOS)
-            .buttonStyle(.plain)
-        #endif
+        .buttonStyle(.plain)
+        .listRowBackground(Color.clear)
+        .foregroundStyle(isSelected ? Color.accentColor : .secondary)
     }
 
     private var isSelected: Bool {
@@ -182,16 +184,17 @@ struct ManagementSectionButton: View {
             navigationManager.selectedManagementSection = section
         } label: {
             Label(section.rawValue, systemImage: section.systemImage)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .contentShape(Rectangle())
         }
-        .listRowBackground(isSelected ? Color.accentColor.opacity(0.2) : nil)
-        .foregroundStyle(isSelected ? .primary : .secondary)
-        #if os(macOS)
-            .buttonStyle(.plain)
-        #endif
+        .buttonStyle(.plain)
+        .listRowBackground(Color.clear)
+        .foregroundStyle(isSelected ? Color.accentColor : .secondary)
     }
 
     private var isSelected: Bool {
-        navigationManager.selectedTab == .management && navigationManager.selectedManagementSection == section
+        navigationManager.selectedTab == .management
+            && navigationManager.selectedManagementSection == section
     }
 }
 
@@ -347,7 +350,9 @@ struct ManagementListView: View {
         case .authors:
             AuthorListView(horizontalSizeClass: .regular, selectedAuthor: $selectedAuthor)
         case .positionSchemas:
-            PositionSchemaListView(horizontalSizeClass: .regular, selectedSchema: $selectedPositionSchema)
+            PositionSchemaListView(
+                horizontalSizeClass: .regular, selectedSchema: $selectedPositionSchema
+            )
         }
     }
 }
