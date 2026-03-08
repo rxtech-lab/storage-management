@@ -10,7 +10,12 @@ struct FFmpegServiceTests {
     private func generateTestVideo(duration: Int = 1) -> String? {
         let tmpDir = FileManager.default.temporaryDirectory
             .appendingPathComponent("FFmpegServiceTests-\(UUID().uuidString)")
-        try? FileManager.default.createDirectory(at: tmpDir, withIntermediateDirectories: true)
+        do {
+            try FileManager.default.createDirectory(at: tmpDir, withIntermediateDirectories: true)
+        } catch {
+            Issue.record("Failed to create temp directory: \(error)")
+            return nil
+        }
 
         let outputPath = tmpDir.appendingPathComponent("input.mp4").path
 
