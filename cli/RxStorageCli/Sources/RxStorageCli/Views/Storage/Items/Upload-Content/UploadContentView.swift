@@ -30,6 +30,8 @@ struct UploadContentView: View, @unchecked Sendable {
             switch step {
             case .enterPath:
                 enterPathView
+            case .extractingISO:
+                extractingISOView
             case .enterExtensions:
                 enterExtensionsView
             case .listFiles:
@@ -54,12 +56,9 @@ struct UploadContentView: View, @unchecked Sendable {
                 sourcePath = trimmed
                 if trimmed.lowercased().hasSuffix(".iso") {
                     if FileManager.default.fileExists(atPath: trimmed) {
-                        if let mountPoint = ISOService.mount(isoPath: trimmed) {
-                            isoMountPoint = mountPoint
-                            directoryPath = mountPoint
-                            step = .enterExtensions
-                        } else {
-                            errorMessage = "Failed to mount ISO: \(trimmed)"
+                        step = .extractingISO
+                        Task {
+                            await mountISO(path: trimmed)
                         }
                     } else {
                         errorMessage = "ISO file does not exist: \(trimmed)"
@@ -79,6 +78,13 @@ struct UploadContentView: View, @unchecked Sendable {
             if let error = errorMessage {
                 Text(error)
             }
+        }
+    }
+
+    private var extractingISOView: some View {
+        VStack(alignment: .leading) {
+            Text("Extracting ISO: \((sourcePath as NSString).lastPathComponent)")
+            Text("Please wait...")
         }
     }
 
@@ -142,7 +148,7 @@ struct UploadContentView: View, @unchecked Sendable {
 
     private var uploadingView: some View {
         VStack(alignment: .leading) {
-            Text("Uploading... [\(uploadProgress)/\(uploadTotal)]")
+            Text("Uploading... [\(uploadProgress)/\(uploadTotal)] (4 parallel jobs)")
             let barWidth = 30
             let filled = uploadTotal > 0 ? (uploadProgress * barWidth / uploadTotal) : 0
             let bar =

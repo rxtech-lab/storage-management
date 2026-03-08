@@ -4,6 +4,65 @@ enum FFmpegService {
     private static let processTimeout: TimeInterval = 30
     private static let videoCompressTimeout: TimeInterval = 300
 
+    private enum HWEncoder {
+        case videotoolbox
+        case nvenc
+        case none
+
+        var codecName: String? {
+            switch self {
+            case .videotoolbox: return "h264_videotoolbox"
+            case .nvenc: return "h264_nvenc"
+            case .none: return nil
+            }
+        }
+
+        var videoArgs: [String] {
+            switch self {
+            case .videotoolbox:
+                return ["-c:v", "h264_videotoolbox", "-q:v", "65"]
+            case .nvenc:
+                return ["-c:v", "h264_nvenc", "-cq", "28", "-preset", "p4"]
+            case .none:
+                return ["-c:v", "libx264", "-preset", "fast", "-crf", "28"]
+            }
+        }
+    }
+
+    private static let detectedEncoder: HWEncoder = {
+        let process = Process()
+        let pipe = Pipe()
+        process.executableURL = URL(fileURLWithPath: "/usr/bin/env")
+        process.arguments = ["ffmpeg", "-hide_banner", "-encoders"]
+        process.standardInput = FileHandle.nullDevice
+        process.standardOutput = pipe
+        process.standardError = FileHandle.nullDevice
+
+        do {
+            try process.run()
+            process.waitUntilExit()
+        } catch {
+            return .none
+        }
+
+        let data = pipe.fileHandleForReading.readDataToEndOfFile()
+        let output = String(data: data, encoding: .utf8) ?? ""
+
+        #if os(macOS)
+        if output.contains("h264_videotoolbox") {
+            AppLogger.ffmpeg.info("GPU acceleration: using VideoToolbox")
+            return .videotoolbox
+        }
+        #endif
+        if output.contains("h264_nvenc") {
+            AppLogger.ffmpeg.info("GPU acceleration: using NVENC")
+            return .nvenc
+        }
+
+        AppLogger.ffmpeg.info("GPU acceleration: not available, using libx264")
+        return .none
+    }()
+
     private static func runProcess(_ process: Process, label: String, timeout: TimeInterval? = nil) -> Bool {
         do {
             try process.run()
@@ -98,30 +157,43 @@ enum FFmpegService {
         return nil
     }
 
-    /// Compress video to low quality MP4, max 720p, using H.264.
+    /// Compress video to low quality MP4, max 720p, using H.264 with automatic GPU acceleration.
     static func compressVideo(inputPath: String, outputPath: String) -> Bool {
+        if detectedEncoder.codecName != nil {
+            if compressVideoWith(encoder: detectedEncoder, inputPath: inputPath, outputPath: outputPath) {
+                return true
+            }
+            AppLogger.ffmpeg.warning("GPU encoding failed, falling back to libx264")
+        }
+        return compressVideoWith(encoder: .none, inputPath: inputPath, outputPath: outputPath)
+    }
+
+    private static func compressVideoWith(encoder: HWEncoder, inputPath: String, outputPath: String) -> Bool {
         let process = Process()
         let stderrPipe = Pipe()
         process.executableURL = URL(fileURLWithPath: "/usr/bin/env")
-        process.arguments = [
+        var args = [
             "ffmpeg", "-y", "-nostdin", "-i", inputPath,
             "-t", "300",
             "-vf", "scale='min(720,iw)':-2",
-            "-c:v", "libx264", "-preset", "fast", "-crf", "28",
+        ]
+        args += encoder.videoArgs
+        args += [
             "-c:a", "aac", "-b:a", "96k",
             "-movflags", "+faststart",
             outputPath,
         ]
+        process.arguments = args
         process.standardInput = FileHandle.nullDevice
         process.standardOutput = FileHandle.nullDevice
         process.standardError = stderrPipe
 
-        guard runProcess(process, label: "compressVideo", timeout: videoCompressTimeout) else { return false }
+        guard runProcess(process, label: "compressVideo(\(encoder))", timeout: videoCompressTimeout) else { return false }
 
         let stderrData = stderrPipe.fileHandleForReading.readDataToEndOfFile()
         if process.terminationStatus != 0 {
             let stderr = String(data: stderrData, encoding: .utf8) ?? ""
-            AppLogger.ffmpeg.error("compressVideo exit \(process.terminationStatus): \(stderr.suffix(500))")
+            AppLogger.ffmpeg.error("compressVideo(\(encoder)) exit \(process.terminationStatus): \(stderr.suffix(500))")
         }
         return process.terminationStatus == 0
     }

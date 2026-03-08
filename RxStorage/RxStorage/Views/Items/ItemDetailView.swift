@@ -380,7 +380,7 @@ struct ItemDetailView: View {
 
             TabView(selection: $selectedImageIndex) {
                 ForEach(Array(images.enumerated()), id: \.offset) { index, image in
-                    AsyncImage(url: URL(string: image.url)) { phase in
+                    CachedAsyncImage(url: URL(string: image.url)) { phase in
                         switch phase {
                         case let .success(loadedImage):
                             loadedImage

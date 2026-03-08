@@ -26,7 +26,7 @@ struct SettingsView: View {
                     HStack(spacing: 12) {
                         // Profile image
                         if let imageUrl = user.image, let url = URL(string: imageUrl) {
-                            AsyncImage(url: url) { phase in
+                            CachedAsyncImage(url: url) { phase in
                                 switch phase {
                                 case .empty:
                                     ProgressView()

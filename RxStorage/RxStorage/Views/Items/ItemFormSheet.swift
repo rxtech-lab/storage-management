@@ -362,12 +362,15 @@ struct ItemFormSheet: View {
             // Existing images
             ForEach(Array(viewModel.existingImages.enumerated()), id: \.element.id) { index, imageRef in
                 HStack {
-                    AsyncImage(url: URL(string: imageRef.url)) { image in
-                        image
-                            .resizable()
-                            .scaledToFill()
-                    } placeholder: {
-                        ProgressView()
+                    CachedAsyncImage(url: URL(string: imageRef.url)) { phase in
+                        switch phase {
+                        case let .success(image):
+                            image
+                                .resizable()
+                                .scaledToFill()
+                        default:
+                            ProgressView()
+                        }
                     }
                     .frame(width: 60, height: 60)
                     .clipShape(RoundedRectangle(cornerRadius: 8))
