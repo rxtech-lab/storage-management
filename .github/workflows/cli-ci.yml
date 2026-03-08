@@ -27,7 +27,7 @@ jobs:
 
       - name: Install Bun
         run: |
-          apt-get update && apt-get install -y curl unzip p7zip-full
+          apt-get update && apt-get install -y curl unzip p7zip-full ffmpeg
           curl -fsSL https://bun.sh/install | bash
           echo "$HOME/.bun/bin" >> $GITHUB_PATH
 
