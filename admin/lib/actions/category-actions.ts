@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { eq, like, or, and, asc, desc, gt, lt } from "drizzle-orm";
+import { eq, like, or, and, asc, desc, gt, lt, count } from "drizzle-orm";
 import { db, categories, type Category, type NewCategory } from "@/lib/db";
 import { ensureSchemaInitialized } from "@/lib/db/client";
 import { getSession } from "@/lib/auth-helper";
@@ -255,6 +255,7 @@ export async function getCategoriesPaginated(
         prevCursor: null,
         hasNextPage: false,
         hasPrevPage: false,
+        totalCount: 0,
       },
     };
   }
@@ -274,6 +275,9 @@ export async function getCategoriesPaginated(
       conditions.push(searchCondition);
     }
   }
+
+  // Capture base conditions before cursor conditions are added
+  const baseConditions = [...conditions];
 
   // Add cursor conditions for pagination
   // Categories are sorted by name ASC, id ASC
@@ -315,13 +319,18 @@ export async function getCategoriesPaginated(
   // Fetch one extra to determine if there are more items
   query = query.limit(limit + 1);
 
-  const results = await query;
+  const [results, countResult] = await Promise.all([
+    query,
+    db.select({ count: count() }).from(categories).where(and(...baseConditions)),
+  ]);
+  const totalCount = countResult[0]?.count ?? 0;
 
   return buildPaginatedResponse(
     results,
     limit,
     direction,
     (item) => item.name,
-    !!cursor
+    !!cursor,
+    totalCount
   );
 }

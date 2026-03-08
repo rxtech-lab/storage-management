@@ -85,7 +85,6 @@ struct SidebarNavigationView: View {
 /// Sidebar with navigation sections
 struct SidebarContent: View {
     @Environment(NavigationManager.self) private var navigationManager
-
     #if os(iOS)
         @Binding var showQrCodeScanner: Bool
 
@@ -104,17 +103,20 @@ struct SidebarContent: View {
         }
         .navigationTitle("RxStorage")
         .listStyle(.sidebar)
+        .task {
+            await navigationManager.loadInitialCounts()
+        }
         #if os(iOS)
-            .toolbar {
-                ToolbarItem(placement: .primaryAction) {
-                    Button {
-                        showQrCodeScanner = true
-                    } label: {
-                        Label("Scan", systemImage: "qrcode.viewfinder")
-                    }
-                    .accessibilityIdentifier("qr-scanner-button")
+        .toolbar {
+            ToolbarItem(placement: .primaryAction) {
+                Button {
+                    showQrCodeScanner = true
+                } label: {
+                    Label("Scan", systemImage: "qrcode.viewfinder")
                 }
+                .accessibilityIdentifier("qr-scanner-button")
             }
+        }
         #endif
     }
 
@@ -122,14 +124,20 @@ struct SidebarContent: View {
         Section {
             SidebarButton(tab: .dashboard)
             SidebarButton(tab: .items)
+                .badge(navigationManager.itemsCount)
         }
     }
 
     private var managementSection: some View {
         Section("Manage") {
-            ForEach(ManagementSection.allCases) { section in
-                ManagementSectionButton(section: section)
-            }
+            ManagementSectionButton(section: .categories)
+                .badge(navigationManager.categoriesCount)
+            ManagementSectionButton(section: .locations)
+                .badge(navigationManager.locationsCount)
+            ManagementSectionButton(section: .authors)
+                .badge(navigationManager.authorsCount)
+            ManagementSectionButton(section: .positionSchemas)
+                .badge(navigationManager.positionSchemasCount)
         }
     }
 
@@ -232,12 +240,7 @@ struct DetailColumn: View {
 
         switch nav.selectedTab {
         case .dashboard:
-            // Dashboard doesn't have a detail view
-            ContentUnavailableView(
-                "Dashboard",
-                systemImage: "chart.bar",
-                description: Text("View your storage overview")
-            )
+            DashboardChartsView()
         case .items:
             if let item = nav.selectedItem {
                 NavigationStack {

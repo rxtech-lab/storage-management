@@ -1,6 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth-helper";
-import { db, items, categories, locations, authors } from "@/lib/db";
+import {
+  db,
+  items,
+  categories,
+  locations,
+  authors,
+  positionSchemas,
+} from "@/lib/db";
 import { eq, count, and } from "drizzle-orm";
 import { DashboardStatsResponseSchema } from "@/lib/schemas/dashboard";
 
@@ -30,6 +37,7 @@ export async function GET(request: NextRequest) {
     totalCategoriesResult,
     totalLocationsResult,
     totalAuthorsResult,
+    totalPositionSchemasResult,
     recentItemsResult,
   ] = await Promise.all([
     // Total items count
@@ -68,6 +76,12 @@ export async function GET(request: NextRequest) {
       .from(authors)
       .where(eq(authors.userId, userId)),
 
+    // Total position schemas count
+    db
+      .select({ count: count() })
+      .from(positionSchemas)
+      .where(eq(positionSchemas.userId, userId)),
+
     // Recent items (last 5)
     db.query.items.findMany({
       where: eq(items.userId, userId),
@@ -86,6 +100,7 @@ export async function GET(request: NextRequest) {
     totalCategories: totalCategoriesResult[0]?.count ?? 0,
     totalLocations: totalLocationsResult[0]?.count ?? 0,
     totalAuthors: totalAuthorsResult[0]?.count ?? 0,
+    totalPositionSchemas: totalPositionSchemasResult[0]?.count ?? 0,
     recentItems: recentItemsResult.map((item) => ({
       id: item.id,
       title: item.title,

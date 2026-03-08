@@ -26,6 +26,10 @@ export const PaginationInfo = z.object({
   hasPrevPage: z
     .boolean()
     .describe("Whether items exist before current page"),
+  totalCount: z
+    .number()
+    .int()
+    .describe("Total number of items matching the current filters"),
 });
 
 // Generic error response

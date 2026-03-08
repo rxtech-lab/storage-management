@@ -151,6 +151,9 @@ struct ItemListView: View {
                 onCancel: { itemToDelete = nil }
             )
             .showViewModelError(errorViewModel)
+            .onChange(of: viewModel.totalCount) { _, newCount in
+                navigationManager.itemsCount = newCount
+            }
     }
 
     // MARK: - Items List

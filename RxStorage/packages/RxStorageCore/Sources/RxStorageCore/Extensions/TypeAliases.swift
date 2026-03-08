@@ -42,6 +42,12 @@ public typealias DashboardStats = Components.Schemas.DashboardStatsResponseSchem
 /// Dashboard recent item (simplified item for dashboard display)
 public typealias DashboardRecentItem = Components.Schemas.DashboardRecentItemSchema
 
+/// Dashboard charts data
+public typealias DashboardCharts = Components.Schemas.DashboardChartsResponseSchema
+
+/// Dashboard chart data point
+public typealias DashboardChartDataPoint = Components.Schemas.DashboardChartDataPointSchema
+
 /// Whitelist entry
 public typealias Whitelist = Components.Schemas.WhitelistResponseSchema
 

@@ -25,6 +25,7 @@ public final class AuthorListViewModel: AuthorListViewModelProtocol {
 
     public private(set) var isLoadingMore = false
     public private(set) var hasNextPage = true
+    public private(set) var totalCount: Int = 0
     private var nextCursor: String?
 
     // MARK: - Combine
@@ -113,6 +114,7 @@ public final class AuthorListViewModel: AuthorListViewModelProtocol {
             authors = response.data
             nextCursor = response.pagination.nextCursor
             hasNextPage = response.pagination.hasNextPage
+            totalCount = response.pagination.totalCount
             isSearching = false
         } catch {
             self.error = error
@@ -142,6 +144,7 @@ public final class AuthorListViewModel: AuthorListViewModelProtocol {
             authors = response.data
             nextCursor = response.pagination.nextCursor
             hasNextPage = response.pagination.hasNextPage
+            totalCount = response.pagination.totalCount
             isLoading = false
         } catch {
             self.error = error
@@ -174,6 +177,7 @@ public final class AuthorListViewModel: AuthorListViewModelProtocol {
 
             nextCursor = response.pagination.nextCursor
             hasNextPage = response.pagination.hasNextPage
+            totalCount = response.pagination.totalCount
             isLoadingMore = false
         } catch {
             self.error = error
