@@ -7,12 +7,13 @@ enum FFmpegService {
     private enum HWEncoder {
         case videotoolbox
         case nvenc
+        case nvencLegacy
         case none
 
         var codecName: String? {
             switch self {
             case .videotoolbox: return "h264_videotoolbox"
-            case .nvenc: return "h264_nvenc"
+            case .nvenc, .nvencLegacy: return "h264_nvenc"
             case .none: return nil
             }
         }
@@ -23,6 +24,8 @@ enum FFmpegService {
                 return ["-c:v", "h264_videotoolbox", "-q:v", "65"]
             case .nvenc:
                 return ["-c:v", "h264_nvenc", "-cq", "28", "-preset", "p4"]
+            case .nvencLegacy:
+                return ["-c:v", "h264_nvenc", "-cq", "28", "-preset", "medium"]
             case .none:
                 return ["-c:v", "libx264", "-preset", "fast", "-crf", "28"]
             }
@@ -162,6 +165,14 @@ enum FFmpegService {
         if detectedEncoder.codecName != nil {
             if compressVideoWith(encoder: detectedEncoder, inputPath: inputPath, outputPath: outputPath) {
                 return true
+            }
+            // For NVENC, retry with legacy preset name before falling back to software encoding.
+            // Older FFmpeg versions don't support "p4" preset; "medium" is the equivalent legacy name.
+            if case .nvenc = detectedEncoder {
+                AppLogger.ffmpeg.info("Retrying NVENC with legacy preset 'medium'")
+                if compressVideoWith(encoder: .nvencLegacy, inputPath: inputPath, outputPath: outputPath) {
+                    return true
+                }
             }
             AppLogger.ffmpeg.warning("GPU encoding failed, falling back to libx264")
         }
