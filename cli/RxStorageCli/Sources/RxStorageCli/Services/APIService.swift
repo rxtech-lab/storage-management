@@ -4,19 +4,115 @@ import OpenAPIRuntime
 import OpenAPIAsyncHTTPClient
 import AsyncHTTPClient
 
-struct BearerAuthMiddleware: ClientMiddleware {
-    let token: String
+actor AutoRefreshAuthMiddleware: ClientMiddleware {
+    private let tokenStorage: FileTokenStorage
+    private let configuration: AuthConfiguration
+    private var isRefreshing = false
+    private var pendingRequests: [CheckedContinuation<Void, Error>] = []
 
-    func intercept(
+    init(tokenStorage: FileTokenStorage, configuration: AuthConfiguration) {
+        self.tokenStorage = tokenStorage
+        self.configuration = configuration
+    }
+
+    nonisolated func intercept(
         _ request: HTTPRequest,
         body: HTTPBody?,
         baseURL: URL,
         operationID: String,
         next: @Sendable (HTTPRequest, HTTPBody?, URL) async throws -> (HTTPResponse, HTTPBody?)
     ) async throws -> (HTTPResponse, HTTPBody?) {
-        var request = request
-        request.headerFields[.authorization] = "Bearer \(token)"
-        return try await next(request, body, baseURL)
+        // Proactively refresh if token is about to expire
+        if tokenStorage.isTokenExpired(), tokenStorage.getRefreshToken() != nil {
+            try await ensureValidToken()
+        }
+
+        var modifiedRequest = request
+        if let accessToken = tokenStorage.getAccessToken() {
+            modifiedRequest.headerFields[.authorization] = "Bearer \(accessToken)"
+        }
+
+        let (response, responseBody) = try await next(modifiedRequest, body, baseURL)
+
+        // Retry on 401
+        if response.status == .unauthorized, tokenStorage.getRefreshToken() != nil {
+            AppLogger.api.info("Received 401 for \(operationID), attempting token refresh")
+            try await ensureValidToken()
+
+            var retryRequest = request
+            if let accessToken = tokenStorage.getAccessToken() {
+                retryRequest.headerFields[.authorization] = "Bearer \(accessToken)"
+            }
+            return try await next(retryRequest, body, baseURL)
+        }
+
+        return (response, responseBody)
+    }
+
+    private func ensureValidToken() async throws {
+        if isRefreshing {
+            return try await withCheckedThrowingContinuation { continuation in
+                pendingRequests.append(continuation)
+            }
+        }
+
+        guard tokenStorage.isTokenExpired() else { return }
+
+        isRefreshing = true
+        do {
+            try await performTokenRefresh()
+            AppLogger.api.info("Token refreshed successfully")
+            let continuations = pendingRequests
+            pendingRequests = []
+            isRefreshing = false
+            for c in continuations { c.resume() }
+        } catch {
+            let continuations = pendingRequests
+            pendingRequests = []
+            isRefreshing = false
+            for c in continuations { c.resume(throwing: error) }
+            throw error
+        }
+    }
+
+    private func performTokenRefresh() async throws {
+        guard let refreshToken = tokenStorage.getRefreshToken(),
+              let tokenURL = configuration.tokenURL
+        else { throw APIServiceError.notAuthenticated }
+
+        var request = HTTPClientRequest(url: tokenURL.absoluteString)
+        request.method = .POST
+        request.headers.add(name: "Content-Type", value: "application/x-www-form-urlencoded")
+
+        let body = [
+            "grant_type=refresh_token",
+            "refresh_token=\(refreshToken)",
+            "client_id=\(configuration.clientID)",
+        ].joined(separator: "&")
+        request.body = .bytes(Data(body.utf8))
+
+        let response = try await HTTPClient.shared.execute(request, timeout: .seconds(30))
+        guard response.status == .ok else {
+            AppLogger.api.error("Token refresh failed with status \(response.status.code)")
+            throw APIServiceError.notAuthenticated
+        }
+
+        struct TokenResponse: Decodable {
+            let access_token: String
+            let refresh_token: String?
+            let expires_in: Int?
+        }
+
+        let data = Data(buffer: try await response.body.collect(upTo: 1024 * 1024))
+        let tokenResponse = try JSONDecoder().decode(TokenResponse.self, from: data)
+
+        try tokenStorage.saveAccessToken(tokenResponse.access_token)
+        if let newRefresh = tokenResponse.refresh_token {
+            try tokenStorage.saveRefreshToken(newRefresh)
+        }
+        if let expiresIn = tokenResponse.expires_in {
+            try tokenStorage.saveExpiresAt(Date().addingTimeInterval(TimeInterval(expiresIn)))
+        }
     }
 }
 
@@ -33,17 +129,17 @@ enum APIService {
 
     static func makeClient() throws -> Client {
         let tokenStorage = FileTokenStorage()
-        guard let accessToken = tokenStorage.getAccessToken(),
-            !tokenStorage.isTokenExpired()
+        guard tokenStorage.getAccessToken() != nil || tokenStorage.getRefreshToken() != nil
         else {
             throw APIServiceError.notAuthenticated
         }
 
+        let configuration = AuthConfiguration.fromEnvironment
         return Client(
             serverURL: serverURL,
             configuration: .init(dateTranscoder: .iso8601WithFractionalSeconds),
             transport: AsyncHTTPClientTransport(),
-            middlewares: [BearerAuthMiddleware(token: accessToken)]
+            middlewares: [AutoRefreshAuthMiddleware(tokenStorage: tokenStorage, configuration: configuration)]
         )
     }
 
