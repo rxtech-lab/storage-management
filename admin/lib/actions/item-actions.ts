@@ -270,8 +270,24 @@ export async function getItem(
 export async function getItemChildren(
   parentId: string,
   userId?: string,
+  limit?: number,
 ): Promise<ItemWithRelations[]> {
-  return getItems(userId, { parentId });
+  const results = await getItems(userId, { parentId });
+  if (limit && results.length > limit) {
+    return results.slice(0, limit);
+  }
+  return results;
+}
+
+export async function getItemChildrenCount(
+  parentId: string,
+): Promise<number> {
+  await ensureSchemaInitialized();
+  const result = await db
+    .select({ count: count() })
+    .from(items)
+    .where(eq(items.parentId, parentId));
+  return result[0]?.count ?? 0;
 }
 
 /**

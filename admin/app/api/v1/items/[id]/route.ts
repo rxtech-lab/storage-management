@@ -3,6 +3,7 @@ import { getSession } from "@/lib/auth-helper";
 import {
   getItem,
   getItemChildren,
+  getItemChildrenCount,
   updateItemAction,
   deleteItemAction,
 } from "@/lib/actions/item-actions";
@@ -76,13 +77,15 @@ async function buildItemResponse(
   const previewUrl = `${process.env.NEXT_PUBLIC_URL}/preview/item?id=${item.id}`;
 
   const CONTENTS_LIMIT = 10;
+  const CHILDREN_LIMIT = 10;
 
   // Fetch item images, children, contents, positions, and stock in parallel
-  const [images, children, contents, totalContents, positions, stockHistory, quantity, itemTags] = await Promise.all([
+  const [images, children, totalChildren, contents, totalContents, positions, stockHistory, quantity, itemTags] = await Promise.all([
     item.images && item.images.length > 0
       ? signImagesArrayWithIds(item.images)
       : Promise.resolve([]),
-    getItemChildren(itemId, item.userId),
+    getItemChildren(itemId, item.userId, CHILDREN_LIMIT),
+    getItemChildrenCount(itemId),
     getItemContents(itemId, CONTENTS_LIMIT),
     getItemContentsCount(itemId),
     getItemPositions(itemId),
@@ -114,6 +117,7 @@ async function buildItemResponse(
     images,
     previewUrl,
     children: childrenWithSignedImages,
+    totalChildren,
     contents: signedContents,
     totalContents,
     positions,

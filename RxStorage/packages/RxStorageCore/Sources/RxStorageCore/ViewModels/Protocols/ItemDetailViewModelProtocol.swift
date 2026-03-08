@@ -22,6 +22,9 @@ public protocol ItemDetailViewModelProtocol: AnyObject, Observable {
     /// Total number of contents for this item
     var totalContents: Int { get }
 
+    /// Total number of child items
+    var totalChildren: Int { get }
+
     /// Stock history entries
     var stockHistory: [StockHistoryRef] { get }
 

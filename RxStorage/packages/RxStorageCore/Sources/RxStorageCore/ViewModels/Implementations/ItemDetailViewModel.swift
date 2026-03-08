@@ -21,6 +21,7 @@ public final class ItemDetailViewModel: ItemDetailViewModelProtocol {
     public private(set) var children: [StorageItem] = []
     public private(set) var contents: [Content] = []
     public private(set) var totalContents: Int = 0
+    public private(set) var totalChildren: Int = 0
     public private(set) var tags: [TagRef] = []
     public private(set) var stockHistory: [StockHistoryRef] = []
     public private(set) var quantity: Int = 0
@@ -69,6 +70,7 @@ public final class ItemDetailViewModel: ItemDetailViewModelProtocol {
             if let item = item {
                 contents = item.contents.map { $0.toContent(itemId: item.id) }
                 totalContents = item.totalContents
+                totalChildren = item.totalChildren
                 stockHistory = item.stockHistory
                 quantity = item.quantity
                 tags = item.tags
@@ -101,6 +103,7 @@ public final class ItemDetailViewModel: ItemDetailViewModelProtocol {
             if let item = item {
                 contents = item.contents.map { $0.toContent(itemId: item.id) }
                 totalContents = item.totalContents
+                totalChildren = item.totalChildren
                 stockHistory = item.stockHistory
                 quantity = item.quantity
                 tags = item.tags
@@ -132,6 +135,7 @@ public final class ItemDetailViewModel: ItemDetailViewModelProtocol {
             if let item = item {
                 contents = item.contents.map { $0.toContent(itemId: item.id) }
                 totalContents = item.totalContents
+                totalChildren = item.totalChildren
                 stockHistory = item.stockHistory
                 quantity = item.quantity
                 tags = item.tags

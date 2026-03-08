@@ -140,7 +140,9 @@ struct ItemDetailDetailsCard: View {
 
 struct ItemDetailChildrenCard: View {
     let children: [StorageItem]
+    let totalChildren: Int
     let isViewOnly: Bool
+    let onSeeAll: () -> Void
     let onAddChild: () -> Void
     let onEditChild: (StorageItem) -> Void
     let onRemoveChild: (String) async -> Void
@@ -148,12 +150,33 @@ struct ItemDetailChildrenCard: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            Label("Child Items", systemImage: "list.bullet.indent")
-                .font(.headline)
-                .foregroundStyle(.secondary)
-                .padding(.horizontal, 16)
-                .padding(.top, 16)
-                .padding(.bottom, 12)
+            Button {
+                onSeeAll()
+            } label: {
+                HStack {
+                    Label("Child Items", systemImage: "list.bullet.indent")
+                        .font(.headline)
+                        .foregroundStyle(.secondary)
+                    if totalChildren > 0 {
+                        Text("\(totalChildren)")
+                            .font(.subheadline)
+                            .foregroundStyle(.tertiary)
+                    }
+                    Spacer()
+                    if totalChildren > children.count {
+                        Text("See All")
+                            .font(.subheadline)
+                            .foregroundStyle(.blue)
+                    }
+                    Image(systemName: "chevron.right")
+                        .font(.caption)
+                        .foregroundStyle(.tertiary)
+                }
+            }
+            .buttonStyle(.plain)
+            .padding(.horizontal, 16)
+            .padding(.top, 16)
+            .padding(.bottom, 12)
 
             Divider()
                 .padding(.leading, 16)

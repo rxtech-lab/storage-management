@@ -222,6 +222,7 @@ enum TestHelpers {
             location: StorageItemDetail.locationPayload(value1: locationRef),
             author: StorageItemDetail.authorPayload(value1: authorRef),
             children: children,
+            totalChildren: children.count,
             contents: contents,
             totalContents: contents.count,
             positions: positions,

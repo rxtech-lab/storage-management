@@ -125,6 +125,7 @@
 				Views/Categories/CategoryListView.swift,
 				Views/Categories/CategoryPickerSheet.swift,
 				Views/Items/AddChildSheet.swift,
+				Views/Items/ChildrenListSheet.swift,
 				Views/Items/ContentDetailSheet.swift,
 				Views/Items/ContentFormSheet.swift,
 				Views/Items/ContentListSheet.swift,

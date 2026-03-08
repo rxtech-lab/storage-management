@@ -7,12 +7,8 @@
   },
   "servers": [
     {
-      "url": "http://localhost:3000/api",
-      "description": "Development server"
-    },
-    {
-      "url": "https://storage.rxlab.app/api",
-      "description": "Production server"
+      "url": "http://localhost:3000",
+      "description": "Current server"
     }
   ],
   "components": {
@@ -818,7 +814,11 @@
             "items": {
               "$ref": "#/components/schemas/ItemResponseSchema"
             },
-            "description": "Child items"
+            "description": "Child items (limited to first 10)"
+          },
+          "totalChildren": {
+            "type": "integer",
+            "description": "Total number of child items"
           },
           "contents": {
             "type": "array",
@@ -867,6 +867,7 @@
           "previewUrl",
           "images",
           "children",
+          "totalChildren",
           "contents",
           "totalContents",
           "positions",
