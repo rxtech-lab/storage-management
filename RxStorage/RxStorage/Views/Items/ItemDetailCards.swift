@@ -398,7 +398,7 @@ struct ItemDetailContentsCard: View {
             if let previewUrl = content.contentData.previewImageUrl,
                let url = URL(string: previewUrl)
             {
-                AsyncImage(url: url) { phase in
+                CachedAsyncImage(url: url) { phase in
                     switch phase {
                     case let .success(image):
                         image

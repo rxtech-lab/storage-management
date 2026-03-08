@@ -184,7 +184,7 @@ struct ContentDetailSheet: View {
             MediaCarousel(items: mediaItems, selectedIndex: $selectedMediaIndex) { item in
                 switch item {
                 case let .image(url):
-                    AsyncImage(url: url) { phase in
+                    CachedAsyncImage(url: url) { phase in
                         switch phase {
                         case let .success(loadedImage):
                             loadedImage
@@ -211,7 +211,7 @@ struct ContentDetailSheet: View {
                 case let .video(url):
                     ZStack {
                         // Video thumbnail or preview
-                        AsyncImage(url: videoThumbnailURL(for: url)) { phase in
+                        CachedAsyncImage(url: videoThumbnailURL(for: url)) { phase in
                             switch phase {
                             case let .success(loadedImage):
                                 loadedImage
@@ -532,7 +532,7 @@ private struct FullscreenMediaViewer: View {
     }
 
     private func imageViewer(url: URL, geometry: GeometryProxy) -> some View {
-        AsyncImage(url: url) { phase in
+        CachedAsyncImage(url: url) { phase in
             switch phase {
             case let .success(loadedImage):
                 loadedImage
