@@ -207,6 +207,21 @@ extension UploadContentView {
         return UploadResult(filename: file.filename, success: false, error: lastError)
     }
 
+    func mountISO(path: String) async {
+        let mountPoint = await Task.detached {
+            ISOService.mount(isoPath: path)
+        }.value
+
+        if let mountPoint {
+            isoMountPoint = mountPoint
+            directoryPath = mountPoint
+            step = .enterExtensions
+        } else {
+            errorMessage = "Failed to mount ISO: \(path)"
+            step = .enterPath
+        }
+    }
+
     func updateProgress(results: [UploadResult]) async {
         uploadProgress = results.count
         uploadResults = results

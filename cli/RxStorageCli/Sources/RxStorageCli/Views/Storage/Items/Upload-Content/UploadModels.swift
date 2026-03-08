@@ -2,6 +2,7 @@ import Foundation
 
 enum UploadStep {
     case enterPath
+    case extractingISO
     case enterExtensions
     case listFiles
     case uploadOptions
