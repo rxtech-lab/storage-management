@@ -539,9 +539,9 @@ struct ItemDetailTagsCard: View {
                     onAddTag()
                 } label: {
                     HStack {
-                        Image(systemName: "plus.circle")
+                        Image(systemName: "tag")
                             .foregroundStyle(.blue)
-                        Text("Add Tag")
+                        Text("Manage Tags")
                             .foregroundStyle(.blue)
                     }
                 }

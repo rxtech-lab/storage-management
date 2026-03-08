@@ -200,7 +200,10 @@ struct ItemDetailView: View {
                     TagPickerSheet(
                         existingTagIds: Set(viewModel.tags.map { $0.id }),
                         onSelect: { tag in
-                            Task { await addTag(tag.id) }
+                            await addTag(tag.id)
+                        },
+                        onDeselect: { tag in
+                            await removeTag(tag.id)
                         }
                     )
                 }

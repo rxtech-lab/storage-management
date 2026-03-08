@@ -11,36 +11,44 @@ import SwiftUI
 /// Searchable tag picker sheet for adding tags to items
 struct TagPickerSheet: View {
     let existingTagIds: Set<String>
-    let onSelect: (Tag) -> Void
+    let onSelect: (Tag) async -> Void
+    var onDeselect: ((Tag) async -> Void)?
 
     @State private var viewModel = TagPickerViewModel()
     @State private var showingCreateSheet = false
     @State private var selectedTagIds: Set<String> = []
+    @State private var isUpdating = false
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
-        Group {
-            if viewModel.isLoading {
-                ProgressView("Loading tags...")
-            } else if viewModel.isSearching {
-                ProgressView("Searching...")
-            } else if viewModel.availableTags.isEmpty && !viewModel.searchText.isEmpty {
-                ContentUnavailableView(
-                    "No Matching Tags",
-                    systemImage: "tag",
-                    description: Text("No tags found matching your search")
-                )
-            } else if viewModel.availableTags.isEmpty {
-                ContentUnavailableView(
-                    "No Tags Available",
-                    systemImage: "tag",
-                    description: Text("Create a tag from the Tags page first")
-                )
-            } else {
-                tagList
+        ZStack {
+            Group {
+                if viewModel.isLoading {
+                    ProgressView("Loading tags...")
+                } else if viewModel.isSearching {
+                    ProgressView("Searching...")
+                } else if viewModel.displayItems.isEmpty && !viewModel.searchText.isEmpty {
+                    ContentUnavailableView(
+                        "No Matching Tags",
+                        systemImage: "tag",
+                        description: Text("No tags found matching your search")
+                    )
+                } else if viewModel.displayItems.isEmpty {
+                    ContentUnavailableView(
+                        "No Tags Available",
+                        systemImage: "tag",
+                        description: Text("Create a tag from the Tags page first")
+                    )
+                } else {
+                    tagList
+                }
+            }
+
+            if isUpdating {
+                LoadingOverlay(title: "Updating...")
             }
         }
-        .navigationTitle("Add Tag")
+        .navigationTitle("Manage Tags")
         #if os(iOS)
             .navigationBarTitleDisplayMode(.inline)
         #endif
@@ -63,7 +71,6 @@ struct TagPickerSheet: View {
                 viewModel.search(newValue)
             }
             .task {
-                viewModel.existingTagIds = existingTagIds
                 await viewModel.loadTags()
             }
             .sheet(isPresented: $showingCreateSheet) {
@@ -75,15 +82,32 @@ struct TagPickerSheet: View {
             }
     }
 
+    private func isTagAdded(_ tag: Tag) -> Bool {
+        existingTagIds.contains(tag.id) || selectedTagIds.contains(tag.id)
+    }
+
     private var tagList: some View {
         List {
-            ForEach(viewModel.availableTags) { tag in
+            ForEach(viewModel.displayItems) { tag in
+                let added = isTagAdded(tag)
                 Button {
-                    onSelect(tag)
-                    selectedTagIds.insert(tag.id)
-                    viewModel.existingTagIds = existingTagIds.union(selectedTagIds)
+                    guard !isUpdating else { return }
+                    Task {
+                        isUpdating = true
+                        defer { isUpdating = false }
+                        if added {
+                            // Allow deselection if onDeselect is provided
+                            if let onDeselect = onDeselect {
+                                await onDeselect(tag)
+                                selectedTagIds.remove(tag.id)
+                            }
+                        } else {
+                            await onSelect(tag)
+                            selectedTagIds.insert(tag.id)
+                        }
+                    }
                 } label: {
-                    HStack(spacing: 10) {
+                    HStack(spacing: 12) {
                         Circle()
                             .fill(Color(hex: tag.color) ?? .gray)
                             .frame(width: 12, height: 12)
@@ -93,16 +117,14 @@ struct TagPickerSheet: View {
 
                         Spacer()
 
-                        Text(tag.title)
-                            .font(.caption)
-                            .fontWeight(.medium)
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 4)
-                            .foregroundStyle(isLightColor(tag.color) ? .black : .white)
-                            .background(Color(hex: tag.color) ?? .gray)
-                            .clipShape(Capsule())
+                        if added {
+                            Image(systemName: "checkmark.circle.fill")
+                                .foregroundStyle(.green)
+                                .font(.title3)
+                        }
                     }
                 }
+                .disabled(isUpdating)
                 .onAppear {
                     if viewModel.shouldLoadMore(for: tag) {
                         Task {
@@ -129,17 +151,6 @@ struct TagPickerSheet: View {
         .frame(minWidth: 400, minHeight: 300)
         #endif
     }
-
-    private func isLightColor(_ hex: String) -> Bool {
-        let color = hex.replacingOccurrences(of: "#", with: "")
-        guard color.count == 6 else { return true }
-        guard let r = UInt8(color.prefix(2), radix: 16),
-              let g = UInt8(color.dropFirst(2).prefix(2), radix: 16),
-              let b = UInt8(color.dropFirst(4).prefix(2), radix: 16)
-        else { return true }
-        let luminance = 0.2126 * Double(r) / 255.0 + 0.7152 * Double(g) / 255.0 + 0.0722 * Double(b) / 255.0
-        return luminance > 0.5
-    }
 }
 
 // MARK: - Color Extension
@@ -153,5 +164,21 @@ private extension Color {
               let b = UInt8(hex.dropFirst(4).prefix(2), radix: 16)
         else { return nil }
         self.init(red: Double(r) / 255.0, green: Double(g) / 255.0, blue: Double(b) / 255.0)
+    }
+}
+
+// MARK: - Preview
+
+#Preview {
+    NavigationStack {
+        TagPickerSheet(
+            existingTagIds: ["tag-1"],
+            onSelect: { tag async in
+                print("Selected tag: \(tag.title)")
+            },
+            onDeselect: { tag async in
+                print("Deselected tag: \(tag.title)")
+            }
+        )
     }
 }

@@ -42,19 +42,20 @@ struct TagFilterPickerSheet: View {
             .navigationBarTitleDisplayMode(.inline)
         #endif
             .toolbar {
-                ToolbarItem(placement: .confirmationAction) {
+                ToolbarItem(placement: .cancellationAction) {
                     Button {
                         dismiss()
                     } label: {
-                        Label("Done", systemImage: "checkmark")
+                        Image(systemName: "xmark")
                     }
+                    .tint(.secondary)
                 }
 
-                ToolbarItem(placement: .cancellationAction) {
+                ToolbarItem(placement: .confirmationAction) {
                     Button {
                         selectedTagIds.removeAll()
                     } label: {
-                        Label("Clear", systemImage: "xmark")
+                        Text("Clear")
                     }
                 }
             }
