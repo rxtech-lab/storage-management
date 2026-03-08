@@ -27,12 +27,22 @@ import {
   Upload,
   Box,
   Package,
+  FolderOpen,
+  ChevronDown,
 } from "lucide-react";
 import { toast } from "sonner";
 import Form from "@rjsf/shadcn";
 import validator from "@rjsf/validator-ajv8";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { PositionSheet } from "@/components/forms/position-sheet";
 import { ContentSheet } from "@/components/forms/content-sheet";
+import { DirectoryUploadSheet } from "@/components/forms/directory-upload-sheet";
+import { FileUploadSheet } from "@/components/forms/file-upload-sheet";
 import { contentSchemas } from "@/lib/schemas/content-schemas";
 import {
   deletePositionAction,
@@ -52,7 +62,15 @@ import {
   deleteStockHistoryAction,
 } from "@/lib/actions/stock-history-actions";
 import { useSignedImages } from "@/lib/hooks/use-signed-images";
-import type { Content, ContentData, ImageContentData, VideoContentData, ItemWhitelist, PositionSchema, StockHistory } from "@/lib/db";
+import type {
+  Content,
+  ContentData,
+  ImageContentData,
+  VideoContentData,
+  ItemWhitelist,
+  PositionSchema,
+  StockHistory,
+} from "@/lib/db";
 import type { ItemWithRelations } from "@/lib/actions/item-actions";
 
 const contentIcons = {
@@ -92,6 +110,8 @@ export function ItemSections({
 
   // Content state
   const [contentLoading, setContentLoading] = useState(false);
+  const [dirUploadOpen, setDirUploadOpen] = useState(false);
+  const [fileUploadOpen, setFileUploadOpen] = useState(false);
 
   // Collect all preview URLs from contents for signed URL resolution
   const previewUrls = useMemo(() => {
@@ -99,7 +119,8 @@ export function ItemSections({
     for (const content of contents) {
       const data = content.data as ImageContentData | VideoContentData;
       if (data.preview_image_url) urls.push(data.preview_image_url);
-      if ("preview_video_url" in data && data.preview_video_url) urls.push(data.preview_video_url);
+      if ("preview_video_url" in data && data.preview_video_url)
+        urls.push(data.preview_video_url);
     }
     return urls;
   }, [contents]);
@@ -188,14 +209,14 @@ export function ItemSections({
   const handleUpdateContent = async (
     contentId: string,
     type: "file" | "image" | "video",
-    data: ContentData
+    data: ContentData,
   ) => {
     setContentLoading(true);
     try {
       const result = await updateContentAction(contentId, { type, data });
       if (result.success) {
         setContents(
-          contents.map((c) => (c.id === contentId ? { ...c, type, data } : c))
+          contents.map((c) => (c.id === contentId ? { ...c, type, data } : c)),
         );
         toast.success("Content updated");
       } else {
@@ -432,18 +453,14 @@ export function ItemSections({
                   <div className="flex items-center gap-3">
                     <span
                       className={`font-mono font-medium ${
-                        entry.quantity > 0
-                          ? "text-green-600"
-                          : "text-red-600"
+                        entry.quantity > 0 ? "text-green-600" : "text-red-600"
                       }`}
                     >
                       {entry.quantity > 0 ? "+" : ""}
                       {entry.quantity}
                     </span>
                     <div>
-                      {entry.note && (
-                        <p className="text-sm">{entry.note}</p>
-                      )}
+                      {entry.note && <p className="text-sm">{entry.note}</p>}
                       <p className="text-xs text-muted-foreground">
                         {new Date(entry.createdAt).toLocaleString()}
                       </p>
@@ -482,11 +499,48 @@ export function ItemSections({
               {contents.length}
             </Badge>
           </CollapsibleTrigger>
-          <ContentSheet
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="sm" className="gap-1">
+                <Plus className="h-4 w-4" />
+                Add
+                <ChevronDown className="h-3 w-3" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-96!">
+              <ContentSheet
+                itemId={item.id}
+                onContentCreated={(content) => {
+                  setContents([...contents, content]);
+                }}
+                trigger={
+                  <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Content
+                  </DropdownMenuItem>
+                }
+              />
+              <DropdownMenuItem onSelect={() => setFileUploadOpen(true)}>
+                <Upload className="h-4 w-4 mr-2" />
+                Upload Files
+              </DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => setDirUploadOpen(true)}>
+                <FolderOpen className="h-4 w-4 mr-2" />
+                Upload Directory
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          <DirectoryUploadSheet
             itemId={item.id}
-            onContentCreated={(content) => {
-              setContents([...contents, content]);
-            }}
+            open={dirUploadOpen}
+            onOpenChange={setDirUploadOpen}
+            onComplete={onUpdate}
+          />
+          <FileUploadSheet
+            itemId={item.id}
+            open={fileUploadOpen}
+            onOpenChange={setFileUploadOpen}
+            onComplete={onUpdate}
           />
         </div>
         <CollapsibleContent>
@@ -498,15 +552,27 @@ export function ItemSections({
             ) : (
               contents.map((content) => {
                 const Icon = contentIcons[content.type];
-                const data = content.data as ImageContentData | VideoContentData;
-                const previewImageSrc = data.preview_image_url ? signedUrls.get(data.preview_image_url) : undefined;
-                const previewVideoSrc = "preview_video_url" in data && data.preview_video_url ? signedUrls.get(data.preview_video_url) : undefined;
+                const data = content.data as
+                  | ImageContentData
+                  | VideoContentData;
+                const previewImageSrc = data.preview_image_url
+                  ? signedUrls.get(data.preview_image_url)
+                  : undefined;
+                const previewVideoSrc =
+                  "preview_video_url" in data && data.preview_video_url
+                    ? signedUrls.get(data.preview_video_url)
+                    : undefined;
                 return (
-                  <div key={content.id} className="border rounded-lg p-4 bg-muted/20">
+                  <div
+                    key={content.id}
+                    className="border rounded-lg p-4 bg-muted/20"
+                  >
                     <div className="flex items-center justify-between mb-4">
                       <div className="flex items-center gap-2">
                         <Icon className="h-5 w-5 text-muted-foreground" />
-                        <h4 className="font-medium capitalize">{content.type}</h4>
+                        <h4 className="font-medium capitalize">
+                          {content.type}
+                        </h4>
                       </div>
                       <Button
                         variant="ghost"
