@@ -18,6 +18,7 @@ public protocol CategoryServiceProtocol: Sendable {
     func fetchCategories(filters: CategoryFilters?) async throws -> [Category]
     func fetchCategoriesPaginated(filters: CategoryFilters?) async throws -> PaginatedResponse<Category>
     func fetchCategory(id: String) async throws -> Category
+    func fetchCategoryDetail(id: String) async throws -> CategoryDetail
     func createCategory(_ request: NewCategoryRequest) async throws -> Category
     func updateCategory(id: String, _ request: UpdateCategoryRequest) async throws -> Category
     func deleteCategory(id: String) async throws
@@ -53,9 +54,19 @@ public struct CategoryService: CategoryServiceProtocol {
         return PaginatedResponse(data: body.data, pagination: pagination)
     }
 
-    @APICall(.ok)
+    @APICall(.ok, transform: "transformCategoryFromDetail")
     public func fetchCategory(id: String) async throws -> Category {
         try await StorageAPIClient.shared.client.getCategory(.init(path: .init(id: id)))
+    }
+
+    @APICall(.ok)
+    public func fetchCategoryDetail(id: String) async throws -> CategoryDetail {
+        try await StorageAPIClient.shared.client.getCategory(.init(path: .init(id: id)))
+    }
+
+    /// Extracts base Category from CategoryDetailResponseSchema
+    private func transformCategoryFromDetail(_ body: CategoryDetail) -> Category {
+        Category(id: body.id, userId: body.userId, name: body.name, description: body.description, createdAt: body.createdAt, updatedAt: body.updatedAt)
     }
 
     @APICall(.created)

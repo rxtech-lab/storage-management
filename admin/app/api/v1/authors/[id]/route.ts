@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth-helper";
 import { getAuthor, updateAuthorAction, deleteAuthorAction } from "@/lib/actions/author-actions";
+import { getItemsPaginated } from "@/lib/actions/item-actions";
+import { signImagesArrayWithIds } from "@/lib/actions/s3-upload-actions";
+import { AuthorDetailResponseSchema } from "@/lib/schemas/authors";
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -9,9 +12,9 @@ interface RouteParams {
 /**
  * Get author by ID
  * @operationId getAuthor
- * @description Retrieve a single author by its ID
+ * @description Retrieve a single author by its ID, including related items
  * @pathParams IdPathParams
- * @response AuthorResponseSchema
+ * @response AuthorDetailResponseSchema
  * @auth bearer
  * @tag Authors
  * @responseSet auth
@@ -35,7 +38,34 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     return NextResponse.json({ error: "Permission denied" }, { status: 403 });
   }
 
-  return NextResponse.json(author);
+  // Fetch related items (limited to 10)
+  const itemsResult = await getItemsPaginated(session.user.id, {
+    authorId: id,
+    limit: 10,
+  });
+
+  // Sign images for each item
+  const itemsWithSignedImages = await Promise.all(
+    itemsResult.data.map(async (item) => {
+      const images =
+        item.images && item.images.length > 0
+          ? await signImagesArrayWithIds(item.images)
+          : [];
+      return {
+        ...item,
+        images,
+        previewUrl: `${process.env.NEXT_PUBLIC_URL}/preview/item?id=${item.id}`,
+      };
+    })
+  );
+
+  const response = AuthorDetailResponseSchema.parse({
+    ...author,
+    items: itemsWithSignedImages,
+    totalItems: itemsResult.pagination.totalCount,
+  });
+
+  return NextResponse.json(response);
 }
 
 /**

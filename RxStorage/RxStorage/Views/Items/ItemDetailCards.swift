@@ -67,27 +67,51 @@ struct ItemDetailDetailsCard: View {
 
             VStack(spacing: 12) {
                 if let category = item.category {
-                    LabeledContent {
-                        Text(category.value1.name)
-                    } label: {
-                        Label("Category", systemImage: "folder")
+                    NavigationLink(value: EntityNavigation.category(id: category.value1.id)) {
+                        LabeledContent {
+                            HStack(spacing: 4) {
+                                Text(category.value1.name)
+                                Image(systemName: "chevron.right")
+                                    .font(.caption)
+                                    .foregroundStyle(.tertiary)
+                            }
+                        } label: {
+                            Label("Category", systemImage: "folder")
+                        }
                     }
+                    .buttonStyle(.plain)
                 }
 
                 if let location = item.location {
-                    LabeledContent {
-                        Text(location.value1.title)
-                    } label: {
-                        Label("Location", systemImage: "mappin")
+                    NavigationLink(value: EntityNavigation.location(id: location.value1.id)) {
+                        LabeledContent {
+                            HStack(spacing: 4) {
+                                Text(location.value1.title)
+                                Image(systemName: "chevron.right")
+                                    .font(.caption)
+                                    .foregroundStyle(.tertiary)
+                            }
+                        } label: {
+                            Label("Location", systemImage: "mappin")
+                        }
                     }
+                    .buttonStyle(.plain)
                 }
 
                 if let author = item.author {
-                    LabeledContent {
-                        Text(author.value1.name)
-                    } label: {
-                        Label("Author", systemImage: "person")
+                    NavigationLink(value: EntityNavigation.author(id: author.value1.id)) {
+                        LabeledContent {
+                            HStack(spacing: 4) {
+                                Text(author.value1.name)
+                                Image(systemName: "chevron.right")
+                                    .font(.caption)
+                                    .foregroundStyle(.tertiary)
+                            }
+                        } label: {
+                            Label("Author", systemImage: "person")
+                        }
                     }
+                    .buttonStyle(.plain)
                 }
 
                 if let price = item.price {

@@ -24,6 +24,15 @@ public typealias Location = Components.Schemas.LocationResponseSchema
 /// Author entity
 public typealias Author = Components.Schemas.AuthorResponseSchema
 
+/// Author with embedded items
+public typealias AuthorDetail = Components.Schemas.AuthorDetailResponseSchema
+
+/// Category with embedded items
+public typealias CategoryDetail = Components.Schemas.CategoryDetailResponseSchema
+
+/// Location with embedded items
+public typealias LocationDetail = Components.Schemas.LocationDetailResponseSchema
+
 /// Position schema entity
 public typealias PositionSchema = Components.Schemas.PositionSchemaResponseSchema
 

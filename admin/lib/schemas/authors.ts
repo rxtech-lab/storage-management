@@ -2,6 +2,7 @@ import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from "zod";
 import { authors } from "@/lib/db/schema";
 import { PaginationQueryParams, PaginationInfo } from "./common";
+import { ItemResponseSchema } from "./items";
 
 // Base schemas from Drizzle (for internal validation)
 export const AuthorSelectSchema = createSelectSchema(authors);
@@ -26,6 +27,12 @@ export const AuthorResponseSchema = z.object({
   bio: z.string().nullable().describe("Author biography"),
   createdAt: z.coerce.date().describe("Creation timestamp"),
   updatedAt: z.coerce.date().describe("Last update timestamp"),
+});
+
+// Detail response with related items
+export const AuthorDetailResponseSchema = AuthorResponseSchema.extend({
+  items: z.array(ItemResponseSchema).describe("Related items (limited to first 10)"),
+  totalItems: z.number().int().describe("Total number of items by this author"),
 });
 
 // Query params for authors list

@@ -18,6 +18,7 @@ public protocol AuthorServiceProtocol: Sendable {
     func fetchAuthors(filters: AuthorFilters?) async throws -> [Author]
     func fetchAuthorsPaginated(filters: AuthorFilters?) async throws -> PaginatedResponse<Author>
     func fetchAuthor(id: String) async throws -> Author
+    func fetchAuthorDetail(id: String) async throws -> AuthorDetail
     func createAuthor(_ request: NewAuthorRequest) async throws -> Author
     func updateAuthor(id: String, _ request: UpdateAuthorRequest) async throws -> Author
     func deleteAuthor(id: String) async throws
@@ -53,9 +54,19 @@ public struct AuthorService: AuthorServiceProtocol {
         return PaginatedResponse(data: body.data, pagination: pagination)
     }
 
-    @APICall(.ok)
+    @APICall(.ok, transform: "transformAuthorFromDetail")
     public func fetchAuthor(id: String) async throws -> Author {
         try await StorageAPIClient.shared.client.getAuthor(.init(path: .init(id: id)))
+    }
+
+    @APICall(.ok)
+    public func fetchAuthorDetail(id: String) async throws -> AuthorDetail {
+        try await StorageAPIClient.shared.client.getAuthor(.init(path: .init(id: id)))
+    }
+
+    /// Extracts base Author from AuthorDetailResponseSchema
+    private func transformAuthorFromDetail(_ body: AuthorDetail) -> Author {
+        Author(id: body.id, userId: body.userId, name: body.name, bio: body.bio, createdAt: body.createdAt, updatedAt: body.updatedAt)
     }
 
     @APICall(.created)
