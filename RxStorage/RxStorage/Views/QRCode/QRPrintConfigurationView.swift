@@ -14,8 +14,6 @@ import SwiftUI
     struct QRPrintConfigurationView: View {
         let item: StorageItemDetail
         let qrImage: UIImage
-        let printMode: QRPrintMode
-
         @State private var configuration = QRPrintConfiguration.loadSaved()
         @State private var customWidth: String
         @State private var customHeight: String
@@ -23,10 +21,9 @@ import SwiftUI
         @Environment(\.dismiss) private var dismiss
         @Environment(EventViewModel.self) private var eventViewModel
 
-        init(item: StorageItemDetail, qrImage: UIImage, printMode: QRPrintMode = .viewOnly) {
+        init(item: StorageItemDetail, qrImage: UIImage) {
             self.item = item
             self.qrImage = qrImage
-            self.printMode = printMode
             let saved = QRPrintConfiguration.loadSaved()
             let unit = saved.sizeUnit
             if case let .custom(w, h) = saved.pageSize {
@@ -63,8 +60,17 @@ import SwiftUI
                         }
                     }
                     ToolbarItem(placement: .confirmationAction) {
-                        Button {
-                            printQRCode()
+                        Menu {
+                            Button {
+                                printQRCode(addStock: false)
+                            } label: {
+                                Label("Print QR Code", systemImage: "qrcode")
+                            }
+                            Button {
+                                printQRCode(addStock: true)
+                            } label: {
+                                Label("Print and Add Stock (+1)", systemImage: "plus.circle")
+                            }
                         } label: {
                             Label("Print", systemImage: "printer")
                         }
@@ -312,7 +318,7 @@ import SwiftUI
         /// Delegate retained during print interaction to auto-select paper size
         @State private var printDelegate: PrintPaperDelegate?
 
-        private func printQRCode() {
+        private func printQRCode(addStock: Bool) {
             let layoutView = QRPrintLayoutView(
                 item: item,
                 qrImage: qrImage,
@@ -341,7 +347,7 @@ import SwiftUI
             printDelegate = delegate
             printController.delegate = delegate
 
-            let shouldAddStock = printMode == .addStock
+            let shouldAddStock = addStock
             let itemId = item.id
             let eventVM = eventViewModel
 

@@ -110,43 +110,63 @@ extension UploadContentView {
                 videoLength: videoLength
             )
 
-            do {
-                AppLogger.upload.info("[\(index+1)/\(matchedFiles.count)] Requesting presigned URL for: \(file.filename)")
-                let presignedResults = try await APIService.getContentPreviewUploadUrls(itemId: itemId, items: [uploadItem])
-                guard let presigned = presignedResults.first else {
-                    results.append(UploadResult(filename: file.filename, success: false, error: "No presigned URL returned"))
-                    await updateProgress(results: results)
-                    continue
-                }
+            // Retry up to 3 times with 10s delay between attempts
+            var uploadSuccess = false
+            var lastError: String? = nil
 
-                // Step 3: Upload thumbnail
-                AppLogger.upload.info("[\(index+1)/\(matchedFiles.count)] Uploading thumbnail for: \(file.filename)")
-                let thumbData = try Data(contentsOf: URL(fileURLWithPath: thumbPath))
-                AppLogger.upload.info("Thumbnail size: \(thumbData.count) bytes")
-                try await APIService.uploadToPresignedUrl(
-                    url: presigned.imageUrl,
-                    data: thumbData,
-                    contentType: "image/jpeg"
-                )
-                AppLogger.upload.info("Thumbnail upload success for: \(file.filename)")
+            for attempt in 1...3 {
+                do {
+                    AppLogger.upload.info("[\(index+1)/\(matchedFiles.count)] Requesting presigned URL for: \(file.filename) (attempt \(attempt)/3)")
+                    let presignedResults = try await APIService.getContentPreviewUploadUrls(itemId: itemId, items: [uploadItem])
+                    guard let presigned = presignedResults.first else {
+                        lastError = "No presigned URL returned"
+                        AppLogger.upload.warning("No presigned URL returned for \(file.filename) (attempt \(attempt)/3)")
+                        if attempt < 3 {
+                            try? await Task.sleep(nanoseconds: 10_000_000_000)
+                        }
+                        continue
+                    }
 
-                // Step 4: Upload video if applicable
-                if let vPath = videoPath, let videoUrl = presigned.videoUrl {
-                    AppLogger.upload.info("[\(index+1)/\(matchedFiles.count)] Uploading video for: \(file.filename)")
-                    let videoData = try Data(contentsOf: URL(fileURLWithPath: vPath))
-                    AppLogger.upload.info("Video size: \(videoData.count) bytes")
+                    // Step 3: Upload thumbnail
+                    AppLogger.upload.info("[\(index+1)/\(matchedFiles.count)] Uploading thumbnail for: \(file.filename)")
+                    let thumbData = try Data(contentsOf: URL(fileURLWithPath: thumbPath))
+                    AppLogger.upload.info("Thumbnail size: \(thumbData.count) bytes")
                     try await APIService.uploadToPresignedUrl(
-                        url: videoUrl,
-                        data: videoData,
-                        contentType: file.mimeType
+                        url: presigned.imageUrl,
+                        data: thumbData,
+                        contentType: "image/jpeg"
                     )
-                    AppLogger.upload.info("Video upload success for: \(file.filename)")
-                }
+                    AppLogger.upload.info("Thumbnail upload success for: \(file.filename)")
 
+                    // Step 4: Upload video if applicable
+                    if let vPath = videoPath, let videoUrl = presigned.videoUrl {
+                        AppLogger.upload.info("[\(index+1)/\(matchedFiles.count)] Uploading video for: \(file.filename)")
+                        let videoData = try Data(contentsOf: URL(fileURLWithPath: vPath))
+                        AppLogger.upload.info("Video size: \(videoData.count) bytes")
+                        try await APIService.uploadToPresignedUrl(
+                            url: videoUrl,
+                            data: videoData,
+                            contentType: file.mimeType
+                        )
+                        AppLogger.upload.info("Video upload success for: \(file.filename)")
+                    }
+
+                    uploadSuccess = true
+                    break
+                } catch {
+                    lastError = error.localizedDescription
+                    AppLogger.upload.warning("Upload attempt \(attempt)/3 failed for \(file.filename): \(error)")
+                    if attempt < 3 {
+                        try? await Task.sleep(nanoseconds: 10_000_000_000)
+                    }
+                }
+            }
+
+            if uploadSuccess {
                 results.append(UploadResult(filename: file.filename, success: true, error: nil))
-            } catch {
-                AppLogger.upload.error("Upload failed for \(file.filename): \(error)")
-                results.append(UploadResult(filename: file.filename, success: false, error: error.localizedDescription))
+            } else {
+                AppLogger.upload.error("Upload failed for \(file.filename) after 3 attempts: \(lastError ?? "unknown")")
+                results.append(UploadResult(filename: file.filename, success: false, error: lastError))
             }
 
             await updateProgress(results: results)

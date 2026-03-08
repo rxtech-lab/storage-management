@@ -14,12 +14,6 @@ import SwiftUI
     import AppKit
 #endif
 
-/// Print mode for QR code printing
-enum QRPrintMode {
-    case viewOnly
-    case addStock
-}
-
 /// Simple QR code view that displays a QR code from a URL string
 struct QRCodeView: View {
     let urlString: String
@@ -28,7 +22,6 @@ struct QRCodeView: View {
     #if os(iOS)
         @State private var qrImage: UIImage?
         @State private var showingPrintConfig = false
-        @State private var selectedPrintMode: QRPrintMode = .viewOnly
     #elseif os(macOS)
         @State private var qrImage: NSImage?
     #endif
@@ -94,19 +87,8 @@ struct QRCodeView: View {
                     if let image = qrImage {
                         ToolbarItemGroup(placement: .bottomBar) {
                             if item != nil {
-                                Menu {
-                                    Button {
-                                        selectedPrintMode = .viewOnly
-                                        showingPrintConfig = true
-                                    } label: {
-                                        Label("Print QR Code", systemImage: "qrcode")
-                                    }
-                                    Button {
-                                        selectedPrintMode = .addStock
-                                        showingPrintConfig = true
-                                    } label: {
-                                        Label("Print and Add Stock (+1)", systemImage: "plus.circle")
-                                    }
+                                Button {
+                                    showingPrintConfig = true
                                 } label: {
                                     Label("Print QR Code", systemImage: "printer")
                                         .frame(maxWidth: .infinity)
@@ -148,7 +130,7 @@ struct QRCodeView: View {
         #if os(iOS)
             .sheet(isPresented: $showingPrintConfig) {
                 if let item, let qrImage {
-                    QRPrintConfigurationView(item: item, qrImage: qrImage, printMode: selectedPrintMode)
+                    QRPrintConfigurationView(item: item, qrImage: qrImage)
                 }
             }
         #endif
