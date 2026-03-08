@@ -72,14 +72,14 @@ struct DashboardChartsView: View {
                 // Items by Location
                 if !charts.itemsByLocation.isEmpty {
                     chartCard(title: "By Location", icon: "mappin.circle") {
-                        horizontalBarChart(charts.itemsByLocation, color: .blue)
+                        horizontalBarChart(charts.itemsByLocation, palette: Self.bluePalette)
                     }
                 }
 
                 // Items by Category
                 if !charts.itemsByCategory.isEmpty {
                     chartCard(title: "By Category", icon: "folder") {
-                        horizontalBarChart(charts.itemsByCategory, color: .green)
+                        horizontalBarChart(charts.itemsByCategory, palette: Self.greenPalette)
                     }
                 }
 
@@ -93,7 +93,7 @@ struct DashboardChartsView: View {
                 // Items by Author
                 if !charts.itemsByAuthor.isEmpty {
                     chartCard(title: "By Author", icon: "person.circle") {
-                        horizontalBarChart(charts.itemsByAuthor, color: .purple)
+                        horizontalBarChart(charts.itemsByAuthor, palette: Self.purplePalette)
                     }
                 }
 
@@ -161,18 +161,32 @@ struct DashboardChartsView: View {
         }
     }
 
+    // MARK: - Color Palettes
+
+    private static let bluePalette: [Color] = [
+        .blue, .cyan, .teal, .mint, .indigo,
+    ]
+
+    private static let greenPalette: [Color] = [
+        .green, .mint, .teal, .cyan, .blue,
+    ]
+
+    private static let purplePalette: [Color] = [
+        .purple, .indigo, .pink, .blue, .cyan,
+    ]
+
     // MARK: - Horizontal Bar Chart
 
     private func horizontalBarChart(
         _ data: [DashboardChartDataPoint],
-        color: Color
+        palette: [Color]
     ) -> some View {
-        Chart(data, id: \.label) { point in
+        Chart(Array(data.enumerated()), id: \.element.label) { index, point in
             BarMark(
                 x: .value("Count", point.value),
                 y: .value("Name", point.label)
             )
-            .foregroundStyle(color.gradient)
+            .foregroundStyle(palette[index % palette.count].gradient)
             .annotation(position: .trailing) {
                 Text("\(point.value)")
                     .font(.caption2)
@@ -184,7 +198,7 @@ struct DashboardChartsView: View {
     // MARK: - Tag Bar Chart (with colors)
 
     private func tagBarChart(_ data: [DashboardChartDataPoint]) -> some View {
-        Chart(data, id: \.label) { point in
+        Chart(Array(data.enumerated()), id: \.element.label) { _, point in
             BarMark(
                 x: .value("Count", point.value),
                 y: .value("Tag", point.label)
