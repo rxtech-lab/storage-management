@@ -142,7 +142,7 @@ struct UploadContentView: View, @unchecked Sendable {
 
     private var uploadingView: some View {
         VStack(alignment: .leading) {
-            Text("Uploading... [\(uploadProgress)/\(uploadTotal)]")
+            Text("Uploading... [\(uploadProgress)/\(uploadTotal)] (4 parallel jobs)")
             let barWidth = 30
             let filled = uploadTotal > 0 ? (uploadProgress * barWidth / uploadTotal) : 0
             let bar =
