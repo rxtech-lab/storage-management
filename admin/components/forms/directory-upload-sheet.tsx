@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
   Sheet,
@@ -22,6 +22,16 @@ import {
   Video,
 } from "lucide-react";
 import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import {
   mimeTypeForExtension,
   isVideoMime,
@@ -78,6 +88,17 @@ export function DirectoryUploadSheet({
   const [fileProgress, setFileProgress] = useState(0);
   const [filePhase, setFilePhase] = useState("");
   const dirInputRef = useRef<HTMLInputElement>(null);
+  const [showCloseConfirm, setShowCloseConfirm] = useState(false);
+
+  // Prevent browser refresh/close during upload
+  useEffect(() => {
+    if (step !== "uploading") return;
+    const handler = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+    };
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
+  }, [step]);
 
   const reset = useCallback(() => {
     setStep("selectDir");
@@ -298,8 +319,28 @@ export function DirectoryUploadSheet({
   const failCount = results.filter((r) => !r.success).length;
 
   return (
-    <Sheet open={open} onOpenChange={handleOpenChange}>
-      <SheetContent className="sm:max-w-lg max-w-3xl overflow-y-auto">
+    <Sheet
+      open={open}
+      onOpenChange={(isOpen) => {
+        if (!isOpen && step === "uploading") {
+          setShowCloseConfirm(true);
+          return;
+        }
+        handleOpenChange(isOpen);
+      }}
+    >
+      <SheetContent
+        className="sm:max-w-lg max-w-3xl overflow-y-auto"
+        onInteractOutside={(e) => {
+          if (step === "uploading") e.preventDefault();
+        }}
+        onEscapeKeyDown={(e) => {
+          if (step === "uploading") {
+            e.preventDefault();
+            setShowCloseConfirm(true);
+          }
+        }}
+      >
         <SheetHeader>
           <SheetTitle>Upload Directory</SheetTitle>
           <SheetDescription>
@@ -575,6 +616,26 @@ export function DirectoryUploadSheet({
           )}
         </div>
       </SheetContent>
+      <AlertDialog open={showCloseConfirm} onOpenChange={setShowCloseConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Upload in progress</AlertDialogTitle>
+            <AlertDialogDescription>
+              Files are still being uploaded. Closing now will cancel the
+              remaining uploads. Are you sure?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Continue uploading</AlertDialogCancel>
+            <AlertDialogAction
+              variant="destructive"
+              onClick={() => handleOpenChange(false)}
+            >
+              Stop and close
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Sheet>
   );
 }
