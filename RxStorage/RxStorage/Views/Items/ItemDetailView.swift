@@ -49,6 +49,8 @@ struct ItemDetailView: View {
     @State private var isRefreshing = false
     @State private var showingStockDetailSheet = false
     @State private var showingTagPickerSheet = false
+    @State private var selectedTagForDetail: TagRef?
+    @State private var selectedTagIdForNavigation: String?
     #if os(macOS)
         @State private var showingContentUploadSheet = false
         @State private var showingFolderExtensionSheet = false
@@ -224,6 +226,18 @@ struct ItemDetailView: View {
                     )
                 }
             }
+            #if os(macOS)
+            .sheet(item: $selectedTagForDetail) { tag in
+                NavigationStack {
+                    TagDetailView(tagId: tag.id)
+                }
+                .frame(minWidth: 500, minHeight: 400)
+            }
+            #else
+            .navigationDestination(item: $selectedTagIdForNavigation) { tagId in
+                TagDetailView(tagId: tagId)
+            }
+            #endif
             .sheet(isPresented: $showingContentListSheet) {
                 ContentListSheet(
                     itemId: itemId,
@@ -412,7 +426,14 @@ struct ItemDetailView: View {
                         tags: viewModel.tags,
                         isViewOnly: isViewOnly,
                         onAddTag: { showingTagPickerSheet = true },
-                        onRemoveTag: { await removeTag($0) }
+                        onRemoveTag: { await removeTag($0) },
+                        onTagTapped: { tag in
+                            #if os(macOS)
+                            selectedTagForDetail = tag
+                            #else
+                            selectedTagIdForNavigation = tag.id
+                            #endif
+                        }
                     )
                     ItemDetailChildrenCard(
                         children: viewModel.children,
@@ -441,6 +462,8 @@ struct ItemDetailView: View {
                 LocationDetailView(locationId: id)
             case let .author(id):
                 AuthorDetailView(authorId: id)
+            case let .tag(id):
+                TagDetailView(tagId: id)
             }
         }
         .overlay {

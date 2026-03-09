@@ -78,6 +78,9 @@ public typealias AccountDeletion = Components.Schemas.AccountDeletionResponseSch
 /// Tag entity
 public typealias Tag = Components.Schemas.TagResponseSchema
 
+/// Tag with embedded items
+public typealias TagDetail = Components.Schemas.TagDetailResponseSchema
+
 // MARK: - Request Schema Type Aliases
 
 /// Request to create an item

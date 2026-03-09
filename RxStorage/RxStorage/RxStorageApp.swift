@@ -22,6 +22,7 @@ struct RxStorageApp: App {
     @State private var authorDetailViewModel = AuthorDetailViewModel()
     @State private var locationDetailViewModel = LocationDetailViewModel()
     @State private var positionSchemaDetailViewModel = PositionSchemaDetailViewModel()
+    @State private var tagDetailViewModel = TagDetailViewModel()
     @State private var eventViewModel = EventViewModel()
     @State private var contentUploadCenterViewModel = ContentUploadCenterViewModel()
     @State private var authManager = OAuthManager(
@@ -62,6 +63,7 @@ struct RxStorageApp: App {
                 .environment(authorDetailViewModel)
                 .environment(locationDetailViewModel)
                 .environment(positionSchemaDetailViewModel)
+                .environment(tagDetailViewModel)
                 .environment(eventViewModel)
                 .environment(contentUploadCenterViewModel)
                 .environment(authManager)

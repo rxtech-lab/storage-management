@@ -666,9 +666,24 @@ struct ItemDetailTagsCard: View {
     let isViewOnly: Bool
     let onAddTag: () -> Void
     let onRemoveTag: (String) async -> Void
+    let onTagTapped: ((TagRef) -> Void)?
 
     @State private var tagToRemove: TagRef?
     @State private var showRemoveConfirmation = false
+
+    init(
+        tags: [TagRef],
+        isViewOnly: Bool,
+        onAddTag: @escaping () -> Void,
+        onRemoveTag: @escaping (String) async -> Void,
+        onTagTapped: ((TagRef) -> Void)? = nil
+    ) {
+        self.tags = tags
+        self.isViewOnly = isViewOnly
+        self.onAddTag = onAddTag
+        self.onRemoveTag = onRemoveTag
+        self.onTagTapped = onTagTapped
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -774,6 +789,14 @@ struct ItemDetailTagsCard: View {
                 .foregroundStyle(isLightColor(tag.color) ? .black : .white)
                 .background(Color(hex: tag.color) ?? .gray)
                 .clipShape(Capsule())
+
+            Image(systemName: "chevron.right")
+                .font(.caption)
+                .foregroundStyle(.tertiary)
+        }
+        .contentShape(Rectangle())
+        .onTapGesture {
+            onTagTapped?(tag)
         }
         .contextMenu {
             if !isViewOnly {
