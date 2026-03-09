@@ -2,7 +2,6 @@ import { items } from "@/lib/db/schema";
 import { createSelectSchema } from "drizzle-zod";
 import { z } from "zod";
 import { PaginationInfo, PaginationQueryParams } from "./common";
-import { TagRefSchema } from "./tags";
 
 // Base schemas from Drizzle (for internal validation)
 export const ItemSelectSchema = createSelectSchema(items);
@@ -148,6 +147,13 @@ export const LocationRefSchema = z.object({
 export const AuthorRefSchema = z.object({
   id: z.string().describe("Author ID"),
   name: z.string().describe("Author name"),
+});
+
+// Tag reference in item response (base object)
+export const TagRefSchema = z.object({
+  id: z.string().describe("Tag ID"),
+  title: z.string().describe("Tag title"),
+  color: z.string().describe("Tag color as hex string"),
 });
 
 // Content in item detail response

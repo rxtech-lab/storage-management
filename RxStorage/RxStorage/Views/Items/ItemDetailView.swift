@@ -57,6 +57,7 @@ struct ItemDetailView: View {
         @State private var selectedCategoryId: String?
         @State private var selectedLocationId: String?
         @State private var selectedAuthorId: String?
+        @State private var selectedTagId: String?
     #endif
     private let imageHeight: CGFloat = 400
 
@@ -334,6 +335,25 @@ struct ItemDetailView: View {
                     .frame(minWidth: 600, minHeight: 400)
                 }
             }
+            .sheet(isPresented: Binding(
+                get: { selectedTagId != nil },
+                set: { if !$0 { selectedTagId = nil } }
+            )) {
+                if let tagId = selectedTagId {
+                    NavigationStack {
+                        TagDetailView(tagId: tagId)
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                            .toolbar {
+                                ToolbarItem(placement: .cancellationAction) {
+                                    Button("Close") {
+                                        selectedTagId = nil
+                                    }
+                                }
+                            }
+                    }
+                    .frame(minWidth: 600, minHeight: 400)
+                }
+            }
         #endif
             .showViewModelError(errorViewModel)
     }
@@ -412,7 +432,12 @@ struct ItemDetailView: View {
                         tags: viewModel.tags,
                         isViewOnly: isViewOnly,
                         onAddTag: { showingTagPickerSheet = true },
-                        onRemoveTag: { await removeTag($0) }
+                        onRemoveTag: { await removeTag($0) },
+                        onTagTapped: { tagId in
+                            #if os(macOS)
+                                selectedTagId = tagId
+                            #endif
+                        }
                     )
                     ItemDetailChildrenCard(
                         children: viewModel.children,
@@ -441,6 +466,8 @@ struct ItemDetailView: View {
                 LocationDetailView(locationId: id)
             case let .author(id):
                 AuthorDetailView(authorId: id)
+            case let .tag(id):
+                TagDetailView(tagId: id)
             }
         }
         .overlay {

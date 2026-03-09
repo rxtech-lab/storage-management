@@ -12,4 +12,5 @@ enum EntityNavigation: Hashable {
     case category(id: String)
     case location(id: String)
     case author(id: String)
+    case tag(id: String)
 }

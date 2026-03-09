@@ -666,6 +666,7 @@ struct ItemDetailTagsCard: View {
     let isViewOnly: Bool
     let onAddTag: () -> Void
     let onRemoveTag: (String) async -> Void
+    var onTagTapped: ((String) -> Void)?
 
     @State private var tagToRemove: TagRef?
     @State private var showRemoveConfirmation = false
@@ -735,7 +736,7 @@ struct ItemDetailTagsCard: View {
     @ViewBuilder
     private func tagRowWithSwipe(_ tag: TagRef) -> some View {
         if isViewOnly {
-            tagRow(tag)
+            tagRowContent(tag)
                 .padding(.horizontal, 16)
                 .padding(.vertical, 12)
         } else {
@@ -747,11 +748,32 @@ struct ItemDetailTagsCard: View {
                     },
                 ]
             ) {
-                tagRow(tag)
+                tagRowContent(tag)
                     .padding(.horizontal, 16)
                     .padding(.vertical, 12)
             }
         }
+    }
+
+    @ViewBuilder
+    private func tagRowContent(_ tag: TagRef) -> some View {
+        #if os(macOS)
+        if let onTagTapped {
+            Button {
+                onTagTapped(tag.id)
+            } label: {
+                tagRow(tag)
+            }
+            .buttonStyle(.plain)
+        } else {
+            tagRow(tag)
+        }
+        #else
+        NavigationLink(value: EntityNavigation.tag(id: tag.id)) {
+            tagRow(tag)
+        }
+        .buttonStyle(.plain)
+        #endif
     }
 
     private func tagRow(_ tag: TagRef) -> some View {
@@ -776,6 +798,15 @@ struct ItemDetailTagsCard: View {
                 .clipShape(Capsule())
         }
         .contextMenu {
+            #if os(macOS)
+            if let onTagTapped {
+                Button {
+                    onTagTapped(tag.id)
+                } label: {
+                    Label("View Tag", systemImage: "tag")
+                }
+            }
+            #endif
             if !isViewOnly {
                 Button(role: .destructive) {
                     tagToRemove = tag

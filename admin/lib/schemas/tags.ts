@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { PaginationQueryParams, PaginationInfo } from "./common";
+import { ItemResponseSchema, TagRefSchema } from "./items";
 
 // Explicit insert schema for OpenAPI
 export const TagInsertSchema = z.object({
@@ -23,12 +24,8 @@ export const TagResponseSchema = z.object({
   updatedAt: z.coerce.date().describe("Last update timestamp"),
 });
 
-// Tag reference for embedding in item responses
-export const TagRefSchema = z.object({
-  id: z.string().describe("Tag ID"),
-  title: z.string().describe("Tag title"),
-  color: z.string().describe("Tag color as hex string"),
-});
+// Re-export TagRefSchema for consumers that import from this module
+export { TagRefSchema };
 
 // Request to add a tag to an item
 export const ItemTagInsertSchema = z.object({
@@ -62,4 +59,10 @@ export const TagsQueryParams = PaginationQueryParams.extend({
 export const PaginatedTagsResponse = z.object({
   data: z.array(TagResponseSchema).describe("Array of tags"),
   pagination: PaginationInfo,
+});
+
+// Detail response with related items
+export const TagDetailResponseSchema = TagResponseSchema.extend({
+  items: z.array(ItemResponseSchema).describe("Related items (limited to first 10)"),
+  totalItems: z.number().int().describe("Total number of items with this tag"),
 });

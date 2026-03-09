@@ -13,12 +13,14 @@ enum EntityItemFilter {
     case author(id: String)
     case category(id: String)
     case location(id: String)
+    case tag(id: String)
 
     var title: String {
         switch self {
         case .author: "Items by Author"
         case .category: "Items in Category"
         case .location: "Items at Location"
+        case .tag: "Items with Tag"
         }
     }
 
@@ -30,6 +32,8 @@ enum EntityItemFilter {
             ItemFilters(categoryId: id, search: search, cursor: cursor, limit: limit)
         case let .location(id):
             ItemFilters(locationId: id, search: search, cursor: cursor, limit: limit)
+        case let .tag(id):
+            ItemFilters(tagIds: [id], search: search, cursor: cursor, limit: limit)
         }
     }
 }
