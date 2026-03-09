@@ -131,3 +131,17 @@ struct TagDetailView: View {
             .environment(TagDetailViewModel())
     }
 }
+
+// MARK: - Color Extension
+
+private extension Color {
+    init?(hex: String) {
+        let hex = hex.replacingOccurrences(of: "#", with: "")
+        guard hex.count == 6,
+              let r = UInt8(hex.prefix(2), radix: 16),
+              let g = UInt8(hex.dropFirst(2).prefix(2), radix: 16),
+              let b = UInt8(hex.dropFirst(4).prefix(2), radix: 16)
+        else { return nil }
+        self.init(red: Double(r) / 255.0, green: Double(g) / 255.0, blue: Double(b) / 255.0)
+    }
+}

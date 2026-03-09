@@ -51,12 +51,12 @@ public final class TagDetailViewModel {
         }
     }
 
-    func refresh() async {
+    public func refresh() async {
         guard let tagId = tag?.id else { return }
         await fetchTag(id: tagId)
     }
 
-    func clearError() {
+    public func clearError() {
         error = nil
     }
 }

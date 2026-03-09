@@ -56,7 +56,7 @@ public struct TagService: TagServiceProtocol {
         return PaginatedResponse(data: body.data, pagination: pagination)
     }
 
-    @APICall(.ok)
+    @APICall(.ok, transform: "transformTagFromDetail")
     public func fetchTag(id: String) async throws -> Tag {
         try await StorageAPIClient.shared.client.getTag(.init(path: .init(id: id)))
     }
@@ -64,6 +64,11 @@ public struct TagService: TagServiceProtocol {
     @APICall(.ok)
     public func fetchTagDetail(id: String) async throws -> TagDetail {
         try await StorageAPIClient.shared.client.getTag(.init(path: .init(id: id)))
+    }
+
+    /// Extracts base Tag from TagDetailResponseSchema
+    private func transformTagFromDetail(_ body: TagDetail) -> Tag {
+        Tag(id: body.id, userId: body.userId, title: body.title, color: body.color, createdAt: body.createdAt, updatedAt: body.updatedAt)
     }
 
     @APICall(.created)
