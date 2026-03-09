@@ -7,6 +7,9 @@
 
 import RxStorageCore
 import SwiftUI
+#if os(macOS)
+    import AppKit
+#endif
 
 // MARK: - Item Detail View
 
@@ -18,6 +21,9 @@ struct ItemDetailView: View {
     @State private var viewModel = ItemDetailViewModel()
     @State private var errorViewModel = ErrorViewModel()
     @Environment(EventViewModel.self) private var eventViewModel
+    #if os(macOS)
+        @Environment(ContentUploadCenterViewModel.self) private var contentUploadCenter
+    #endif
     @State private var showingEditSheet = false
     @State private var showingQRSheet = false
     #if os(iOS)
@@ -43,6 +49,15 @@ struct ItemDetailView: View {
     @State private var isRefreshing = false
     @State private var showingStockDetailSheet = false
     @State private var showingTagPickerSheet = false
+    #if os(macOS)
+        @State private var showingContentUploadSheet = false
+        @State private var showingFolderExtensionSheet = false
+        @State private var pendingUploadFolderURL: URL?
+        @State private var folderExtensionInput = ContentUploadCatalog.defaultFolderExtensionInput
+        @State private var selectedCategoryId: String?
+        @State private var selectedLocationId: String?
+        @State private var selectedAuthorId: String?
+    #endif
     private let imageHeight: CGFloat = 400
 
     init(itemId: String, isViewOnly: Bool = false) {
@@ -222,6 +237,104 @@ struct ItemDetailView: View {
                     isViewOnly: isViewOnly
                 )
             }
+        #if os(macOS)
+            .sheet(isPresented: $showingContentUploadSheet) {
+                NavigationStack {
+                    ContentUploadProgressSheet(
+                        itemId: itemId,
+                        itemTitle: viewModel.item?.title ?? "Item",
+                        onClose: { showingContentUploadSheet = false },
+                        onUploadFiles: {
+                            showingContentUploadSheet = false
+                            handleUploadFilesAction()
+                        },
+                        onUploadFolder: {
+                            showingContentUploadSheet = false
+                            handleUploadFolderAction()
+                        },
+                        uploadCenter: contentUploadCenter
+                    )
+                }
+            }
+            .sheet(isPresented: $showingFolderExtensionSheet) {
+                FolderExtensionInputSheet(
+                    extensionInput: $folderExtensionInput,
+                    onCancel: {
+                        pendingUploadFolderURL = nil
+                        showingFolderExtensionSheet = false
+                    },
+                    onConfirm: {
+                        let folderURL = pendingUploadFolderURL
+                        pendingUploadFolderURL = nil
+                        showingFolderExtensionSheet = false
+                        if let folderURL {
+                            startFolderUpload(folderURL)
+                        }
+                    }
+                )
+            }
+            .onChange(of: contentUploadCenter.completionTrigger) { _, _ in
+                guard contentUploadCenter.lastCompletedItemId == itemId else { return }
+                Task { await refreshItemFromBackgroundUpload() }
+            }
+            .sheet(isPresented: Binding(
+                get: { selectedCategoryId != nil },
+                set: { if !$0 { selectedCategoryId = nil } }
+            )) {
+                if let categoryId = selectedCategoryId {
+                    NavigationStack {
+                        CategoryDetailView(categoryId: categoryId)
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                            .toolbar {
+                                ToolbarItem(placement: .cancellationAction) {
+                                    Button("Close") {
+                                        selectedCategoryId = nil
+                                    }
+                                }
+                            }
+                    }
+                    .frame(minWidth: 600, minHeight: 400)
+                }
+            }
+            .sheet(isPresented: Binding(
+                get: { selectedLocationId != nil },
+                set: { if !$0 { selectedLocationId = nil } }
+            )) {
+                if let locationId = selectedLocationId {
+                    NavigationStack {
+                        LocationDetailView(locationId: locationId)
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                            .toolbar {
+                                ToolbarItem(placement: .cancellationAction) {
+                                    Button("Close") {
+                                        selectedLocationId = nil
+                                    }
+                                }
+                            }
+                    }
+                    .frame(minWidth: 600, minHeight: 400)
+                }
+            }
+            .sheet(isPresented: Binding(
+                get: { selectedAuthorId != nil },
+                set: { if !$0 { selectedAuthorId = nil } }
+            )) {
+                if let authorId = selectedAuthorId {
+                    NavigationStack {
+                        AuthorDetailView(authorId: authorId)
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                            .toolbar {
+                                ToolbarItem(placement: .cancellationAction) {
+                                    Button("Close") {
+                                        selectedAuthorId = nil
+                                    }
+                                }
+                            }
+                    }
+                    .frame(minWidth: 600, minHeight: 400)
+                }
+            }
+        #endif
             .showViewModelError(errorViewModel)
     }
 
@@ -239,7 +352,22 @@ struct ItemDetailView: View {
                     ItemDetailDetailsCard(
                         item: item,
                         quantity: viewModel.quantity,
-                        onStockTapped: { showingStockDetailSheet = true }
+                        onStockTapped: { showingStockDetailSheet = true },
+                        onCategoryTapped: { categoryId in
+                            #if os(macOS)
+                                selectedCategoryId = categoryId
+                            #endif
+                        },
+                        onLocationTapped: { locationId in
+                            #if os(macOS)
+                                selectedLocationId = locationId
+                            #endif
+                        },
+                        onAuthorTapped: { authorId in
+                            #if os(macOS)
+                                selectedAuthorId = authorId
+                            #endif
+                        }
                     )
                     ItemDetailContentsCard(
                         contents: viewModel.contents,
@@ -247,6 +375,35 @@ struct ItemDetailView: View {
                         isViewOnly: isViewOnly,
                         onSeeAll: { showingContentListSheet = true },
                         onAddContent: { showingContentSheet = true },
+                        onUploadFiles: {
+                            #if os(macOS)
+                                handleUploadFilesAction()
+                            #endif
+                        },
+                        onUploadFolder: {
+                            #if os(macOS)
+                                handleUploadFolderAction()
+                            #endif
+                        },
+                        onShowUploadProgress: {
+                            #if os(macOS)
+                                showingContentUploadSheet = true
+                            #endif
+                        },
+                        hasActiveUploadSession: {
+                            #if os(macOS)
+                                contentUploadCenter.hasSession(for: itemId)
+                            #else
+                                false
+                            #endif
+                        }(),
+                        isUploading: {
+                            #if os(macOS)
+                                contentUploadCenter.isUploading(for: itemId)
+                            #else
+                                false
+                            #endif
+                        }(),
                         onEditContent: { selectedContentForEdit = $0 },
                         onDeleteContent: { await deleteContent($0) },
                         onSelectContent: { selectedContentForDetail = $0 }
@@ -506,4 +663,77 @@ struct ItemDetailView: View {
             errorViewModel.showError(error)
         }
     }
+
+    #if os(macOS)
+        private func handleUploadFilesAction() {
+            if contentUploadCenter.hasActiveSession(for: itemId) {
+                showingContentUploadSheet = true
+                return
+            }
+
+            let panel = NSOpenPanel()
+            panel.canChooseFiles = true
+            panel.canChooseDirectories = false
+            panel.allowsMultipleSelection = true
+            panel.canCreateDirectories = false
+            panel.prompt = "Select Files"
+
+            guard panel.runModal() == .OK else { return }
+            startFileUpload(with: panel.urls)
+        }
+
+        private func handleUploadFolderAction() {
+            if contentUploadCenter.hasActiveSession(for: itemId) {
+                showingContentUploadSheet = true
+                return
+            }
+
+            let panel = NSOpenPanel()
+            panel.canChooseFiles = false
+            panel.canChooseDirectories = true
+            panel.allowsMultipleSelection = false
+            panel.canCreateDirectories = false
+            panel.prompt = "Select Folder"
+
+            guard panel.runModal() == .OK else { return }
+            guard let folderURL = panel.url else { return }
+
+            pendingUploadFolderURL = folderURL
+            showingFolderExtensionSheet = true
+        }
+
+        private func startFileUpload(with urls: [URL]) {
+            do {
+                _ = try contentUploadCenter.createSessionFromFiles(
+                    itemId: itemId,
+                    itemTitle: viewModel.item?.title ?? "Item",
+                    fileURLs: urls
+                )
+                showingContentUploadSheet = true
+            } catch {
+                errorViewModel.showError(error)
+            }
+        }
+
+        private func startFolderUpload(_ folderURL: URL) {
+            do {
+                _ = try contentUploadCenter.createSessionFromFolder(
+                    itemId: itemId,
+                    itemTitle: viewModel.item?.title ?? "Item",
+                    folderURL: folderURL,
+                    extensionInput: folderExtensionInput
+                )
+                showingContentUploadSheet = true
+            } catch {
+                errorViewModel.showError(error)
+            }
+        }
+
+        private func refreshItemFromBackgroundUpload() async {
+            guard !Task.isCancelled else { return }
+            isRefreshing = true
+            await viewModel.refresh()
+            isRefreshing = false
+        }
+    #endif
 }
