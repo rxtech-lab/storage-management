@@ -16,6 +16,7 @@ public final class MockLocationService: LocationServiceProtocol {
     public var fetchLocationsResult: Result<[Location], Error> = .success([])
     public var fetchLocationsPaginatedResult: Result<PaginatedResponse<Location>, Error>?
     public var fetchLocationResult: Result<Location, Error>?
+    public var fetchLocationDetailResult: Result<LocationDetail, Error>?
     public var createLocationResult: Result<Location, Error>?
     public var updateLocationResult: Result<Location, Error>?
     public var deleteLocationResult: Result<Void, Error>?
@@ -24,6 +25,7 @@ public final class MockLocationService: LocationServiceProtocol {
     public var fetchLocationsCalled = false
     public var fetchLocationsPaginatedCalled = false
     public var fetchLocationCalled = false
+    public var fetchLocationDetailCalled = false
     public var createLocationCalled = false
     public var updateLocationCalled = false
     public var deleteLocationCalled = false
@@ -76,6 +78,32 @@ public final class MockLocationService: LocationServiceProtocol {
             switch result {
             case let .success(location):
                 return location
+            case let .failure(error):
+                throw error
+            }
+        }
+
+        throw APIError.serverError("Not configured")
+    }
+
+    public func fetchLocationDetail(id: String) async throws -> LocationDetail {
+        fetchLocationDetailCalled = true
+        lastFetchLocationId = id
+
+        if let result = fetchLocationDetailResult {
+            switch result {
+            case let .success(detail):
+                return detail
+            case let .failure(error):
+                throw error
+            }
+        }
+
+        // Fall back to fetchLocationResult, wrapping in LocationDetail with empty items
+        if let result = fetchLocationResult {
+            switch result {
+            case let .success(location):
+                return LocationDetail(id: location.id, userId: location.userId, title: location.title, latitude: location.latitude, longitude: location.longitude, createdAt: location.createdAt, updatedAt: location.updatedAt, items: [], totalItems: 0)
             case let .failure(error):
                 throw error
             }

@@ -16,6 +16,7 @@ public final class MockCategoryService: CategoryServiceProtocol {
     public var fetchCategoriesResult: Result<[RxStorageCore.Category], Error> = .success([])
     public var fetchCategoriesPaginatedResult: Result<PaginatedResponse<RxStorageCore.Category>, Error>?
     public var fetchCategoryResult: Result<RxStorageCore.Category, Error>?
+    public var fetchCategoryDetailResult: Result<CategoryDetail, Error>?
     public var createCategoryResult: Result<RxStorageCore.Category, Error>?
     public var updateCategoryResult: Result<RxStorageCore.Category, Error>?
     public var deleteCategoryResult: Result<Void, Error>?
@@ -24,6 +25,7 @@ public final class MockCategoryService: CategoryServiceProtocol {
     public var fetchCategoriesCalled = false
     public var fetchCategoriesPaginatedCalled = false
     public var fetchCategoryCalled = false
+    public var fetchCategoryDetailCalled = false
     public var lastFetchCategoryId: String?
     public var createCategoryCalled = false
     public var updateCategoryCalled = false
@@ -76,6 +78,32 @@ public final class MockCategoryService: CategoryServiceProtocol {
             switch result {
             case let .success(category):
                 return category
+            case let .failure(error):
+                throw error
+            }
+        }
+
+        throw APIError.notFound
+    }
+
+    public func fetchCategoryDetail(id: String) async throws -> CategoryDetail {
+        fetchCategoryDetailCalled = true
+        lastFetchCategoryId = id
+
+        if let result = fetchCategoryDetailResult {
+            switch result {
+            case let .success(detail):
+                return detail
+            case let .failure(error):
+                throw error
+            }
+        }
+
+        // Fall back to fetchCategoryResult, wrapping in CategoryDetail with empty items
+        if let result = fetchCategoryResult {
+            switch result {
+            case let .success(category):
+                return CategoryDetail(id: category.id, userId: category.userId, name: category.name, description: category.description, createdAt: category.createdAt, updatedAt: category.updatedAt, items: [], totalItems: 0)
             case let .failure(error):
                 throw error
             }

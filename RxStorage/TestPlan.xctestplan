@@ -9,10 +9,10 @@
     }
   ],
   "defaultOptions" : {
-    "testExecutionOrdering" : "random",
     "executeInParallel" : true,
-    "parallelizationMaximumWorkers" : 2,
     "maximumTestRepetitions" : 3,
+    "parallelizationMaximumWorkers" : 2,
+    "testExecutionOrdering" : "random",
     "testRepetitionMode" : "retryOnFailure",
     "testTimeoutsEnabled" : true
   },

@@ -18,6 +18,7 @@ public protocol LocationServiceProtocol: Sendable {
     func fetchLocations(filters: LocationFilters?) async throws -> [Location]
     func fetchLocationsPaginated(filters: LocationFilters?) async throws -> PaginatedResponse<Location>
     func fetchLocation(id: String) async throws -> Location
+    func fetchLocationDetail(id: String) async throws -> LocationDetail
     func createLocation(_ request: NewLocationRequest) async throws -> Location
     func updateLocation(id: String, _ request: UpdateLocationRequest) async throws -> Location
     func deleteLocation(id: String) async throws
@@ -53,9 +54,19 @@ public struct LocationService: LocationServiceProtocol {
         return PaginatedResponse(data: body.data, pagination: pagination)
     }
 
-    @APICall(.ok)
+    @APICall(.ok, transform: "transformLocationFromDetail")
     public func fetchLocation(id: String) async throws -> Location {
         try await StorageAPIClient.shared.client.getLocation(.init(path: .init(id: id)))
+    }
+
+    @APICall(.ok)
+    public func fetchLocationDetail(id: String) async throws -> LocationDetail {
+        try await StorageAPIClient.shared.client.getLocation(.init(path: .init(id: id)))
+    }
+
+    /// Extracts base Location from LocationDetailResponseSchema
+    private func transformLocationFromDetail(_ body: LocationDetail) -> Location {
+        Location(id: body.id, userId: body.userId, title: body.title, latitude: body.latitude, longitude: body.longitude, createdAt: body.createdAt, updatedAt: body.updatedAt)
     }
 
     @APICall(.created)

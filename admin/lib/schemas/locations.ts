@@ -2,6 +2,7 @@ import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from "zod";
 import { locations } from "@/lib/db/schema";
 import { PaginationQueryParams, PaginationInfo } from "./common";
+import { ItemResponseSchema } from "./items";
 
 // Base schemas from Drizzle (for internal validation)
 export const LocationSelectSchema = createSelectSchema(locations);
@@ -29,6 +30,12 @@ export const LocationResponseSchema = z.object({
   longitude: z.number().describe("Longitude coordinate"),
   createdAt: z.coerce.date().describe("Creation timestamp"),
   updatedAt: z.coerce.date().describe("Last update timestamp"),
+});
+
+// Detail response with related items
+export const LocationDetailResponseSchema = LocationResponseSchema.extend({
+  items: z.array(ItemResponseSchema).describe("Related items (limited to first 10)"),
+  totalItems: z.number().int().describe("Total number of items at this location"),
 });
 
 // Query params for locations list

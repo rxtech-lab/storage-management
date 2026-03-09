@@ -56,6 +56,9 @@ struct ItemDetailDetailsCard: View {
     let item: StorageItemDetail
     let quantity: Int
     let onStockTapped: () -> Void
+    var onCategoryTapped: ((String) -> Void)?
+    var onLocationTapped: ((String) -> Void)?
+    var onAuthorTapped: ((String) -> Void)?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -67,72 +70,160 @@ struct ItemDetailDetailsCard: View {
 
             VStack(spacing: 12) {
                 if let category = item.category {
-                    LabeledContent {
-                        Text(category.value1.name)
-                    } label: {
-                        Label("Category", systemImage: "folder")
-                    }
+                    #if os(macOS)
+                        Button {
+                            onCategoryTapped?(category.value1.id)
+                        } label: {
+                            DetailInfoRow(
+                                icon: "folder",
+                                label: "Category",
+                                value: category.value1.name,
+                                showChevron: true
+                            )
+                        }
+                        .buttonStyle(.plain)
+                    #else
+                        NavigationLink(value: EntityNavigation.category(id: category.value1.id)) {
+                            DetailInfoRow(
+                                icon: "folder",
+                                label: "Category",
+                                value: category.value1.name,
+                                showChevron: true
+                            )
+                        }
+                        .buttonStyle(.plain)
+                    #endif
                 }
 
                 if let location = item.location {
-                    LabeledContent {
-                        Text(location.value1.title)
-                    } label: {
-                        Label("Location", systemImage: "mappin")
-                    }
+                    #if os(macOS)
+                        Button {
+                            onLocationTapped?(location.value1.id)
+                        } label: {
+                            DetailInfoRow(
+                                icon: "mappin",
+                                label: "Location",
+                                value: location.value1.title,
+                                showChevron: true
+                            )
+                        }
+                        .buttonStyle(.plain)
+                    #else
+                        NavigationLink(value: EntityNavigation.location(id: location.value1.id)) {
+                            DetailInfoRow(
+                                icon: "mappin",
+                                label: "Location",
+                                value: location.value1.title,
+                                showChevron: true
+                            )
+                        }
+                        .buttonStyle(.plain)
+                    #endif
                 }
 
                 if let author = item.author {
-                    LabeledContent {
-                        Text(author.value1.name)
-                    } label: {
-                        Label("Author", systemImage: "person")
-                    }
+                    #if os(macOS)
+                        Button {
+                            onAuthorTapped?(author.value1.id)
+                        } label: {
+                            DetailInfoRow(
+                                icon: "person",
+                                label: "Author",
+                                value: author.value1.name,
+                                showChevron: true
+                            )
+                        }
+                        .buttonStyle(.plain)
+                    #else
+                        NavigationLink(value: EntityNavigation.author(id: author.value1.id)) {
+                            DetailInfoRow(
+                                icon: "person",
+                                label: "Author",
+                                value: author.value1.name,
+                                showChevron: true
+                            )
+                        }
+                        .buttonStyle(.plain)
+                    #endif
                 }
 
                 if let price = item.price {
-                    LabeledContent {
-                        Text(price, format: .currency(code: "USD"))
-                    } label: {
-                        Label("Price", systemImage: "dollarsign.circle")
-                    }
+                    DetailInfoRow(
+                        icon: "dollarsign.circle",
+                        label: "Price",
+                        value: price.formatted(.currency(code: "USD"))
+                    )
                 }
 
                 if let itemDate = item.itemDate {
-                    LabeledContent {
-                        Text(itemDate, style: .date)
-                    } label: {
-                        Label("Item Date", systemImage: "calendar")
-                    }
+                    DetailInfoRow(
+                        icon: "calendar",
+                        label: "Item Date",
+                        value: itemDate.formatted(date: .abbreviated, time: .omitted)
+                    )
                 }
 
                 if let expiresAt = item.expiresAt {
-                    LabeledContent {
-                        Text(expiresAt, style: .date)
-                            .foregroundStyle(expiresAt < Date() ? .red : .primary)
-                    } label: {
-                        Label("Expires", systemImage: "clock")
-                    }
+                    DetailInfoRow(
+                        icon: "clock",
+                        label: "Expires",
+                        value: expiresAt.formatted(date: .abbreviated, time: .omitted),
+                        valueColor: expiresAt < Date() ? .red : .primary
+                    )
                 }
 
                 Button {
                     onStockTapped()
                 } label: {
-                    LabeledContent {
-                        HStack(spacing: 4) {
-                            Text("\(quantity)")
-                            Image(systemName: "chevron.right")
-                                .font(.caption)
-                                .foregroundStyle(.tertiary)
-                        }
-                    } label: {
-                        Label("Stock", systemImage: "shippingbox")
-                    }
+                    DetailInfoRow(
+                        icon: "shippingbox",
+                        label: "Stock",
+                        value: "\(quantity)",
+                        showChevron: true
+                    )
                 }
                 .buttonStyle(.plain)
             }
         }
         .cardStyle()
+    }
+}
+
+// MARK: - Detail Info Row
+
+/// A consistently aligned row for displaying detail information with icon, label, and value
+private struct DetailInfoRow: View {
+    let icon: String
+    let label: String
+    let value: String
+    var showChevron: Bool = false
+    var valueColor: Color = .primary
+
+    private let iconWidth: CGFloat = 20
+
+    var body: some View {
+        HStack(spacing: 8) {
+            Image(systemName: icon)
+                .font(.body)
+                .foregroundStyle(.secondary)
+                .frame(width: iconWidth, alignment: .center)
+
+            Text(label)
+                .foregroundStyle(.primary)
+
+            Spacer()
+
+            HStack(spacing: 4) {
+                Text(value)
+                    .foregroundStyle(valueColor)
+
+                if showChevron {
+                    Image(systemName: "chevron.right")
+                        .font(.caption)
+                        .foregroundStyle(.tertiary)
+                }
+            }
+        }
     }
 }
 
@@ -299,6 +390,11 @@ struct ItemDetailContentsCard: View {
     let isViewOnly: Bool
     let onSeeAll: () -> Void
     let onAddContent: () -> Void
+    let onUploadFiles: (() -> Void)?
+    let onUploadFolder: (() -> Void)?
+    let onShowUploadProgress: (() -> Void)?
+    let hasActiveUploadSession: Bool
+    let isUploading: Bool
     let onEditContent: (Content) -> Void
     let onDeleteContent: (String) async -> Void
     let onSelectContent: (Content) -> Void
@@ -358,18 +454,65 @@ struct ItemDetailContentsCard: View {
             if !isViewOnly {
                 Divider()
                     .padding(.leading, 16)
-                Button {
-                    onAddContent()
-                } label: {
-                    HStack {
-                        Image(systemName: "plus.circle")
-                            .foregroundStyle(.blue)
-                        Text("Add Content")
-                            .foregroundStyle(.blue)
+                #if os(macOS)
+                    Menu {
+                        if !isUploading {
+                            Button {
+                                onAddContent()
+                            } label: {
+                                Label("Add Content", systemImage: "plus")
+                            }
+
+                            Button {
+                                onUploadFiles?()
+                            } label: {
+                                Label("Upload Files", systemImage: "arrow.up.doc")
+                            }
+
+                            Button {
+                                onUploadFolder?()
+                            } label: {
+                                Label("Upload Folder", systemImage: "folder.badge.plus")
+                            }
+                        }
+
+                        if hasActiveUploadSession {
+                            if !isUploading {
+                                Divider()
+                            }
+                            Button {
+                                onShowUploadProgress?()
+                            } label: {
+                                Label("Upload Progress", systemImage: "clock.arrow.trianglehead.counterclockwise.rotate.90")
+                            }
+                        }
+                    } label: {
+                        HStack(spacing: 6) {
+                            Image(systemName: "plus.circle")
+                                .foregroundStyle(.blue)
+                            Text("Add Content")
+                                .foregroundStyle(.blue)
+                            Image(systemName: "chevron.down")
+                                .font(.caption2)
+                                .foregroundStyle(.blue)
+                        }
                     }
-                }
-                .padding(.horizontal, 16)
-                .padding(.vertical, 12)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 12)
+                #else
+                    Button {
+                        onAddContent()
+                    } label: {
+                        HStack {
+                            Image(systemName: "plus.circle")
+                                .foregroundStyle(.blue)
+                            Text("Add Content")
+                                .foregroundStyle(.blue)
+                        }
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 12)
+                #endif
             }
         }
         .background(Color.secondarySystemGroupedBackground)

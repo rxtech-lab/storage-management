@@ -23,6 +23,7 @@ struct RxStorageApp: App {
     @State private var locationDetailViewModel = LocationDetailViewModel()
     @State private var positionSchemaDetailViewModel = PositionSchemaDetailViewModel()
     @State private var eventViewModel = EventViewModel()
+    @State private var contentUploadCenterViewModel = ContentUploadCenterViewModel()
     @State private var authManager = OAuthManager(
         configuration: AppConfiguration.shared.rxAuthConfiguration
     )
@@ -62,6 +63,7 @@ struct RxStorageApp: App {
                 .environment(locationDetailViewModel)
                 .environment(positionSchemaDetailViewModel)
                 .environment(eventViewModel)
+                .environment(contentUploadCenterViewModel)
                 .environment(authManager)
                 .task {
                     await authManager.checkExistingAuth()

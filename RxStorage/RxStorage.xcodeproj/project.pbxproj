@@ -23,6 +23,7 @@
 		DF6628342F2E327300333552 /* JsonSchemaEditor in Frameworks */ = {isa = PBXBuildFile; productRef = DF6628332F2E327300333552 /* JsonSchemaEditor */; };
 		DF6628362F2E327300333552 /* RxStorageCore in Frameworks */ = {isa = PBXBuildFile; productRef = DF6628352F2E327300333552 /* RxStorageCore */; };
 		DF6628382F2E327300333552 /* JSONSchema in Frameworks */ = {isa = PBXBuildFile; productRef = DF6628372F2E327300333552 /* JSONSchema */; };
+		DF6B4A9E2F5E7CF50019DE06 /* ViewInspector in Frameworks */ = {isa = PBXBuildFile; productRef = DF6B4A9D2F5E7CF50019DE06 /* ViewInspector */; };
 		DFA1B2013A8E4F0100AA1001 /* Sparkle in Frameworks */ = {isa = PBXBuildFile; platformFilters = (macos, ); productRef = DFA1B2023A8E4F0100AA1001 /* Sparkle */; };
 		DFE7DB8A2F49610900018A97 /* RxAuthSwift in Frameworks */ = {isa = PBXBuildFile; productRef = DFE7DB892F49610900018A97 /* RxAuthSwift */; };
 		DFE7DB8C2F49610900018A97 /* RxAuthSwiftUI in Frameworks */ = {isa = PBXBuildFile; productRef = DFE7DB8B2F49610900018A97 /* RxAuthSwiftUI */; };
@@ -159,6 +160,9 @@
 				Views/Shared/AdaptiveList.swift,
 				Views/Shared/CachedAsyncImage.swift,
 				Views/Shared/CameraPickerView.swift,
+				Views/Shared/EntityItemsCard.swift,
+				Views/Shared/EntityItemsListSheet.swift,
+				Views/Shared/EntityNavigation.swift,
 				Views/Shared/MediaCarousel.swift,
 				Views/Shared/SwipeableRow.swift,
 				Views/Tags/TagFormSheet.swift,
@@ -233,6 +237,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				DF6B4A9E2F5E7CF50019DE06 /* ViewInspector in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -361,6 +366,7 @@
 			);
 			name = RxStorageTests;
 			packageProductDependencies = (
+				DF6B4A9D2F5E7CF50019DE06 /* ViewInspector */,
 			);
 			productName = RxStorageTests;
 			productReference = DF66256E2F29137000333552 /* RxStorageTests.xctest */;
@@ -511,6 +517,7 @@
 				DF6626622F2B892800333552 /* XCRemoteSwiftPackageReference "swift-json-schema" */,
 				DFE7DB882F49610900018A97 /* XCRemoteSwiftPackageReference "RxAuthSwift" */,
 				DFA1B2033A8E4F0100AA1001 /* XCRemoteSwiftPackageReference "Sparkle" */,
+				DF6B4A9C2F5E7CF50019DE06 /* XCRemoteSwiftPackageReference "ViewInspector" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = DF66255E2F29136F00333552 /* Products */;
@@ -654,22 +661,10 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 5;
 				DEVELOPMENT_TEAM = P9KK452K8P;
-				ENABLE_APP_SANDBOX = YES;
-				ENABLE_FILE_ACCESS_PICTURE_FOLDER = readonly;
+				ENABLE_APP_SANDBOX = NO;
 				ENABLE_HARDENED_RUNTIME = YES;
-				ENABLE_INCOMING_NETWORK_CONNECTIONS = YES;
-				ENABLE_OUTGOING_NETWORK_CONNECTIONS = YES;
 				ENABLE_PREVIEWS = YES;
-				ENABLE_RESOURCE_ACCESS_AUDIO_INPUT = NO;
-				ENABLE_RESOURCE_ACCESS_BLUETOOTH = NO;
-				ENABLE_RESOURCE_ACCESS_CALENDARS = NO;
-				ENABLE_RESOURCE_ACCESS_CAMERA = YES;
-				ENABLE_RESOURCE_ACCESS_CONTACTS = NO;
-				ENABLE_RESOURCE_ACCESS_LOCATION = YES;
 				ENABLE_RESOURCE_ACCESS_PHOTO_LIBRARY = YES;
-				ENABLE_RESOURCE_ACCESS_PRINTING = NO;
-				ENABLE_RESOURCE_ACCESS_USB = NO;
-				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = RxStorage/Info.plist;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -1220,6 +1215,14 @@
 				minimumVersion = 1.0.2;
 			};
 		};
+		DF6B4A9C2F5E7CF50019DE06 /* XCRemoteSwiftPackageReference "ViewInspector" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/nalexn/ViewInspector.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 0.10.3;
+			};
+		};
 		DFA1B2033A8E4F0100AA1001 /* XCRemoteSwiftPackageReference "Sparkle" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/sparkle-project/Sparkle";
@@ -1289,6 +1292,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = DF6626622F2B892800333552 /* XCRemoteSwiftPackageReference "swift-json-schema" */;
 			productName = JSONSchema;
+		};
+		DF6B4A9D2F5E7CF50019DE06 /* ViewInspector */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = DF6B4A9C2F5E7CF50019DE06 /* XCRemoteSwiftPackageReference "ViewInspector" */;
+			productName = ViewInspector;
 		};
 		DFA1B2023A8E4F0100AA1001 /* Sparkle */ = {
 			isa = XCSwiftPackageProductDependency;
