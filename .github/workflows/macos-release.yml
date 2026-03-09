@@ -204,12 +204,12 @@ jobs:
 
     steps:
       - name: Download appcast artifact
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: macos-appcast-${{ github.sha }}
 
       - name: Download release notes artifact
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: macos-release-notes-${{ github.sha }}
 
