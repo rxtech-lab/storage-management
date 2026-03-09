@@ -28,6 +28,7 @@ struct SidebarNavigationView: View {
                 SidebarContent(showQrCodeScanner: $showQrCodeScanner)
             #else
                 SidebarContent()
+                    .frame(minWidth: 250)
             #endif
         } content: {
             // Column 2: List
@@ -39,7 +40,7 @@ struct SidebarNavigationView: View {
             // Column 3: Detail
             DetailColumn()
             #if os(macOS)
-                .frame(minWidth: 400)
+                .frame(minWidth: 500)
             #endif
         }
         .navigationSplitViewStyle(.balanced)
