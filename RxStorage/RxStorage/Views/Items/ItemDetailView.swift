@@ -9,6 +9,7 @@ import RxStorageCore
 import SwiftUI
 #if os(macOS)
     import AppKit
+    import UniformTypeIdentifiers
 #endif
 
 // MARK: - Item Detail View
@@ -55,6 +56,8 @@ struct ItemDetailView: View {
         @State private var showingContentUploadSheet = false
         @State private var showingFolderExtensionSheet = false
         @State private var pendingUploadFolderURL: URL?
+        @State private var pendingISOURL: URL?
+        @State private var isMountingISO = false
         @State private var folderExtensionInput = ContentUploadCatalog.defaultFolderExtensionInput
         @State private var selectedCategoryId: String?
         @State private var selectedLocationId: String?
@@ -266,6 +269,10 @@ struct ItemDetailView: View {
                                 showingContentUploadSheet = false
                                 handleUploadFolderAction()
                             },
+                            onUploadISO: {
+                                showingContentUploadSheet = false
+                                handleUploadISOAction()
+                            },
                             uploadCenter: contentUploadCenter
                         )
                     }
@@ -275,13 +282,16 @@ struct ItemDetailView: View {
                         extensionInput: $folderExtensionInput,
                         onCancel: {
                             pendingUploadFolderURL = nil
+                            pendingISOURL = nil
                             showingFolderExtensionSheet = false
                         },
                         onConfirm: {
-                            let folderURL = pendingUploadFolderURL
-                            pendingUploadFolderURL = nil
                             showingFolderExtensionSheet = false
-                            if let folderURL {
+                            if let isoURL = pendingISOURL {
+                                pendingISOURL = nil
+                                startISOUpload(isoURL)
+                            } else if let folderURL = pendingUploadFolderURL {
+                                pendingUploadFolderURL = nil
                                 startFolderUpload(folderURL)
                             }
                         }
@@ -399,6 +409,11 @@ struct ItemDetailView: View {
                                 handleUploadFolderAction()
                             #endif
                         },
+                        onUploadISO: {
+                            #if os(macOS)
+                                handleUploadISOAction()
+                            #endif
+                        },
                         onShowUploadProgress: {
                             #if os(macOS)
                                 showingContentUploadSheet = true
@@ -458,6 +473,11 @@ struct ItemDetailView: View {
             if isRefreshing {
                 LoadingOverlay(title: "Refreshing...")
             }
+            #if os(macOS)
+                if isMountingISO {
+                    LoadingOverlay(title: "Mounting ISO...")
+                }
+            #endif
         }
         .toolbar {
             if !isViewOnly {
@@ -737,6 +757,45 @@ struct ItemDetailView: View {
                 showingContentUploadSheet = true
             } catch {
                 errorViewModel.showError(error)
+            }
+        }
+
+        private func handleUploadISOAction() {
+            if contentUploadCenter.hasActiveSession(for: itemId) {
+                showingContentUploadSheet = true
+                return
+            }
+
+            let panel = NSOpenPanel()
+            panel.canChooseFiles = true
+            panel.canChooseDirectories = false
+            panel.allowsMultipleSelection = false
+            panel.canCreateDirectories = false
+            panel.allowedContentTypes = [.init(filenameExtension: "iso")].compactMap { $0 }
+            panel.prompt = "Select ISO"
+
+            guard panel.runModal() == .OK else { return }
+            guard let isoURL = panel.url else { return }
+
+            pendingISOURL = isoURL
+            showingFolderExtensionSheet = true
+        }
+
+        private func startISOUpload(_ isoURL: URL) {
+            Task {
+                isMountingISO = true
+                defer { isMountingISO = false }
+                do {
+                    _ = try await contentUploadCenter.createSessionFromISO(
+                        itemId: itemId,
+                        itemTitle: viewModel.item?.title ?? "Item",
+                        isoURL: isoURL,
+                        extensionInput: folderExtensionInput
+                    )
+                    showingContentUploadSheet = true
+                } catch {
+                    errorViewModel.showError(error)
+                }
             }
         }
 

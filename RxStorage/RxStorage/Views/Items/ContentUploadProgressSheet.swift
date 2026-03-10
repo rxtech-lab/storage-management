@@ -7,6 +7,7 @@ struct ContentUploadProgressSheet: View {
     let onClose: () -> Void
     var onUploadFiles: (() -> Void)?
     var onUploadFolder: (() -> Void)?
+    var onUploadISO: (() -> Void)?
     var uploadCenter: ContentUploadCenterViewModel
     @State private var expandedLogFileIDs: Set<UUID> = []
     @State private var selectedMode: ContentUploadVideoMode = .imageOnly
@@ -64,6 +65,14 @@ struct ContentUploadProgressSheet: View {
                             Label("Upload Folder", systemImage: "folder.badge.plus")
                         }
                         .accessibilityIdentifier("new-upload-folder-button")
+
+                        Button {
+                            uploadCenter.removeSession(for: itemId)
+                            onUploadISO?()
+                        } label: {
+                            Label("Upload ISO", systemImage: "opticaldisc")
+                        }
+                        .accessibilityIdentifier("new-upload-iso-button")
                     } label: {
                         Label("New Upload", systemImage: "plus")
                     }

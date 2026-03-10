@@ -5,6 +5,7 @@ import SwiftUI
 public enum ContentUploadCenterError: LocalizedError {
     case noSupportedFiles
     case invalidFolder
+    case isoMountFailed
 
     public var errorDescription: String? {
         switch self {
@@ -12,6 +13,8 @@ public enum ContentUploadCenterError: LocalizedError {
             return "No supported image/video files were found"
         case .invalidFolder:
             return "Selected folder is invalid"
+        case .isoMountFailed:
+            return "Failed to mount ISO file"
         }
     }
 }
@@ -28,6 +31,9 @@ public final class ContentUploadCenterViewModel {
     private let preprocessor: ContentUploadPreprocessorProtocol
     private var runTasks: [String: Task<Void, Never>] = [:]
     private var runIdentifiers: [String: UUID] = [:]
+    #if os(macOS)
+        private var isoMountPoints: [String: String] = [:]
+    #endif
 
     private let maxConcurrency: Int
     private let maxAttempts: Int
@@ -70,6 +76,13 @@ public final class ContentUploadCenterViewModel {
         runTasks[itemId] = nil
         runIdentifiers[itemId] = nil
         sessions[itemId] = nil
+        #if os(macOS)
+            if let mountPoint = isoMountPoints.removeValue(forKey: itemId) {
+                Task {
+                    await ISOService.unmount(mountPoint: mountPoint)
+                }
+            }
+        #endif
     }
 
     @discardableResult
@@ -93,6 +106,31 @@ public final class ContentUploadCenterViewModel {
         let files = try buildInputFiles(fromFolder: folderURL, extensionFilter: extensionFilter)
         return createSession(itemId: itemId, itemTitle: itemTitle, files: files)
     }
+
+    #if os(macOS)
+        @discardableResult
+        public func createSessionFromISO(
+            itemId: String,
+            itemTitle: String,
+            isoURL: URL,
+            extensionInput: String
+        ) async throws -> ContentUploadSession {
+            guard let mountPoint = await ISOService.mount(isoPath: isoURL.path) else {
+                throw ContentUploadCenterError.isoMountFailed
+            }
+            let folderURL = URL(fileURLWithPath: mountPoint)
+            let extensionFilter = ContentUploadCatalog.parseExtensionList(extensionInput)
+            do {
+                let files = try buildInputFiles(fromFolder: folderURL, extensionFilter: extensionFilter)
+                let session = createSession(itemId: itemId, itemTitle: itemTitle, files: files)
+                isoMountPoints[itemId] = mountPoint
+                return session
+            } catch {
+                await ISOService.unmount(mountPoint: mountPoint)
+                throw error
+            }
+        }
+    #endif
 
     public func beginUpload(itemId: String, mode: ContentUploadVideoMode) {
         guard var session = sessions[itemId] else { return }
