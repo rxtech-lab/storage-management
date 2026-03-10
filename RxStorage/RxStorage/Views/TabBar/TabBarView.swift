@@ -29,9 +29,7 @@ struct TabBarView: View {
                 #if os(iOS)
                     .qrCodeScannerToolbar(isPresented: $showQrCodeScanner)
                 #endif
-                    .navigationDestination(for: StorageItem.self) { item in
-                        ItemDetailView(itemId: item.id)
-                    }
+                    .entityNavigationDestinations()
             }
             .tabItem {
                 Label(AppTab.dashboard.rawValue, systemImage: AppTab.dashboard.systemImage)
@@ -50,9 +48,7 @@ struct TabBarView: View {
                 #if os(iOS)
                 .qrCodeScannerToolbar(isPresented: $showQrCodeScanner)
                 #endif
-                .navigationDestination(for: StorageItem.self) { item in
-                    ItemDetailView(itemId: item.id)
-                }
+                .entityNavigationDestinations()
             }
             .tabItem {
                 Label(AppTab.items.rawValue, systemImage: AppTab.items.systemImage)
@@ -81,6 +77,7 @@ struct TabBarView: View {
                     .navigationDestination(for: PositionSchema.self) { schema in
                         PositionSchemaDetailView(schemaId: schema.id)
                     }
+                    .entityNavigationDestinations()
             }
             .tabItem {
                 Label(AppTab.management.rawValue, systemImage: AppTab.management.systemImage)

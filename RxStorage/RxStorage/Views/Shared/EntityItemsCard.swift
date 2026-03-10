@@ -13,6 +13,7 @@ struct EntityItemsCard: View {
     let items: [StorageItem]
     let totalItems: Int
     let onSeeAll: () -> Void
+    var onItemTapped: ((StorageItem) -> Void)?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -55,12 +56,23 @@ struct EntityItemsCard: View {
                     .padding(.vertical, 12)
             } else {
                 ForEach(Array(items.enumerated()), id: \.element.id) { index, item in
-                    NavigationLink(value: item) {
-                        ItemRow(item: item)
+                    if let onItemTapped {
+                        Button {
+                            onItemTapped(item)
+                        } label: {
+                            ItemRow(item: item)
+                        }
+                        .buttonStyle(.plain)
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 8)
+                    } else {
+                        NavigationLink(value: item) {
+                            ItemRow(item: item)
+                        }
+                        .buttonStyle(.plain)
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 8)
                     }
-                    .buttonStyle(.plain)
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 8)
 
                     if index < items.count - 1 {
                         Divider()

@@ -165,6 +165,7 @@
 				Views/Shared/EntityNavigation.swift,
 				Views/Shared/MediaCarousel.swift,
 				Views/Shared/SwipeableRow.swift,
+				Views/Tags/TagDetailView.swift,
 				Views/Tags/TagFormSheet.swift,
 				Views/Tags/TagPickerSheet.swift,
 			);

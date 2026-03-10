@@ -41,9 +41,6 @@ struct AuthorDetailView: View {
                     .padding()
                 }
                 .background(Color.systemGroupedBackground)
-                .navigationDestination(for: StorageItem.self) { item in
-                    ItemDetailView(itemId: item.id)
-                }
             } else if let error = viewModel.error {
                 ContentUnavailableView(
                     "Error Loading Author",
@@ -80,6 +77,9 @@ struct AuthorDetailView: View {
             .task(id: authorId) {
                 await viewModel.fetchAuthor(id: authorId)
             }
+            .navigationDestination(for: StorageItem.self) { item in
+                ItemDetailView(itemId: item.id)
+            }
     }
 
     // MARK: - Author Header
@@ -89,6 +89,7 @@ struct AuthorDetailView: View {
             Text(author.name)
                 .font(.title2)
                 .fontWeight(.bold)
+                .accessibilityIdentifier("author-detail-title")
 
             if let bio = author.bio {
                 Text(bio)
@@ -96,6 +97,7 @@ struct AuthorDetailView: View {
                     .foregroundStyle(.secondary)
             }
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     // MARK: - Author Details

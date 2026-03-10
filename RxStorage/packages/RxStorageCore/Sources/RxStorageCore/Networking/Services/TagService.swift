@@ -18,6 +18,7 @@ public protocol TagServiceProtocol: Sendable {
     func fetchTags(filters: TagFilters?) async throws -> [Tag]
     func fetchTagsPaginated(filters: TagFilters?) async throws -> PaginatedResponse<Tag>
     func fetchTag(id: String) async throws -> Tag
+    func fetchTagDetail(id: String) async throws -> TagDetail
     func createTag(_ request: NewTagRequest) async throws -> Tag
     func updateTag(id: String, _ request: UpdateTagRequest) async throws -> Tag
     func deleteTag(id: String) async throws
@@ -55,9 +56,19 @@ public struct TagService: TagServiceProtocol {
         return PaginatedResponse(data: body.data, pagination: pagination)
     }
 
-    @APICall(.ok)
+    @APICall(.ok, transform: "transformTagFromDetail")
     public func fetchTag(id: String) async throws -> Tag {
         try await StorageAPIClient.shared.client.getTag(.init(path: .init(id: id)))
+    }
+
+    @APICall(.ok)
+    public func fetchTagDetail(id: String) async throws -> TagDetail {
+        try await StorageAPIClient.shared.client.getTag(.init(path: .init(id: id)))
+    }
+
+    /// Extracts base Tag from TagDetailResponseSchema
+    private func transformTagFromDetail(_ body: TagDetail) -> Tag {
+        Tag(id: body.id, userId: body.userId, title: body.title, color: body.color, createdAt: body.createdAt, updatedAt: body.updatedAt)
     }
 
     @APICall(.created)

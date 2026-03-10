@@ -90,8 +90,10 @@ struct ItemDetailDetailsCard: View {
                                 value: category.value1.name,
                                 showChevron: true
                             )
+                            .accessibilityIdentifier("detail-category-link")
                         }
                         .buttonStyle(.plain)
+
                     #endif
                 }
 
@@ -116,8 +118,10 @@ struct ItemDetailDetailsCard: View {
                                 value: location.value1.title,
                                 showChevron: true
                             )
+                            .accessibilityIdentifier("detail-location-link")
                         }
                         .buttonStyle(.plain)
+
                     #endif
                 }
 
@@ -142,8 +146,10 @@ struct ItemDetailDetailsCard: View {
                                 value: author.value1.name,
                                 showChevron: true
                             )
+                            .accessibilityIdentifier("detail-author-link")
                         }
                         .buttonStyle(.plain)
+
                     #endif
                 }
 
@@ -666,9 +672,24 @@ struct ItemDetailTagsCard: View {
     let isViewOnly: Bool
     let onAddTag: () -> Void
     let onRemoveTag: (String) async -> Void
+    let onTagTapped: ((TagRef) -> Void)?
 
     @State private var tagToRemove: TagRef?
     @State private var showRemoveConfirmation = false
+
+    init(
+        tags: [TagRef],
+        isViewOnly: Bool,
+        onAddTag: @escaping () -> Void,
+        onRemoveTag: @escaping (String) async -> Void,
+        onTagTapped: ((TagRef) -> Void)? = nil
+    ) {
+        self.tags = tags
+        self.isViewOnly = isViewOnly
+        self.onAddTag = onAddTag
+        self.onRemoveTag = onRemoveTag
+        self.onTagTapped = onTagTapped
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -774,6 +795,16 @@ struct ItemDetailTagsCard: View {
                 .foregroundStyle(isLightColor(tag.color) ? .black : .white)
                 .background(Color(hex: tag.color) ?? .gray)
                 .clipShape(Capsule())
+
+            Image(systemName: "chevron.right")
+                .font(.caption)
+                .foregroundStyle(.tertiary)
+        }
+        .contentShape(Rectangle())
+        .accessibilityElement(children: .combine)
+        .accessibilityIdentifier("tag-row-\(tag.id)")
+        .onTapGesture {
+            onTagTapped?(tag)
         }
         .contextMenu {
             if !isViewOnly {

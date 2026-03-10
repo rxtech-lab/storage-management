@@ -121,9 +121,6 @@ struct LocationDetailView: View {
             }
         }
         .background(Color.systemGroupedBackground)
-        .navigationDestination(for: StorageItem.self) { item in
-            ItemDetailView(itemId: item.id)
-        }
     }
 
     // MARK: - Map Content
@@ -156,6 +153,7 @@ struct LocationDetailView: View {
             Text(location.title)
                 .font(.title2)
                 .fontWeight(.bold)
+                .accessibilityIdentifier("location-detail-title")
 
             Text(String(format: "%.6f, %.6f", location.latitude, location.longitude))
                 .font(.subheadline)
