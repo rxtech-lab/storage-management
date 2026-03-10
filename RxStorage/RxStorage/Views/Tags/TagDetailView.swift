@@ -15,6 +15,7 @@ struct TagDetailView: View {
     @Environment(TagDetailViewModel.self) private var viewModel
     @State private var showingEditSheet = false
     @State private var showingItemsSheet = false
+    @State private var selectedItemForNavigation: StorageItem?
 
     var body: some View {
         Group {
@@ -35,15 +36,13 @@ struct TagDetailView: View {
                         EntityItemsCard(
                             items: viewModel.items,
                             totalItems: viewModel.totalItems,
-                            onSeeAll: { showingItemsSheet = true }
+                            onSeeAll: { showingItemsSheet = true },
+                            onItemTapped: { selectedItemForNavigation = $0 }
                         )
                     }
                     .padding()
                 }
                 .background(Color.systemGroupedBackground)
-                .navigationDestination(for: StorageItem.self) { item in
-                    ItemDetailView(itemId: item.id)
-                }
             } else if let error = viewModel.error {
                 ContentUnavailableView(
                     "Error Loading Tag",
@@ -82,6 +81,9 @@ struct TagDetailView: View {
             .task(id: tagId) {
                 await viewModel.fetchTag(id: tagId)
             }
+            .navigationDestination(item: $selectedItemForNavigation) { item in
+                ItemDetailView(itemId: item.id)
+            }
     }
 
     // MARK: - Tag Header
@@ -96,6 +98,9 @@ struct TagDetailView: View {
                 Text(tag.title)
                     .font(.title2)
                     .fontWeight(.bold)
+                    .accessibilityIdentifier("tag-detail-title")
+
+                Spacer()
             }
 
             Text(tag.title)
@@ -107,6 +112,7 @@ struct TagDetailView: View {
                 .background(Color(hex: tag.color) ?? .gray)
                 .clipShape(Capsule())
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     // MARK: - Tag Details

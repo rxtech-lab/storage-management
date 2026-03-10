@@ -226,130 +226,130 @@ struct ItemDetailView: View {
                     )
                 }
             }
-            #if os(macOS)
+        #if os(macOS)
             .sheet(item: $selectedTagForDetail) { tag in
                 NavigationStack {
                     TagDetailView(tagId: tag.id)
                 }
                 .frame(minWidth: 500, minHeight: 400)
             }
-            #else
+        #else
             .navigationDestination(item: $selectedTagIdForNavigation) { tagId in
-                TagDetailView(tagId: tagId)
-            }
-            #endif
-            .sheet(isPresented: $showingContentListSheet) {
-                ContentListSheet(
-                    itemId: itemId,
-                    contentSchemas: $viewModel.contentSchemas,
-                    isViewOnly: isViewOnly
-                )
-            }
-            .sheet(isPresented: $showingChildrenListSheet) {
-                ChildrenListSheet(
-                    parentId: itemId,
-                    isViewOnly: isViewOnly
-                )
-            }
-        #if os(macOS)
-            .sheet(isPresented: $showingContentUploadSheet) {
-                NavigationStack {
-                    ContentUploadProgressSheet(
+                    TagDetailView(tagId: tagId)
+                }
+        #endif
+                .sheet(isPresented: $showingContentListSheet) {
+                    ContentListSheet(
                         itemId: itemId,
-                        itemTitle: viewModel.item?.title ?? "Item",
-                        onClose: { showingContentUploadSheet = false },
-                        onUploadFiles: {
-                            showingContentUploadSheet = false
-                            handleUploadFilesAction()
-                        },
-                        onUploadFolder: {
-                            showingContentUploadSheet = false
-                            handleUploadFolderAction()
-                        },
-                        uploadCenter: contentUploadCenter
+                        contentSchemas: $viewModel.contentSchemas,
+                        isViewOnly: isViewOnly
                     )
                 }
-            }
-            .sheet(isPresented: $showingFolderExtensionSheet) {
-                FolderExtensionInputSheet(
-                    extensionInput: $folderExtensionInput,
-                    onCancel: {
-                        pendingUploadFolderURL = nil
-                        showingFolderExtensionSheet = false
-                    },
-                    onConfirm: {
-                        let folderURL = pendingUploadFolderURL
-                        pendingUploadFolderURL = nil
-                        showingFolderExtensionSheet = false
-                        if let folderURL {
-                            startFolderUpload(folderURL)
+                .sheet(isPresented: $showingChildrenListSheet) {
+                    ChildrenListSheet(
+                        parentId: itemId,
+                        isViewOnly: isViewOnly
+                    )
+                }
+        #if os(macOS)
+                .sheet(isPresented: $showingContentUploadSheet) {
+                    NavigationStack {
+                        ContentUploadProgressSheet(
+                            itemId: itemId,
+                            itemTitle: viewModel.item?.title ?? "Item",
+                            onClose: { showingContentUploadSheet = false },
+                            onUploadFiles: {
+                                showingContentUploadSheet = false
+                                handleUploadFilesAction()
+                            },
+                            onUploadFolder: {
+                                showingContentUploadSheet = false
+                                handleUploadFolderAction()
+                            },
+                            uploadCenter: contentUploadCenter
+                        )
+                    }
+                }
+                .sheet(isPresented: $showingFolderExtensionSheet) {
+                    FolderExtensionInputSheet(
+                        extensionInput: $folderExtensionInput,
+                        onCancel: {
+                            pendingUploadFolderURL = nil
+                            showingFolderExtensionSheet = false
+                        },
+                        onConfirm: {
+                            let folderURL = pendingUploadFolderURL
+                            pendingUploadFolderURL = nil
+                            showingFolderExtensionSheet = false
+                            if let folderURL {
+                                startFolderUpload(folderURL)
+                            }
                         }
-                    }
-                )
-            }
-            .onChange(of: contentUploadCenter.completionTrigger) { _, _ in
-                guard contentUploadCenter.lastCompletedItemId == itemId else { return }
-                Task { await refreshItemFromBackgroundUpload() }
-            }
-            .sheet(isPresented: Binding(
-                get: { selectedCategoryId != nil },
-                set: { if !$0 { selectedCategoryId = nil } }
-            )) {
-                if let categoryId = selectedCategoryId {
-                    NavigationStack {
-                        CategoryDetailView(categoryId: categoryId)
-                            .frame(maxWidth: .infinity, maxHeight: .infinity)
-                            .toolbar {
-                                ToolbarItem(placement: .cancellationAction) {
-                                    Button("Close") {
-                                        selectedCategoryId = nil
+                    )
+                }
+                .onChange(of: contentUploadCenter.completionTrigger) { _, _ in
+                    guard contentUploadCenter.lastCompletedItemId == itemId else { return }
+                    Task { await refreshItemFromBackgroundUpload() }
+                }
+                .sheet(isPresented: Binding(
+                    get: { selectedCategoryId != nil },
+                    set: { if !$0 { selectedCategoryId = nil } }
+                )) {
+                    if let categoryId = selectedCategoryId {
+                        NavigationStack {
+                            CategoryDetailView(categoryId: categoryId)
+                                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                                .toolbar {
+                                    ToolbarItem(placement: .cancellationAction) {
+                                        Button("Close") {
+                                            selectedCategoryId = nil
+                                        }
                                     }
                                 }
-                            }
+                        }
+                        .frame(minWidth: 600, minHeight: 400)
                     }
-                    .frame(minWidth: 600, minHeight: 400)
                 }
-            }
-            .sheet(isPresented: Binding(
-                get: { selectedLocationId != nil },
-                set: { if !$0 { selectedLocationId = nil } }
-            )) {
-                if let locationId = selectedLocationId {
-                    NavigationStack {
-                        LocationDetailView(locationId: locationId)
-                            .frame(maxWidth: .infinity, maxHeight: .infinity)
-                            .toolbar {
-                                ToolbarItem(placement: .cancellationAction) {
-                                    Button("Close") {
-                                        selectedLocationId = nil
+                .sheet(isPresented: Binding(
+                    get: { selectedLocationId != nil },
+                    set: { if !$0 { selectedLocationId = nil } }
+                )) {
+                    if let locationId = selectedLocationId {
+                        NavigationStack {
+                            LocationDetailView(locationId: locationId)
+                                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                                .toolbar {
+                                    ToolbarItem(placement: .cancellationAction) {
+                                        Button("Close") {
+                                            selectedLocationId = nil
+                                        }
                                     }
                                 }
-                            }
+                        }
+                        .frame(minWidth: 600, minHeight: 400)
                     }
-                    .frame(minWidth: 600, minHeight: 400)
                 }
-            }
-            .sheet(isPresented: Binding(
-                get: { selectedAuthorId != nil },
-                set: { if !$0 { selectedAuthorId = nil } }
-            )) {
-                if let authorId = selectedAuthorId {
-                    NavigationStack {
-                        AuthorDetailView(authorId: authorId)
-                            .frame(maxWidth: .infinity, maxHeight: .infinity)
-                            .toolbar {
-                                ToolbarItem(placement: .cancellationAction) {
-                                    Button("Close") {
-                                        selectedAuthorId = nil
+                .sheet(isPresented: Binding(
+                    get: { selectedAuthorId != nil },
+                    set: { if !$0 { selectedAuthorId = nil } }
+                )) {
+                    if let authorId = selectedAuthorId {
+                        NavigationStack {
+                            AuthorDetailView(authorId: authorId)
+                                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                                .toolbar {
+                                    ToolbarItem(placement: .cancellationAction) {
+                                        Button("Close") {
+                                            selectedAuthorId = nil
+                                        }
                                     }
                                 }
-                            }
+                        }
+                        .frame(minWidth: 600, minHeight: 400)
                     }
-                    .frame(minWidth: 600, minHeight: 400)
                 }
-            }
         #endif
-            .showViewModelError(errorViewModel)
+                .showViewModelError(errorViewModel)
     }
 
     // MARK: - Item Content
@@ -429,9 +429,9 @@ struct ItemDetailView: View {
                         onRemoveTag: { await removeTag($0) },
                         onTagTapped: { tag in
                             #if os(macOS)
-                            selectedTagForDetail = tag
+                                selectedTagForDetail = tag
                             #else
-                            selectedTagIdForNavigation = tag.id
+                                selectedTagIdForNavigation = tag.id
                             #endif
                         }
                     )
@@ -454,18 +454,6 @@ struct ItemDetailView: View {
         }
         .ignoresSafeArea(edges: item.images.isEmpty ? [] : .top)
         .background(Color.systemGroupedBackground)
-        .navigationDestination(for: EntityNavigation.self) { nav in
-            switch nav {
-            case let .category(id):
-                CategoryDetailView(categoryId: id)
-            case let .location(id):
-                LocationDetailView(locationId: id)
-            case let .author(id):
-                AuthorDetailView(authorId: id)
-            case let .tag(id):
-                TagDetailView(tagId: id)
-            }
-        }
         .overlay {
             if isRefreshing {
                 LoadingOverlay(title: "Refreshing...")

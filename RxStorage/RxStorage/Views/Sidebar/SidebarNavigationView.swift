@@ -249,9 +249,7 @@ struct DetailColumn: View {
             if let item = nav.selectedItem {
                 NavigationStack {
                     ItemDetailView(itemId: item.id)
-                        .navigationDestination(for: StorageItem.self) { child in
-                            ItemDetailView(itemId: child.id)
-                        }
+                        .entityNavigationDestinations()
                 }
                 .id(item.id) // Forces clean NavigationStack recreation on item change
             } else {
@@ -286,8 +284,11 @@ struct DetailColumn: View {
         switch nav.selectedManagementSection {
         case .categories:
             if let category = nav.selectedCategory {
-                CategoryDetailView(categoryId: category.id)
-                    .id(category.id)
+                NavigationStack {
+                    CategoryDetailView(categoryId: category.id)
+                        .entityNavigationDestinations()
+                }
+                .id(category.id)
             } else {
                 ContentUnavailableView(
                     "Select a category",
@@ -297,8 +298,11 @@ struct DetailColumn: View {
             }
         case .locations:
             if let location = nav.selectedLocation {
-                LocationDetailView(locationId: location.id)
-                    .id(location.id)
+                NavigationStack {
+                    LocationDetailView(locationId: location.id)
+                        .entityNavigationDestinations()
+                }
+                .id(location.id)
             } else {
                 ContentUnavailableView(
                     "Select a location",
@@ -308,8 +312,11 @@ struct DetailColumn: View {
             }
         case .authors:
             if let author = nav.selectedAuthor {
-                AuthorDetailView(authorId: author.id)
-                    .id(author.id)
+                NavigationStack {
+                    AuthorDetailView(authorId: author.id)
+                        .entityNavigationDestinations()
+                }
+                .id(author.id)
             } else {
                 ContentUnavailableView(
                     "Select an author",

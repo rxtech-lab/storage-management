@@ -99,6 +99,36 @@ extension XCUIApplication {
         alerts["Deep Link Error"].buttons["OK"].firstMatch
     }
 
+    // MARK: - Entity Detail Navigation
+
+    var tagDetailTitle: XCUIElement {
+        staticTexts["tag-detail-title"].firstMatch
+    }
+
+    var categoryDetailTitle: XCUIElement {
+        staticTexts["category-detail-title"].firstMatch
+    }
+
+    var locationDetailTitle: XCUIElement {
+        staticTexts["location-detail-title"].firstMatch
+    }
+
+    var authorDetailTitle: XCUIElement {
+        staticTexts["author-detail-title"].firstMatch
+    }
+
+    var detailCategoryLink: XCUIElement {
+        staticTexts["detail-category-link"].firstMatch
+    }
+
+    var detailLocationLink: XCUIElement {
+        staticTexts["detail-location-link"].firstMatch
+    }
+
+    var detailAuthorLink: XCUIElement {
+        staticTexts["detail-author-link"].firstMatch
+    }
+
     // MARK: - Image Picker & Camera
 
     var addImagesButton: XCUIElement {

@@ -90,8 +90,10 @@ struct ItemDetailDetailsCard: View {
                                 value: category.value1.name,
                                 showChevron: true
                             )
+                            .accessibilityIdentifier("detail-category-link")
                         }
                         .buttonStyle(.plain)
+
                     #endif
                 }
 
@@ -116,8 +118,10 @@ struct ItemDetailDetailsCard: View {
                                 value: location.value1.title,
                                 showChevron: true
                             )
+                            .accessibilityIdentifier("detail-location-link")
                         }
                         .buttonStyle(.plain)
+
                     #endif
                 }
 
@@ -142,8 +146,10 @@ struct ItemDetailDetailsCard: View {
                                 value: author.value1.name,
                                 showChevron: true
                             )
+                            .accessibilityIdentifier("detail-author-link")
                         }
                         .buttonStyle(.plain)
+
                     #endif
                 }
 
@@ -795,6 +801,8 @@ struct ItemDetailTagsCard: View {
                 .foregroundStyle(.tertiary)
         }
         .contentShape(Rectangle())
+        .accessibilityElement(children: .combine)
+        .accessibilityIdentifier("tag-row-\(tag.id)")
         .onTapGesture {
             onTagTapped?(tag)
         }

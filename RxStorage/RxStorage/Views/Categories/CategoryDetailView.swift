@@ -41,9 +41,6 @@ struct CategoryDetailView: View {
                     .padding()
                 }
                 .background(Color.systemGroupedBackground)
-                .navigationDestination(for: StorageItem.self) { item in
-                    ItemDetailView(itemId: item.id)
-                }
             } else if let error = viewModel.error {
                 ContentUnavailableView(
                     "Error Loading Category",
@@ -80,6 +77,9 @@ struct CategoryDetailView: View {
             .task(id: categoryId) {
                 await viewModel.fetchCategory(id: categoryId)
             }
+            .navigationDestination(for: StorageItem.self) { item in
+                ItemDetailView(itemId: item.id)
+            }
     }
 
     // MARK: - Category Header
@@ -89,6 +89,7 @@ struct CategoryDetailView: View {
             Text(category.name)
                 .font(.title2)
                 .fontWeight(.bold)
+                .accessibilityIdentifier("category-detail-title")
 
             if let description = category.description {
                 Text(description)
@@ -96,6 +97,7 @@ struct CategoryDetailView: View {
                     .foregroundStyle(.secondary)
             }
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     // MARK: - Category Details
