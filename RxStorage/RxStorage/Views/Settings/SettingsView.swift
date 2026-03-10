@@ -19,7 +19,7 @@ struct SettingsView: View {
     @State private var accountDeletionViewModel = AccountDeletionViewModel()
 
     var body: some View {
-        List {
+        Form {
             // User Info Section
             if let user = authManager.currentUser {
                 Section("Account") {
@@ -194,6 +194,7 @@ struct SettingsView: View {
             }
         }
         .navigationTitle("Settings")
+        .formStyle(.grouped)
         .confirmationDialog(
             title: "Sign Out",
             message: "Are you sure you want to sign out?",

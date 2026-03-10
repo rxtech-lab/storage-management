@@ -398,6 +398,7 @@ struct ItemDetailContentsCard: View {
     let onAddContent: () -> Void
     let onUploadFiles: (() -> Void)?
     let onUploadFolder: (() -> Void)?
+    let onUploadISO: (() -> Void)?
     let onShowUploadProgress: (() -> Void)?
     let hasActiveUploadSession: Bool
     let isUploading: Bool
@@ -479,6 +480,12 @@ struct ItemDetailContentsCard: View {
                                 onUploadFolder?()
                             } label: {
                                 Label("Upload Folder", systemImage: "folder.badge.plus")
+                            }
+
+                            Button {
+                                onUploadISO?()
+                            } label: {
+                                Label("Upload ISO", systemImage: "opticaldisc")
                             }
                         }
 
