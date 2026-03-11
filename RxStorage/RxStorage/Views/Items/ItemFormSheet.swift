@@ -85,7 +85,7 @@ struct ItemFormSheet: View {
                             await submitForm()
                         }
                     }
-                    .disabled(viewModel.isSubmitting)
+                    .disabled(viewModel.isSubmitting || viewModel.isUploading)
                     .accessibilityIdentifier("item-form-submit-button")
                 }
             }

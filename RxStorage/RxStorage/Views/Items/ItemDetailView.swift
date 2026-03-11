@@ -11,6 +11,9 @@ import SwiftUI
     import AppKit
     import UniformTypeIdentifiers
 #endif
+#if os(iOS)
+    import UIKit
+#endif
 
 // MARK: - Item Detail View
 
@@ -52,6 +55,7 @@ struct ItemDetailView: View {
     @State private var showingTagPickerSheet = false
     @State private var selectedTagForDetail: TagRef?
     @State private var selectedTagIdForNavigation: String?
+    @State private var sharePreviewImage: Image?
     #if os(macOS)
         @State private var showingContentUploadSheet = false
         @State private var showingFolderExtensionSheet = false
@@ -122,6 +126,9 @@ struct ItemDetailView: View {
                         await handleEvent(event)
                     }
                 }
+            }
+            .task(id: viewModel.item?.id) {
+                await loadSharePreviewImage()
             }
         #if os(iOS)
             .confirmationDialog(
@@ -504,6 +511,24 @@ struct ItemDetailView: View {
                 Label("Show QR Code", systemImage: "qrcode")
             }
 
+            if let previewURL = URL(string: item.previewUrl) {
+                if let previewImage = sharePreviewImage {
+                    ShareLink(
+                        item: previewURL,
+                        preview: SharePreview(item.title, image: previewImage)
+                    ) {
+                        Label("Share", systemImage: "square.and.arrow.up")
+                    }
+                } else {
+                    ShareLink(
+                        item: previewURL,
+                        preview: SharePreview(item.title)
+                    ) {
+                        Label("Share", systemImage: "square.and.arrow.up")
+                    }
+                }
+            }
+
             #if os(iOS)
                 Button {
                     Task { await writeToNFC(previewUrl: item.previewUrl) }
@@ -541,6 +566,47 @@ struct ItemDetailView: View {
         default:
             break
         }
+    }
+
+    // MARK: - Share Preview Image
+
+    private func loadSharePreviewImage() async {
+        guard let item = viewModel.item,
+              let firstImage = item.images.first,
+              let imageURL = URL(string: firstImage.url)
+        else {
+            sharePreviewImage = nil
+            return
+        }
+
+        // Check disk cache first
+        if let cachedData = await ImageDiskCache.shared.cachedData(for: imageURL),
+           let image = platformImageToSwiftUIImage(from: cachedData)
+        {
+            sharePreviewImage = image
+            return
+        }
+
+        // Download from network
+        do {
+            let (data, _) = try await URLSession.shared.data(from: imageURL)
+            if let image = platformImageToSwiftUIImage(from: data) {
+                await ImageDiskCache.shared.store(data: data, for: imageURL)
+                sharePreviewImage = image
+            }
+        } catch {
+            sharePreviewImage = nil
+        }
+    }
+
+    private func platformImageToSwiftUIImage(from data: Data) -> Image? {
+        #if os(iOS)
+            guard let uiImage = UIImage(data: data) else { return nil }
+            return Image(uiImage: uiImage)
+        #elseif os(macOS)
+            guard let nsImage = NSImage(data: data) else { return nil }
+            return Image(nsImage: nsImage)
+        #endif
     }
 
     // MARK: - NFC Writing
