@@ -96,6 +96,27 @@ final class RxStorageEntityNavigationTests: XCTestCase {
 
         // Verify location detail view appears
         XCTAssertTrue(app.staticTexts["Test Location"].waitForExistence(timeout: 10), "Location detail should be displayed")
+
+        app/*@START_MENU_TOKEN@*/ .buttons["Edit"]/*[[".navigationBars.buttons[\"Edit\"]",".buttons[\"Edit\"]"],[[[-1,1],[-1,0]]],[0]]@END_MENU_TOKEN@*/ .firstMatch.tap()
+        app/*@START_MENU_TOKEN@*/ .buttons["location-form-cancel-button"]/*[[".otherElements[\"location-form-cancel-button\"].buttons",".otherElements",".buttons[\"Cancel\"]",".buttons[\"location-form-cancel-button\"]"],[[[-1,3],[-1,2],[-1,1,1],[-1,0]],[[-1,3],[-1,2]]],[0]]@END_MENU_TOKEN@*/ .firstMatch.tap()
+
+        let cellsQuery = app.cells
+        cellsQuery/*@START_MENU_TOKEN@*/ .containing(.staticText, identifier: "Test Location").firstMatch/*[[".element(boundBy: 0)",".containing(.staticText, identifier: \"37.774900, -122.419400\").firstMatch",".containing(.staticText, identifier: \"Test Location\").firstMatch"],[[[-1,2],[-1,1],[-1,0]]],[0]]@END_MENU_TOKEN@*/ .swipeUp()
+
+        let element = app/*@START_MENU_TOKEN@*/ .buttons["Items, (1)"]/*[[".buttons",".containing(.image, identifier: \"chevron.right\")",".containing(.staticText, identifier: \"(1)\")",".containing(.staticText, identifier: \"Items\")",".otherElements.buttons[\"Items, (1)\"]",".buttons[\"Items, (1)\"]"],[[[-1,5],[-1,4],[-1,0,1]],[[-1,3],[-1,2],[-1,1]]],[0]]@END_MENU_TOKEN@*/ .firstMatch
+
+        app.collectionViews/*@START_MENU_TOKEN@*/ .firstMatch/*[[".containing(.cell, identifier: nil).firstMatch",".containing(.other, identifier: nil).firstMatch",".firstMatch"],[[[-1,2],[-1,1],[-1,0]]],[0]]@END_MENU_TOKEN@*/ .swipeUp()
+        cellsQuery/*@START_MENU_TOKEN@*/ .containing(.staticText, identifier: "Latitude").firstMatch/*[[".element(boundBy: 2)",".containing(.staticText, identifier: \"37.774900\").firstMatch",".containing(.staticText, identifier: \"Latitude\").firstMatch"],[[[-1,2],[-1,1],[-1,0]]],[0]]@END_MENU_TOKEN@*/ .swipeUp()
+        app/*@START_MENU_TOKEN@*/ .buttons["item-row"]/*[[".buttons",".containing(.image, identifier: \"chevron.forward\")",".containing(.staticText, identifier: \"This is a public test item for E2E testing\")",".containing(.staticText, identifier: \"item-row\")",".otherElements",".buttons[\"Public Test Item, This is a public test item for E2E testing\"]",".buttons[\"item-row\"]"],[[[-1,6],[-1,5],[-1,4,2],[-1,0,1]],[[-1,3],[-1,2],[-1,1]],[[-1,6],[-1,5]]],[0]]@END_MENU_TOKEN@*/ .firstMatch.tap()
+        app/*@START_MENU_TOKEN@*/ .buttons["BackButton"]/*[[".navigationBars",".buttons[\"Back\"]",".buttons[\"BackButton\"]"],[[[-1,2],[-1,1],[-1,0,1]],[[-1,2],[-1,1]]],[0]]@END_MENU_TOKEN@*/ .firstMatch.tap()
+
+        element.tap()
+
+        let element2 = app/*@START_MENU_TOKEN@*/ .buttons["Done"]/*[[".otherElements[\"Done\"].buttons",".otherElements.buttons[\"Done\"]",".buttons[\"Done\"]"],[[[-1,2],[-1,1],[-1,0]]],[0]]@END_MENU_TOKEN@*/ .firstMatch
+        element2.tap()
+        app/*@START_MENU_TOKEN@*/ .buttons["item-row"]/*[[".buttons",".containing(.image, identifier: \"chevron.forward\")",".containing(.staticText, identifier: \"This is a public test item for E2E testing\")",".containing(.staticText, identifier: \"item-row\")",".cells.buttons",".otherElements",".buttons[\"Public Test Item, This is a public test item for E2E testing\"]",".buttons[\"item-row\"]"],[[[-1,7],[-1,6],[-1,5,2],[-1,4],[-1,0,1]],[[-1,3],[-1,2],[-1,1]],[[-1,7],[-1,6]]],[0]]@END_MENU_TOKEN@*/ .firstMatch.tap()
+        app/*@START_MENU_TOKEN@*/ .buttons["BackButton"]/*[[".navigationBars",".buttons[\"Items at Location\"]",".buttons[\"BackButton\"]"],[[[-1,2],[-1,1],[-1,0,1]],[[-1,2],[-1,1]]],[0]]@END_MENU_TOKEN@*/ .firstMatch.tap()
+        element2.tap()
     }
 
     // MARK: - Author Navigation

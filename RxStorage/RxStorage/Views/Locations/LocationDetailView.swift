@@ -9,6 +9,21 @@ import MapKit
 import RxStorageCore
 import SwiftUI
 
+/// Sheet types for LocationDetailView
+private enum LocationSheet: Identifiable {
+    case edit
+    case items
+    case info(Location)
+
+    var id: String {
+        switch self {
+        case .edit: return "edit"
+        case .items: return "items"
+        case .info: return "info"
+        }
+    }
+}
+
 /// Location detail view with full-screen map and bottom sheet (iPhone) or side panel (iPad/Mac)
 struct LocationDetailView: View {
     let locationId: String
@@ -16,9 +31,8 @@ struct LocationDetailView: View {
     @Environment(LocationDetailViewModel.self) private var viewModel
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @State private var cameraPosition: MapCameraPosition = .automatic
-    @State private var showingEditSheet = false
-    @State private var showingInfoSheet = false
-    @State private var showingItemsSheet = false
+    @State private var activeSheet: LocationSheet?
+    @State private var pendingSheet: LocationSheet?
 
     var body: some View {
         Group {
@@ -49,21 +63,46 @@ struct LocationDetailView: View {
             .toolbar {
                 ToolbarItem(placement: .primaryAction) {
                     Button {
-                        showingEditSheet = true
+                        activeSheet = .edit
                     } label: {
                         Label("Edit", systemImage: "pencil")
                     }
                 }
             }
-            .sheet(isPresented: $showingEditSheet) {
-                if let location = viewModel.location {
-                    NavigationStack {
-                        LocationFormSheet(location: location)
-                    }
+            .sheet(item: $activeSheet, onDismiss: {
+                // Check if there's a pending sheet to show
+                if let pending = pendingSheet {
+                    pendingSheet = nil
+                    activeSheet = pending
+                } else if horizontalSizeClass != .regular, let location = viewModel.location {
+                    // Restore info sheet in compact layout after dismissing edit/items sheets
+                    activeSheet = .info(location)
                 }
-            }
-            .sheet(isPresented: $showingItemsSheet) {
-                EntityItemsListSheet(filter: .location(id: locationId))
+            }) { sheet in
+                switch sheet {
+                case .edit:
+                    if let location = viewModel.location {
+                        NavigationStack {
+                            LocationFormSheet(location: location)
+                        }
+                    }
+                case .items:
+                    EntityItemsListSheet(filter: .location(id: locationId))
+                case let .info(location):
+                    LocationInfoContent(
+                        location: location,
+                        items: viewModel.items,
+                        totalItems: viewModel.totalItems,
+                        onSeeAllItems: {
+                            pendingSheet = .items
+                            activeSheet = nil
+                        }
+                    )
+                    .presentationDetents([.height(220), .medium, .large])
+                    .presentationDragIndicator(.visible)
+                    .presentationBackgroundInteraction(.enabled(upThrough: .medium))
+                    .interactiveDismissDisabled(true)
+                }
             }
             .task(id: locationId) {
                 await viewModel.fetchLocation(id: locationId)
@@ -75,21 +114,9 @@ struct LocationDetailView: View {
     private func compactLayout(_ location: Location) -> some View {
         mapContent(location)
             .onAppear {
-                if !showingInfoSheet {
-                    showingInfoSheet = true
+                if activeSheet == nil {
+                    activeSheet = .info(location)
                 }
-            }
-            .sheet(isPresented: $showingInfoSheet) {
-                LocationInfoContent(
-                    location: location,
-                    items: viewModel.items,
-                    totalItems: viewModel.totalItems,
-                    onSeeAllItems: { showingItemsSheet = true }
-                )
-                .presentationDetents([.height(220), .medium, .large])
-                .presentationDragIndicator(.visible)
-                .presentationBackgroundInteraction(.enabled(upThrough: .medium))
-                .interactiveDismissDisabled(true)
             }
     }
 
@@ -114,7 +141,7 @@ struct LocationDetailView: View {
                     EntityItemsCard(
                         items: viewModel.items,
                         totalItems: viewModel.totalItems,
-                        onSeeAll: { showingItemsSheet = true }
+                        onSeeAll: { activeSheet = .items }
                     )
                 }
                 .padding()
@@ -289,13 +316,22 @@ private struct LocationInfoContent: View {
                         }
                     }
                 } header: {
-                    HStack {
-                        Text("Items")
-                        if totalItems > 0 {
-                            Text("(\(totalItems))")
-                                .foregroundStyle(.tertiary)
+                    Button {
+                        onSeeAllItems()
+                    } label: {
+                        HStack {
+                            Text("Items")
+                            if totalItems > 0 {
+                                Text("(\(totalItems))")
+                                    .foregroundStyle(.secondary)
+                            }
+                            Spacer()
+                            Image(systemName: "chevron.right")
+                                .font(.caption.weight(.semibold))
+                                .foregroundStyle(.secondary)
                         }
                     }
+                    .buttonStyle(.plain)
                 }
             }
             #if os(iOS)
