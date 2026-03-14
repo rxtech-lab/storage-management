@@ -108,6 +108,13 @@ final class RxStorageEntityNavigationTests: XCTestCase {
         app.collectionViews/*@START_MENU_TOKEN@*/ .firstMatch/*[[".containing(.cell, identifier: nil).firstMatch",".containing(.other, identifier: nil).firstMatch",".firstMatch"],[[[-1,2],[-1,1],[-1,0]]],[0]]@END_MENU_TOKEN@*/ .swipeUp()
         cellsQuery/*@START_MENU_TOKEN@*/ .containing(.staticText, identifier: "Latitude").firstMatch/*[[".element(boundBy: 2)",".containing(.staticText, identifier: \"37.774900\").firstMatch",".containing(.staticText, identifier: \"Latitude\").firstMatch"],[[[-1,2],[-1,1],[-1,0]]],[0]]@END_MENU_TOKEN@*/ .swipeUp()
         app/*@START_MENU_TOKEN@*/ .buttons["item-row"]/*[[".buttons",".containing(.image, identifier: \"chevron.forward\")",".containing(.staticText, identifier: \"This is a public test item for E2E testing\")",".containing(.staticText, identifier: \"item-row\")",".otherElements",".buttons[\"Public Test Item, This is a public test item for E2E testing\"]",".buttons[\"item-row\"]"],[[[-1,6],[-1,5],[-1,4,2],[-1,0,1]],[[-1,3],[-1,2],[-1,1]],[[-1,6],[-1,5]]],[0]]@END_MENU_TOKEN@*/ .firstMatch.tap()
+
+        app.staticTexts["Test Category"].firstMatch.tap()
+        app.navigationBars.buttons.firstMatch.tap()
+
+        app.staticTexts["Test Author"].firstMatch.tap()
+        app.navigationBars.buttons.firstMatch.tap()
+
         app/*@START_MENU_TOKEN@*/ .buttons["BackButton"]/*[[".navigationBars",".buttons[\"Back\"]",".buttons[\"BackButton\"]"],[[[-1,2],[-1,1],[-1,0,1]],[[-1,2],[-1,1]]],[0]]@END_MENU_TOKEN@*/ .firstMatch.tap()
 
         element.tap()
