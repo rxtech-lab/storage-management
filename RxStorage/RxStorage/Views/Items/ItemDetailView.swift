@@ -247,6 +247,7 @@ struct ItemDetailView: View {
             .navigationDestination(item: $selectedTagIdForNavigation) { tagId in
                     TagDetailView(tagId: tagId)
                 }
+                .entityNavigationDestinations()
         #endif
                 .sheet(isPresented: $showingContentListSheet) {
                     ContentListSheet(
