@@ -117,6 +117,7 @@ if command -v xcbeautify &> /dev/null; then
         -resultBundlePath "$RESULT_BUNDLE_PATH" \
         -parallel-testing-enabled NO \
         -skipPackagePluginValidation \
+        -retry-tests-on-failure \
         2>&1 | tee "$LOG_FILE" | xcbeautify
     TEST_EXIT_CODE=${PIPESTATUS[0]}
 else
@@ -130,6 +131,7 @@ else
         -resultBundlePath "$RESULT_BUNDLE_PATH" \
         -parallel-testing-enabled NO \
         -skipPackagePluginValidation \
+        -retry-tests-on-failure \
         2>&1 | tee "$LOG_FILE"
     TEST_EXIT_CODE=${PIPESTATUS[0]}
 fi
