@@ -3,16 +3,17 @@ import { relations } from "drizzle-orm";
 import { nanoid } from "nanoid";
 
 /**
- * A long-running ISO job reported by the iso-burner CLI: either generating
- * ISO files from a folder or burning ISO files to discs. The CLI chooses the
- * ID so it can keep updating the same job, including after a resume.
+ * A long-running job reported by the iso-burner CLI: generating ISO files
+ * from a folder, burning ISO files to discs, or uploading content files to an
+ * item. The CLI chooses the ID so it can keep updating the same job, including
+ * after a resume.
  */
 export const isoJobs = sqliteTable(
   "iso_jobs",
   {
     id: text("id").primaryKey(),
     userId: text("user_id").notNull(),
-    kind: text("kind", { enum: ["generate", "burn"] }).notNull(),
+    kind: text("kind", { enum: ["generate", "burn", "upload"] }).notNull(),
     title: text("title").notNull(),
     status: text("status", {
       enum: ["running", "completed", "failed", "cancelled", "stopped"],
@@ -39,7 +40,8 @@ export const isoJobs = sqliteTable(
 
 /**
  * One row of a job's progress: an ISO being written, a drive burning discs,
- * or an ISO's burned copies. Rows are replaced on every progress report.
+ * an ISO's burned copies, or a content file being uploaded. Rows are replaced
+ * on every progress report.
  */
 export const isoJobTasks = sqliteTable(
   "iso_job_tasks",
@@ -50,7 +52,7 @@ export const isoJobTasks = sqliteTable(
     jobId: text("job_id")
       .notNull()
       .references(() => isoJobs.id, { onDelete: "cascade" }),
-    section: text("section", { enum: ["iso", "drive"] }).notNull(),
+    section: text("section", { enum: ["iso", "drive", "file"] }).notNull(),
     position: integer("position").notNull(),
     name: text("name").notNull(),
     status: text("status").notNull(),

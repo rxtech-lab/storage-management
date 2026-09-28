@@ -135,7 +135,26 @@ struct IsoJobDetailViewModelTests {
         #expect(sut.isRunning)
         #expect(sut.driveTasks.map(\.id) == ["d1"])
         #expect(sut.isoTasks.map(\.id) == ["i1", "i2"])
+        #expect(sut.fileTasks.isEmpty)
         #expect(sut.isLoading == false)
+    }
+
+    @Test("Fetch upload job collects file rows")
+    @MainActor
+    func fetchUploadJob() async {
+        let service = MockIsoJobService()
+        service.fetchJobResults = [.success(TestHelpers.makeIsoJobDetail(kind: .upload, tasks: [
+            TestHelpers.makeIsoJobTask(id: "f1", section: .file, name: "clip.mov", status: "compressing"),
+            TestHelpers.makeIsoJobTask(id: "f2", section: .file, name: "photo.jpg", status: "done"),
+        ]))]
+        let sut = IsoJobDetailViewModel(isoJobService: service)
+
+        await sut.fetchJob(id: "job-1")
+
+        #expect(sut.job?.kind == .upload)
+        #expect(sut.fileTasks.map(\.id) == ["f1", "f2"])
+        #expect(sut.driveTasks.isEmpty)
+        #expect(sut.isoTasks.isEmpty)
     }
 
     @Test("Refresh reloads the same job")

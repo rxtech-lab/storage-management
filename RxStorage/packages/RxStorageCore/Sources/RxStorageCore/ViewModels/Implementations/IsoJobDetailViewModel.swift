@@ -45,6 +45,11 @@ public final class IsoJobDetailViewModel {
         job?.tasks.filter { $0.section == .iso } ?? []
     }
 
+    /// Content files being uploaded to an item
+    public var fileTasks: [IsoJobTask] {
+        job?.tasks.filter { $0.section == .file } ?? []
+    }
+
     // MARK: - Public Methods
 
     public func fetchJob(id: String) async {

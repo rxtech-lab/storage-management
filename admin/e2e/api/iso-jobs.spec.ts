@@ -119,6 +119,40 @@ test.describe.serial("ISO Jobs API", () => {
     expect((await list.json()).data).toHaveLength(0);
   });
 
+  test("PUT /api/v1/iso-jobs/{id} - accepts upload jobs with file rows", async ({ request }) => {
+    const uploadJobId = crypto.randomUUID();
+    const response = await request.put(`/api/v1/iso-jobs/${uploadJobId}`, {
+      headers,
+      data: snapshot({
+        kind: "upload",
+        title: "Upload to Camera roll",
+        doneCount: 1,
+        totalCount: 3,
+        tasks: [
+          { section: "file", name: "clip.mov", status: "compressing", detail: "videos/clip.mov", progress: 0.4, doneBytes: 40, totalBytes: 100 },
+          { section: "file", name: "broken.jpg", status: "failed", detail: "photos/broken.jpg", progress: 0, doneBytes: 0, totalBytes: 10, error: "unreadable" },
+          { section: "file", name: "photo.jpg", status: "done", detail: "photos/photo.jpg", progress: 1, doneBytes: 20, totalBytes: 20 },
+        ],
+      }),
+    });
+
+    expect(response.status()).toBe(200);
+    const body = await response.json();
+    expect(body.kind).toBe("upload");
+    expect(body.tasks).toHaveLength(3);
+    expect(body.tasks[0].section).toBe("file");
+    expect(body.tasks[0].detail).toBe("videos/clip.mov");
+    expect(body.tasks[1].error).toBe("unreadable");
+
+    const list = await request.get("/api/v1/iso-jobs?kind=upload", { headers });
+    expect(list.status()).toBe(200);
+    const listBody = await list.json();
+    expect(listBody.data.map((job: { id: string }) => job.id)).toEqual([uploadJobId]);
+
+    const del = await request.delete(`/api/v1/iso-jobs/${uploadJobId}`, { headers });
+    expect(del.status()).toBe(200);
+  });
+
   test("DELETE /api/v1/iso-jobs/{id} - deletes the job", async ({ request }) => {
     const response = await request.delete(`/api/v1/iso-jobs/${jobId}`, { headers });
     expect(response.status()).toBe(200);

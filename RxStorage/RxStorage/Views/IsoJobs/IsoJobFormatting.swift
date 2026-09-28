@@ -44,6 +44,7 @@ extension IsoJobKind {
         switch self {
         case .generate: "Generate ISO"
         case .burn: "Burn discs"
+        case .upload: "Upload content"
         }
     }
 
@@ -51,6 +52,7 @@ extension IsoJobKind {
         switch self {
         case .generate: "doc.zipper"
         case .burn: "opticaldisc"
+        case .upload: "arrow.up.doc"
         }
     }
 
@@ -59,6 +61,7 @@ extension IsoJobKind {
         switch self {
         case .generate: "ISO files"
         case .burn: "discs"
+        case .upload: "files"
         }
     }
 }
