@@ -31,7 +31,7 @@
 	<string>Save QR codes to your photo library</string>
 
 	<key>NFCReaderUsageDescription</key>
-	<string>NFC access is needed to write item information to NFC tags</string>
+	<string>NFC access is needed to read and write item information on NFC tags</string>
 
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Location access is needed to pick your current location on the map</string>

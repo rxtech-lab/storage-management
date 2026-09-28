@@ -78,7 +78,8 @@ public final class ChildItemSearchViewModel {
         error = nil
 
         do {
-            let filters = ItemFilters(parentId: "null", search: trimmedQuery)
+            // Include items that already have a parent so they can be moved here
+            let filters = ItemFilters(search: trimmedQuery)
             let results = try await itemService.fetchItems(filters: filters)
             // Filter out excluded items
             searchResults = results.filter { !excludedItemIds.contains($0.id) }
@@ -97,7 +98,7 @@ public final class ChildItemSearchViewModel {
         error = nil
 
         do {
-            let results = try await itemService.fetchItems(filters: ItemFilters(parentId: "null"))
+            let results = try await itemService.fetchItems(filters: ItemFilters())
             // Filter excluded items and limit to 10
             defaultItems = Array(
                 results.filter { !excludedItemIds.contains($0.id) }.prefix(10)
