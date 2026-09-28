@@ -77,6 +77,9 @@ struct TabBarView: View {
                     .navigationDestination(for: PositionSchema.self) { schema in
                         PositionSchemaDetailView(schemaId: schema.id)
                     }
+                    .navigationDestination(for: IsoJob.self) { job in
+                        IsoJobDetailView(jobId: job.id)
+                    }
                     .entityNavigationDestinations()
             }
             .tabItem {

@@ -36,6 +36,7 @@ enum ManagementSection: String, CaseIterable, Identifiable {
     case locations = "Locations"
     case authors = "Authors"
     case positionSchemas = "Position Schemas"
+    case isoJobs = "ISO Jobs"
 
     var id: String {
         rawValue
@@ -47,7 +48,13 @@ enum ManagementSection: String, CaseIterable, Identifiable {
         case .locations: return "mappin.circle"
         case .authors: return "person.circle"
         case .positionSchemas: return "doc.text"
+        case .isoJobs: return "opticaldisc"
         }
+    }
+
+    /// Whether the section tracks long-running jobs rather than storage data
+    var isJob: Bool {
+        self == .isoJobs
     }
 }
 
@@ -79,6 +86,9 @@ final class NavigationManager {
 
     /// Selected position schema for detail view
     var selectedPositionSchema: PositionSchema?
+
+    /// Selected ISO job for detail view
+    var selectedIsoJob: IsoJob?
 
     // MARK: - Navigation Paths (for NavigationStack in TabView)
 

@@ -100,6 +100,7 @@ struct SidebarContent: View {
         List {
             mainSection
             managementSection
+            jobsSection
             settingsSection
         }
         .navigationTitle("RxStorage")
@@ -141,6 +142,12 @@ struct SidebarContent: View {
                 .badge(navigationManager.authorsCount)
             ManagementSectionButton(section: .positionSchemas)
                 .badge(navigationManager.positionSchemasCount)
+        }
+    }
+
+    private var jobsSection: some View {
+        Section("Jobs") {
+            ManagementSectionButton(section: .isoJobs)
         }
     }
 
@@ -225,7 +232,8 @@ struct ContentColumn: View {
                 selectedCategory: $nav.selectedCategory,
                 selectedLocation: $nav.selectedLocation,
                 selectedAuthor: $nav.selectedAuthor,
-                selectedPositionSchema: $nav.selectedPositionSchema
+                selectedPositionSchema: $nav.selectedPositionSchema,
+                selectedIsoJob: $nav.selectedIsoJob
             )
         case .settings:
             SettingsView()
@@ -335,6 +343,19 @@ struct DetailColumn: View {
                     description: Text("Choose a schema from the list")
                 )
             }
+        case .isoJobs:
+            if let job = nav.selectedIsoJob {
+                NavigationStack {
+                    IsoJobDetailView(jobId: job.id)
+                }
+                .id(job.id)
+            } else {
+                ContentUnavailableView(
+                    "Select an ISO job",
+                    systemImage: "opticaldisc",
+                    description: Text("Choose a job to follow its generation or burning progress")
+                )
+            }
         }
     }
 }
@@ -348,6 +369,7 @@ struct ManagementListView: View {
     @Binding var selectedLocation: Location?
     @Binding var selectedAuthor: Author?
     @Binding var selectedPositionSchema: PositionSchema?
+    @Binding var selectedIsoJob: IsoJob?
 
     var body: some View {
         switch section {
@@ -361,6 +383,8 @@ struct ManagementListView: View {
             PositionSchemaListView(
                 horizontalSizeClass: .regular, selectedSchema: $selectedPositionSchema
             )
+        case .isoJobs:
+            IsoJobListView(horizontalSizeClass: .regular, selectedJob: $selectedIsoJob)
         }
     }
 }

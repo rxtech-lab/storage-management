@@ -249,3 +249,100 @@ enum TestHelpers {
         )
     }
 }
+
+// MARK: - ISO Jobs
+
+extension TestHelpers {
+    /// Create an IsoJob for testing
+    static func makeIsoJob(
+        id: String = "job-1",
+        kind: IsoJobKind = .generate,
+        title: String = "backup",
+        status: IsoJobStatus = .running,
+        progress: Double = 0.5
+    ) -> IsoJob {
+        IsoJob(
+            id: id,
+            userId: defaultUserId,
+            kind: kind,
+            title: title,
+            status: status,
+            hostName: "studio-mac",
+            progress: progress,
+            doneCount: 1,
+            totalCount: 2,
+            doneBytes: 50,
+            totalBytes: 100,
+            message: nil,
+            error: nil,
+            startedAt: defaultDate,
+            finishedAt: nil,
+            createdAt: defaultDate,
+            updatedAt: defaultDate
+        )
+    }
+
+    /// Create an IsoJobTask for testing
+    static func makeIsoJobTask(
+        id: String,
+        section: Components.Schemas.IsoJobTaskSection,
+        name: String,
+        status: String = "copying",
+        progress: Double = 0.5
+    ) -> IsoJobTask {
+        IsoJobTask(
+            section: section,
+            name: name,
+            status: status,
+            detail: nil,
+            progress: progress,
+            doneBytes: 50,
+            totalBytes: 100,
+            error: nil,
+            id: id,
+            position: 0
+        )
+    }
+
+    /// Create an IsoJobDetail for testing
+    static func makeIsoJobDetail(
+        id: String = "job-1",
+        kind: IsoJobKind = .burn,
+        status: IsoJobStatus = .running,
+        tasks: [IsoJobTask] = []
+    ) -> IsoJobDetail {
+        IsoJobDetail(
+            id: id,
+            userId: defaultUserId,
+            kind: kind,
+            title: "Burn backup_1.iso",
+            status: status,
+            hostName: "studio-mac",
+            progress: 0.5,
+            doneCount: 1,
+            totalCount: 2,
+            doneBytes: 50,
+            totalBytes: 100,
+            message: nil,
+            error: nil,
+            startedAt: defaultDate,
+            finishedAt: nil,
+            createdAt: defaultDate,
+            updatedAt: defaultDate,
+            tasks: tasks
+        )
+    }
+
+    static func page<T: Sendable>(_ data: [T], nextCursor: String? = nil, total: Int? = nil) -> PaginatedResponse<T> {
+        PaginatedResponse(
+            data: data,
+            pagination: PaginationState(
+                hasNextPage: nextCursor != nil,
+                hasPrevPage: false,
+                nextCursor: nextCursor,
+                prevCursor: nil,
+                totalCount: total ?? data.count
+            )
+        )
+    }
+}

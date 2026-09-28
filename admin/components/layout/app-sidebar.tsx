@@ -10,6 +10,7 @@ import {
   FileJson,
   LayoutDashboard,
   Tag,
+  Disc3,
 } from "lucide-react";
 import {
   Sidebar,
@@ -28,6 +29,7 @@ import { NavUser } from "./nav-user";
 const mainNavItems = [
   { title: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { title: "Items", href: "/items", icon: Package },
+  { title: "ISO Jobs", href: "/iso-jobs", icon: Disc3 },
 ];
 
 const entityNavItems = [

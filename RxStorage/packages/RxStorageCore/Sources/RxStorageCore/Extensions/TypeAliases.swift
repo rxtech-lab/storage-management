@@ -349,3 +349,22 @@ public extension Components.Schemas.ContentResponseSchema._typePayload {
         }
     }
 }
+
+/// ISO generation or burning job reported by the iso-burner CLI
+public typealias IsoJob = Components.Schemas.IsoJobResponseSchema
+
+/// ISO job with its per-ISO and per-drive progress rows
+public typealias IsoJobDetail = Components.Schemas.IsoJobDetailResponseSchema
+
+/// One progress row of an ISO job
+public typealias IsoJobTask = Components.Schemas.IsoJobTaskResponseSchema
+
+/// What an ISO job does (generate ISO files or burn discs)
+public typealias IsoJobKind = Components.Schemas.IsoJobKind
+
+/// Lifecycle state of an ISO job
+public typealias IsoJobStatus = Components.Schemas.IsoJobStatus
+
+extension Components.Schemas.IsoJobResponseSchema: Identifiable {}
+extension Components.Schemas.IsoJobDetailResponseSchema: Identifiable {}
+extension Components.Schemas.IsoJobTaskResponseSchema: Identifiable {}
