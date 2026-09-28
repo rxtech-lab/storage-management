@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { formatDistanceToNow } from "date-fns";
-import { Disc3, FileArchive } from "lucide-react";
+import { Disc3, FileArchive, FileUp } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PaginationNav } from "@/components/ui/pagination-nav";
@@ -16,6 +16,8 @@ import {
 } from "@/components/iso-jobs/iso-job-format";
 
 const PAGE_SIZE = 20;
+
+const kindIcons = { generate: FileArchive, burn: Disc3, upload: FileUp };
 
 export default async function IsoJobsPage({
   searchParams,
@@ -38,7 +40,7 @@ export default async function IsoJobsPage({
       <div>
         <h1 className="text-3xl font-bold">ISO Jobs</h1>
         <p className="text-muted-foreground">
-          ISO generation and disc burning progress reported by iso-burner
+          ISO generation, disc burning and content upload progress reported by iso-burner
         </p>
       </div>
 
@@ -51,7 +53,7 @@ export default async function IsoJobsPage({
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {jobs.map((job) => {
-            const Icon = job.kind === "generate" ? FileArchive : Disc3;
+            const Icon = kindIcons[job.kind];
             return (
               <Link key={job.id} href={`/iso-jobs/${job.id}`}>
                 <Card className="h-full transition-colors hover:bg-muted/50">

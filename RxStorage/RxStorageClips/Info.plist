@@ -11,6 +11,8 @@
 	</dict>
 
 	<!-- Permissions -->
+	<key>NSCameraUsageDescription</key>
+	<string>Camera access is needed to scan QR codes and take photos</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Location access is needed to pick your current location on the map</string>
 

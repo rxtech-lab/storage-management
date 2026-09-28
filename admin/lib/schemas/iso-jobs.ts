@@ -2,26 +2,28 @@ import { z } from "zod";
 import { PaginationQueryParams, PaginationInfo } from "./common";
 
 export const IsoJobKind = z
-  .enum(["generate", "burn"])
-  .describe("generate writes ISO files from a folder; burn writes ISO files to discs");
+  .enum(["generate", "burn", "upload"])
+  .describe(
+    "generate writes ISO files from a folder; burn writes ISO files to discs; upload uploads content files to an item"
+  );
 
 export const IsoJobStatus = z
   .enum(["running", "completed", "failed", "cancelled", "stopped"])
   .describe("Lifecycle state of the job");
 
 export const IsoJobTaskSection = z
-  .enum(["iso", "drive"])
-  .describe("iso rows track one ISO file; drive rows track one disc drive");
+  .enum(["iso", "drive", "file"])
+  .describe("iso rows track one ISO file; drive rows track one disc drive; file rows track one uploaded file");
 
 // One progress row as reported by the CLI
 export const IsoJobTaskInputSchema = z.object({
   section: IsoJobTaskSection,
-  name: z.string().min(1).max(512).describe("ISO file name or drive name"),
+  name: z.string().min(1).max(512).describe("ISO file name, drive name or uploaded file name"),
   status: z
     .string()
     .min(1)
     .max(64)
-    .describe("Row state, e.g. queued, copying, done, waiting, burning, verifying"),
+    .describe("Row state, e.g. queued, copying, done, waiting, burning, verifying, uploading"),
   detail: z.string().max(1024).nullable().optional().describe("Human-readable detail line"),
   progress: z.number().min(0).max(1).describe("Fraction done, 0 to 1"),
   doneBytes: z.number().int().min(0).describe("Bytes done in the current phase"),
@@ -36,8 +38,8 @@ export const IsoJobUpsertSchema = z.object({
   status: IsoJobStatus,
   hostName: z.string().max(255).nullable().optional().describe("Machine running the job"),
   progress: z.number().min(0).max(1).describe("Overall fraction done, 0 to 1"),
-  doneCount: z.number().int().min(0).describe("ISOs written or discs burned"),
-  totalCount: z.number().int().min(0).describe("ISOs to write or discs to burn"),
+  doneCount: z.number().int().min(0).describe("ISOs written, discs burned or files uploaded"),
+  totalCount: z.number().int().min(0).describe("ISOs to write, discs to burn or files to upload"),
   doneBytes: z.number().int().min(0).describe("Bytes written so far"),
   totalBytes: z.number().int().min(0).describe("Bytes to write in total"),
   message: z.string().max(1024).nullable().optional().describe("Current state, e.g. waiting for a disc"),
@@ -62,8 +64,8 @@ export const IsoJobResponseSchema = z.object({
   status: IsoJobStatus,
   hostName: z.string().nullable().describe("Machine running the job"),
   progress: z.number().describe("Overall fraction done, 0 to 1"),
-  doneCount: z.number().int().describe("ISOs written or discs burned"),
-  totalCount: z.number().int().describe("ISOs to write or discs to burn"),
+  doneCount: z.number().int().describe("ISOs written, discs burned or files uploaded"),
+  totalCount: z.number().int().describe("ISOs to write, discs to burn or files to upload"),
   doneBytes: z.number().int().describe("Bytes written so far"),
   totalBytes: z.number().int().describe("Bytes to write in total"),
   message: z.string().nullable().describe("Current state"),
@@ -80,7 +82,7 @@ export const IsoJobDetailResponseSchema = IsoJobResponseSchema.extend({
 
 // Enums are inlined so the OpenAPI generator emits typed query parameters
 export const IsoJobsQueryParams = PaginationQueryParams.extend({
-  kind: z.enum(["generate", "burn"]).optional().describe("Only jobs of this kind"),
+  kind: z.enum(["generate", "burn", "upload"]).optional().describe("Only jobs of this kind"),
   status: z
     .enum(["running", "completed", "failed", "cancelled", "stopped"])
     .optional()

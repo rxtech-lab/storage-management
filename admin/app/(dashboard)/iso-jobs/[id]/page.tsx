@@ -25,6 +25,7 @@ export default async function IsoJobPage({ params }: { params: Promise<{ id: str
 
   const drives = job.tasks.filter((task) => task.section === "drive");
   const isos = job.tasks.filter((task) => task.section === "iso");
+  const files = job.tasks.filter((task) => task.section === "file");
 
   return (
     <div className="flex flex-col gap-6">
@@ -71,6 +72,7 @@ export default async function IsoJobPage({ params }: { params: Promise<{ id: str
 
       {drives.length > 0 && <TaskSection title="Drives" tasks={drives} />}
       {isos.length > 0 && <TaskSection title="ISO files" tasks={isos} />}
+      {files.length > 0 && <TaskSection title="Files" tasks={files} />}
     </div>
   );
 }

@@ -2,7 +2,7 @@
 //  IsoJobDetailView.swift
 //  RxStorage
 //
-//  Live progress of one ISO generation or burning job
+//  Live progress of one ISO generation, burning or upload job
 //
 
 import RxStorageCore
@@ -36,6 +36,11 @@ struct IsoJobDetailView: View {
 
                         if !viewModel.isoTasks.isEmpty {
                             taskSection("ISO Files", systemImage: "doc.zipper", tasks: viewModel.isoTasks)
+                                .cardStyle()
+                        }
+
+                        if !viewModel.fileTasks.isEmpty {
+                            taskSection("Files", systemImage: "doc", tasks: viewModel.fileTasks)
                                 .cardStyle()
                         }
                     }

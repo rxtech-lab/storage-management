@@ -23,13 +23,24 @@ export function isoJobStatusVariant(
   }
 }
 
+const isoJobKindLabels: Record<IsoJob["kind"], string> = {
+  generate: "Generate ISO",
+  burn: "Burn discs",
+  upload: "Upload content",
+};
+
+const isoJobCountNouns: Record<IsoJob["kind"], string> = {
+  generate: "ISO file(s)",
+  burn: "disc(s)",
+  upload: "file(s)",
+};
+
 export function isoJobKindLabel(kind: IsoJob["kind"]): string {
-  return kind === "generate" ? "Generate ISO" : "Burn discs";
+  return isoJobKindLabels[kind];
 }
 
 export function isoJobCountLabel(job: Pick<IsoJob, "kind" | "doneCount" | "totalCount">): string {
-  const noun = job.kind === "generate" ? "ISO file(s)" : "disc(s)";
-  return `${job.doneCount} of ${job.totalCount} ${noun}`;
+  return `${job.doneCount} of ${job.totalCount} ${isoJobCountNouns[job.kind]}`;
 }
 
 /** Formats bytes with binary units, matching the iso-burner CLI. */
