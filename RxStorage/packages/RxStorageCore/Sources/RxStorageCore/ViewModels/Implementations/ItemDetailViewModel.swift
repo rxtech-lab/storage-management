@@ -187,7 +187,11 @@ public final class ItemDetailViewModel: ItemDetailViewModelProtocol {
 
         do {
             let updatedChild = try await itemService.setParent(itemId: childId, parentId: currentItemId)
-            children.append(updatedChild)
+            if let index = children.firstIndex(where: { $0.id == updatedChild.id }) {
+                children[index] = updatedChild
+            } else {
+                children.append(updatedChild)
+            }
             logger.info("Successfully added child \(childId, privacy: .public) to parent \(currentItemId, privacy: .public)")
             return (parentId: currentItemId, childId: childId)
         } catch {

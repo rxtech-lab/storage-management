@@ -18,6 +18,8 @@ struct AddChildData: Sendable {
     let authorId: String?
     let price: Double?
     let visibility: String
+    /// Current parent of the item, if it already belongs to another item
+    let parentId: String?
 }
 
 /// Sheet for searching and adding child items
@@ -29,6 +31,9 @@ struct AddChildSheet: View {
 
     @State private var viewModel: ChildItemSearchViewModel
     @State private var addedChildIds: Set<String> = []
+    /// Item awaiting confirmation because it already belongs to another parent
+    @State private var pendingMoveItem: StorageItem?
+    @State private var showMoveConfirmation = false
     @Environment(\.dismiss) private var dismiss
 
     init(
@@ -100,6 +105,45 @@ struct AddChildSheet: View {
                     LoadingOverlay()
                 }
             }
+            .confirmationDialog(
+                title: "Move Item",
+                message: "\"\(pendingMoveItem?.title ?? "")\" already belongs to another item. Do you want to move it to this item?",
+                confirmButtonTitle: "Move",
+                isPresented: $showMoveConfirmation,
+                onConfirm: {
+                    guard let item = pendingMoveItem else { return }
+                    pendingMoveItem = nil
+                    select(item)
+                },
+                onCancel: { pendingMoveItem = nil }
+            )
+    }
+
+    // MARK: - Selection
+
+    private func requestSelect(_ item: StorageItem) {
+        if item.parentId != nil {
+            pendingMoveItem = item
+            showMoveConfirmation = true
+        } else {
+            select(item)
+        }
+    }
+
+    private func select(_ item: StorageItem) {
+        let childData = AddChildData(
+            itemId: item.id,
+            title: item.title,
+            description: item.description,
+            categoryId: item.categoryId,
+            locationId: item.locationId,
+            authorId: item.authorId,
+            price: item.price,
+            visibility: item.visibility.rawValue,
+            parentId: item.parentId
+        )
+        addedChildIds.insert(item.id)
+        onChildSelected(childData)
     }
 
     // MARK: - Items List
@@ -108,18 +152,7 @@ struct AddChildSheet: View {
         List(items) { item in
             let isAdded = addedChildIds.contains(item.id)
             Button {
-                let childData = AddChildData(
-                    itemId: item.id,
-                    title: item.title,
-                    description: item.description,
-                    categoryId: item.categoryId,
-                    locationId: item.locationId,
-                    authorId: item.authorId,
-                    price: item.price,
-                    visibility: item.visibility.rawValue
-                )
-                addedChildIds.insert(item.id)
-                onChildSelected(childData)
+                requestSelect(item)
             } label: {
                 HStack {
                     ItemRow(item: item)

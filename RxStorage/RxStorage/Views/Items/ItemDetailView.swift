@@ -39,6 +39,14 @@ struct ItemDetailView: View {
         @State private var pendingNFCUrl = ""
         /// Lock flow
         @State private var showNFCLockSheet = false
+        // Add child via QR code / NFC
+        @State private var nfcReader = NFCReader()
+        @State private var showingChildScanner = false
+        /// Move flow: scanned item already belongs to another parent
+        @State private var pendingMoveChild: StorageItemDetail?
+        @State private var showMoveChildConfirmation = false
+        private let qrCodeService = QrCodeService()
+        private let itemService = ItemService()
     #endif
     @State private var showingAddChildSheet = false
     @State private var isAddingChild = false
@@ -145,6 +153,26 @@ struct ItemDetailView: View {
                     showNFCLockSheet = false
                 }
             }
+            .confirmationDialog(
+                title: "Move Item",
+                message: "\"\(pendingMoveChild?.title ?? "")\" already belongs to another item. Do you want to move it to \"\(viewModel.item?.title ?? "")\"?",
+                confirmButtonTitle: "Move",
+                isPresented: $showMoveChildConfirmation,
+                onConfirm: {
+                    guard let child = pendingMoveChild else { return }
+                    pendingMoveChild = nil
+                    Task { await addChild(child.id, previousParentId: child.parentId) }
+                },
+                onCancel: { pendingMoveChild = nil }
+            )
+            .sheet(isPresented: $showingChildScanner) {
+                NavigationStack {
+                    QRCodeScannerView { code in
+                        showingChildScanner = false
+                        Task { await addChild(fromScannedContent: code) }
+                    }
+                }
+            }
         #endif
             .sheet(isPresented: $showingAddChildSheet) {
                 if let item = viewModel.item {
@@ -154,7 +182,7 @@ struct ItemDetailView: View {
                             existingChildIds: Set(viewModel.children.map { $0.id }),
                             isAdding: $isAddingChild,
                             onChildSelected: { childData in
-                                Task { await addChild(childData.itemId) }
+                                Task { await addChild(childData.itemId, previousParentId: childData.parentId) }
                             }
                         )
                     }
@@ -464,6 +492,8 @@ struct ItemDetailView: View {
                         isViewOnly: isViewOnly,
                         onSeeAll: { showingChildrenListSheet = true },
                         onAddChild: { showingAddChildSheet = true },
+                        onScanChild: scanChildAction,
+                        onTapNFCChild: tapNFCChildAction,
                         onEditChild: { selectedChildForEdit = $0 },
                         onRemoveChild: { await removeChild($0) },
                         onSelectChild: { selectedChildForDetail = $0 }
@@ -481,6 +511,11 @@ struct ItemDetailView: View {
             if isRefreshing {
                 LoadingOverlay(title: "Refreshing...")
             }
+            #if os(iOS)
+                if isAddingChild && !showingAddChildSheet {
+                    LoadingOverlay(title: "Adding child item...")
+                }
+            #endif
             #if os(macOS)
                 if isMountingISO {
                     LoadingOverlay(title: "Mounting ISO...")
@@ -695,16 +730,82 @@ struct ItemDetailView: View {
 
     // MARK: - Child Management
 
-    private func addChild(_ childId: String) async {
+    private func addChild(_ childId: String, previousParentId: String? = nil) async {
         isAddingChild = true
         defer { isAddingChild = false }
         do {
             let (parentId, childId) = try await viewModel.addChildById(childId)
+            if let previousParentId, previousParentId != parentId {
+                eventViewModel.emit(.childRemoved(parentId: previousParentId, childId: childId))
+            }
             eventViewModel.emit(.childAdded(parentId: parentId, childId: childId))
         } catch {
             errorViewModel.showError(error)
         }
     }
+
+    /// Camera QR scanning is only available on iOS
+    private var scanChildAction: (() -> Void)? {
+        #if os(iOS)
+            return { showingChildScanner = true }
+        #else
+            return nil
+        #endif
+    }
+
+    /// NFC reading is only available on iOS
+    private var tapNFCChildAction: (() -> Void)? {
+        #if os(iOS)
+            return { Task { await addChildFromNFC() } }
+        #else
+            return nil
+        #endif
+    }
+
+    #if os(iOS)
+        /// Resolves scanned QR / NFC content to an item and adds it as a child
+        private func addChild(fromScannedContent content: String) async {
+            let child: StorageItemDetail
+            isAddingChild = true
+            do {
+                let scanResponse = try await qrCodeService.scanQrCode(qrcontent: content)
+                child = try await itemService.fetchItemUsingUrl(url: scanResponse.url)
+            } catch {
+                isAddingChild = false
+                errorViewModel.showError(error)
+                return
+            }
+            isAddingChild = false
+
+            if child.id == viewModel.item?.id {
+                errorViewModel.showError(AddChildError.cannotAddSelf)
+                return
+            }
+            // Use the freshly fetched parent rather than the local children list, which may be stale
+            if child.parentId == viewModel.item?.id {
+                errorViewModel.showError(AddChildError.alreadyChild(child.title))
+                return
+            }
+            if child.parentId != nil {
+                // Item already belongs to another parent - ask before moving it
+                pendingMoveChild = child
+                showMoveChildConfirmation = true
+                return
+            }
+            await addChild(child.id)
+        }
+
+        private func addChildFromNFC() async {
+            do {
+                let content = try await nfcReader.readNfcChip()
+                await addChild(fromScannedContent: content)
+            } catch NFCTagReaderError.cancelled {
+                // User cancelled - do nothing
+            } catch {
+                errorViewModel.showError(error)
+            }
+        }
+    #endif
 
     private func removeChild(_ childId: String) async {
         do {
@@ -873,4 +974,20 @@ struct ItemDetailView: View {
             isRefreshing = false
         }
     #endif
+}
+
+// MARK: - Add Child Error
+
+private enum AddChildError: LocalizedError {
+    case cannotAddSelf
+    case alreadyChild(String)
+
+    var errorDescription: String? {
+        switch self {
+        case .cannotAddSelf:
+            return "An item can't be added as its own child"
+        case let .alreadyChild(title):
+            return "\"\(title)\" is already a child of this item"
+        }
+    }
 }

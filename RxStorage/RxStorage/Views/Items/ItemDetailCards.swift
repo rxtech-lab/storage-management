@@ -241,6 +241,8 @@ struct ItemDetailChildrenCard: View {
     let isViewOnly: Bool
     let onSeeAll: () -> Void
     let onAddChild: () -> Void
+    var onScanChild: (() -> Void)?
+    var onTapNFCChild: (() -> Void)?
     let onEditChild: (StorageItem) -> Void
     let onRemoveChild: (String) async -> Void
     var onSelectChild: ((StorageItem) -> Void)?
@@ -297,8 +299,26 @@ struct ItemDetailChildrenCard: View {
             if !isViewOnly {
                 Divider()
                     .padding(.leading, 16)
-                Button {
-                    onAddChild()
+                Menu {
+                    if let onScanChild {
+                        Button {
+                            onScanChild()
+                        } label: {
+                            Label("Scan with Camera", systemImage: "qrcode.viewfinder")
+                        }
+                    }
+                    if let onTapNFCChild {
+                        Button {
+                            onTapNFCChild()
+                        } label: {
+                            Label("Tap with NFC", systemImage: "wave.3.right")
+                        }
+                    }
+                    Button {
+                        onAddChild()
+                    } label: {
+                        Label("Select from Sheet", systemImage: "list.bullet")
+                    }
                 } label: {
                     HStack {
                         Image(systemName: "plus.circle")
@@ -307,6 +327,9 @@ struct ItemDetailChildrenCard: View {
                             .foregroundStyle(.blue)
                     }
                 }
+                .menuStyle(.button)
+                .buttonStyle(.plain)
+                .accessibilityIdentifier("add-child-item-menu")
                 .padding(.horizontal, 16)
                 .padding(.vertical, 12)
             }
