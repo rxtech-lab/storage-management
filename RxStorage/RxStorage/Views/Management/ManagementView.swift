@@ -13,7 +13,7 @@ struct ManagementView: View {
     var body: some View {
         List {
             Section {
-                ForEach(ManagementSection.allCases) { section in
+                ForEach(ManagementSection.allCases.filter { !$0.isJob }) { section in
                     NavigationLink(value: section) {
                         Label(section.rawValue, systemImage: section.systemImage)
                     }
@@ -22,6 +22,14 @@ struct ManagementView: View {
                 Text("Manage your storage data")
             } footer: {
                 Text("Select a section to view and manage its items")
+            }
+
+            Section("Jobs") {
+                ForEach(ManagementSection.allCases.filter(\.isJob)) { section in
+                    NavigationLink(value: section) {
+                        Label(section.rawValue, systemImage: section.systemImage)
+                    }
+                }
             }
         }
         .navigationTitle("Management")
@@ -42,6 +50,8 @@ struct ManagementSectionListView: View {
             AuthorListView(horizontalSizeClass: .compact)
         case .positionSchemas:
             PositionSchemaListView(horizontalSizeClass: .compact)
+        case .isoJobs:
+            IsoJobListView(horizontalSizeClass: .compact)
         }
     }
 }

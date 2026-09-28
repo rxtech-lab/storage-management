@@ -7,8 +7,9 @@ import PackageDescription
 let package = Package(
     name: "RxStorageCore",
     platforms: [
-        .iOS(.v18),
-        .macOS(.v15),
+        // RxAuthSwift 1.3 requires iOS 26 and macOS 26.
+        .iOS(.v26),
+        .macOS(.v26),
     ],
     products: [
         .library(
@@ -20,7 +21,7 @@ let package = Package(
         .package(url: "https://github.com/apple/swift-log.git", from: "1.5.0"),
         .package(url: "https://github.com/apple/swift-testing.git", branch: "main"),
         // OpenAPI Generator
-        .package(url: "https://github.com/rxtech-lab/RxAuthSwift.git", from: "1.0.0"),
+        .package(url: "https://github.com/rxtech-lab/RxAuthSwift.git", from: "1.3.1"),
         .package(url: "https://github.com/apple/swift-openapi-generator.git", from: "1.4.0"),
         .package(url: "https://github.com/apple/swift-openapi-runtime.git", from: "1.6.0"),
         .package(url: "https://github.com/apple/swift-openapi-urlsession.git", from: "1.0.0"),

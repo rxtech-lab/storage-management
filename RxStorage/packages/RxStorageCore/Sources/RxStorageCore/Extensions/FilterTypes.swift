@@ -189,6 +189,29 @@ public struct TagFilters: Sendable {
     }
 }
 
+/// Filters for ISO job queries
+public struct IsoJobFilters: Sendable {
+    public var kind: IsoJobKind?
+    public var status: IsoJobStatus?
+    public var cursor: String?
+    public var direction: PaginationDirection?
+    public var limit: Int?
+
+    public init(
+        kind: IsoJobKind? = nil,
+        status: IsoJobStatus? = nil,
+        cursor: String? = nil,
+        direction: PaginationDirection? = nil,
+        limit: Int? = nil
+    ) {
+        self.kind = kind
+        self.status = status
+        self.cursor = cursor
+        self.direction = direction
+        self.limit = limit
+    }
+}
+
 // MARK: - Paginated Response
 
 /// Generic paginated response wrapper

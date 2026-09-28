@@ -46,35 +46,13 @@ jobs:
             echo "$SECRETS_XCCONFIG_BASE64" | base64 --decode > RxStorage/RxStorage/Config/Secrets.xcconfig
           fi
 
-      - name: Setup Admin .env from GitHub Secrets
-        env:
-          ADMIN_ENV_BASE64: ${{ secrets.ADMIN_ENV_BASE64 }}
-        run: |
-          if [ -z "$ADMIN_ENV_BASE64" ]; then
-            echo "Warning: ADMIN_ENV_BASE64 secret is not set, skipping admin .env setup"
-          else
-            echo "$ADMIN_ENV_BASE64" | base64 --decode > admin/.env
-          fi
-
-      - name: Start Backend Server
-        run: bun install && bun dev:e2e > backend.log 2>&1 &
-        working-directory: admin
-
-      - name: Wait for Backend Server
-        run: |
-          echo "Waiting for backend server to start..."
-          for i in {1..30}; do
-            if curl -s http://localhost:3000; then
-              echo "Backend server is up!"
-              exit 0
-            fi
-            sleep 2
-          done
-          echo "Backend server did not start in time."
-          exit 1
-
       - name: Generate OpenAPI spec
-        run: ./scripts/ios-update-openapi.sh
+        run: |
+          bun install
+          bun run openapi:generate
+          cp public/openapi.json ../RxStorage/packages/RxStorageCore/Sources/RxStorageCore/openapi.json
+          cp public/openapi.json ../cli/RxStorageCli/Sources/RxStorageCli/openapi.json
+        working-directory: admin
 
       - name: Setup Python
         uses: actions/setup-python@v6

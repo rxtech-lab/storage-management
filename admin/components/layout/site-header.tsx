@@ -26,6 +26,7 @@ const routeTitles: Record<string, string> = {
   "/authors/new": "New Author",
   "/position-schemas": "Position Schemas",
   "/position-schemas/new": "New Schema",
+  "/iso-jobs": "ISO Jobs",
 };
 
 export function SiteHeader() {
