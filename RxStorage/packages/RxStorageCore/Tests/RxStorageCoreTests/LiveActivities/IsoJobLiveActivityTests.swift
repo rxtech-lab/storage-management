@@ -70,5 +70,16 @@ struct IsoJobDeepLinkTests {
             #expect(state.hiddenCount == 1)
             #expect(IsoJobActivityAttributes.ContentState(runningJobs: []).runningCount == 0)
         }
+
+        @Test("Ends with the ended job and nothing running, like the server's end push")
+        func buildsEndedState() {
+            let job = IsoJobActivityAttributes.Job(job: TestHelpers.makeIsoJob(id: "job-1", status: .completed))
+            let state = IsoJobActivityAttributes.ContentState(endedJob: job)
+
+            #expect(state.jobs == [job])
+            #expect(state.jobs[0].status == .completed)
+            #expect(state.runningCount == 0)
+            #expect(state.hiddenCount == 0)
+        }
     }
 #endif
