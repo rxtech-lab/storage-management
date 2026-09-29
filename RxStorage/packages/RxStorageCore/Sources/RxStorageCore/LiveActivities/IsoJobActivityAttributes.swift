@@ -61,6 +61,23 @@
                 self.message = message
                 self.error = error
             }
+
+            public init(job: IsoJob) {
+                self.init(
+                    id: job.id,
+                    kind: job.kind,
+                    title: job.title,
+                    hostName: job.hostName,
+                    status: job.status,
+                    progress: job.progress,
+                    doneCount: job.doneCount,
+                    totalCount: job.totalCount,
+                    doneBytes: job.doneBytes,
+                    totalBytes: job.totalBytes,
+                    message: job.message,
+                    error: job.error
+                )
+            }
         }
 
         public struct ContentState: Codable, Hashable, Sendable {
@@ -73,6 +90,18 @@
             public init(jobs: [Job], runningCount: Int) {
                 self.jobs = jobs
                 self.runningCount = runningCount
+            }
+
+            /// Builds the state the server would push for these jobs, so the app can
+            /// start the activity itself for jobs that were already running when it opened
+            public init(runningJobs: [IsoJob]) {
+                let running = runningJobs
+                    .filter { $0.status == .running }
+                    .sorted { $0.startedAt < $1.startedAt }
+                self.init(
+                    jobs: running.prefix(IsoJobActivityAttributes.maxListedJobs).map(Job.init(job:)),
+                    runningCount: running.count
+                )
             }
 
             /// Running jobs left out of `jobs`

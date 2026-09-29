@@ -19,6 +19,7 @@
         static let shared = LiveActivityManager()
 
         private let service: LiveActivityServiceProtocol
+        private let isoJobService: IsoJobServiceProtocol
         private var observers: [Task<Void, Never>] = []
         /// Token observers for running activities, keyed by activity ID
         private var activityObservers: [String: Task<Void, Never>] = [:]
@@ -29,8 +30,12 @@
         /// activities that ended while the app was not running can be removed
         private static let registeredUpdateTokensKey = "registeredLiveActivityUpdateTokens"
 
-        init(service: LiveActivityServiceProtocol = LiveActivityService()) {
+        init(
+            service: LiveActivityServiceProtocol = LiveActivityService(),
+            isoJobService: IsoJobServiceProtocol = IsoJobService()
+        ) {
             self.service = service
+            self.isoJobService = isoJobService
         }
 
         /// Starts forwarding push tokens to the server. Call while signed in.
@@ -53,6 +58,40 @@
                     self?.observeUpdateTokens(of: activity)
                 }
             })
+        }
+
+        /// Starts the activity for jobs that are already running, since the server only
+        /// starts one when a job starts. Once running, its update token is registered
+        /// through `activityUpdates` and the server keeps it up to date.
+        /// Call when the app opens or returns to the foreground while signed in.
+        func startActivityIfJobsRunning() async {
+            guard ActivityAuthorizationInfo().areActivitiesEnabled,
+                  Activity<IsoJobActivityAttributes>.activities.isEmpty
+            else { return }
+
+            let jobs: [IsoJob]
+            do {
+                jobs = try await isoJobService.fetchJobsPaginated(
+                    filters: IsoJobFilters(status: .running, limit: 100)
+                ).data
+            } catch {
+                logger.error("Failed to fetch running ISO jobs: \(error.localizedDescription)")
+                return
+            }
+
+            let state = IsoJobActivityAttributes.ContentState(runningJobs: jobs)
+            // The fetch may have raced with a push-to-start activity
+            guard state.runningCount > 0, Activity<IsoJobActivityAttributes>.activities.isEmpty else { return }
+
+            do {
+                _ = try Activity.request(
+                    attributes: IsoJobActivityAttributes(),
+                    content: ActivityContent(state: state, staleDate: nil),
+                    pushType: .token
+                )
+            } catch {
+                logger.error("Failed to start ISO jobs Live Activity: \(error.localizedDescription)")
+            }
         }
 
         /// Stops Live Activity pushes to this device and removes its activities.

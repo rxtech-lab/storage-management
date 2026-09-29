@@ -208,11 +208,27 @@ struct IsoJobTaskRow: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
-            HStack(alignment: .firstTextBaseline) {
-                Text(task.name)
-                    .font(.subheadline)
-                    .fontWeight(.medium)
-                    .lineLimit(1)
+            HStack(alignment: .center) {
+                if let drive = task.driveLetter {
+                    Text(drive.letter)
+                        .font(.headline)
+                        .fontDesign(.monospaced)
+                        .frame(minWidth: 28, minHeight: 28)
+                        .padding(.horizontal, 2)
+                        .background(tint.opacity(0.15), in: RoundedRectangle(cornerRadius: 6))
+                        .foregroundStyle(tint)
+                        .accessibilityLabel("Drive \(drive.letter)")
+                        .accessibilityIdentifier("iso-job-task-drive-letter-\(task.id)")
+                    Text(drive.model)
+                        .font(.subheadline)
+                        .fontWeight(.medium)
+                        .lineLimit(1)
+                } else {
+                    Text(task.name)
+                        .font(.subheadline)
+                        .fontWeight(.medium)
+                        .lineLimit(1)
+                }
                 Spacer()
                 Text("\(task.status.capitalized) · \(IsoJobFormat.percent(task.progress))")
                     .font(.caption)

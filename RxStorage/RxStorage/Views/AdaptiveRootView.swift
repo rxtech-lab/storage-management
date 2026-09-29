@@ -11,6 +11,7 @@ import SwiftUI
 /// Adaptive root view that uses TabView on iPhone and NavigationSplitView on iPad
 struct AdaptiveRootView: View {
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    @Environment(\.scenePhase) private var scenePhase
     @State private var navigationManager = NavigationManager()
 
     var body: some View {
@@ -31,6 +32,13 @@ struct AdaptiveRootView: View {
             #endif
             await PushNotificationManager.shared.registerForPushNotifications()
         }
+        #if os(iOS)
+        // Show jobs already running when the app opens or returns to the foreground
+        .task(id: scenePhase) {
+            guard scenePhase == .active else { return }
+            await LiveActivityManager.shared.startActivityIfJobsRunning()
+        }
+        #endif
         // Open the ISO job whose notification was tapped, including one that launched the app
         .task(id: PushNotificationManager.shared.pendingIsoJobId) {
             guard let jobId = PushNotificationManager.shared.pendingIsoJobId else { return }

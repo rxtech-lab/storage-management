@@ -111,3 +111,18 @@ extension View {
         }
     }
 }
+
+extension IsoJobTask {
+    /// Drive letter and drive model of a drive row. iso-burner reports drive
+    /// rows as "E · Vendor Model" on Windows and "1 · Vendor Model" on macOS,
+    /// so the letter is the part before " · ".
+    /// Returns nil for other rows or names without a short drive letter.
+    var driveLetter: (letter: String, model: String)? {
+        guard section == .drive else { return nil }
+        let parts = name.components(separatedBy: " · ")
+        guard parts.count >= 2 else { return nil }
+        let letter = parts[0].trimmingCharacters(in: .whitespaces)
+        guard (1 ... 2).contains(letter.count), letter.allSatisfy({ $0.isLetter || $0.isNumber }) else { return nil }
+        return (letter.uppercased(), parts.dropFirst().joined(separator: " · "))
+    }
+}
