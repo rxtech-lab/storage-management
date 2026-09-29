@@ -219,8 +219,13 @@
         }
 
         private func registerStartToken(_ data: Data) async {
+            let previousToken = UserDefaults.standard.string(forKey: Self.registeredStartTokenKey)
             guard let token = await register(token: data, kind: .start) else { return }
             UserDefaults.standard.set(token, forKey: Self.registeredStartTokenKey)
+            // A rotated start token replaces the old one, which APNs would reject
+            if let previousToken, previousToken != token {
+                await unregister(token: previousToken)
+            }
         }
 
         private func register(token data: Data, kind: LiveActivityTokenKind) async -> String? {
