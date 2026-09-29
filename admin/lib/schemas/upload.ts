@@ -36,6 +36,7 @@ export const ContentPreviewUploadItemsSchema = z.array(ContentPreviewUploadItemS
 export const ContentPreviewUploadRequestSchema = z.object({
   item_id: z.string().min(1).describe("ID of the item to associate content with"),
   items: ContentPreviewUploadItemsSchema,
+  overwrite: z.boolean().optional().describe("Replace existing content with the same title instead of rejecting the upload"),
 }).describe("Content preview upload request with item ID and content items");
 
 // Content preview presigned upload - response item
