@@ -127,6 +127,7 @@ final class NavigationManager {
     private let itemService = ItemService()
     private let qrCodeService = QrCodeService()
     private let dashboardService = DashboardService()
+    private let isoJobService = IsoJobService()
 
     // MARK: - Sidebar Badge Counts (Initial Load)
 
@@ -196,6 +197,27 @@ final class NavigationManager {
     func navigateToManagement(_ section: ManagementSection) {
         selectedTab = .management
         selectedManagementSection = section
+    }
+
+    /// Navigate to an ISO job by its ID, e.g. from a push notification
+    func navigateToIsoJob(id: String) async {
+        isLoadingDeepLink = true
+        defer { isLoadingDeepLink = false }
+
+        do {
+            let job = try await isoJobService.fetchJob(id: id).toIsoJob()
+            navigateToManagement(.isoJobs)
+            // Sidebar (iPad/macOS) shows the selected job in its detail column
+            selectedIsoJob = job
+            // TabView (iPhone) pushes the section list, then the job
+            var path = NavigationPath()
+            path.append(ManagementSection.isoJobs)
+            path.append(job)
+            managementNavigationPath = path
+        } catch {
+            deepLinkError = error
+            showDeepLinkError = true
+        }
     }
 
     /// Clear all detail selections

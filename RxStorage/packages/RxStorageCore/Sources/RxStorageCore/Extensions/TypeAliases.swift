@@ -387,3 +387,42 @@ public typealias IsoJobStatus = Components.Schemas.IsoJobStatus
 extension Components.Schemas.IsoJobResponseSchema: Identifiable {}
 extension Components.Schemas.IsoJobDetailResponseSchema: Identifiable {}
 extension Components.Schemas.IsoJobTaskResponseSchema: Identifiable {}
+
+public extension Components.Schemas.IsoJobDetailResponseSchema {
+    /// Convert to IsoJob (IsoJobResponseSchema) for navigation and list views
+    func toIsoJob() -> IsoJob {
+        IsoJob(
+            id: id,
+            userId: userId,
+            kind: kind,
+            title: title,
+            status: status,
+            hostName: hostName,
+            progress: progress,
+            doneCount: doneCount,
+            totalCount: totalCount,
+            doneBytes: doneBytes,
+            totalBytes: totalBytes,
+            message: message,
+            error: error,
+            startedAt: startedAt,
+            finishedAt: finishedAt,
+            createdAt: createdAt,
+            updatedAt: updatedAt
+        )
+    }
+}
+
+// MARK: - Device Types
+
+/// Device registered for push notifications
+public typealias Device = Components.Schemas.DeviceResponseSchema
+
+/// Request body for registering a device for push notifications
+public typealias DeviceRegisterRequest = Components.Schemas.DeviceRegisterSchema
+
+/// Platform a push notification device runs on
+public typealias DevicePlatform = Components.Schemas.DevicePlatform
+
+/// APNs environment a device token belongs to
+public typealias DeviceEnvironment = Components.Schemas.DeviceEnvironment

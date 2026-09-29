@@ -17,6 +17,12 @@ import SwiftUI
 
 @main
 struct RxStorageApp: App {
+    #if os(iOS)
+        @UIApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
+    #elseif os(macOS)
+        @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
+    #endif
+
     // Detail view models injected via environment
     @State private var categoryDetailViewModel = CategoryDetailViewModel()
     @State private var authorDetailViewModel = AuthorDetailViewModel()

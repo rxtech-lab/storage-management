@@ -23,6 +23,16 @@ struct AdaptiveRootView: View {
             }
         }
         .environment(navigationManager)
+        // Only shown while signed in, so the device token is registered for the current user
+        .task {
+            await PushNotificationManager.shared.registerForPushNotifications()
+        }
+        // Open the ISO job whose notification was tapped, including one that launched the app
+        .task(id: PushNotificationManager.shared.pendingIsoJobId) {
+            guard let jobId = PushNotificationManager.shared.pendingIsoJobId else { return }
+            PushNotificationManager.shared.pendingIsoJobId = nil
+            await navigationManager.navigateToIsoJob(id: jobId)
+        }
         // Handle universal links (https://...)
         .onContinueUserActivity(NSUserActivityTypeBrowsingWeb) { userActivity in
             if let url = userActivity.webpageURL {
