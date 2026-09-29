@@ -48,5 +48,27 @@ struct IsoJobDeepLinkTests {
 
             _ = try JSONDecoder().decode(IsoJobActivityAttributes.self, from: Data("{}".utf8))
         }
+
+        @Test("Builds the content state from running jobs, oldest first")
+        func buildsStateFromRunningJobs() {
+            func job(_ id: String, status: IsoJobStatus = .running, startedAfter seconds: TimeInterval) -> IsoJob {
+                var job = TestHelpers.makeIsoJob(id: id, status: status)
+                job.startedAt = job.startedAt.addingTimeInterval(seconds)
+                return job
+            }
+
+            let state = IsoJobActivityAttributes.ContentState(runningJobs: [
+                job("newest", startedAfter: 40),
+                job("done", status: .completed, startedAfter: 0),
+                job("oldest", startedAfter: 10),
+                job("second", startedAfter: 20),
+                job("third", startedAfter: 30),
+            ])
+
+            #expect(state.jobs.map(\.id) == ["oldest", "second", "third"])
+            #expect(state.runningCount == 4)
+            #expect(state.hiddenCount == 1)
+            #expect(IsoJobActivityAttributes.ContentState(runningJobs: []).runningCount == 0)
+        }
     }
 #endif
