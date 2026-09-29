@@ -18,3 +18,4 @@ export * from "./account-deletions";
 export * from "./tags";
 export * from "./iso-jobs";
 export * from "./devices";
+export * from "./live-activities";

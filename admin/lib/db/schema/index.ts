@@ -80,3 +80,8 @@ export {
   type DeviceToken,
   type NewDeviceToken,
 } from "./device-tokens";
+export {
+  liveActivityTokens,
+  type LiveActivityToken,
+  type NewLiveActivityToken,
+} from "./live-activity-tokens";

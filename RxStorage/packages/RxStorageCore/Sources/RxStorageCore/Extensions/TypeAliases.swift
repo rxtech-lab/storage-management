@@ -426,3 +426,14 @@ public typealias DevicePlatform = Components.Schemas.DevicePlatform
 
 /// APNs environment a device token belongs to
 public typealias DeviceEnvironment = Components.Schemas.DeviceEnvironment
+
+// MARK: - Live Activity Types
+
+/// ActivityKit push token registered for ISO job Live Activities
+public typealias LiveActivityToken = Components.Schemas.LiveActivityTokenResponseSchema
+
+/// Request body for registering an ActivityKit push token
+public typealias LiveActivityTokenRegisterRequest = Components.Schemas.LiveActivityTokenRegisterSchema
+
+/// Whether an ActivityKit push token starts activities or updates one activity
+public typealias LiveActivityTokenKind = Components.Schemas.LiveActivityTokenKind

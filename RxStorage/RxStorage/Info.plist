@@ -38,6 +38,13 @@
 	<key>NSFaceIDUsageDescription</key>
 	<string>Face ID is used to authenticate before permanently locking NFC tags</string>
 
+	<!-- Live Activities for running ISO jobs, started and updated over APNs -->
+	<key>NSSupportsLiveActivities</key>
+	<true/>
+
+	<key>NSSupportsLiveActivitiesFrequentUpdates</key>
+	<true/>
+
 	<!-- Export Compliance -->
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>

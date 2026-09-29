@@ -14,6 +14,7 @@ import { ensureSchemaInitialized } from "@/lib/db/client";
 import { getSession } from "@/lib/auth-helper";
 import { IsoJobUpsertSchema } from "@/lib/schemas/iso-jobs";
 import { notifyIsoJobFinished, shouldNotifyIsoJob } from "@/lib/push/iso-job-notifications";
+import { liveActivityEventFor, syncIsoJobLiveActivity } from "@/lib/push/iso-job-live-activities";
 import {
   type PaginationParams,
   type PaginatedResult,
@@ -191,9 +192,13 @@ export async function upsertIsoJobAction(
       await db.batch([writeJob, clearTasks]);
     }
 
+    // Push after the response so the CLI's progress report is not delayed.
     if (shouldNotifyIsoJob(existing?.status, job.status)) {
-      // Push after the response so the CLI's progress report is not delayed.
       after(() => notifyIsoJobFinished(resolvedUserId, { ...job, id, error: job.error ?? null }));
+    }
+    const liveActivityEvent = liveActivityEventFor(existing?.status, job.status);
+    if (liveActivityEvent) {
+      after(() => syncIsoJobLiveActivity(resolvedUserId, liveActivityEvent, { ...values, id }));
     }
 
     revalidatePath("/iso-jobs");

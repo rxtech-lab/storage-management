@@ -248,6 +248,9 @@ struct SettingsView: View {
     }
 
     private func signOut() async {
+        #if os(iOS)
+            await LiveActivityManager.shared.stop()
+        #endif
         await PushNotificationManager.shared.unregister()
         await authManager.logout()
     }

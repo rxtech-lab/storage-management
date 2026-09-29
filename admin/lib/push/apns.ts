@@ -95,20 +95,30 @@ function getJwt(config: ApnsConfig): string {
   return cachedJwt.value;
 }
 
+interface PushOptions {
+  pushType: "alert" | "liveactivity";
+  priority: 5 | 10;
+}
+
 function sendOne(
   session: http2.ClientHttp2Session,
   config: ApnsConfig,
   token: string,
-  payload: string
+  payload: string,
+  options: PushOptions
 ): Promise<ApnsResult> {
   return new Promise((resolve) => {
     const request = session.request({
       ":method": "POST",
       ":path": `/3/device/${token}`,
       authorization: `bearer ${getJwt(config)}`,
-      "apns-topic": config.bundleId,
-      "apns-push-type": "alert",
-      "apns-priority": "10",
+      // Live Activity pushes use a dedicated topic derived from the app's bundle ID
+      "apns-topic":
+        options.pushType === "liveactivity"
+          ? `${config.bundleId}.push-type.liveactivity`
+          : config.bundleId,
+      "apns-push-type": options.pushType,
+      "apns-priority": String(options.priority),
       "content-type": "application/json",
     });
 
@@ -149,18 +159,41 @@ export async function sendApnsAlert(
   tokens: string[],
   alert: ApnsAlert
 ): Promise<ApnsResult[]> {
-  const config = getConfig();
-  if (!config || tokens.length === 0) return [];
-
-  const payload = JSON.stringify({
+  const payload = {
     aps: {
       alert: { title: alert.title, body: alert.body },
       sound: "default",
       ...(alert.threadId ? { "thread-id": alert.threadId } : {}),
     },
     ...alert.data,
-  });
+  };
+  return send(environment, tokens, payload, { pushType: "alert", priority: 10 });
+}
 
+/**
+ * Sends a Live Activity push (start, update or end) to every token in one
+ * APNs environment. `aps` is the full `aps` dictionary, including `event`,
+ * `timestamp` and `content-state`. Never throws.
+ */
+export async function sendApnsLiveActivity(
+  environment: ApnsEnvironment,
+  tokens: string[],
+  aps: Record<string, unknown>,
+  priority: 5 | 10
+): Promise<ApnsResult[]> {
+  return send(environment, tokens, { aps }, { pushType: "liveactivity", priority });
+}
+
+async function send(
+  environment: ApnsEnvironment,
+  tokens: string[],
+  body: Record<string, unknown>,
+  options: PushOptions
+): Promise<ApnsResult[]> {
+  const config = getConfig();
+  if (!config || tokens.length === 0) return [];
+
+  const payload = JSON.stringify(body);
   const session = http2.connect(HOSTS[environment]);
   const sessionError = new Promise<ApnsResult[]>((resolve) => {
     session.on("error", (error) =>
@@ -170,7 +203,7 @@ export async function sendApnsAlert(
 
   try {
     return await Promise.race([
-      Promise.all(tokens.map((token) => sendOne(session, config, token, payload))),
+      Promise.all(tokens.map((token) => sendOne(session, config, token, payload, options))),
       sessionError,
     ]);
   } finally {

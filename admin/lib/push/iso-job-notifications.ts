@@ -12,7 +12,7 @@ import {
 // outcomes they did not trigger themselves are pushed.
 const NOTIFIED_STATUSES: IsoJob["status"][] = ["completed", "failed"];
 
-const KIND_LABELS: Record<IsoJob["kind"], string> = {
+export const KIND_LABELS: Record<IsoJob["kind"], string> = {
   generate: "ISO generation",
   burn: "Disc burning",
   upload: "Upload",

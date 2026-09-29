@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		DF7A10022F7B0000000A0000 /* RxStorageWidgetsExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = DF7A10012F7B0000000A0000 /* RxStorageWidgetsExtension.appex */; platformFilter = ios; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		DF7A10032F7B0000000A0000 /* RxStorageCore in Frameworks */ = {isa = PBXBuildFile; productRef = DF7A10042F7B0000000A0000 /* RxStorageCore */; };
 		DF1A77E42F320CE6000C757A /* TestPlan.xctestplan in Resources */ = {isa = PBXBuildFile; fileRef = DF1A77E32F320CE6000C757A /* TestPlan.xctestplan */; };
 		DF1A77E52F320CE6000C757A /* TestPlan.xctestplan in Resources */ = {isa = PBXBuildFile; fileRef = DF1A77E32F320CE6000C757A /* TestPlan.xctestplan */; };
 		DF6625B52F29138400333552 /* RxStorageClips.app in Embed App Clips */ = {isa = PBXBuildFile; fileRef = DF6625902F29138300333552 /* RxStorageClips.app */; platformFilter = ios; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
@@ -30,6 +32,13 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
+		DF7A10062F7B0000000A0000 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = DF6625552F29136F00333552 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = DF7A10112F7B0000000A0000;
+			remoteInfo = RxStorageWidgetsExtension;
+		};
 		DF66256F2F29137000333552 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = DF6625552F29136F00333552 /* Project object */;
@@ -61,6 +70,17 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
+		DF7A10052F7B0000000A0000 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				DF7A10022F7B0000000A0000 /* RxStorageWidgetsExtension.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		DF6625BA2F29138400333552 /* Embed App Clips */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
@@ -75,6 +95,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		DF7A10012F7B0000000A0000 /* RxStorageWidgetsExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = RxStorageWidgetsExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		DF1A77E32F320CE6000C757A /* TestPlan.xctestplan */ = {isa = PBXFileReference; lastKnownFileType = text; path = TestPlan.xctestplan; sourceTree = "<group>"; };
 		DF66255D2F29136F00333552 /* RxStorage.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = RxStorage.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		DF66256E2F29137000333552 /* RxStorageTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = RxStorageTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -86,6 +107,20 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		DF7A10102F7B0000000A0000 /* Exceptions for "RxStorage" folder in "RxStorageWidgetsExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Views/IsoJobs/IsoJobFormatting.swift,
+			);
+			target = DF7A10112F7B0000000A0000 /* RxStorageWidgetsExtension */;
+		};
+		DF7A10092F7B0000000A0000 /* Exceptions for "RxStorageWidgets" folder in "RxStorageWidgetsExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = DF7A10112F7B0000000A0000 /* RxStorageWidgetsExtension */;
+		};
 		DF1A7A542F3326BD000C757A /* Exceptions for "RxStorageUITests" folder in "RxStorageClipsUITests" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
@@ -179,11 +214,20 @@
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
+		DF7A10082F7B0000000A0000 /* RxStorageWidgets */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				DF7A10092F7B0000000A0000 /* Exceptions for "RxStorageWidgets" folder in "RxStorageWidgetsExtension" target */,
+			);
+			path = RxStorageWidgets;
+			sourceTree = "<group>";
+		};
 		DF66255F2F29136F00333552 /* RxStorage */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
 				DF6625802F29137000333552 /* Exceptions for "RxStorage" folder in "RxStorage" target */,
 				DF66282F2F2E325B00333552 /* Exceptions for "RxStorage" folder in "RxStorageClips" target */,
+				DF7A10102F7B0000000A0000 /* Exceptions for "RxStorage" folder in "RxStorageWidgetsExtension" target */,
 			);
 			path = RxStorage;
 			sourceTree = "<group>";
@@ -222,6 +266,14 @@
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		DF7A10132F7B0000000A0000 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				DF7A10032F7B0000000A0000 /* RxStorageCore in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		DF66255A2F29136F00333552 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -292,6 +344,7 @@
 				DF6625912F29138300333552 /* RxStorageClips */,
 				DF6625A42F29138400333552 /* RxStorageClipsTests */,
 				DF6625AE2F29138400333552 /* RxStorageClipsUITests */,
+				DF7A10082F7B0000000A0000 /* RxStorageWidgets */,
 				DF66255E2F29136F00333552 /* Products */,
 				DF6626D82F2CF37000333552 /* icon.icon */,
 				DF6628302F2E327300333552 /* Frameworks */,
@@ -307,6 +360,7 @@
 				DF6625902F29138300333552 /* RxStorageClips.app */,
 				DF6625A12F29138400333552 /* RxStorageClipsTests.xctest */,
 				DF6625AB2F29138400333552 /* RxStorageClipsUITests.xctest */,
+				DF7A10012F7B0000000A0000 /* RxStorageWidgetsExtension.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -321,6 +375,29 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		DF7A10112F7B0000000A0000 /* RxStorageWidgetsExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = DF7A10152F7B0000000A0000 /* Build configuration list for PBXNativeTarget "RxStorageWidgetsExtension" */;
+			buildPhases = (
+				DF7A10122F7B0000000A0000 /* Sources */,
+				DF7A10132F7B0000000A0000 /* Frameworks */,
+				DF7A10142F7B0000000A0000 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				DF7A10082F7B0000000A0000 /* RxStorageWidgets */,
+			);
+			name = RxStorageWidgetsExtension;
+			packageProductDependencies = (
+				DF7A10042F7B0000000A0000 /* RxStorageCore */,
+			);
+			productName = RxStorageWidgetsExtension;
+			productReference = DF7A10012F7B0000000A0000 /* RxStorageWidgetsExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 		DF66255C2F29136F00333552 /* RxStorage */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = DF6625812F29137000333552 /* Build configuration list for PBXNativeTarget "RxStorage" */;
@@ -329,10 +406,12 @@
 				DF66255A2F29136F00333552 /* Frameworks */,
 				DF66255B2F29136F00333552 /* Resources */,
 				DF6625BA2F29138400333552 /* Embed App Clips */,
+				DF7A10052F7B0000000A0000 /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				DF7A10072F7B0000000A0000 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				DF66255F2F29136F00333552 /* RxStorage */,
@@ -483,6 +562,9 @@
 				LastSwiftUpdateCheck = 2620;
 				LastUpgradeCheck = 2620;
 				TargetAttributes = {
+					DF7A10112F7B0000000A0000 = {
+						CreatedOnToolsVersion = 26.2;
+					};
 					DF66255C2F29136F00333552 = {
 						CreatedOnToolsVersion = 26.2;
 					};
@@ -536,11 +618,19 @@
 				DF66258F2F29138300333552 /* RxStorageClips */,
 				DF6625A02F29138400333552 /* RxStorageClipsTests */,
 				DF6625AA2F29138400333552 /* RxStorageClipsUITests */,
+				DF7A10112F7B0000000A0000 /* RxStorageWidgetsExtension */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		DF7A10142F7B0000000A0000 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		DF66255B2F29136F00333552 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -590,6 +680,13 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		DF7A10122F7B0000000A0000 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		DF6625592F29136F00333552 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -635,6 +732,12 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
+		DF7A10072F7B0000000A0000 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			platformFilter = ios;
+			target = DF7A10112F7B0000000A0000 /* RxStorageWidgetsExtension */;
+			targetProxy = DF7A10062F7B0000000A0000 /* PBXContainerItemProxy */;
+		};
 		DF6625702F29137000333552 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = DF66255C2F29136F00333552 /* RxStorage */;
@@ -658,6 +761,72 @@
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
+		DF7A10162F7B0000000A0000 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 5;
+				DEVELOPMENT_TEAM = P9KK452K8P;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = RxStorageWidgets/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = RxStorageWidgets;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = rxlab.RxStorage.RxStorageWidgets;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		DF7A10172F7B0000000A0000 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 5;
+				DEVELOPMENT_TEAM = P9KK452K8P;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = RxStorageWidgets/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = RxStorageWidgets;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = rxlab.RxStorage.RxStorageWidgets;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
 		DF6625822F29137000333552 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -1128,6 +1297,15 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		DF7A10152F7B0000000A0000 /* Build configuration list for PBXNativeTarget "RxStorageWidgetsExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				DF7A10162F7B0000000A0000 /* Debug */,
+				DF7A10172F7B0000000A0000 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		DF6625582F29136F00333552 /* Build configuration list for PBXProject "RxStorage" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
@@ -1248,6 +1426,11 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		DF7A10042F7B0000000A0000 /* RxStorageCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = DF66265F2F2B828600333552 /* XCLocalSwiftPackageReference "packages/RxStorageCore" */;
+			productName = RxStorageCore;
+		};
 		DF6626062F2A54C200333552 /* RxStorageCore */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = RxStorageCore;
