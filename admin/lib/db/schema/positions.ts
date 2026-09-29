@@ -2,6 +2,7 @@ import { sqliteTable, text, integer } from "drizzle-orm/sqlite-core";
 import { relations } from "drizzle-orm";
 import { nanoid } from "nanoid";
 import { items } from "./items";
+import { itemStocks } from "./item-stocks";
 import { positionSchemas } from "./position-schemas";
 
 export const positions = sqliteTable("positions", {
@@ -12,6 +13,8 @@ export const positions = sqliteTable("positions", {
   itemId: text("item_id")
     .notNull()
     .references(() => items.id, { onDelete: "cascade" }),
+  // Placement this position describes; null means the item's main placement
+  stockId: text("stock_id").references(() => itemStocks.id, { onDelete: "cascade" }),
   positionSchemaId: text("position_schema_id")
     .notNull()
     .references(() => positionSchemas.id),

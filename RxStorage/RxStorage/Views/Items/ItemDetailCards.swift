@@ -237,6 +237,8 @@ private struct DetailInfoRow: View {
 
 struct ItemDetailChildrenCard: View {
     let children: [StorageItem]
+    /// Placements of other items stored in this item (some of their units)
+    var storedStocks: [StoredStock] = []
     let totalChildren: Int
     let isViewOnly: Bool
     let onSeeAll: () -> Void
@@ -245,6 +247,8 @@ struct ItemDetailChildrenCard: View {
     var onTapNFCChild: (() -> Void)?
     let onEditChild: (StorageItem) -> Void
     let onRemoveChild: (String) async -> Void
+    var onRemoveStoredStock: ((StoredStock) async -> Void)?
+    var onEditStoredStock: ((StoredStock) -> Void)?
     var onSelectChild: ((StorageItem) -> Void)?
 
     var body: some View {
@@ -280,7 +284,7 @@ struct ItemDetailChildrenCard: View {
             Divider()
                 .padding(.leading, 16)
 
-            if children.isEmpty {
+            if children.isEmpty && storedStocks.isEmpty {
                 Text("No child items")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
@@ -289,7 +293,14 @@ struct ItemDetailChildrenCard: View {
             } else {
                 ForEach(Array(children.enumerated()), id: \.element.id) { index, child in
                     childRowWithSwipe(child)
-                    if index < children.count - 1 {
+                    if index < children.count - 1 || !storedStocks.isEmpty {
+                        Divider()
+                            .padding(.leading, 16)
+                    }
+                }
+                ForEach(Array(storedStocks.enumerated()), id: \.element.stock.value1.id) { index, stored in
+                    storedStockRowWithSwipe(stored)
+                    if index < storedStocks.count - 1 {
                         Divider()
                             .padding(.leading, 16)
                     }
@@ -360,6 +371,79 @@ struct ItemDetailChildrenCard: View {
                 childRow(child)
                     .padding(.horizontal, 16)
                     .padding(.vertical, 12)
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func storedStockRowWithSwipe(_ stored: StoredStock) -> some View {
+        if isViewOnly || (onRemoveStoredStock == nil && onEditStoredStock == nil) {
+            storedStockRow(stored)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 12)
+        } else {
+            SwipeableRow(
+                leadingActions: onEditStoredStock.map { onEdit in
+                    [SwipeAction(title: "Edit", icon: "pencil", color: .blue) { onEdit(stored) }]
+                } ?? [],
+                trailingActions: onRemoveStoredStock.map { onRemove in
+                    [SwipeAction(title: "Remove", icon: "minus.circle", color: .red) {
+                        Task { await onRemove(stored) }
+                    }]
+                } ?? []
+            ) {
+                storedStockRow(stored)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 12)
+            }
+        }
+    }
+
+    private func storedStockRow(_ stored: StoredStock) -> some View {
+        let item = stored.item.value1
+        let label = HStack {
+            ItemRow(item: item)
+            Spacer()
+            Text("×\(stored.stock.value1.quantity)")
+                .font(.subheadline)
+                .monospacedDigit()
+                .padding(.horizontal, 8)
+                .padding(.vertical, 2)
+                .background(Color.blue.opacity(0.15))
+                .foregroundStyle(.blue)
+                .clipShape(Capsule())
+        }
+        .accessibilityIdentifier("stored-stock-row")
+
+        return Group {
+            #if os(macOS)
+                Button {
+                    onSelectChild?(item)
+                } label: {
+                    label
+                }
+            #else
+                NavigationLink(value: item) {
+                    label
+                }
+            #endif
+        }
+        .buttonStyle(.plain)
+        .contentShape(Rectangle())
+        .contextMenu {
+            if !isViewOnly, let onEditStoredStock {
+                Button {
+                    onEditStoredStock(stored)
+                } label: {
+                    Label("Edit Placement", systemImage: "pencil")
+                }
+            }
+            if !isViewOnly, let onRemoveStoredStock {
+                Button(role: .destructive) {
+                    Task { await onRemoveStoredStock(stored) }
+                } label: {
+                    Label("Remove from Parent", systemImage: "minus.circle")
+                }
             }
         }
     }

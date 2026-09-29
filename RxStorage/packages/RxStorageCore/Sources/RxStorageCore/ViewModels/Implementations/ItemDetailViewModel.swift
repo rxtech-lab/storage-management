@@ -25,6 +25,12 @@ public final class ItemDetailViewModel: ItemDetailViewModelProtocol {
     public private(set) var tags: [TagRef] = []
     public private(set) var stockHistory: [StockHistoryRef] = []
     public private(set) var quantity: Int = 0
+    /// Units in the item's main placement
+    public private(set) var mainQuantity: Int = 0
+    /// Placements holding units of this item apart from its main placement
+    public private(set) var stocks: [ItemStock] = []
+    /// Placements of other items stored inside this item
+    public private(set) var storedStocks: [StoredStock] = []
     public var contentSchemas: [ContentSchema] = []
     public private(set) var isLoading = false
     public private(set) var error: Error?
@@ -36,6 +42,7 @@ public final class ItemDetailViewModel: ItemDetailViewModelProtocol {
     private let contentSchemaService: ContentSchemaServiceProtocol
     private let stockHistoryService: StockHistoryServiceProtocol
     private let tagService: TagServiceProtocol
+    private let stockService: ItemStockServiceProtocol
 
     // MARK: - Initialization
 
@@ -44,13 +51,15 @@ public final class ItemDetailViewModel: ItemDetailViewModelProtocol {
         contentService: ContentServiceProtocol = ContentService(),
         contentSchemaService: ContentSchemaServiceProtocol = ContentSchemaService(),
         stockHistoryService: StockHistoryServiceProtocol = StockHistoryService(),
-        tagService: TagServiceProtocol = TagService()
+        tagService: TagServiceProtocol = TagService(),
+        stockService: ItemStockServiceProtocol = ItemStockService()
     ) {
         self.itemService = itemService
         self.contentService = contentService
         self.contentSchemaService = contentSchemaService
         self.stockHistoryService = stockHistoryService
         self.tagService = tagService
+        self.stockService = stockService
     }
 
     // MARK: - Public Methods
@@ -73,6 +82,9 @@ public final class ItemDetailViewModel: ItemDetailViewModelProtocol {
                 totalChildren = item.totalChildren
                 stockHistory = item.stockHistory
                 quantity = item.quantity
+                mainQuantity = item.mainQuantity
+                stocks = item.stocks
+                storedStocks = item.storedStocks
                 tags = item.tags
             }
         } catch is CancellationError {
@@ -106,6 +118,9 @@ public final class ItemDetailViewModel: ItemDetailViewModelProtocol {
                 totalChildren = item.totalChildren
                 stockHistory = item.stockHistory
                 quantity = item.quantity
+                mainQuantity = item.mainQuantity
+                stocks = item.stocks
+                storedStocks = item.storedStocks
                 tags = item.tags
             }
         } catch is CancellationError {
@@ -138,6 +153,9 @@ public final class ItemDetailViewModel: ItemDetailViewModelProtocol {
                 totalChildren = item.totalChildren
                 stockHistory = item.stockHistory
                 quantity = item.quantity
+                mainQuantity = item.mainQuantity
+                stocks = item.stocks
+                storedStocks = item.storedStocks
                 tags = item.tags
             }
         } catch is CancellationError {
@@ -225,6 +243,34 @@ public final class ItemDetailViewModel: ItemDetailViewModelProtocol {
         }
     }
 
+    /// Take another item's stock placement out of this item (moves it to no parent)
+    /// Returns tuple of (parentId, childId) for event emission
+    @discardableResult
+    public func removeStoredStock(_ stored: StoredStock) async throws -> (parentId: String, childId: String) {
+        guard let currentItemId = item?.id else {
+            throw ItemDetailError.noItemLoaded
+        }
+
+        let childId = stored.item.value1.id
+        _ = try await stockService.moveStock(
+            itemId: childId,
+            MoveItemStockRequest(fromStockId: stored.stock.value1.id, toParentId: nil)
+        )
+        storedStocks.removeAll { $0.stock.value1.id == stored.stock.value1.id }
+        return (parentId: currentItemId, childId: childId)
+    }
+
+    // MARK: - Stock Placements
+
+    /// Remove a placement of this item, returning its units to the main placement
+    public func returnStockToMain(stockId: String) async throws {
+        guard item != nil else {
+            throw ItemDetailError.noItemLoaded
+        }
+        try await stockService.deleteStock(id: stockId)
+        await refresh()
+    }
+
     // MARK: - Content Management
 
     /// Create a new content for this item
@@ -305,13 +351,14 @@ public final class ItemDetailViewModel: ItemDetailViewModelProtocol {
 
     /// Add a stock history entry
     @discardableResult
-    public func addStockEntry(quantity: Int, note: String?) async throws -> StockHistory {
+    public func addStockEntry(quantity: Int, note: String?, stockId: String? = nil) async throws -> StockHistory {
         guard let itemId = item?.id else {
             throw ItemDetailError.noItemLoaded
         }
 
         let request = NewStockHistoryRequest(
             itemId: itemId,
+            stockId: stockId,
             quantity: quantity,
             note: note
         )

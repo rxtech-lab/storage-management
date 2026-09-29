@@ -1,8 +1,8 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { eq, desc, sum } from "drizzle-orm";
-import { db, stockHistories, items, type StockHistory, type NewStockHistory } from "@/lib/db";
+import { and, eq, desc, sum } from "drizzle-orm";
+import { db, stockHistories, items, itemStocks, type StockHistory, type NewStockHistory } from "@/lib/db";
 import { ensureSchemaInitialized } from "@/lib/db/client";
 import { getSession } from "@/lib/auth-helper";
 
@@ -48,6 +48,17 @@ export async function createStockHistoryAction(
 
     if (!parentItem[0] || parentItem[0].userId !== resolvedUserId) {
       return { success: false, error: "Permission denied" };
+    }
+
+    if (data.stockId) {
+      const stock = await db
+        .select({ id: itemStocks.id })
+        .from(itemStocks)
+        .where(and(eq(itemStocks.id, data.stockId), eq(itemStocks.itemId, data.itemId)))
+        .limit(1);
+      if (!stock[0]) {
+        return { success: false, error: "Stock placement not found" };
+      }
     }
 
     const result = await db.insert(stockHistories).values({

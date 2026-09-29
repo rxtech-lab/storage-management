@@ -13,6 +13,9 @@ import { getItemStockHistory, getItemQuantity } from "@/lib/actions/stock-histor
 import { signImagesArrayWithIds } from "@/lib/actions/s3-upload-actions";
 import { isEmailWhitelisted } from "@/lib/actions/whitelist-actions";
 import { getItemTags } from "@/lib/actions/tag-actions";
+import { getItemStockPlacements, getStoredStocks } from "@/lib/actions/item-stock-actions";
+import { db, items } from "@/lib/db";
+import { eq } from "drizzle-orm";
 import {
   ItemDetailResponseSchema,
   ItemResponseSchema,
@@ -80,7 +83,20 @@ async function buildItemResponse(
   const CHILDREN_LIMIT = 10;
 
   // Fetch item images, children, contents, positions, and stock in parallel
-  const [images, children, totalChildren, contents, totalContents, positions, stockHistory, quantity, itemTags] = await Promise.all([
+  const [
+    images,
+    children,
+    totalChildren,
+    contents,
+    totalContents,
+    positions,
+    stockHistory,
+    quantity,
+    itemTags,
+    placements,
+    storedStocks,
+    parentRows,
+  ] = await Promise.all([
     item.images && item.images.length > 0
       ? signImagesArrayWithIds(item.images)
       : Promise.resolve([]),
@@ -92,6 +108,15 @@ async function buildItemResponse(
     getItemStockHistory(itemId),
     getItemQuantity(itemId),
     getItemTags(itemId),
+    getItemStockPlacements(itemId),
+    getStoredStocks(itemId),
+    item.parentId
+      ? db
+          .select({ id: items.id, title: items.title })
+          .from(items)
+          .where(eq(items.id, item.parentId))
+          .limit(1)
+      : Promise.resolve([]),
   ]);
 
   // Sign images for each child
@@ -109,6 +134,20 @@ async function buildItemResponse(
     }),
   );
 
+  const signedStoredStocks = await Promise.all(
+    storedStocks.map(async ({ stock, item: storedItem }) => ({
+      stock,
+      item: {
+        ...storedItem,
+        images:
+          storedItem.images && storedItem.images.length > 0
+            ? await signImagesArrayWithIds(storedItem.images)
+            : [],
+        previewUrl: `${process.env.NEXT_PUBLIC_URL}/preview/item?id=${storedItem.id}`,
+      },
+    })),
+  );
+
   // Sign file references in content data (preview_image_url, preview_video_url, file_path)
   const signedContents = await resolveContentFileRefs(contents);
 
@@ -122,6 +161,10 @@ async function buildItemResponse(
     totalContents,
     positions,
     quantity,
+    parent: parentRows[0] ?? null,
+    mainQuantity: placements.mainQuantity,
+    stocks: placements.stocks,
+    storedStocks: signedStoredStocks,
     stockHistory,
     tags: itemTags,
   };

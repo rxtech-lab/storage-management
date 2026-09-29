@@ -42,9 +42,8 @@ struct ItemDetailView: View {
         // Add child via QR code / NFC
         @State private var nfcReader = NFCReader()
         @State private var showingChildScanner = false
-        /// Move flow: scanned item already belongs to another parent
+        /// Scanned item whose move (source, amount) is being chosen
         @State private var pendingMoveChild: StorageItemDetail?
-        @State private var showMoveChildConfirmation = false
         private let qrCodeService = QrCodeService()
         private let itemService = ItemService()
     #endif
@@ -55,6 +54,7 @@ struct ItemDetailView: View {
     @State private var showingChildrenListSheet = false
     @State private var selectedImageIndex = 0
     @State private var selectedChildForEdit: StorageItem?
+    @State private var selectedStoredStockForEdit: ItemStock?
     @State private var selectedChildForDetail: StorageItem?
     @State private var selectedContentForEdit: Content?
     @State private var selectedContentForDetail: Content?
@@ -153,18 +153,18 @@ struct ItemDetailView: View {
                     showNFCLockSheet = false
                 }
             }
-            .confirmationDialog(
-                title: "Move Item",
-                message: "\"\(pendingMoveChild?.title ?? "")\" already belongs to another item. Do you want to move it to \"\(viewModel.item?.title ?? "")\"?",
-                confirmButtonTitle: "Move",
-                isPresented: $showMoveChildConfirmation,
-                onConfirm: {
-                    guard let child = pendingMoveChild else { return }
-                    pendingMoveChild = nil
-                    Task { await addChild(child.id, previousParentId: child.parentId) }
-                },
-                onCancel: { pendingMoveChild = nil }
-            )
+            .sheet(item: $pendingMoveChild) { child in
+                NavigationStack {
+                    MoveStockSheet(
+                        itemId: child.id,
+                        itemTitle: child.title,
+                        destinationParentId: itemId,
+                        destinationTitle: viewModel.item?.title
+                    ) { result in
+                        handleChildMoved(result)
+                    }
+                }
+            }
             .sheet(isPresented: $showingChildScanner) {
                 NavigationStack {
                     QRCodeScannerView { code in
@@ -179,10 +179,10 @@ struct ItemDetailView: View {
                     NavigationStack {
                         AddChildSheet(
                             parentItemId: item.id,
+                            parentTitle: item.title,
                             existingChildIds: Set(viewModel.children.map { $0.id }),
-                            isAdding: $isAddingChild,
-                            onChildSelected: { childData in
-                                Task { await addChild(childData.itemId, previousParentId: childData.parentId) }
+                            onChildMoved: { result in
+                                handleChildMoved(result)
                             }
                         )
                     }
@@ -213,6 +213,14 @@ struct ItemDetailView: View {
             .sheet(item: $selectedChildForEdit) { child in
                 NavigationStack {
                     ItemFormSheet(item: child)
+                }
+            }
+            .sheet(item: $selectedStoredStockForEdit) { stock in
+                NavigationStack {
+                    ItemStockFormSheet(stock: stock) {
+                        eventViewModel.emit(.itemUpdated(id: stock.itemId))
+                        Task { await viewModel.refresh() }
+                    }
                 }
             }
         #if os(macOS)
@@ -247,7 +255,8 @@ struct ItemDetailView: View {
                         content: content,
                         contentSchemas: $viewModel.contentSchemas,
                         onEdit: { selectedContentForEdit = content },
-                        isViewOnly: isViewOnly
+                        isViewOnly: isViewOnly,
+                        onDelete: { Task { await deleteContent(content.id) } }
                     )
                 }
             }
@@ -287,6 +296,7 @@ struct ItemDetailView: View {
                 .sheet(isPresented: $showingChildrenListSheet) {
                     ChildrenListSheet(
                         parentId: itemId,
+                        storedStocks: viewModel.storedStocks,
                         isViewOnly: isViewOnly
                     )
                 }
@@ -488,6 +498,7 @@ struct ItemDetailView: View {
                     )
                     ItemDetailChildrenCard(
                         children: viewModel.children,
+                        storedStocks: viewModel.storedStocks,
                         totalChildren: viewModel.totalChildren,
                         isViewOnly: isViewOnly,
                         onSeeAll: { showingChildrenListSheet = true },
@@ -496,6 +507,8 @@ struct ItemDetailView: View {
                         onTapNFCChild: tapNFCChildAction,
                         onEditChild: { selectedChildForEdit = $0 },
                         onRemoveChild: { await removeChild($0) },
+                        onRemoveStoredStock: { await removeStoredStock($0) },
+                        onEditStoredStock: { selectedStoredStockForEdit = $0.stock.value1 },
                         onSelectChild: { selectedChildForDetail = $0 }
                     )
                 }
@@ -730,18 +743,15 @@ struct ItemDetailView: View {
 
     // MARK: - Child Management
 
-    private func addChild(_ childId: String, previousParentId: String? = nil) async {
-        isAddingChild = true
-        defer { isAddingChild = false }
-        do {
-            let (parentId, childId) = try await viewModel.addChildById(childId)
-            if let previousParentId, previousParentId != parentId {
-                eventViewModel.emit(.childRemoved(parentId: previousParentId, childId: childId))
-            }
-            eventViewModel.emit(.childAdded(parentId: parentId, childId: childId))
-        } catch {
-            errorViewModel.showError(error)
+    /// Notify the parents that lost and gained the moved units
+    private func handleChildMoved(_ result: MoveStockResult) {
+        if let source = result.sourceParentId, source != result.destinationParentId {
+            eventViewModel.emit(.childRemoved(parentId: source, childId: result.itemId))
         }
+        if let destination = result.destinationParentId {
+            eventViewModel.emit(.childAdded(parentId: destination, childId: result.itemId))
+        }
+        eventViewModel.emit(.itemUpdated(id: result.itemId))
     }
 
     /// Camera QR scanning is only available on iOS
@@ -781,18 +791,14 @@ struct ItemDetailView: View {
                 errorViewModel.showError(AddChildError.cannotAddSelf)
                 return
             }
-            // Use the freshly fetched parent rather than the local children list, which may be stale
-            if child.parentId == viewModel.item?.id {
+            // Use the freshly fetched placements rather than the local children list, which may be stale
+            let hasUnitsElsewhere = child.stocks.contains { $0.quantity > 0 && $0.parentId != itemId }
+            if child.parentId == itemId, !hasUnitsElsewhere {
                 errorViewModel.showError(AddChildError.alreadyChild(child.title))
                 return
             }
-            if child.parentId != nil {
-                // Item already belongs to another parent - ask before moving it
-                pendingMoveChild = child
-                showMoveChildConfirmation = true
-                return
-            }
-            await addChild(child.id)
+            // Let the user confirm where it moves from and how many units
+            pendingMoveChild = child
         }
 
         private func addChildFromNFC() async {
@@ -806,6 +812,16 @@ struct ItemDetailView: View {
             }
         }
     #endif
+
+    private func removeStoredStock(_ stored: StoredStock) async {
+        do {
+            let (parentId, childId) = try await viewModel.removeStoredStock(stored)
+            eventViewModel.emit(.childRemoved(parentId: parentId, childId: childId))
+            eventViewModel.emit(.itemUpdated(id: childId))
+        } catch {
+            errorViewModel.showError(error)
+        }
+    }
 
     private func removeChild(_ childId: String) async {
         do {

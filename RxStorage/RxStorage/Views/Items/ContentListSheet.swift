@@ -19,7 +19,11 @@ struct ContentListSheet: View {
     @State private var selectedContent: Content?
     @State private var searchTask: Task<Void, Never>?
     @State private var isSearching = false
+    @State private var contentToDelete: Content?
+    @State private var showDeleteConfirmation = false
+    @State private var errorViewModel = ErrorViewModel()
     @Environment(\.dismiss) private var dismiss
+    @Environment(EventViewModel.self) private var eventViewModel
 
     var body: some View {
         NavigationStack {
@@ -69,14 +73,37 @@ struct ContentListSheet: View {
                         ContentDetailSheet(
                             content: content,
                             contentSchemas: $contentSchemas,
-                            onEdit: {},
-                            isViewOnly: isViewOnly
+                            onEdit: nil,
+                            isViewOnly: isViewOnly,
+                            onDelete: { Task { await deleteContent(content) } }
                         )
                     }
                 }
                 .task {
                     await viewModel.fetchContents(itemId: itemId)
                 }
+                .confirmationDialog(
+                    title: "Delete Content",
+                    message: "Are you sure you want to delete \"\(contentToDelete?.contentData.title ?? "Untitled")\"? This action cannot be undone.",
+                    confirmButtonTitle: "Delete",
+                    isPresented: $showDeleteConfirmation,
+                    onConfirm: {
+                        guard let content = contentToDelete else { return }
+                        contentToDelete = nil
+                        Task { await deleteContent(content) }
+                    },
+                    onCancel: { contentToDelete = nil }
+                )
+                .showViewModelError(errorViewModel)
+        }
+    }
+
+    private func deleteContent(_ content: Content) async {
+        do {
+            try await viewModel.deleteContent(id: content.id)
+            eventViewModel.emit(.contentDeleted(itemId: itemId, contentId: content.id))
+        } catch {
+            errorViewModel.showError(error)
         }
     }
 
@@ -89,6 +116,26 @@ struct ContentListSheet: View {
                     ContentRowView(content: content)
                 }
                 .buttonStyle(.plain)
+                .swipeActions(edge: .trailing) {
+                    if !isViewOnly {
+                        Button(role: .destructive) {
+                            contentToDelete = content
+                            showDeleteConfirmation = true
+                        } label: {
+                            Label("Delete", systemImage: "trash")
+                        }
+                    }
+                }
+                .contextMenu {
+                    if !isViewOnly {
+                        Button(role: .destructive) {
+                            contentToDelete = content
+                            showDeleteConfirmation = true
+                        } label: {
+                            Label("Delete", systemImage: "trash")
+                        }
+                    }
+                }
             }
 
             if viewModel.hasMore {

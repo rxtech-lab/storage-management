@@ -44,10 +44,14 @@ private extension Color {
 struct ContentDetailSheet: View {
     let content: Content
     @Binding var contentSchemas: [ContentSchema]
-    let onEdit: () -> Void
+    /// Nil hides the Edit action
+    let onEdit: (() -> Void)?
     let isViewOnly: Bool
+    /// Nil hides the Delete action
+    var onDelete: (() -> Void)?
 
     @State private var formData: FormData = .object(properties: [:])
+    @State private var showDeleteConfirmation = false
     @State private var selectedMediaIndex = 0
     @State private var fullscreenMediaItem: MediaItem?
     @Environment(\.dismiss) private var dismiss
@@ -129,13 +133,21 @@ struct ContentDetailSheet: View {
                     Button { dismiss() } label: {
                         Label("Close", systemImage: "xmark")
                     }
-                    if !isViewOnly {
+                    if !isViewOnly, let onEdit {
                         Button {
                             dismiss()
                             onEdit()
                         } label: {
                             Label("Edit", systemImage: "pencil")
                         }
+                    }
+                    if !isViewOnly, onDelete != nil {
+                        Button(role: .destructive) {
+                            showDeleteConfirmation = true
+                        } label: {
+                            Label("Delete", systemImage: "trash")
+                        }
+                        .accessibilityIdentifier("content-detail-delete-button")
                     }
                 }
             }
@@ -144,7 +156,14 @@ struct ContentDetailSheet: View {
                     ToolbarItem(placement: .cancellationAction) {
                         Button("Close") { dismiss() }
                     }
-                    if !isViewOnly {
+                    if !isViewOnly, onDelete != nil {
+                        ToolbarItem(placement: .destructiveAction) {
+                            Button("Delete", role: .destructive) {
+                                showDeleteConfirmation = true
+                            }
+                        }
+                    }
+                    if !isViewOnly, let onEdit {
                         ToolbarItem(placement: .confirmationAction) {
                             Button("Edit") {
                                 dismiss()
@@ -154,18 +173,28 @@ struct ContentDetailSheet: View {
                     }
                 }
         #endif
+                .confirmationDialog(
+                    title: "Delete Content",
+                    message: "Are you sure you want to delete \"\(content.contentData.title ?? "Untitled")\"? This action cannot be undone.",
+                    confirmButtonTitle: "Delete",
+                    isPresented: $showDeleteConfirmation,
+                    onConfirm: {
+                        dismiss()
+                        onDelete?()
+                    }
+                )
                 .onAppear {
                     formData = contentDataToFormData(content.contentData)
                 }
         #if os(iOS)
                 .fullScreenCover(item: $fullscreenMediaItem) { mediaItem in
-                    FullscreenMediaViewer(mediaItem: mediaItem) {
+                    FullscreenMediaViewer(mediaItem: mediaItem, title: content.contentData.title) {
                         fullscreenMediaItem = nil
                     }
                 }
         #else
                 .sheet(item: $fullscreenMediaItem) { mediaItem in
-                    FullscreenMediaViewer(mediaItem: mediaItem) {
+                    FullscreenMediaViewer(mediaItem: mediaItem, title: content.contentData.title) {
                         fullscreenMediaItem = nil
                     }
                     .frame(minWidth: 800, minHeight: 600)
@@ -470,6 +499,7 @@ private enum MediaItem: Identifiable {
 
 private struct FullscreenMediaViewer: View {
     let mediaItem: MediaItem
+    var title: String?
     let onDismiss: () -> Void
 
     @State private var player: AVPlayer?
@@ -479,56 +509,63 @@ private struct FullscreenMediaViewer: View {
     @State private var lastOffset: CGSize = .zero
 
     var body: some View {
-        GeometryReader { geometry in
-            ZStack {
-                Color.black.ignoresSafeArea()
+        ZStack {
+            Color.black.ignoresSafeArea()
 
-                switch mediaItem {
-                case let .image(url):
+            switch mediaItem {
+            case let .image(url):
+                GeometryReader { geometry in
                     imageViewer(url: url, geometry: geometry)
-
-                case let .video(url):
-                    videoViewer(url: url)
+                }
+                .ignoresSafeArea()
+                .overlay(alignment: .top) {
+                    topBar
                 }
 
-                // Close button - positioned on left for videos to avoid overlap with volume control
-                VStack {
-                    HStack {
-                        if case .video = mediaItem {
-                            Button {
-                                onDismiss()
-                            } label: {
-                                Image(systemName: "xmark.circle.fill")
-                                    .font(.system(size: 30))
-                                    .foregroundStyle(.white.opacity(0.8))
-                                    .shadow(radius: 2)
-                            }
-                            .buttonStyle(.plain)
-                            .padding(.top, 12)
-                            .padding(.leading, 62)
-                            Spacer()
-                        } else {
-                            Spacer()
-                            Button {
-                                onDismiss()
-                            } label: {
-                                Image(systemName: "xmark.circle.fill")
-                                    .font(.system(size: 30))
-                                    .foregroundStyle(.white.opacity(0.8))
-                                    .shadow(radius: 2)
-                            }
-                            .buttonStyle(.plain)
-                            .padding()
-                        }
-                    }
-                    Spacer()
+            case let .video(url):
+                // The bar sits above the player so it never overlaps the
+                // player's own controls (PiP, volume, scrubber)
+                VStack(spacing: 0) {
+                    topBar
+                    videoViewer(url: url)
                 }
             }
         }
+        .environment(\.colorScheme, .dark)
         .onDisappear {
             player?.pause()
             player = nil
         }
+    }
+
+    private var topBar: some View {
+        HStack(spacing: 12) {
+            Button {
+                onDismiss()
+            } label: {
+                Image(systemName: "xmark")
+                    .font(.system(size: 17, weight: .semibold))
+                    .foregroundStyle(.white)
+                    .frame(width: 44, height: 44)
+                    .background(.ultraThinMaterial, in: Circle())
+                    .contentShape(Circle())
+            }
+            .buttonStyle(.plain)
+            .keyboardShortcut(.cancelAction)
+            .accessibilityLabel("Close")
+            .accessibilityIdentifier("fullscreen-media-close-button")
+
+            if let title, !title.isEmpty {
+                Text(title)
+                    .font(.headline)
+                    .foregroundStyle(.white)
+                    .lineLimit(1)
+            }
+
+            Spacer()
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 8)
     }
 
     private func imageViewer(url: URL, geometry: GeometryProxy) -> some View {
@@ -611,33 +648,21 @@ private struct FullscreenMediaViewer: View {
     }
 
     private func videoViewer(url: URL) -> some View {
-        VideoPlayer(player: player ?? AVPlayer(url: url))
-            .ignoresSafeArea()
-            .scaleEffect(scale)
-            .gesture(
-                MagnificationGesture()
-                    .onChanged { value in
-                        scale = lastScale * value
-                    }
-                    .onEnded { _ in
-                        // Dismiss if pinched out below threshold
-                        if scale < 0.7 {
-                            onDismiss()
-                        } else if scale < 1.0 {
-                            // Snap back to normal scale
-                            withAnimation(.spring()) {
-                                scale = 1.0
-                                lastScale = 1.0
-                            }
-                        } else {
-                            lastScale = scale
-                        }
-                    }
-            )
-            .onAppear {
-                player = AVPlayer(url: url)
-                player?.play()
+        Group {
+            if let player {
+                VideoPlayer(player: player)
+            } else {
+                ProgressView()
+                    .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
+        }
+        .ignoresSafeArea(edges: .bottom)
+        .task(id: url) {
+            let newPlayer = AVPlayer(url: url)
+            player = newPlayer
+            newPlayer.play()
+        }
     }
 }
 
