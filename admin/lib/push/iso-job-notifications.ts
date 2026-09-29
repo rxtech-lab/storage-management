@@ -3,6 +3,7 @@ import { db, deviceTokens, type IsoJob } from "@/lib/db";
 import {
   isApnsConfigured,
   isInvalidTokenResult,
+  logApnsResults,
   sendApnsAlert,
   type ApnsAlert,
   type ApnsEnvironment,
@@ -73,15 +74,13 @@ export async function notifyIsoJobFinished(
 
     const results = (
       await Promise.all(
-        [...byEnvironment].map(([environment, tokens]) => sendApnsAlert(environment, tokens, alert))
+        [...byEnvironment].map(async ([environment, tokens]) => {
+          const envResults = await sendApnsAlert(environment, tokens, alert);
+          logApnsResults(`alert job=${job.id} status=${job.status}`, environment, envResults);
+          return envResults;
+        })
       )
     ).flat();
-
-    for (const result of results) {
-      if (result.status !== 200 && !isInvalidTokenResult(result)) {
-        console.warn(`APNs push for ISO job ${job.id} failed: ${result.status} ${result.reason ?? ""}`);
-      }
-    }
 
     const invalidTokens = results.filter(isInvalidTokenResult).map((result) => result.token);
     if (invalidTokens.length > 0) {

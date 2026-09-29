@@ -3,6 +3,7 @@ import { db, isoJobs, liveActivityTokens, type IsoJob } from "@/lib/db";
 import {
   isApnsConfigured,
   isInvalidTokenResult,
+  logApnsResults,
   sendApnsLiveActivity,
   type ApnsEnvironment,
   type ApnsResult,
@@ -152,15 +153,13 @@ async function push(
   }
   const results: ApnsResult[] = (
     await Promise.all(
-      [...byEnvironment].map(([environment, list]) => sendApnsLiveActivity(environment, list, aps, 10))
+      [...byEnvironment].map(async ([environment, list]) => {
+        const envResults = await sendApnsLiveActivity(environment, list, aps, 10);
+        logApnsResults(`liveactivity event=${String(aps.event)} user=${userId}`, environment, envResults);
+        return envResults;
+      })
     )
   ).flat();
-
-  for (const result of results) {
-    if (result.status !== 200 && !isInvalidTokenResult(result)) {
-      console.warn(`Live Activity ${String(aps.event)} push failed: ${result.status} ${result.reason ?? ""}`);
-    }
-  }
 
   const invalidTokens = results.filter(isInvalidTokenResult).map((result) => result.token);
   if (invalidTokens.length > 0) {

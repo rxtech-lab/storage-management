@@ -26,6 +26,30 @@ export interface ApnsResult {
   token: string;
   status: number;
   reason?: string;
+  /** `apns-id` response header, identifying the notification for Apple support */
+  apnsId?: string;
+  /** `apns-unique-id` response header (sandbox only), searchable in the Push Notifications Console */
+  apnsUniqueId?: string;
+}
+
+/** Shortens a device token so logs identify it without exposing it. */
+export function maskToken(token: string): string {
+  return token.length > 12 ? `${token.slice(0, 6)}…${token.slice(-6)}` : token;
+}
+
+/** Logs every push outcome with its APNs IDs for debugging delivery. */
+export function logApnsResults(context: string, environment: ApnsEnvironment, results: ApnsResult[]): void {
+  for (const result of results) {
+    const line =
+      `[APNs] ${context} env=${environment} token=${maskToken(result.token)} status=${result.status}` +
+      ` apns-id=${result.apnsId ?? "-"} apns-unique-id=${result.apnsUniqueId ?? "-"}` +
+      (result.reason ? ` reason=${result.reason}` : "");
+    if (result.status === 200) {
+      console.log(line);
+    } else {
+      console.warn(line);
+    }
+  }
 }
 
 const HOSTS: Record<ApnsEnvironment, string> = {
@@ -123,10 +147,14 @@ function sendOne(
     });
 
     let status = 0;
+    let apnsId: string | undefined;
+    let apnsUniqueId: string | undefined;
     let body = "";
     request.setEncoding("utf8");
     request.on("response", (headers) => {
       status = Number(headers[":status"]);
+      apnsId = headers["apns-id"] as string | undefined;
+      apnsUniqueId = headers["apns-unique-id"] as string | undefined;
     });
     request.on("data", (chunk: string) => {
       body += chunk;
@@ -140,7 +168,7 @@ function sendOne(
           reason = body;
         }
       }
-      resolve({ token, status, reason });
+      resolve({ token, status, reason, apnsId, apnsUniqueId });
     });
     request.on("error", (error) => {
       resolve({ token, status: 0, reason: error.message });
