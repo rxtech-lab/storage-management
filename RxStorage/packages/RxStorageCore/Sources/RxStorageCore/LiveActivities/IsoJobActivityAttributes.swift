@@ -78,6 +78,23 @@
                     error: job.error
                 )
             }
+
+            public init(job: IsoJobDetail) {
+                self.init(
+                    id: job.id,
+                    kind: job.kind,
+                    title: job.title,
+                    hostName: job.hostName,
+                    status: job.status,
+                    progress: job.progress,
+                    doneCount: job.doneCount,
+                    totalCount: job.totalCount,
+                    doneBytes: job.doneBytes,
+                    totalBytes: job.totalBytes,
+                    message: job.message,
+                    error: job.error
+                )
+            }
         }
 
         public struct ContentState: Codable, Hashable, Sendable {
@@ -102,6 +119,12 @@
                     jobs: running.prefix(IsoJobActivityAttributes.maxListedJobs).map(Job.init(job:)),
                     runningCount: running.count
                 )
+            }
+
+            /// The state the server pushes when the last running job ends: that job
+            /// with its final status and nothing left running
+            public init(endedJob: Job) {
+                self.init(jobs: [endedJob], runningCount: 0)
             }
 
             /// Running jobs left out of `jobs`

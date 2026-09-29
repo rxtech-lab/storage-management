@@ -3,7 +3,8 @@
 //  RxStorage
 //
 //  Hands ActivityKit push tokens to the server so it can start the ISO jobs
-//  Live Activity when a job starts, then update and end it as jobs run
+//  Live Activity when a job starts, then update and end it as jobs run. While
+//  the app is open it also fetches job status itself to refresh the activity.
 //
 
 #if os(iOS)
@@ -60,14 +61,31 @@
             })
         }
 
-        /// Starts the activity for jobs that are already running, since the server only
-        /// starts one when a job starts. Once running, its update token is registered
-        /// through `activityUpdates` and the server keeps it up to date.
-        /// Call when the app opens or returns to the foreground while signed in.
-        func startActivityIfJobsRunning() async {
-            guard ActivityAuthorizationInfo().areActivitiesEnabled,
-                  Activity<IsoJobActivityAttributes>.activities.isEmpty
-            else { return }
+        /// Fetches job status and refreshes the activity every `refreshInterval` until
+        /// the calling task is cancelled. Server pushes are throttled and only sent when
+        /// the CLI reports progress, so this keeps the activity current while the app runs.
+        /// Call while the app is active and signed in.
+        func refreshPeriodically() async {
+            while !Task.isCancelled {
+                await refreshActivity()
+                try? await Task.sleep(for: Self.refreshInterval)
+            }
+        }
+
+        /// How often `refreshPeriodically` fetches job status
+        private static let refreshInterval: Duration = .seconds(10)
+
+        /// How long the activity stays on the Lock Screen after the last job ends,
+        /// matching the server's end push
+        private static let dismissAfter: TimeInterval = 15 * 60
+
+        /// Brings the activity in line with the user's running jobs: starts it for jobs
+        /// that are already running, since the server only starts one when a job starts,
+        /// updates it while jobs run, and ends it once none are left. A started activity's
+        /// update token is registered through `activityUpdates`, so the server keeps it
+        /// up to date too.
+        func refreshActivity() async {
+            guard ActivityAuthorizationInfo().areActivitiesEnabled else { return }
 
             let jobs: [IsoJob]
             do {
@@ -80,17 +98,61 @@
             }
 
             let state = IsoJobActivityAttributes.ContentState(runningJobs: jobs)
-            // The fetch may have raced with a push-to-start activity
-            guard state.runningCount > 0, Activity<IsoJobActivityAttributes>.activities.isEmpty else { return }
+            // Read after the fetch, which may have raced with a push-to-start activity
+            let activities = Self.liveActivities
 
-            do {
-                _ = try Activity.request(
-                    attributes: IsoJobActivityAttributes(),
-                    content: ActivityContent(state: state, staleDate: nil),
-                    pushType: .token
+            if activities.isEmpty {
+                guard state.runningCount > 0 else { return }
+                do {
+                    _ = try Activity.request(
+                        attributes: IsoJobActivityAttributes(),
+                        content: ActivityContent(state: state, staleDate: nil),
+                        pushType: .token
+                    )
+                } catch {
+                    logger.error("Failed to start ISO jobs Live Activity: \(error.localizedDescription)")
+                }
+                return
+            }
+
+            if state.runningCount > 0 {
+                for activity in activities where activity.content.state != state {
+                    await activity.update(ActivityContent(state: state, staleDate: nil))
+                }
+                return
+            }
+
+            // The last jobs ended: show how one of them ended, then let the activity go
+            for activity in activities {
+                let finalState = await endedState(of: activity.content.state)
+                await activity.end(
+                    ActivityContent(state: finalState, staleDate: nil),
+                    dismissalPolicy: .after(Date().addingTimeInterval(Self.dismissAfter))
                 )
+            }
+        }
+
+        /// Activities still running; ended ones may linger on the Lock Screen
+        private static var liveActivities: [Activity<IsoJobActivityAttributes>] {
+            Activity<IsoJobActivityAttributes>.activities.filter {
+                $0.activityState == .active || $0.activityState == .stale
+            }
+        }
+
+        /// The state to end with once nothing is running: the first listed job with
+        /// its final status, or the last known state if that job cannot be fetched
+        private func endedState(
+            of state: IsoJobActivityAttributes.ContentState
+        ) async -> IsoJobActivityAttributes.ContentState {
+            guard let job = state.jobs.first else {
+                return IsoJobActivityAttributes.ContentState(jobs: [], runningCount: 0)
+            }
+            do {
+                let detail = try await isoJobService.fetchJob(id: job.id)
+                return IsoJobActivityAttributes.ContentState(endedJob: .init(job: detail))
             } catch {
-                logger.error("Failed to start ISO jobs Live Activity: \(error.localizedDescription)")
+                logger.error("Failed to fetch ended ISO job \(job.id): \(error.localizedDescription)")
+                return IsoJobActivityAttributes.ContentState(endedJob: job)
             }
         }
 

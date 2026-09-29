@@ -33,10 +33,11 @@ struct AdaptiveRootView: View {
             await PushNotificationManager.shared.registerForPushNotifications()
         }
         #if os(iOS)
-        // Show jobs already running when the app opens or returns to the foreground
+        // Keep the ISO jobs Live Activity current while the app is in the foreground;
+        // the task is cancelled when the app leaves it
         .task(id: scenePhase) {
             guard scenePhase == .active else { return }
-            await LiveActivityManager.shared.startActivityIfJobsRunning()
+            await LiveActivityManager.shared.refreshPeriodically()
         }
         #endif
         // Open the ISO job whose notification was tapped, including one that launched the app
