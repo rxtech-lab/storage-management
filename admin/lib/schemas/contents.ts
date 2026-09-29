@@ -36,6 +36,7 @@ export const ContentSelectSchema = createSelectSchema(contents);
 export const ContentInsertSchema = z.object({
   type: z.enum(["file", "image", "video"]).describe("Content type (required)"),
   data: ContentDataSchema.describe("Content metadata (required)"),
+  overwrite: z.boolean().optional().describe("Replace existing content with the same title"),
 });
 
 export const ContentUpdateSchema = z.object({

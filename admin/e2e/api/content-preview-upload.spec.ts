@@ -323,6 +323,37 @@ test.describe.serial("Content Preview Upload API", () => {
     expect(body.error).toContain("Existing Content Title");
   });
 
+  test("POST /api/v1/upload/content-preview - overwrite replaces existing content with the same title", async ({
+    request,
+  }) => {
+    const response = await request.post("/api/v1/upload/content-preview", {
+      data: {
+        item_id: testItemId,
+        overwrite: true,
+        items: [
+          {
+            filename: "replacement-file.jpg",
+            type: "image",
+            title: "Existing Content Title",
+            mime_type: "image/jpeg",
+            size: 4096,
+            file_path: "images/replacement-file.jpg",
+          },
+        ],
+      },
+    });
+    expect(response.status()).toBe(201);
+
+    const contents = await request.get(`/api/v1/items/${testItemId}/contents?search=Existing%20Content%20Title`);
+    expect(contents.status()).toBe(200);
+    const body = await contents.json();
+    const matching = body.data.filter(
+      (c: { data: { title: string } }) => c.data.title === "Existing Content Title"
+    );
+    expect(matching).toHaveLength(1);
+    expect(matching[0].data.file_path).toBe("images/replacement-file.jpg");
+  });
+
   test("POST /api/v1/upload/content-preview - multiple duplicates in batch returns 400", async ({
     request,
   }) => {

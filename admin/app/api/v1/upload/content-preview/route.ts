@@ -3,7 +3,8 @@ import { PutObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { getSession } from "@/lib/auth-helper";
 import { createFileRecordAction } from "@/lib/actions/file-actions";
-import { createContentAction, getItemContents } from "@/lib/actions/content-actions";
+import { createContentAction, deleteContentAction, getItemContents } from "@/lib/actions/content-actions";
+import { getItem } from "@/lib/actions/item-actions";
 import { s3Client, S3_BUCKET } from "@/lib/s3";
 import { ContentPreviewUploadRequestSchema } from "@/lib/schemas/upload";
 import type { ImageContentData, VideoContentData } from "@/lib/db/schema/contents";
@@ -27,7 +28,7 @@ async function generatePresignedPutUrl(key: string, contentType: string): Promis
 /**
  * Generate presigned upload URLs for content previews
  * @operationId getContentPreviewUploadUrls
- * @description Generate presigned PUT URLs for uploading content preview files. For video type, returns both image thumbnail and video preview URLs. For image type, returns only image preview URL.
+ * @description Generate presigned PUT URLs for uploading content preview files. For video type, returns both image thumbnail and video preview URLs. For image type, returns only image preview URL. Titles the item already has are rejected unless overwrite is true, in which case the existing content is replaced.
  * @body ContentPreviewUploadRequestSchema
  * @response ContentPreviewUploadResponseSchema
  * @auth bearer
@@ -52,7 +53,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { item_id: itemId, items } = parsed.data;
+    const { item_id: itemId, items, overwrite } = parsed.data;
+
+    // Verify user owns the item
+    const ownedItem = await getItem(itemId);
+    if (!ownedItem || ownedItem.userId !== session.user.id) {
+      return NextResponse.json({ error: "Item not found" }, { status: 404 });
+    }
 
     if (items.length === 0) {
       return NextResponse.json([], { status: 201 });
@@ -79,19 +86,31 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check for duplicate titles against existing content for the item
+    // Check for duplicate titles against existing content for the item.
+    // With overwrite, the existing content (and its preview files) is replaced.
+    const titles = new Set(items.map((item) => item.title));
     const existingContents = await getItemContents(itemId);
-    const existingTitles = new Set(
-      existingContents
-        .map((c) => (c.data as unknown as Record<string, unknown>)?.title)
-        .filter((title): title is string => typeof title === "string")
-    );
-    const duplicateWithExisting = items.filter((item) => existingTitles.has(item.title));
-    if (duplicateWithExisting.length > 0) {
-      return NextResponse.json(
-        { error: `Content with the same name already exists: ${duplicateWithExisting.map((i) => i.title).join(", ")}` },
-        { status: 400 }
-      );
+    const conflicting = existingContents.filter((c) => {
+      const title = (c.data as unknown as Record<string, unknown>)?.title;
+      return typeof title === "string" && titles.has(title);
+    });
+    if (conflicting.length > 0) {
+      if (!overwrite) {
+        const names = [...new Set(conflicting.map((c) => (c.data as unknown as Record<string, unknown>).title))];
+        return NextResponse.json(
+          { error: `Content with the same name already exists: ${names.join(", ")}` },
+          { status: 400 }
+        );
+      }
+      for (const content of conflicting) {
+        const deleted = await deleteContentAction(content.id);
+        if (!deleted.success) {
+          return NextResponse.json(
+            { error: deleted.error || "Failed to replace existing content" },
+            { status: 500 }
+          );
+        }
+      }
     }
 
     const isE2E = process.env.IS_E2E === "true";

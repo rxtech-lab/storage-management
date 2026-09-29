@@ -1,7 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth-helper";
 import { getItem } from "@/lib/actions/item-actions";
-import { getItemContentsPaginated, createContentAction, resolveContentFileRefs } from "@/lib/actions/content-actions";
+import {
+  getItemContents,
+  getItemContentsPaginated,
+  createContentAction,
+  deleteContentAction,
+  resolveContentFileRefs,
+} from "@/lib/actions/content-actions";
 import { parsePaginationParams } from "@/lib/utils/pagination";
 import { PaginatedContentsResponse } from "@/lib/schemas/contents";
 import type { ContentData } from "@/lib/db";
@@ -60,7 +66,7 @@ export async function GET(
 /**
  * Create item content
  * @operationId createItemContent
- * @description Create a new content attachment for an item
+ * @description Create a new content attachment for an item. With overwrite, existing content with the same title is replaced.
  * @pathParams IdPathParams
  * @body ContentInsertSchema
  * @response 201:ContentResponseSchema
@@ -87,7 +93,11 @@ export async function POST(
   }
 
   const body = await request.json();
-  const { type, data } = body as { type: "file" | "image" | "video"; data: ContentData };
+  const { type, data, overwrite } = body as {
+    type: "file" | "image" | "video";
+    data: ContentData;
+    overwrite?: boolean;
+  };
 
   if (!type || !data) {
     return NextResponse.json(
@@ -101,6 +111,20 @@ export async function POST(
       { error: "Invalid content type. Must be: file, image, or video" },
       { status: 400 }
     );
+  }
+
+  if (overwrite && typeof data.title === "string") {
+    const existing = await getItemContents(id);
+    for (const content of existing) {
+      if ((content.data as unknown as Record<string, unknown>)?.title !== data.title) continue;
+      const deleted = await deleteContentAction(content.id);
+      if (!deleted.success) {
+        return NextResponse.json(
+          { error: deleted.error || "Failed to replace existing content" },
+          { status: 500 }
+        );
+      }
+    }
   }
 
   const result = await createContentAction({ itemId: id, type, data });
