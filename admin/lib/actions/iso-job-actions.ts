@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { after } from "next/server";
 import { and, asc, count, desc, eq, gt, lt, or } from "drizzle-orm";
 import {
   db,
@@ -12,6 +13,7 @@ import {
 import { ensureSchemaInitialized } from "@/lib/db/client";
 import { getSession } from "@/lib/auth-helper";
 import { IsoJobUpsertSchema } from "@/lib/schemas/iso-jobs";
+import { notifyIsoJobFinished, shouldNotifyIsoJob } from "@/lib/push/iso-job-notifications";
 import {
   type PaginationParams,
   type PaginatedResult,
@@ -153,7 +155,7 @@ export async function upsertIsoJobAction(
     const { tasks, ...job } = parsed.data;
 
     const [existing] = await db
-      .select({ userId: isoJobs.userId })
+      .select({ userId: isoJobs.userId, status: isoJobs.status })
       .from(isoJobs)
       .where(eq(isoJobs.id, id))
       .limit(1);
@@ -187,6 +189,11 @@ export async function upsertIsoJobAction(
       await db.batch([writeJob, clearTasks, db.insert(isoJobTasks).values(rows)]);
     } else {
       await db.batch([writeJob, clearTasks]);
+    }
+
+    if (shouldNotifyIsoJob(existing?.status, job.status)) {
+      // Push after the response so the CLI's progress report is not delayed.
+      after(() => notifyIsoJobFinished(resolvedUserId, { ...job, id, error: job.error ?? null }));
     }
 
     revalidatePath("/iso-jobs");

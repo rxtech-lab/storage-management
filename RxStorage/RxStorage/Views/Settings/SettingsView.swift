@@ -248,6 +248,7 @@ struct SettingsView: View {
     }
 
     private func signOut() async {
+        await PushNotificationManager.shared.unregister()
         await authManager.logout()
     }
 }
