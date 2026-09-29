@@ -138,6 +138,8 @@
 				Views/Items/ItemFormSheet.swift,
 				Views/Items/ItemListView.swift,
 				Views/Items/ItemRow.swift,
+				Views/Items/ItemStockFormSheet.swift,
+				Views/Items/MoveStockSheet.swift,
 				Views/Items/NFCLockSheet.swift,
 				Views/Items/ParentItemPickerSheet.swift,
 				Views/Items/PlatformColors.swift,

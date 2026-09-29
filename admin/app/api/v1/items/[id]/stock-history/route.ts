@@ -68,7 +68,11 @@ export async function POST(
   }
 
   const body = await request.json();
-  const { quantity, note } = body as { quantity: number; note?: string };
+  const { quantity, note, stockId } = body as {
+    quantity: number;
+    note?: string;
+    stockId?: string | null;
+  };
 
   if (quantity === undefined || typeof quantity !== "number" || !Number.isInteger(quantity)) {
     return NextResponse.json(
@@ -78,12 +82,13 @@ export async function POST(
   }
 
   const result = await createStockHistoryAction(
-    { itemId: id, quantity, note: note ?? null },
+    { itemId: id, stockId: stockId ?? null, quantity, note: note ?? null },
     session.user.id
   );
 
   if (!result.success) {
-    return NextResponse.json({ error: result.error }, { status: 500 });
+    const status = result.error === "Stock placement not found" ? 404 : 500;
+    return NextResponse.json({ error: result.error }, { status });
   }
 
   return NextResponse.json(result.data, { status: 201 });

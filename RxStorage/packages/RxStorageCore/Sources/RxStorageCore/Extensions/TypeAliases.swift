@@ -63,6 +63,15 @@ public typealias Whitelist = Components.Schemas.WhitelistResponseSchema
 /// Stock history entry
 public typealias StockHistory = Components.Schemas.StockHistoryResponseSchema
 
+/// Stock placement holding some units of an item apart from its main placement
+public typealias ItemStock = Components.Schemas.ItemStockResponseSchema
+
+/// Stock placement of another item stored inside an item, with that item
+public typealias StoredStock = Components.Schemas.ItemDetailResponseSchema.storedStocksPayloadPayload
+
+/// Result of moving item stock
+public typealias MoveItemStockResponse = Components.Schemas.MoveItemStockResponseSchema
+
 /// Presigned upload response
 public typealias PresignedUploadResponse = Components.Schemas.PresignedUploadResponseSchema
 
@@ -131,6 +140,12 @@ public typealias WhitelistAddRequest = Components.Schemas.WhitelistAddRequestSch
 /// Request to create a stock history entry
 public typealias NewStockHistoryRequest = Components.Schemas.StockHistoryInsertSchema
 
+/// Request to move units of an item between placements
+public typealias MoveItemStockRequest = Components.Schemas.MoveItemStockRequestSchema
+
+/// Request to update a stock placement
+public typealias UpdateItemStockRequest = Components.Schemas.ItemStockUpdateSchema
+
 /// Request to create a tag
 public typealias NewTagRequest = Components.Schemas.TagInsertSchema
 
@@ -186,6 +201,9 @@ public typealias PositionRef = Components.Schemas.PositionRefSchema
 /// Stock history reference in item detail
 public typealias StockHistoryRef = Components.Schemas.StockHistoryRefSchema
 
+/// Parent item reference
+public typealias ParentRef = Components.Schemas.ParentRefSchema
+
 /// Tag reference in item detail
 public typealias TagRef = Components.Schemas.TagRefSchema
 
@@ -233,6 +251,7 @@ extension Components.Schemas.ContentResponseSchema: Identifiable {}
 extension Components.Schemas.DashboardRecentItemSchema: Identifiable {}
 extension Components.Schemas.StockHistoryResponseSchema: Identifiable {}
 extension Components.Schemas.TagResponseSchema: Identifiable {}
+extension Components.Schemas.ItemStockResponseSchema: Identifiable {}
 
 // Reference schemas also need Identifiable
 extension Components.Schemas.CategoryRefSchema: Identifiable {}

@@ -10,6 +10,12 @@ export {
   type NewItem,
 } from "./items";
 export {
+  itemStocks,
+  itemStocksRelations,
+  type ItemStock,
+  type NewItemStock,
+} from "./item-stocks";
+export {
   positions,
   positionsRelations,
   type Position,

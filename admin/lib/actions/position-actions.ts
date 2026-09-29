@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { eq } from "drizzle-orm";
+import { and, eq, isNull } from "drizzle-orm";
 import { db, positions, positionSchemas, items, type Position, type NewPosition } from "@/lib/db";
 import { ensureSchemaInitialized } from "@/lib/db/client";
 import { getSession } from "@/lib/auth-helper";
@@ -17,6 +17,7 @@ export async function getItemPositions(itemId: string): Promise<PositionWithSche
       id: positions.id,
       userId: positions.userId,
       itemId: positions.itemId,
+      stockId: positions.stockId,
       positionSchemaId: positions.positionSchemaId,
       data: positions.data,
       createdAt: positions.createdAt,
@@ -29,7 +30,8 @@ export async function getItemPositions(itemId: string): Promise<PositionWithSche
     })
     .from(positions)
     .leftJoin(positionSchemas, eq(positions.positionSchemaId, positionSchemas.id))
-    .where(eq(positions.itemId, itemId));
+    // Placement positions are returned with their stock placement
+    .where(and(eq(positions.itemId, itemId), isNull(positions.stockId)));
 
   return results.map((row) => ({
     ...row,
@@ -43,6 +45,7 @@ export async function getPosition(id: string): Promise<PositionWithSchema | unde
       id: positions.id,
       userId: positions.userId,
       itemId: positions.itemId,
+      stockId: positions.stockId,
       positionSchemaId: positions.positionSchemaId,
       data: positions.data,
       createdAt: positions.createdAt,

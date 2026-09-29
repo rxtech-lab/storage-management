@@ -11,6 +11,8 @@ import SwiftUI
 /// Sheet that displays all child items for an item with search and load more
 struct ChildrenListSheet: View {
     let parentId: String
+    /// Placements of other items stored in this item (some of their units)
+    var storedStocks: [StoredStock] = []
     let isViewOnly: Bool
 
     @State private var children: [StorageItem] = []
@@ -33,7 +35,7 @@ struct ChildrenListSheet: View {
                 if isLoading && children.isEmpty {
                     ProgressView("Loading children...")
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
-                } else if children.isEmpty {
+                } else if children.isEmpty && filteredStoredStocks.isEmpty {
                     ContentUnavailableView(
                         searchText.isEmpty ? "No Child Items" : "No Results",
                         systemImage: searchText.isEmpty ? "list.bullet.indent" : "magnifyingglass",
@@ -49,7 +51,7 @@ struct ChildrenListSheet: View {
             #endif
                 .searchable(text: $searchText, prompt: "Search children")
                 .overlay {
-                    if isSearching && !children.isEmpty {
+                    if isSearching && !(children.isEmpty && filteredStoredStocks.isEmpty) {
                         ProgressView()
                             .frame(maxWidth: .infinity, maxHeight: .infinity)
                             .background(.ultraThinMaterial)
@@ -90,6 +92,25 @@ struct ChildrenListSheet: View {
                 .buttonStyle(.plain)
             }
 
+            ForEach(filteredStoredStocks, id: \.stock.value1.id) { stored in
+                NavigationLink(value: stored.item.value1) {
+                    HStack {
+                        ItemRow(item: stored.item.value1)
+                        Spacer()
+                        Text("×\(stored.stock.value1.quantity)")
+                            .font(.subheadline)
+                            .monospacedDigit()
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 2)
+                            .background(Color.blue.opacity(0.15))
+                            .foregroundStyle(.blue)
+                            .clipShape(Capsule())
+                    }
+                }
+                .buttonStyle(.plain)
+                .accessibilityIdentifier("stored-stock-row")
+            }
+
             if hasMore {
                 Section {
                     if isLoadingMore {
@@ -122,6 +143,13 @@ struct ChildrenListSheet: View {
         .navigationDestination(for: StorageItem.self) { child in
             ItemDetailView(itemId: child.id, isViewOnly: isViewOnly)
         }
+    }
+
+    /// Stored placements matching the search text (they are not paginated)
+    private var filteredStoredStocks: [StoredStock] {
+        let query = searchText.trimmingCharacters(in: .whitespaces)
+        guard !query.isEmpty else { return storedStocks }
+        return storedStocks.filter { $0.item.value1.title.localizedCaseInsensitiveContains(query) }
     }
 
     // MARK: - Data Fetching

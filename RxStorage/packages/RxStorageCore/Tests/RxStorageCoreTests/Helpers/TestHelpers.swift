@@ -193,6 +193,10 @@ enum TestHelpers {
         contents: [ContentRef] = [],
         positions: [PositionRef] = [],
         quantity: Int = 0,
+        parent: ParentRef? = nil,
+        mainQuantity: Int? = nil,
+        stocks: [ItemStock] = [],
+        storedStocks: [StoredStock] = [],
         stockHistory: [StockHistoryRef] = [],
         tags: [TagRef] = []
     ) -> StorageItemDetail {
@@ -227,6 +231,10 @@ enum TestHelpers {
             totalContents: contents.count,
             positions: positions,
             quantity: quantity,
+            parent: parent.map { StorageItemDetail.parentPayload(value1: $0) },
+            mainQuantity: mainQuantity ?? quantity,
+            stocks: stocks,
+            storedStocks: storedStocks,
             stockHistory: stockHistory,
             tags: tags
         )

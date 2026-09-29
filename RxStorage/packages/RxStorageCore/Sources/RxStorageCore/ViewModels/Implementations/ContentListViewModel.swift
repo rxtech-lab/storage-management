@@ -86,4 +86,10 @@ public final class ContentListViewModel {
 
         isLoadingMore = false
     }
+
+    /// Delete a content and remove it from the loaded list
+    public func deleteContent(id: String) async throws {
+        try await contentService.deleteContent(id: id)
+        contents.removeAll { $0.id == id }
+    }
 }

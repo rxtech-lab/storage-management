@@ -169,6 +169,10 @@ export const PositionRefSchema = z.object({
 // Stock history entry in item detail response
 export const StockHistoryRefSchema = z.object({
   id: z.string().describe("Stock history entry ID"),
+  stockId: z
+    .string()
+    .nullable()
+    .describe("Stock placement ID (null for the item's main placement)"),
   quantity: z.number().int().describe("Quantity change"),
   note: z.string().nullable().describe("Optional note"),
   createdAt: z.coerce.date().describe("Creation timestamp"),
@@ -178,6 +182,28 @@ export const StockHistoryRefSchema = z.object({
 export const SignedImageSchema = z.object({
   id: z.string().describe("File ID"),
   url: z.string().url().describe("Signed image URL"),
+});
+
+// Parent item reference
+export const ParentRefSchema = z.object({
+  id: z.string().describe("Parent item ID"),
+  title: z.string().describe("Parent item title"),
+});
+
+// A placement holding some units of an item apart from its main placement
+export const ItemStockResponseSchema = z.object({
+  id: z.string().describe("Stock placement ID"),
+  itemId: z.string().describe("Item ID this placement belongs to"),
+  parentId: z.string().nullable().describe("Parent item holding these units"),
+  parent: ParentRefSchema.nullable().describe("Parent item holding these units"),
+  locationId: z.string().nullable().describe("Location ID of these units"),
+  location: LocationRefSchema.nullable().describe("Location of these units"),
+  images: z.array(SignedImageSchema).describe("Signed images of these units"),
+  note: z.string().nullable().describe("Optional note"),
+  quantity: z.number().int().describe("Computed quantity in this placement"),
+  positions: z.array(PositionRefSchema).describe("Positions of these units"),
+  createdAt: z.coerce.date().describe("Creation timestamp"),
+  updatedAt: z.coerce.date().describe("Last update timestamp"),
 });
 
 // Extended response with relations and computed fields (defined inline to avoid extend issues with generator)
@@ -252,6 +278,22 @@ export const ItemDetailResponseSchema = z.object({
     .describe("Total number of content attachments for this item"),
   positions: z.array(PositionRefSchema).describe("Position data entries"),
   quantity: z.number().int().describe("Computed current stock quantity"),
+  parent: ParentRefSchema.nullable().describe("Parent of the item's main placement"),
+  mainQuantity: z
+    .number()
+    .int()
+    .describe("Quantity in the item's main placement (total minus stock placements)"),
+  stocks: z
+    .array(ItemStockResponseSchema)
+    .describe("Stock placements of this item apart from its main placement"),
+  storedStocks: z
+    .array(
+      z.object({
+        stock: ItemStockResponseSchema.describe("Stock placement stored in this item"),
+        item: ItemResponseSchema.describe("Item the placement belongs to"),
+      }),
+    )
+    .describe("Stock placements of other items stored in this item"),
   stockHistory: z.array(StockHistoryRefSchema).describe("Stock history entries"),
   tags: z.array(TagRefSchema).describe("Tags associated with this item"),
 });
@@ -309,4 +351,57 @@ export const SetParentRequestSchema = z.object({
     .string()
     .nullable()
     .describe("Parent item ID (null to remove parent)"),
+});
+
+// Move units of an item between placements
+export const MoveItemStockRequestSchema = z.object({
+  fromStockId: z
+    .string()
+    .nullable()
+    .optional()
+    .describe("Source stock placement ID (null or omitted for the item's main placement)"),
+  toParentId: z
+    .string()
+    .nullable()
+    .optional()
+    .describe("Destination parent item ID (null or omitted for no parent)"),
+  quantity: z
+    .number()
+    .int()
+    .min(1)
+    .optional()
+    .describe("Units to move (omitted moves the whole source placement)"),
+  merge: z
+    .boolean()
+    .optional()
+    .describe(
+      "Merge into an existing placement under the destination parent (default true). Set false to split into a new placement.",
+    ),
+  note: z.string().nullable().optional().describe("Optional note recorded in stock history"),
+});
+
+export const MoveItemStockResponseSchema = z.object({
+  stockId: z
+    .string()
+    .nullable()
+    .describe("Destination stock placement ID (null for the item's main placement)"),
+  quantity: z.number().int().describe("Units moved"),
+});
+
+// Update a stock placement's location, images, note, and positions
+export const ItemStockUpdateSchema = z.object({
+  locationId: z
+    .string()
+    .nullable()
+    .optional()
+    .describe("Location ID reference (empty string or null clears it)"),
+  images: z
+    .array(z.string())
+    .optional()
+    .describe("Image file references (file:N format)"),
+  note: z.string().nullable().optional().describe("Optional note (empty string clears it)"),
+  positions: z
+    .array(NewPositionDataSchema)
+    .optional()
+    .describe("Positions for this placement (replaces existing positions)"),
 });

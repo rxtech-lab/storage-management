@@ -72,7 +72,7 @@ public protocol ItemDetailViewModelProtocol: AnyObject, Observable {
     /// Add a stock history entry
     /// Returns the created stock history entry
     @discardableResult
-    func addStockEntry(quantity: Int, note: String?) async throws -> StockHistory
+    func addStockEntry(quantity: Int, note: String?, stockId: String?) async throws -> StockHistory
 
     /// Delete a stock history entry
     func deleteStockEntry(id: String) async throws

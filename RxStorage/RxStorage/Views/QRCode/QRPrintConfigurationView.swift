@@ -487,6 +487,10 @@ import SwiftUI
             totalContents: 0,
             positions: [],
             quantity: 0,
+            parent: nil,
+            mainQuantity: 0,
+            stocks: [],
+            storedStocks: [],
             stockHistory: [],
             tags: []
         )

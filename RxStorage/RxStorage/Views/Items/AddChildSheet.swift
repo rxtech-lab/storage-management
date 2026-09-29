@@ -8,44 +8,29 @@
 import RxStorageCore
 import SwiftUI
 
-/// Minimal data needed to add a child item (captured synchronously to avoid memory issues)
-struct AddChildData: Sendable {
-    let itemId: String
-    let title: String
-    let description: String?
-    let categoryId: String?
-    let locationId: String?
-    let authorId: String?
-    let price: Double?
-    let visibility: String
-    /// Current parent of the item, if it already belongs to another item
-    let parentId: String?
-}
-
 /// Sheet for searching and adding child items
 struct AddChildSheet: View {
     let parentItemId: String
+    let parentTitle: String
     let existingChildIds: Set<String>
-    let onChildSelected: (AddChildData) -> Void
-    @Binding var isAdding: Bool
+    let onChildMoved: (MoveStockResult) -> Void
 
     @State private var viewModel: ChildItemSearchViewModel
     @State private var addedChildIds: Set<String> = []
-    /// Item awaiting confirmation because it already belongs to another parent
+    /// Item whose move (source, amount) is being chosen
     @State private var pendingMoveItem: StorageItem?
-    @State private var showMoveConfirmation = false
     @Environment(\.dismiss) private var dismiss
 
     init(
         parentItemId: String,
+        parentTitle: String,
         existingChildIds: Set<String>,
-        isAdding: Binding<Bool>,
-        onChildSelected: @escaping (AddChildData) -> Void
+        onChildMoved: @escaping (MoveStockResult) -> Void
     ) {
         self.parentItemId = parentItemId
+        self.parentTitle = parentTitle
         self.existingChildIds = existingChildIds
-        _isAdding = isAdding
-        self.onChildSelected = onChildSelected
+        self.onChildMoved = onChildMoved
 
         // Exclude parent and existing children
         var excluded = existingChildIds
@@ -100,50 +85,19 @@ struct AddChildSheet: View {
             .onChange(of: viewModel.searchText) { _, newValue in
                 viewModel.search(newValue)
             }
-            .overlay {
-                if isAdding {
-                    LoadingOverlay()
+            .sheet(item: $pendingMoveItem) { item in
+                NavigationStack {
+                    MoveStockSheet(
+                        itemId: item.id,
+                        itemTitle: item.title,
+                        destinationParentId: parentItemId,
+                        destinationTitle: parentTitle
+                    ) { result in
+                        addedChildIds.insert(result.itemId)
+                        onChildMoved(result)
+                    }
                 }
             }
-            .confirmationDialog(
-                title: "Move Item",
-                message: "\"\(pendingMoveItem?.title ?? "")\" already belongs to another item. Do you want to move it to this item?",
-                confirmButtonTitle: "Move",
-                isPresented: $showMoveConfirmation,
-                onConfirm: {
-                    guard let item = pendingMoveItem else { return }
-                    pendingMoveItem = nil
-                    select(item)
-                },
-                onCancel: { pendingMoveItem = nil }
-            )
-    }
-
-    // MARK: - Selection
-
-    private func requestSelect(_ item: StorageItem) {
-        if item.parentId != nil {
-            pendingMoveItem = item
-            showMoveConfirmation = true
-        } else {
-            select(item)
-        }
-    }
-
-    private func select(_ item: StorageItem) {
-        let childData = AddChildData(
-            itemId: item.id,
-            title: item.title,
-            description: item.description,
-            categoryId: item.categoryId,
-            locationId: item.locationId,
-            authorId: item.authorId,
-            price: item.price,
-            visibility: item.visibility.rawValue,
-            parentId: item.parentId
-        )
-        addedChildIds.insert(item.id)
-        onChildSelected(childData)
     }
 
     // MARK: - Items List
@@ -152,7 +106,7 @@ struct AddChildSheet: View {
         List(items) { item in
             let isAdded = addedChildIds.contains(item.id)
             Button {
-                requestSelect(item)
+                pendingMoveItem = item
             } label: {
                 HStack {
                     ItemRow(item: item)
@@ -160,7 +114,7 @@ struct AddChildSheet: View {
                     Spacer()
 
                     if isAdded {
-                        // Added
+                        // Added; stays tappable so more units can be moved
                         Image(systemName: "checkmark.circle.fill")
                             .foregroundStyle(.green)
                     } else {
@@ -169,7 +123,6 @@ struct AddChildSheet: View {
                     }
                 }
             }
-            .disabled(isAdded || isAdding)
         }
         #if os(iOS)
         .listStyle(.plain)
@@ -184,9 +137,9 @@ struct AddChildSheet: View {
     NavigationStack {
         AddChildSheet(
             parentItemId: "1",
+            parentTitle: "Box",
             existingChildIds: ["2", "3"],
-            isAdding: .constant(false),
-            onChildSelected: { _ in }
+            onChildMoved: { _ in }
         )
     }
 }
