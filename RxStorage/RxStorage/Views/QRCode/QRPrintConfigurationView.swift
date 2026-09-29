@@ -18,6 +18,7 @@ import SwiftUI
         @State private var customWidth: String
         @State private var customHeight: String
         @State private var isCustomSize: Bool
+        @AppStorage("qrPrint.printer") private var printer: QRPrinter = .airPrint
         @Environment(\.dismiss) private var dismiss
         @Environment(EventViewModel.self) private var eventViewModel
 
@@ -45,6 +46,7 @@ import SwiftUI
         var body: some View {
             NavigationStack {
                 List {
+                    printerSection
                     previewSection
                     pageSizeSection
                     layoutSection
@@ -75,6 +77,26 @@ import SwiftUI
                             Label("Print", systemImage: "printer")
                         }
                     }
+                }
+            }
+        }
+
+        // MARK: - Printer Section
+
+        private var printerSection: some View {
+            Section {
+                Picker("Printer", selection: $printer) {
+                    ForEach(QRPrinter.allCases) { printer in
+                        Label(printer.displayName, systemImage: printer.icon).tag(printer)
+                    }
+                }
+                .accessibilityIdentifier("qr-print-printer-picker")
+            } header: {
+                Text("Printer")
+            } footer: {
+                switch printer {
+                case .airPrint:
+                    Text("Choose any AirPrint printer in the system print dialog.")
                 }
             }
         }
@@ -319,6 +341,13 @@ import SwiftUI
         @State private var printDelegate: PrintPaperDelegate?
 
         private func printQRCode(addStock: Bool) {
+            switch printer {
+            case .airPrint:
+                printWithAirPrint(addStock: addStock)
+            }
+        }
+
+        private func printWithAirPrint(addStock: Bool) {
             let layoutView = QRPrintLayoutView(
                 item: item,
                 qrImage: qrImage,
@@ -347,25 +376,44 @@ import SwiftUI
             printDelegate = delegate
             printController.delegate = delegate
 
-            let shouldAddStock = addStock
-            let itemId = item.id
-            let eventVM = eventViewModel
-
             printController.present(animated: true) { _, completed, error in
-                if completed, shouldAddStock, error == nil {
-                    Task {
-                        let service = StockHistoryService()
-                        let request = NewStockHistoryRequest(
-                            itemId: itemId,
-                            quantity: 1,
-                            note: "Added via QR print"
-                        )
-                        _ = try? await service.createStockHistory(itemId: itemId, request)
-                        await MainActor.run {
-                            eventVM.emit(.itemUpdated(id: itemId))
-                        }
-                    }
+                if completed, addStock, error == nil {
+                    Task { await addStockAfterPrint() }
                 }
+            }
+        }
+
+        private func addStockAfterPrint() async {
+            let service = StockHistoryService()
+            let request = NewStockHistoryRequest(
+                itemId: item.id,
+                quantity: 1,
+                note: "Added via QR print"
+            )
+            _ = try? await service.createStockHistory(itemId: item.id, request)
+            eventViewModel.emit(.itemUpdated(id: item.id))
+        }
+    }
+
+    // MARK: - Printer
+
+    /// Printer used to print the QR code
+    enum QRPrinter: String, CaseIterable, Identifiable {
+        case airPrint
+
+        var id: String {
+            rawValue
+        }
+
+        var displayName: String {
+            switch self {
+            case .airPrint: "AirPrint"
+            }
+        }
+
+        var icon: String {
+            switch self {
+            case .airPrint: "printer"
             }
         }
     }

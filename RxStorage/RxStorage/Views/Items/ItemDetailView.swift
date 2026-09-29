@@ -30,6 +30,7 @@ struct ItemDetailView: View {
     #endif
     @State private var showingEditSheet = false
     @State private var showingQRSheet = false
+    @State private var showingLabelPrintSheet = false
     #if os(iOS)
         @State private var nfcWriter = NFCWriter()
         @State private var isWritingNFC = false
@@ -115,6 +116,11 @@ struct ItemDetailView: View {
                     NavigationStack {
                         QRCodeView(item: item)
                     }
+                }
+            }
+            .sheet(isPresented: $showingLabelPrintSheet) {
+                if let item = viewModel.item {
+                    LabelPrintSheet(item: item)
                 }
             }
             .task(id: itemId) {
@@ -554,12 +560,6 @@ struct ItemDetailView: View {
                 Label("Edit", systemImage: "pencil")
             }
 
-            Button {
-                showingQRSheet = true
-            } label: {
-                Label("Show QR Code", systemImage: "qrcode")
-            }
-
             if let previewURL = URL(string: item.previewUrl) {
                 if let previewImage = sharePreviewImage {
                     ShareLink(
@@ -578,6 +578,14 @@ struct ItemDetailView: View {
                 }
             }
 
+            Divider()
+
+            Button {
+                showingQRSheet = true
+            } label: {
+                Label("Show QR Code", systemImage: "qrcode")
+            }
+
             #if os(iOS)
                 Button {
                     Task { await writeToNFC(previewUrl: item.previewUrl) }
@@ -586,6 +594,12 @@ struct ItemDetailView: View {
                 }
                 .disabled(isWritingNFC)
             #endif
+
+            Button {
+                showingLabelPrintSheet = true
+            } label: {
+                Label("Print Label", systemImage: "printer")
+            }
         } label: {
             Label("More", systemImage: "ellipsis.circle")
         }

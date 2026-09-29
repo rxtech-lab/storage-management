@@ -28,6 +28,9 @@ public class AppConfiguration: @unchecked Sendable {
     /// OAuth scopes
     public let authScopes: [String]
 
+    /// rxlab-auth scope names; native sign-in rejects the OIDC aliases (email/profile/offline_access)
+    static let defaultScopes = ["openid", "read:profile", "read:email"]
+
     private init() {
         let infoPlist = Bundle.main.infoDictionary
 
@@ -52,10 +55,12 @@ public class AppConfiguration: @unchecked Sendable {
             }
             authRedirectURI = redirectURI
 
-            if let scopesString = infoPlist?["AUTH_SCOPES"] as? String {
+            if let scopesString = infoPlist?["AUTH_SCOPES"] as? String, !scopesString.isEmpty {
                 authScopes = scopesString.split(separator: " ").map(String.init)
+            } else if let scopes = infoPlist?["AUTH_SCOPES"] as? [String], !scopes.isEmpty {
+                authScopes = scopes
             } else {
-                authScopes = ["openid", "email", "profile", "offline_access"]
+                authScopes = Self.defaultScopes
             }
         } else {
             // Test environment - use placeholder values
@@ -63,7 +68,7 @@ public class AppConfiguration: @unchecked Sendable {
             authIssuer = "https://auth.test.local"
             authClientID = "test_client_id"
             authRedirectURI = "rxstorage://oauth/callback"
-            authScopes = ["openid", "email", "profile", "offline_access"]
+            authScopes = Self.defaultScopes
         }
     }
 

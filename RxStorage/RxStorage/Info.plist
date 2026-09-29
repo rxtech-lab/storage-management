@@ -17,11 +17,7 @@
 	<string>$(AUTH_REDIRECT_URI)</string>
 
 	<key>AUTH_SCOPES</key>
-	<array>
-		<string>openid</string>
-		<string>profile</string>
-		<string>email</string>
-	</array>
+	<string>$(AUTH_SCOPES)</string>
 
 	<!-- Permissions -->
 	<key>NSCameraUsageDescription</key>
@@ -32,6 +28,9 @@
 
 	<key>NFCReaderUsageDescription</key>
 	<string>NFC access is needed to read and write item information on NFC tags</string>
+
+	<key>NSBluetoothAlwaysUsageDescription</key>
+	<string>Bluetooth is used to connect to label printers and print item labels</string>
 
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Location access is needed to pick your current location on the map</string>
