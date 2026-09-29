@@ -87,7 +87,7 @@ final class PushNotificationManager: NSObject {
     }
 
     /// Debug builds are signed with the development aps-environment; TestFlight and App Store builds use production.
-    private static var environment: DeviceEnvironment {
+    static var environment: DeviceEnvironment {
         #if DEBUG
             .sandbox
         #else

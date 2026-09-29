@@ -5,6 +5,7 @@
 //  Main view that detects size class and switches between TabBar/Sidebar navigation
 //
 
+import RxStorageCore
 import SwiftUI
 
 /// Adaptive root view that uses TabView on iPhone and NavigationSplitView on iPad
@@ -25,6 +26,9 @@ struct AdaptiveRootView: View {
         .environment(navigationManager)
         // Only shown while signed in, so the device token is registered for the current user
         .task {
+            #if os(iOS)
+                LiveActivityManager.shared.startObserving()
+            #endif
             await PushNotificationManager.shared.registerForPushNotifications()
         }
         // Open the ISO job whose notification was tapped, including one that launched the app
@@ -44,7 +48,12 @@ struct AdaptiveRootView: View {
         // Handle custom URL scheme (rxstorage://...)
         .onOpenURL { url in
             Task {
-                await navigationManager.handleDeepLink(url)
+                // Tapping an ISO job's Live Activity opens rxstorage://iso-jobs/<id>
+                if let jobId = IsoJobDeepLink.jobId(from: url) {
+                    await navigationManager.navigateToIsoJob(id: jobId)
+                } else {
+                    await navigationManager.handleDeepLink(url)
+                }
             }
         }
         .alert("Deep Link Error", isPresented: $navigationManager.showDeepLinkError) {

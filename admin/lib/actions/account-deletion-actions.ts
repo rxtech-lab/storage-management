@@ -13,6 +13,7 @@ import {
   uploadFiles,
   accountDeletions,
   deviceTokens,
+  liveActivityTokens,
 } from "@/lib/db";
 import { ensureSchemaInitialized } from "@/lib/db/client";
 import { s3Client, S3_BUCKET } from "@/lib/s3";
@@ -236,6 +237,7 @@ export async function executeAccountDeletion(
     await db.delete(authors).where(eq(authors.userId, userId));
     await db.delete(positionSchemas).where(eq(positionSchemas.userId, userId));
     await db.delete(deviceTokens).where(eq(deviceTokens.userId, userId));
+    await db.delete(liveActivityTokens).where(eq(liveActivityTokens.userId, userId));
 
     // Mark deletion as completed
     await db
