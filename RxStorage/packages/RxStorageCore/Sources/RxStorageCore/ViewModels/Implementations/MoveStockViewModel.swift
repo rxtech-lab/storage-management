@@ -191,7 +191,9 @@ public final class MoveStockViewModel {
             quantity: canChooseAmount && !isMovingAll ? quantity : nil,
             merge: keepSeparate ? false : nil
         )
-        logger.info("Moving \(request.quantity ?? source.quantity) of \(itemId, privacy: .public) to \(destinationParentId ?? "root", privacy: .public)")
+        let movingItemId = itemId
+        let destination = destinationParentId ?? "root"
+        logger.info("Moving \(request.quantity ?? source.quantity) of \(movingItemId, privacy: .public) to \(destination, privacy: .public)")
         return try await stockService.moveStock(itemId: itemId, request)
     }
 
