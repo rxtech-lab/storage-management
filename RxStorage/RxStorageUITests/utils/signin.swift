@@ -20,7 +20,6 @@ extension XCUIApplication {
         guard let testPassword = DotEnv.get("TEST_PASSWORD", from: envVars) else {
             throw NSError(domain: "SigninError", code: 1, userInfo: [NSLocalizedDescriptionKey: "TEST_PASSWORD not found in .env file or environment"])
         }
-        NSLog("🔐 Using test password: \(testPassword)")
 
         NSLog("🔐 Starting sign-in flow with email: \(testEmail)")
         logger.info("🔐 Starting sign-in flow with email: \(testEmail)")
@@ -48,7 +47,10 @@ extension XCUIApplication {
             let passwordField = safariViewServiceApp.secureTextFields["Enter your password"].firstMatch
 
             // Use a longer timeout and provide better error message
-            let emailFieldExists = emailField.waitForExistence(timeout: 30)
+            let emailFieldExists = emailField.waitForExistence(timeout: 60)
+            guard emailFieldExists else {
+                throw NSError(domain: "SigninError", code: 2, userInfo: [NSLocalizedDescriptionKey: "OAuth email field did not appear"])
+            }
             NSLog("✅ Email field found, entering credentials...")
             logger.info("✅ Email field found, entering credentials...")
 

@@ -96,6 +96,7 @@ struct EntityItemsListSheet: View {
                 .toolbar {
                     ToolbarItem(placement: .cancellationAction) {
                         Button("Done") { dismiss() }
+                            .accessibilityIdentifier("entity-items-done-button")
                     }
                 }
                 .task {

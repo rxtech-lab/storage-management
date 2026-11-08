@@ -61,7 +61,7 @@ jobs:
   run:
     name: ${{ inputs.job-name }}
     runs-on: ${{ inputs.runs-on }}
-    timeout-minutes: 30
+    timeout-minutes: ${{ inputs.upload-test-results && inputs.script == 'ios-ui-test.sh' && 60 || 30 }}
 
     steps:
       - name: Checkout code
@@ -172,7 +172,7 @@ jobs:
           SDK: ${{ inputs.sdk }}
 
       - name: Upload Logs
-        if: failure()
+        if: failure() || cancelled()
         uses: actions/upload-artifact@v7
         with:
           name: ${{ inputs.artifact-name }}
@@ -205,7 +205,7 @@ jobs:
           if [ -d "$RESULT_BUNDLE" ]; then
             echo "📸 Extracting screenshots from $RESULT_BUNDLE..."
             mkdir -p test-screenshots
-            xcrun xcresulttool get test-results attachments \
+            xcrun xcresulttool export attachments \
               --path "$RESULT_BUNDLE" \
               --output-path test-screenshots || echo "No attachments found in result bundle"
             SCREENSHOT_COUNT=$(find test-screenshots -type f 2>/dev/null | wc -l | tr -d ' ')
