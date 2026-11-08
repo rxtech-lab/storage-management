@@ -51,7 +51,6 @@ jobs:
           bun install
           bun run openapi:generate
           cp public/openapi.json ../RxStorage/packages/RxStorageCore/Sources/RxStorageCore/openapi.json
-          cp public/openapi.json ../cli/RxStorageCli/Sources/RxStorageCli/openapi.json
         working-directory: admin
 
       - name: Setup Python
