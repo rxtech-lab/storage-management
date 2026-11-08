@@ -119,10 +119,12 @@ final class RxStorageEntityNavigationTests: XCTestCase {
 
         element.tap()
 
-        let element2 = app/*@START_MENU_TOKEN@*/ .buttons["Done"]/*[[".otherElements[\"Done\"].buttons",".otherElements.buttons[\"Done\"]",".buttons[\"Done\"]"],[[[-1,2],[-1,1],[-1,0]]],[0]]@END_MENU_TOKEN@*/ .firstMatch
+        let element2 = app.buttons["entity-items-done-button"].firstMatch
+        XCTAssertTrue(element2.waitForExistence(timeout: 10), "Items sheet should present its Done button")
         element2.tap()
         app/*@START_MENU_TOKEN@*/ .buttons["item-row"]/*[[".buttons",".containing(.image, identifier: \"chevron.forward\")",".containing(.staticText, identifier: \"This is a public test item for E2E testing\")",".containing(.staticText, identifier: \"item-row\")",".cells.buttons",".otherElements",".buttons[\"Public Test Item, This is a public test item for E2E testing\"]",".buttons[\"item-row\"]"],[[[-1,7],[-1,6],[-1,5,2],[-1,4],[-1,0,1]],[[-1,3],[-1,2],[-1,1]],[[-1,7],[-1,6]]],[0]]@END_MENU_TOKEN@*/ .firstMatch.tap()
         app/*@START_MENU_TOKEN@*/ .buttons["BackButton"]/*[[".navigationBars",".buttons[\"Items at Location\"]",".buttons[\"BackButton\"]"],[[[-1,2],[-1,1],[-1,0,1]],[[-1,2],[-1,1]]],[0]]@END_MENU_TOKEN@*/ .firstMatch.tap()
+        XCTAssertTrue(element2.waitForExistence(timeout: 10), "Returning from the item should restore the items sheet")
         element2.tap()
     }
 
