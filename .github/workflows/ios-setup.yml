@@ -145,6 +145,25 @@ jobs:
       - name: Generate openapi documentation
         run: ./scripts/ios-update-openapi.sh
 
+      - name: Resolve Swift packages with retry
+        env:
+          SCHEME: ${{ inputs.scheme }}
+        run: |
+          set -o pipefail
+          for attempt in 1 2 3; do
+            if xcodebuild -resolvePackageDependencies \
+              -project RxStorage/RxStorage.xcodeproj \
+              -scheme "$SCHEME" \
+              -derivedDataPath .build 2>&1 | tee -a package-resolution.log; then
+              exit 0
+            fi
+            if [ "$attempt" -eq 3 ]; then
+              echo "::error::Swift package resolution failed after 3 attempts"
+              exit 1
+            fi
+            sleep $((attempt * 10))
+          done
+
       - name: Run Script
         run: ./scripts/${{ inputs.script }}
         env:
@@ -157,7 +176,9 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: ${{ inputs.artifact-name }}
-          path: ${{ inputs.artifact-path }}
+          path: |
+            ${{ inputs.artifact-path }}
+            package-resolution.log
           retention-days: 7
 
       - name: Upload Backend Logs
