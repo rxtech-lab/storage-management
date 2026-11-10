@@ -33,7 +33,7 @@ export default defineConfig({
   ],
 
   webServer: {
-    command: `bun run dev --port ${port}`,
+    command: `bun run scripts/prepare-e2e-db.ts && bun run dev --port ${port}`,
     url: baseURL,
     // Never reuse an already-running localhost:3000 server; it may belong to another project.
     reuseExistingServer: false,
@@ -42,6 +42,7 @@ export default defineConfig({
       IS_E2E: "true",
       USE_LOCAL_DB: "false",
       E2E_DATABASE_URL: `file:${e2eDatabasePath}`,
+      E2E_SCHEMA_INITIALIZED: "true",
       AUTH_SECRET: "test-secret",
       AUTH_ISSUER: "https://test.example.com",
       AUTH_CLIENT_ID: "test-client",
