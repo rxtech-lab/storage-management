@@ -16,6 +16,8 @@ public protocol ItemFormViewModelProtocol: AnyObject, Observable {
     /// Form data
     var title: String { get set }
     var description: String { get set }
+    var originalQrCode: String { get set }
+    var suggestedTagIds: [String] { get set }
     var selectedCategoryId: String? { get set }
     var selectedLocationId: String? { get set }
     var selectedAuthorId: String? { get set }

@@ -3,7 +3,7 @@ import { ItemForm } from "@/components/forms/item-form";
 import { getPositionSchemas } from "@/lib/actions/position-schema-actions";
 
 interface NewItemPageProps {
-  searchParams: Promise<{ parentId?: string }>;
+  searchParams: Promise<{ parentId?: string; mode?: string }>;
 }
 
 export default async function NewItemPage({ searchParams }: NewItemPageProps) {
@@ -24,6 +24,7 @@ export default async function NewItemPage({ searchParams }: NewItemPageProps) {
       <Suspense fallback={<div>Loading...</div>}>
         <ItemForm
           positionSchemas={positionSchemas}
+          startWithAI={params.mode === "ai"}
           defaultParentId={defaultParentId}
         />
       </Suspense>

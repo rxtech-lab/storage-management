@@ -33,6 +33,8 @@ struct ItemListView: View {
     }
 
     @State private var showingCreateSheet = false
+    @State private var createUsingAI = false
+    @State private var createFeedback = 0
     @State private var showingFilterSheet = false
     @State private var errorViewModel = ErrorViewModel()
 
@@ -48,8 +50,17 @@ struct ItemListView: View {
             .navigationTitle("Items")
             .toolbar {
                 ToolbarItemGroup(placement: .primaryAction) {
-                    Button {
-                        showingCreateSheet = true
+                    Menu {
+                        Button("Create using form") {
+                            createUsingAI = false
+                            showingCreateSheet = true
+                            createFeedback += 1
+                        }.accessibilityIdentifier("item-create-form")
+                        Button("Create using AI") {
+                            createUsingAI = true
+                            showingCreateSheet = true
+                            createFeedback += 1
+                        }.accessibilityIdentifier("item-create-ai")
                     } label: {
                         Label("New Item", systemImage: "plus")
                     }
@@ -73,9 +84,12 @@ struct ItemListView: View {
             .refreshable {
                 await viewModel.refreshItems()
             }
+        #if os(iOS)
+            .sensoryFeedback(.selection, trigger: createFeedback)
+        #endif
             .sheet(isPresented: $showingCreateSheet) {
                 NavigationStack {
-                    ItemFormSheet()
+                    ItemFormSheet(startWithAI: createUsingAI)
                 }
             }
             .sheet(isPresented: $showingFilterSheet) {

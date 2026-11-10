@@ -22,8 +22,8 @@ export function createDatabaseClient() {
   }
 
   if (process.env.IS_E2E === "true") {
-    // Use in-memory SQLite for e2e tests
-    clientInstance = createClient({ url: ":memory:" });
+    // A file URL allows transactions and separate Next.js route workers to share test data.
+    clientInstance = createClient({ url: process.env.E2E_DATABASE_URL || ":memory:" });
 
     // Initialize schema asynchronously (idempotent - uses CREATE TABLE IF NOT EXISTS)
     if (!initPromise) {

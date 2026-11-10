@@ -1,10 +1,10 @@
 "use client";
+import { ItemCreateMenu } from "@/components/items/item-create-menu";
 
 import { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
 import { ItemFilters } from "@/components/items/item-filters";
 import { ItemPreview } from "@/components/items/item-preview";
 import { ItemTreeView } from "@/components/items/item-tree-view";
@@ -79,12 +79,7 @@ export default function ItemsPage() {
           <h1 className="text-3xl font-bold">Items</h1>
           <p className="text-muted-foreground">Manage your storage items</p>
         </div>
-        <Link href="/items/new">
-          <Button data-testid="items-new-button">
-            <Plus className="h-4 w-4 mr-2" />
-            New Item
-          </Button>
-        </Link>
+        <ItemCreateMenu />
       </div>
 
       <ItemFilters
@@ -102,12 +97,7 @@ export default function ItemsPage() {
       ) : items.length === 0 ? (
         <div className="text-center py-12">
           <p className="text-muted-foreground">No items found</p>
-          <Link href="/items/new" className="mt-4 inline-block">
-            <Button variant="outline">
-              <Plus className="h-4 w-4 mr-2" />
-              Create your first item
-            </Button>
-          </Link>
+          <p className="mt-4 text-sm text-muted-foreground">Use New Item to create using a form or AI.</p>
         </div>
       ) : view === "tree" ? (
         <ItemTreeView items={items} />

@@ -19,6 +19,8 @@ public final class ItemFormViewModel: ItemFormViewModelProtocol {
     // Form fields
     public var title = ""
     public var description = ""
+    public var originalQrCode = ""
+    public var suggestedTagIds: [String] = []
     public var selectedCategoryId: String?
     public var selectedLocationId: String?
     public var selectedAuthorId: String?
@@ -166,6 +168,7 @@ public final class ItemFormViewModel: ItemFormViewModelProtocol {
                 let updateRequest = UpdateItemRequest(
                     title: title,
                     description: description.isEmpty ? nil : description,
+                    originalQrCode: originalQrCode,
                     categoryId: selectedCategoryId,
                     locationId: selectedLocationId,
                     authorId: selectedAuthorId,
@@ -175,6 +178,7 @@ public final class ItemFormViewModel: ItemFormViewModelProtocol {
                     itemDate: itemDate,
                     expiresAt: expiresAt,
                     images: allImageReferences,
+                    tagIds: suggestedTagIds.isEmpty ? nil : suggestedTagIds,
                     positions: positionsData
                 )
                 result = try await itemService.updateItem(id: existingItem.id, updateRequest)
@@ -185,6 +189,7 @@ public final class ItemFormViewModel: ItemFormViewModelProtocol {
                 let createRequest = NewItemRequest(
                     title: title,
                     description: description.isEmpty ? nil : description,
+                    originalQrCode: originalQrCode.isEmpty ? nil : originalQrCode,
                     categoryId: selectedCategoryId,
                     locationId: selectedLocationId,
                     authorId: selectedAuthorId,
@@ -194,6 +199,7 @@ public final class ItemFormViewModel: ItemFormViewModelProtocol {
                     itemDate: itemDate,
                     expiresAt: expiresAt,
                     images: allImageReferences,
+                    tagIds: suggestedTagIds.isEmpty ? nil : suggestedTagIds,
                     positions: positionsData
                 )
                 result = try await itemService.createItem(createRequest)
@@ -362,6 +368,7 @@ public final class ItemFormViewModel: ItemFormViewModelProtocol {
     private func populateForm(from item: StorageItem) {
         title = item.title
         description = item.description ?? ""
+        originalQrCode = item.originalQrCode ?? ""
         selectedCategoryId = item.categoryId
         selectedLocationId = item.locationId
         selectedAuthorId = item.authorId

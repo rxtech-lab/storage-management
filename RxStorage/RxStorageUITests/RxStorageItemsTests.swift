@@ -28,6 +28,7 @@ final class RxStorageItemsUITests: XCTestCase {
         // Tap New Item button
         XCTAssertTrue(app.newItemButton.waitForExistence(timeout: 10), "New Item button did not appear")
         app.newItemButton.tap()
+        app.buttons["item-create-form"].tap()
 
         // Fill in basic info
         XCTAssertTrue(app.itemTitleField.waitForExistence(timeout: 5), "Title field did not appear")
@@ -54,6 +55,32 @@ final class RxStorageItemsUITests: XCTestCase {
         XCTAssertTrue(app.itemDetailTitle.waitForExistence(timeout: 20), "Item detail title")
     }
 
+    @MainActor
+    func testItemCreationChoicesAndAILookup() throws {
+        let app = launchApp()
+        try app.signInWithEmailAndPassword()
+        XCTAssertTrue(app.itemsTab.waitForExistence(timeout: 10))
+        app.itemsTab.tap()
+        XCTAssertTrue(app.newItemButton.waitForExistence(timeout: 10))
+        app.newItemButton.tap()
+        XCTAssertTrue(app.buttons["item-create-form"].waitForExistence(timeout: 5))
+        app.buttons["item-create-ai"].tap()
+        XCTAssertTrue(app.buttons["item-ai-generate"].waitForExistence(timeout: 10))
+        XCTAssertFalse(app.buttons["item-ai-generate"].isEnabled)
+        XCTAssertTrue(app.buttons["item-ai-attach-images"].exists)
+        app.buttons["item-ai-cancel"].tap()
+        XCTAssertTrue(app.itemTitleField.waitForExistence(timeout: 5))
+        let qr = app.textFields["item-form-qr-field"]
+        XCTAssertTrue(qr.exists)
+        qr.tap()
+        qr.typeText("9780000000000")
+        app.buttons["item-form-ai-search"].tap()
+        XCTAssertTrue(app.buttons["item-ai-generate"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["item-ai-generate"].isEnabled)
+        app.buttons["item-ai-cancel"].tap()
+        XCTAssertEqual(qr.value as? String, "9780000000000")
+    }
+
     // MARK: - Image Picker & Camera Tests
 
     @MainActor
@@ -68,6 +95,7 @@ final class RxStorageItemsUITests: XCTestCase {
         // Tap New Item button
         XCTAssertTrue(app.newItemButton.waitForExistence(timeout: 10), "New Item button did not appear")
         app.newItemButton.tap()
+        app.buttons["item-create-form"].tap()
 
         // Fill in title
         XCTAssertTrue(app.itemTitleField.waitForExistence(timeout: 5), "Title field did not appear")
@@ -108,6 +136,7 @@ final class RxStorageItemsUITests: XCTestCase {
 //        // Tap New Item button
 //        XCTAssertTrue(app.newItemButton.waitForExistence(timeout: 10), "New Item button did not appear")
 //        app.newItemButton.tap()
+//        app.buttons["item-create-form"].tap()
 //
 //        // Scroll down to the Images section
 //        let form = app.collectionViews.firstMatch

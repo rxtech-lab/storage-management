@@ -171,6 +171,7 @@
 				Views/Items/ItemDetailView.swift,
 				Views/Items/ItemFilterSheet.swift,
 				Views/Items/ItemFormSheet.swift,
+				Views/Items/ItemAISheet.swift,
 				Views/Items/ItemListView.swift,
 				Views/Items/ItemRow.swift,
 				Views/Items/ItemStockFormSheet.swift,

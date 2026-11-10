@@ -65,6 +65,7 @@ export const ItemInsertSchema = z.object({
     .array(z.string())
     .optional()
     .describe("Image file references (file:N format)"),
+  tagIds: z.array(z.string()).max(50).optional().describe("Tags to add to the item"),
   positions: z
     .array(NewPositionDataSchema)
     .optional()
@@ -124,6 +125,7 @@ export const ItemUpdateSchema = z.object({
     .array(z.string())
     .optional()
     .describe("Image file references (file:N format)"),
+  tagIds: z.array(z.string()).max(50).optional().describe("Tags to add to the item"),
   positions: z
     .array(NewPositionDataSchema)
     .optional()
