@@ -12,6 +12,7 @@ import {
   authors,
   positions,
   itemTags,
+  tags,
   type Item,
   type NewItem,
 } from "@/lib/db";
@@ -62,6 +63,7 @@ const itemInsertSchema = z.object({
     )
     .optional(),
   positions: z.array(positionDataSchema).optional(),
+  tagIds: z.array(z.string().min(1)).max(50).optional(),
 });
 
 const itemUpdateSchema = itemInsertSchema
@@ -308,7 +310,7 @@ export async function findItemByOriginalQrCode(
 }
 
 export async function createItemAction(
-  data: Omit<NewItem, "id" | "userId" | "createdAt" | "updatedAt">,
+  data: Omit<NewItem, "id" | "userId" | "createdAt" | "updatedAt"> & { tagIds?: string[] },
   userId?: string,
 ): Promise<{ success: boolean; data?: Item; error?: string }> {
   try {
@@ -412,7 +414,16 @@ export async function createItemAction(
       }
     }
 
-    const result = await db.insert(items).values(insertData).returning();
+    const selectedTagIds = [...new Set(validatedData.tagIds ?? [])];
+    if (selectedTagIds.length) {
+      const ownedTags = await db.select({ id: tags.id }).from(tags).where(and(eq(tags.userId, resolvedUserId), inArray(tags.id, selectedTagIds)));
+      if (ownedTags.length !== selectedTagIds.length) return { success: false, error: "Invalid or unauthorized tags" };
+    }
+    const result = await db.transaction(async tx => {
+      const created = await tx.insert(items).values(insertData).returning();
+      for (const tagId of selectedTagIds) await tx.insert(itemTags).values({ itemId: created[0].id, tagId });
+      return created;
+    });
 
     // Associate files with the created item
     if (fileIds.length > 0) {
@@ -461,7 +472,7 @@ export async function createItemAction(
 
 export async function updateItemAction(
   id: string,
-  data: Partial<Omit<NewItem, "id" | "userId" | "createdAt" | "updatedAt">>,
+  data: Partial<Omit<NewItem, "id" | "userId" | "createdAt" | "updatedAt">> & { tagIds?: string[] },
   userId?: string,
 ): Promise<{ success: boolean; data?: Item; error?: string }> {
   try {
@@ -562,7 +573,7 @@ export async function updateItemAction(
     }
 
     // Extract positions from data before updating item
-    const { positions: positionsData, ...itemData } = data as typeof data & {
+    const { positions: positionsData, tagIds, ...itemData } = data as typeof data & {
       positions?: Array<{
         positionSchemaId: string;
         data: Record<string, unknown>;
@@ -571,10 +582,15 @@ export async function updateItemAction(
 
     const now = new Date();
 
-    await db
-      .update(items)
-      .set({ ...itemData, updatedAt: now })
-      .where(eq(items.id, id));
+    const selectedTagIds = [...new Set(tagIds ?? [])];
+    if (selectedTagIds.length) {
+      const ownedTags = await db.select({ id: tags.id }).from(tags).where(and(eq(tags.userId, resolvedUserId), inArray(tags.id, selectedTagIds)));
+      if (ownedTags.length !== selectedTagIds.length) return { success: false, error: "Invalid or unauthorized tags" };
+    }
+    await db.transaction(async tx => {
+      await tx.update(items).set({ ...itemData, updatedAt: now }).where(eq(items.id, id));
+      for (const tagId of selectedTagIds) await tx.insert(itemTags).values({ itemId: id, tagId }).onConflictDoNothing();
+    });
 
     // Update parent's lastUsedAsParent timestamp if parentId is set
     if (itemData.parentId) {
@@ -664,7 +680,7 @@ export async function deleteItemAction(
 }
 
 export async function createItemAndRedirect(
-  data: Omit<NewItem, "id" | "userId" | "createdAt" | "updatedAt">,
+  data: Omit<NewItem, "id" | "userId" | "createdAt" | "updatedAt"> & { tagIds?: string[] },
   userId?: string,
 ) {
   const result = await createItemAction(data, userId);

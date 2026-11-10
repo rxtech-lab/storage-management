@@ -44,6 +44,20 @@ struct ItemFormViewModelTests {
         #expect(sut.existingImages[0].url == "https://example.com/image.jpg")
     }
 
+    @Test("Existing QR loads and can be cleared when editing")
+    @MainActor
+    func qrCodeRoundTrip() async throws {
+        var item = Self.testItem
+        item.originalQrCode = "existing-code"
+        let service = MockItemService()
+        service.updateItemResult = .success(item)
+        let sut = ItemFormViewModel(item: item, itemService: service)
+        #expect(sut.originalQrCode == "existing-code")
+        sut.originalQrCode = ""
+        try await sut.submit()
+        #expect(service.lastUpdateItemRequest?.originalQrCode == "")
+    }
+
     // MARK: - Validation Tests
 
     @Test("Validation succeeds with valid data")
@@ -109,6 +123,8 @@ struct ItemFormViewModelTests {
 
         sut.title = "New Item"
         sut.description = "New Description"
+        sut.originalQrCode = "9780000000000"
+        sut.suggestedTagIds = ["tag-camera"]
         sut.price = "29.99"
 
         // When
@@ -118,6 +134,8 @@ struct ItemFormViewModelTests {
         #expect(mockItemService.createItemCalled == true)
         #expect(mockItemService.lastCreateItemRequest?.title == "New Item")
         #expect(mockItemService.lastCreateItemRequest?.description == "New Description")
+        #expect(mockItemService.lastCreateItemRequest?.originalQrCode == "9780000000000")
+        #expect(mockItemService.lastCreateItemRequest?.tagIds == ["tag-camera"])
         #expect(sut.isSubmitting == false)
     }
 
@@ -135,6 +153,8 @@ struct ItemFormViewModelTests {
         )
 
         sut.title = "Updated Title"
+        sut.originalQrCode = "updated-code"
+        sut.suggestedTagIds = ["tag-updated"]
 
         // When
         try await sut.submit()
@@ -143,6 +163,8 @@ struct ItemFormViewModelTests {
         #expect(mockItemService.updateItemCalled == true)
         #expect(mockItemService.lastUpdateItemId == "1")
         #expect(mockItemService.lastUpdateItemRequest?.title == "Updated Title")
+        #expect(mockItemService.lastUpdateItemRequest?.originalQrCode == "updated-code")
+        #expect(mockItemService.lastUpdateItemRequest?.tagIds == ["tag-updated"])
         #expect(sut.isSubmitting == false)
     }
 

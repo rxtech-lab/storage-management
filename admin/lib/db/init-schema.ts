@@ -27,7 +27,7 @@ export async function initializeSchema(client: Client) {
       .map((s) => s.trim())
       .filter((s) => s.length > 0)
       // Replace CREATE TABLE with CREATE TABLE IF NOT EXISTS
-      .map((s) => s.replace(/CREATE TABLE `/g, "CREATE TABLE IF NOT EXISTS `"))
+      .map((s) => s.replace(/CREATE TABLE `/g, "CREATE TABLE IF NOT EXISTS `").replace(/CREATE (UNIQUE )?INDEX `/g, "CREATE $1INDEX IF NOT EXISTS `"))
       // E2E in-memory DB must match current string ID schema even if migrations are older.
       .map((s) =>
         s

@@ -18,7 +18,9 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2 } from "lucide-react";
+import { ItemAIDialog } from "./item-ai-dialog";
+import { ItemQRInput } from "./item-qr-input";
+import { Loader2, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { ImageUpload } from "./image-upload";
 import { ParentItemCombobox } from "./parent-item-combobox";
@@ -54,11 +56,13 @@ const itemSchema = z.object({
   itemDate: z.string().nullable().optional(),
   expiresAt: z.string().nullable().optional(),
   images: z.array(z.string()).optional(),
+  tagIds: z.array(z.string()).optional(),
 });
 
 type ItemFormData = z.infer<typeof itemSchema>;
 
 interface ItemFormProps {
+  startWithAI?: boolean;
   item?: ItemWithRelations;
   positionSchemas: PositionSchema[];
   positions?: PositionWithSchema[];
@@ -67,11 +71,14 @@ interface ItemFormProps {
 
 export function ItemForm({
   item,
+  startWithAI = false,
   positionSchemas: initialPositionSchemas,
   positions: initialPositions,
   defaultParentId,
 }: ItemFormProps) {
   const router = useRouter();
+  const [aiOpen, setAIOpen] = useState(startWithAI);
+  const [suggestedTags, setSuggestedTags] = useState<string[]>([]);
   const [isPending, startTransition] = useTransition();
   const [positionSchemas, setPositionSchemas] = useState(initialPositionSchemas);
   const [positions, setPositions] = useState<PositionWithSchema[]>(initialPositions ?? []);
@@ -192,13 +199,13 @@ export function ItemForm({
 
           <div className="space-y-2">
             <Label htmlFor="description">Description</Label>
-            <Textarea
+            <div className="flex items-start gap-2"><Textarea
               id="description"
               data-testid="item-description-textarea"
               {...register("description")}
               placeholder="Item description"
               rows={4}
-            />
+            /><Button type="button" variant="outline" aria-label="Search item using AI" title="Search item using AI" onClick={() => setAIOpen(true)}><Sparkles className="h-4 w-4" /></Button></div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -239,14 +246,7 @@ export function ItemForm({
               </Select>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="originalQrCode">Original QR Code</Label>
-              <Input
-                id="originalQrCode"
-                {...register("originalQrCode")}
-                placeholder="Original QR code value"
-              />
-            </div>
+            <ItemQRInput value={watch("originalQrCode") ?? ""} onChange={value => setValue("originalQrCode", value, { shouldDirty: true })} />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -295,13 +295,26 @@ export function ItemForm({
         </CardContent>
       </Card>
 
+      <ItemAIDialog open={aiOpen} onOpenChange={setAIOpen}
+        context={{ title: watch("title"), description: watch("description") ?? "", originalQrCode: watch("originalQrCode") ?? "", images: images ?? [] }}
+        onApply={({ response, images: attached, selectedTags, categoryId, authorId, tagIds }) => {
+          setValue("title", response.draft.title, { shouldDirty: true });
+          setValue("description", response.draft.description, { shouldDirty: true });
+          if (response.draft.originalQrCode) setValue("originalQrCode", response.draft.originalQrCode, { shouldDirty: true });
+          setValue("images", [...new Set([...(images ?? []), ...attached])], { shouldDirty: true });
+          if (categoryId) setValue("categoryId", categoryId, { shouldDirty: true });
+          if (authorId) setValue("authorId", authorId, { shouldDirty: true });
+          setValue("tagIds", [...new Set([...(watch("tagIds") ?? []), ...tagIds])]);
+          setSuggestedTags(previous => [...new Set([...previous, ...selectedTags])]);
+        }} />
       <Card>
         <CardHeader>
           <CardTitle>Relations</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
+          {suggestedTags.length > 0 && <p>Selected AI tags: {suggestedTags.join(", ")}</p>}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <CategoryCombobox
+            <CategoryCombobox key={`category-${categoryId ?? "empty"}`}
               value={categoryId ?? null}
               onChange={(val) => setValue("categoryId", val)}
             />
@@ -311,7 +324,7 @@ export function ItemForm({
               onChange={(val) => setValue("locationId", val)}
             />
 
-            <AuthorCombobox
+            <AuthorCombobox key={`author-${authorId ?? "empty"}`}
               value={authorId ?? null}
               onChange={(val) => setValue("authorId", val)}
             />
@@ -428,6 +441,7 @@ export function ItemForm({
         </CardContent>
       </Card>
 
+      {isPending && <div role="status" className="fixed inset-0 z-50 grid place-items-center bg-background/80">Saving changes…</div>}
       <div className="flex justify-end gap-4">
         <Button
           type="button"

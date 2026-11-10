@@ -18,10 +18,11 @@ test.describe('Item Creation', () => {
 
   test('should create a new item with title only', async ({ page }) => {
     // Click New Item button
-    await page.getByTestId('items-new-button').click();
+    await page.getByTestId('items-new-button').first().click();
+    await page.getByRole('menuitem', { name: 'Create using form' }).click();
 
     // Wait for navigation to complete
-    await page.waitForURL('/items/new');
+    await page.waitForURL('**/items/new?mode=form');
     await page.waitForLoadState('networkidle');
 
     // Wait for form to be visible
@@ -35,7 +36,7 @@ test.describe('Item Creation', () => {
     await page.getByTestId('item-submit-button').click();
 
     // Wait for redirect to item detail page
-    await page.waitForURL(/\/items\/[^/]+$/);
+    await page.waitForURL(url => /^\/items\/[^/]+$/.test(url.pathname) && url.pathname !== "/items/new");
 
     // Verify we're on the item detail page
     expect(page.url()).toMatch(/\/items\/[^/]+$/);

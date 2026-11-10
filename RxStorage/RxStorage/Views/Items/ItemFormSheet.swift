@@ -9,10 +9,20 @@ import OpenAPIRuntime
 import PhotosUI
 import RxStorageCore
 import SwiftUI
+import UniformTypeIdentifiers
+import Vision
 
 /// Item form sheet for creating or editing items
 struct ItemFormSheet: View {
     let item: StorageItem?
+    @State private var showingAI = false
+    @State private var showingQRScanner = false
+    @State private var showingQRImporter = false
+    @State private var qrBusy = false
+    @State private var aiFeedback = 0
+    @State private var aiCategoryName: String?
+    @State private var aiAuthorName: String?
+    @State private var aiTagNames: [String] = []
 
     @State private var viewModel: ItemFormViewModel
     @Environment(\.dismiss) private var dismiss
@@ -47,7 +57,8 @@ struct ItemFormSheet: View {
     /// Photo picker
     @State private var selectedPhotos: [PhotosPickerItem] = []
 
-    init(item: StorageItem? = nil) {
+    init(item: StorageItem? = nil, startWithAI: Bool = false) {
+        _showingAI = State(initialValue: startWithAI)
         self.item = item
         _viewModel = State(initialValue: ItemFormViewModel(item: item))
     }
@@ -66,8 +77,12 @@ struct ItemFormSheet: View {
             validationErrorsSection
         }
         .formStyle(.grouped)
-        .scrollDismissesKeyboard(.interactively)
-        .navigationTitle(item == nil ? "New Item" : "Edit Item")
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        #if os(macOS)
+            .frame(minWidth: 600, minHeight: 650)
+        #endif
+            .scrollDismissesKeyboard(.interactively)
+            .navigationTitle(item == nil ? "New Item" : "Edit Item")
         #if os(iOS)
             .navigationBarTitleDisplayMode(.inline)
         #endif
@@ -88,6 +103,33 @@ struct ItemFormSheet: View {
                     .disabled(viewModel.isSubmitting || viewModel.isUploading)
                     .accessibilityIdentifier("item-form-submit-button")
                 }
+            }
+            .sheet(isPresented: $showingAI) {
+                NavigationStack {
+                    ItemAISheet(context: ItemAIRequest(title: viewModel.title, description: viewModel.description, originalQrCode: viewModel.originalQrCode, images: Array(viewModel.allImageReferences.prefix(5)))) { response, relations, attachments, selectedTags in
+                        viewModel.title = response.draft.title
+                        viewModel.description = response.draft.description
+                        if let qr = response.draft.originalQrCode { viewModel.originalQrCode = qr }
+                        if let id = relations.categoryId { viewModel.selectedCategoryId = id; selectedCategory = nil; aiCategoryName = response.draft.category }
+                        if let id = relations.authorId { viewModel.selectedAuthorId = id; selectedAuthor = nil; aiAuthorName = response.draft.author }
+                        viewModel.suggestedTagIds = Array(Set(viewModel.suggestedTagIds + relations.tagIds))
+                        aiTagNames += selectedTags.filter { !aiTagNames.contains($0) }
+                        viewModel.existingImages += attachments
+                        aiFeedback += 1
+                    }
+                }
+                #if os(macOS)
+                .frame(minWidth: 600, minHeight: 650, maxHeight: .infinity, alignment: .top)
+                #endif
+            }
+        #if os(iOS)
+            .sensoryFeedback(.success, trigger: aiFeedback)
+            .sheet(isPresented: $showingQRScanner) {
+                QRCodeScannerView { value in viewModel.originalQrCode = value; aiFeedback += 1 }
+            }
+        #endif
+            .fileImporter(isPresented: $showingQRImporter, allowedContentTypes: [.image]) { result in
+                Task { await readQRCode(result) }
             }
             .sheet(isPresented: $showingCategorySheet) {
                 NavigationStack {
@@ -128,6 +170,7 @@ struct ItemFormSheet: View {
                     CategoryPickerSheet(selectedId: viewModel.selectedCategoryId) { category in
                         viewModel.selectedCategoryId = category?.id
                         selectedCategory = category
+                        aiCategoryName = nil
                     }
                 }
             }
@@ -144,6 +187,7 @@ struct ItemFormSheet: View {
                     AuthorPickerSheet(selectedId: viewModel.selectedAuthorId) { author in
                         viewModel.selectedAuthorId = author?.id
                         selectedAuthor = author
+                        aiAuthorName = nil
                     }
                 }
             }
@@ -185,7 +229,7 @@ struct ItemFormSheet: View {
                 await viewModel.loadReferenceData()
             }
             .overlay {
-                if viewModel.isSubmitting || viewModel.isUploading {
+                if viewModel.isSubmitting || viewModel.isUploading || qrBusy {
                     LoadingOverlay()
                 }
             }
@@ -201,9 +245,28 @@ struct ItemFormSheet: View {
             #endif
                 .accessibilityIdentifier("item-form-title-field")
 
-            TextField("Description", text: $viewModel.description, axis: .vertical)
-                .lineLimit(3 ... 6)
-                .accessibilityIdentifier("item-form-description-field")
+            HStack(alignment: .top) {
+                TextField("Description", text: $viewModel.description, axis: .vertical)
+                    .lineLimit(3 ... 6)
+                    .accessibilityIdentifier("item-form-description-field")
+                Button { showingAI = true } label: { Image(systemName: "sparkle.magnifyingglass") }
+                    .buttonStyle(.borderless)
+                    .accessibilityLabel("Search item using AI")
+                    .accessibilityIdentifier("item-form-ai-search")
+            }
+            HStack {
+                TextField("Original QR Code", text: $viewModel.originalQrCode)
+                    .accessibilityIdentifier("item-form-qr-field")
+                Menu {
+                    #if os(iOS)
+                        Button("Scan with camera") { showingQRScanner = true }
+                    #endif
+                    Button("Scan QR image") { showingQRImporter = true }
+                } label: { Image(systemName: "qrcode.viewfinder") }
+                    .accessibilityLabel("Scan QR code")
+                    .accessibilityIdentifier("item-form-qr-scan")
+            }
+            if !aiTagNames.isEmpty { Text("Selected AI tags: " + aiTagNames.joined(separator: ", ")).font(.caption) }
 
             TextField("Price", text: $viewModel.price)
             #if os(iOS)
@@ -583,6 +646,7 @@ struct ItemFormSheet: View {
         if let category = selectedCategory {
             return category.name
         }
+        if let aiCategoryName { return aiCategoryName }
         // Use item's embedded FK object for initial display
         if let categoryRef = item?.category?.value1 {
             return categoryRef.name
@@ -604,6 +668,7 @@ struct ItemFormSheet: View {
         if let author = selectedAuthor {
             return author.name
         }
+        if let aiAuthorName { return aiAuthorName }
         if let authorRef = item?.author?.value1 {
             return authorRef.name
         }
@@ -691,6 +756,25 @@ struct ItemFormSheet: View {
             return "\(key): \(valueStr)"
         }
         return items.joined(separator: ", ")
+    }
+
+    private func readQRCode(_ result: Result<URL, Error>) async {
+        qrBusy = true
+        defer { qrBusy = false }
+        do {
+            let url = try result.get()
+            let access = url.startAccessingSecurityScopedResource()
+            defer { if access { url.stopAccessingSecurityScopedResource() } }
+            let code = try await Task.detached(priority: .userInitiated) {
+                let request = VNDetectBarcodesRequest()
+                request.symbologies = [.qr]
+                try VNImageRequestHandler(url: url).perform([request])
+                guard let code = request.results?.first?.payloadStringValue else { throw APIError.badRequest("No QR code found in the image") }
+                return code
+            }.value
+            viewModel.originalQrCode = code
+            aiFeedback += 1
+        } catch { errorMessage = error.localizedDescription; showingErrorAlert = true }
     }
 
     // MARK: - Image Helpers
