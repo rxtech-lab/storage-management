@@ -28,7 +28,7 @@ import SwiftUI
             case .invalidImage:
                 return "Unable to process the selected image"
             case .noQRCodeFound:
-                return "No QR code found in the image"
+                return "No barcode or QR code found in the image"
             }
         }
     }
@@ -56,6 +56,7 @@ import SwiftUI
                 case .camera:
                     // Camera preview
                     CameraPreview(isScanningEnabled: $isScanningEnabled, onScan: { code in
+                        UINotificationFeedbackGenerator().notificationOccurred(.success)
                         onScan(code)
                         dismiss()
                     })
@@ -70,8 +71,8 @@ import SwiftUI
                 VStack {
                     Text(
                         scanMode == .camera
-                            ? "Position the QR code within the frame"
-                            : "Select an image containing a QR code"
+                            ? "Position the barcode or QR code within the frame"
+                            : "Select an image containing a barcode or QR code"
                     )
                     .padding()
                     .glassEffect()
@@ -83,7 +84,7 @@ import SwiftUI
                         .padding(.bottom)
                 }
             }
-            .navigationTitle("Scan QR Code")
+            .navigationTitle("Scan Barcode")
             #if os(iOS)
                 .navigationBarTitleDisplayMode(.inline)
             #endif
@@ -208,6 +209,7 @@ import SwiftUI
                 // Success - call the onScan callback
                 await MainActor.run {
                     isProcessingImage = false
+                    UINotificationFeedbackGenerator().notificationOccurred(.success)
                     onScan(code)
                     dismiss()
                 }
@@ -255,7 +257,7 @@ import SwiftUI
                     }
 
                     guard let results = request.results as? [VNBarcodeObservation],
-                          let firstBarcode = results.first(where: { $0.symbology == .qr }),
+                          let firstBarcode = results.first(where: { [VNBarcodeSymbology.qr, .ean13, .ean8, .upce, .code128].contains($0.symbology) }),
                           let payload = firstBarcode.payloadStringValue
                     else {
                         continuation.resume(throwing: QRCodeError.noQRCodeFound)
@@ -265,7 +267,7 @@ import SwiftUI
                     continuation.resume(returning: payload)
                 }
 
-                request.symbologies = [.qr]
+                request.symbologies = [.qr, .ean13, .ean8, .upce, .code128]
 
                 let handler = VNImageRequestHandler(cgImage: cgImage, options: [:])
                 do {
@@ -338,7 +340,7 @@ import SwiftUI
                 captureSession.addOutput(metadataOutput)
 
                 metadataOutput.setMetadataObjectsDelegate(context.coordinator, queue: DispatchQueue.main)
-                metadataOutput.metadataObjectTypes = [.qr]
+                metadataOutput.metadataObjectTypes = [.qr, .ean13, .ean8, .upce, .code128].filter { metadataOutput.availableMetadataObjectTypes.contains($0) }
             } else {
                 return view
             }

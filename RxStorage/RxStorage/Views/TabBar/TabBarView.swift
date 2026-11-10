@@ -15,6 +15,8 @@ struct TabBarView: View {
     #if os(iOS)
         @State private var showQrCodeScanner = false
         @State private var isLoadingFromQR = false
+        @State private var barcodeDraft: ItemAIResponse?
+        @State private var showBarcodeDraft = false
         private let itemService = ItemService()
         private let qrCodeService = QrCodeService()
     #endif
@@ -119,9 +121,12 @@ struct TabBarView: View {
                 }
             }
         }
+        .sheet(isPresented: $showBarcodeDraft) {
+            NavigationStack { ItemFormSheet(lookupResult: barcodeDraft) }
+        }
         .overlay {
             if isLoadingFromQR {
-                LoadingOverlay(title: "Loading item from QR code...")
+                LoadingOverlay(title: "Looking up barcode...")
             }
         }
         #endif
@@ -133,10 +138,16 @@ struct TabBarView: View {
             defer { isLoadingFromQR = false }
 
             do {
-                let scanResponse = try await qrCodeService.scanQrCode(qrcontent: code)
-                let itemDetail = try await itemService.fetchItemUsingUrl(url: scanResponse.url)
-                let item = itemDetail.toStorageItem()
-                navigationManager.navigateToItem(item)
+                let lookup = try await ItemAIService().lookupBarcode(code)
+                if let url = lookup.itemUrl {
+                    let itemDetail = try await itemService.fetchItemUsingUrl(url: url)
+                    navigationManager.navigateToItem(itemDetail.toStorageItem())
+                } else if let result = lookup.result {
+                    barcodeDraft = result
+                    showBarcodeDraft = true
+                } else {
+                    throw APIError.badRequest("No book or product found for this barcode. You can create the item manually.")
+                }
             } catch {
                 navigationManager.deepLinkError = error
                 navigationManager.showDeepLinkError = true
