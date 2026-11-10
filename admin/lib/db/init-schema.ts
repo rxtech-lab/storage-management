@@ -52,12 +52,8 @@ export async function initializeSchema(client: Client) {
       );
 
     for (const statement of statements) {
-      try {
-        await client.execute(statement);
-      } catch (error) {
-        // Ignore errors for idempotent operations (e.g., table already exists)
-        console.warn(`Migration statement warning (${file}):`, error);
-      }
+      // CREATE statements are idempotent; other failures must stop test startup.
+      await client.execute(statement);
     }
   }
 

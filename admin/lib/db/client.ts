@@ -26,7 +26,7 @@ export function createDatabaseClient() {
     clientInstance = createClient({ url: process.env.E2E_DATABASE_URL || ":memory:" });
 
     // Initialize schema asynchronously (idempotent - uses CREATE TABLE IF NOT EXISTS)
-    if (!initPromise) {
+    if (process.env.E2E_SCHEMA_INITIALIZED !== "true" && !initPromise) {
       initPromise = (async () => {
         const { initializeSchema } = await import("./init-schema");
         await initializeSchema(clientInstance!);

@@ -1,6 +1,6 @@
 async function globalSetup() {
   console.log("Starting e2e tests with an isolated SQLite database");
-  // Schema will be initialized automatically by lib/db/client.ts
+  // The webServer command initializes the schema before starting Next.js.
 }
 
 export default globalSetup;
