@@ -330,18 +330,21 @@ private struct LocationInfoContent: View {
                                 .font(.caption.weight(.semibold))
                                 .foregroundStyle(.secondary)
                         }
+                        .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
+                    .accessibilityIdentifier("location-items-button")
                 }
             }
+            .accessibilityIdentifier("location-info-list")
             #if os(iOS)
-            .listStyle(.insetGrouped)
+                .listStyle(.insetGrouped)
             #elseif os(macOS)
-            .listStyle(.inset)
+                .listStyle(.inset)
             #endif
-            .navigationDestination(for: StorageItem.self) { item in
-                ItemDetailView(itemId: item.id)
-            }
+                .navigationDestination(for: StorageItem.self) { item in
+                    ItemDetailView(itemId: item.id)
+                }
         }
     }
 }
