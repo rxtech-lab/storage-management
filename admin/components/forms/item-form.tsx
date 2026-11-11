@@ -19,6 +19,7 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ItemAIDialog } from "./item-ai-dialog";
+import type { ItemAIResponse } from "@/lib/schemas/item-ai";
 import { ItemQRInput } from "./item-qr-input";
 import { Loader2, Sparkles } from "lucide-react";
 import { toast } from "sonner";
@@ -77,6 +78,7 @@ export function ItemForm({
   defaultParentId,
 }: ItemFormProps) {
   const router = useRouter();
+  const [barcodeResult, setBarcodeResult] = useState<ItemAIResponse | null>(null);
   const [aiOpen, setAIOpen] = useState(startWithAI);
   const [suggestedTags, setSuggestedTags] = useState<string[]>([]);
   const [isPending, startTransition] = useTransition();
@@ -246,7 +248,7 @@ export function ItemForm({
               </Select>
             </div>
 
-            <ItemQRInput value={watch("originalQrCode") ?? ""} onChange={value => setValue("originalQrCode", value, { shouldDirty: true })} />
+            <ItemQRInput onLookup={result => { setBarcodeResult(result); setAIOpen(true); }} value={watch("originalQrCode") ?? ""} onChange={value => setValue("originalQrCode", value, { shouldDirty: true })} />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -295,7 +297,7 @@ export function ItemForm({
         </CardContent>
       </Card>
 
-      <ItemAIDialog open={aiOpen} onOpenChange={setAIOpen}
+      <ItemAIDialog initialResponse={barcodeResult} open={aiOpen} onOpenChange={open => { setAIOpen(open); if (!open) setBarcodeResult(null); }}
         context={{ title: watch("title"), description: watch("description") ?? "", originalQrCode: watch("originalQrCode") ?? "", images: images ?? [] }}
         onApply={({ response, images: attached, selectedTags, categoryId, authorId, tagIds }) => {
           setValue("title", response.draft.title, { shouldDirty: true });

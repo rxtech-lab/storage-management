@@ -5,6 +5,29 @@ const aiResult = {
   sources: [{ title: "Official product page", url: "https://example.com/camera" }],
 };
 
+test("barcode lookup opens a review dialog and applies details without saving", async ({ page }) => {
+  await page.route("**/api/v1/items/lookup", async route => {
+    expect(route.request().postDataJSON()).toEqual({ barcode: "9780140328721", inventory: false });
+    await route.fulfill({ json: { barcode: "9780140328721", itemUrl: null, result: { ...aiResult, draft: { ...aiResult.draft, title: "Fantastic Mr. Fox", originalQrCode: "9780140328721", category: "Books", author: "Roald Dahl" } } } });
+  });
+  await page.goto("/items/new");
+  // EAN-13 fixture for 9780140328721, including quiet zones.
+  const left = ["0001101", "0011001", "0010011", "0111101", "0100011", "0110001", "0101111", "0111011", "0110111", "0001011"];
+  const even = ["0100111", "0110011", "0011011", "0100001", "0011101", "0111001", "0000101", "0010001", "0001001", "0010111"];
+  const code = "9780140328721";
+  const bits = "101" + [...code.slice(1, 7)].map((digit, i) => ("LGGLGL"[i] === "L" ? left : even)[Number(digit)]).join("") + "01010" + [...code.slice(7)].map(digit => left[Number(digit)].replace(/[01]/g, bit => bit === "0" ? "1" : "0")).join("") + "101";
+  const bars = [...bits].map((bit, i) => bit === "1" ? `<rect x="${(i + 12) * 3}" y="0" width="3" height="160"/>` : "").join("");
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="357" height="180"><rect width="357" height="180" fill="white"/><g fill="black">${bars}</g></svg>`;
+  await page.getByRole("button", { name: "Scan barcode", exact: true }).click();
+  await page.getByLabel("Barcode or QR code image", { exact: true }).setInputFiles({ name: "isbn.svg", mimeType: "image/svg+xml", buffer: Buffer.from(svg) });
+  await expect(page.getByRole("dialog")).toContainText("Review item details");
+  await expect(page.getByLabel("Title", { exact: true }).last()).toHaveValue("Fantastic Mr. Fox");
+  await page.getByRole("button", { name: "Apply draft", exact: true }).click();
+  await expect(page.getByTestId("item-title-input")).toHaveValue("Fantastic Mr. Fox");
+  await expect(page.getByTestId("item-qr-input")).toHaveValue("9780140328721");
+  expect(new URL(page.url()).pathname).toBe("/items/new");
+});
+
 test("creation dropdown offers form and AI in separate views", async ({ page }) => {
   await page.goto("/items");
   await page.getByTestId("items-new-button").first().click();
@@ -20,8 +43,8 @@ test("QR image scan previews its value and persists it with the item", async ({ 
   await page.goto("/items/new");
   const value = `https://example.com/item/${Date.now()}`;
   const png = await QRCode.toBuffer(value);
-  await page.getByRole("button", { name: "Scan QR", exact: true }).click();
-  await page.getByLabel("QR code image", { exact: true }).setInputFiles({ name: "qr.png", mimeType: "image/png", buffer: png });
+  await page.getByRole("button", { name: "Scan barcode", exact: true }).click();
+  await page.getByLabel("Barcode or QR code image", { exact: true }).setInputFiles({ name: "qr.png", mimeType: "image/png", buffer: png });
   await expect(page.getByTestId("qr-decoded-value")).toHaveText(value);
   await page.getByRole("button", { name: "Use QR code", exact: true }).click();
   await expect(page.getByTestId("item-qr-input")).toHaveValue(value);
@@ -70,7 +93,7 @@ test("description lookup sends form context and recovers from AI failure", async
   await page.getByRole("button", { name: "Generate draft" }).click();
   await expect(page.getByText("Research unavailable", { exact: true })).toBeVisible();
   await page.getByRole("button", { name: "Generate draft" }).click();
-  await expect(page.getByText("Review AI draft", { exact: true })).toBeVisible();
+  await expect(page.getByText("Review item details", { exact: true })).toBeVisible();
   await page.getByRole("button", { name: "Close", exact: true }).click();
   await expect(page.getByTestId("item-description-textarea")).toHaveValue("Keep my description");
 });
@@ -87,5 +110,5 @@ test("AI image attachments upload directly to the presigned domain and submit fi
   await page.getByLabel("Attach images (up to 5)", { exact: true }).setInputFiles({ name: "camera.png", mimeType: "image/png", buffer: await QRCode.toBuffer("camera") });
   await expect(page.getByText("Attached image 1", { exact: true })).toBeVisible();
   await page.getByRole("button", { name: "Generate draft" }).click();
-  await expect(page.getByText("Review AI draft", { exact: true })).toBeVisible();
+  await expect(page.getByText("Review item details", { exact: true })).toBeVisible();
 });

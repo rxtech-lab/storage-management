@@ -18,12 +18,13 @@ export interface AppliedItemDraft {
   tagIds: string[];
 }
 interface Props {
+  initialResponse?: ItemAIResponse | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   context: { title: string; description: string; originalQrCode: string; images: string[] };
   onApply: (draft: AppliedItemDraft) => void;
 }
-export function ItemAIDialog({ open, onOpenChange, context, onApply }: Props) {
+export function ItemAIDialog({ open, onOpenChange, context, onApply, initialResponse }: Props) {
   const [prompt, setPrompt] = useState("");
   const [webSearch, setWebSearch] = useState(true);
   const [images, setImages] = useState<string[]>([]);
@@ -33,7 +34,7 @@ export function ItemAIDialog({ open, onOpenChange, context, onApply }: Props) {
   const [tags, setTags] = useState<string[]>([]);
   const [busy, setBusy] = useState<string | null>(null);
   useEffect(() => {
-    if (open) { setResult(null); setImages(context.images.slice(0, 5)); setPrompt(""); }
+    if (open) { setResult(initialResponse ?? null); setCategory(false); setAuthor(false); setTags([]); setImages(context.images.slice(0, 5)); setPrompt(""); }
     // Capture the form when the dialog opens; edits in the dialog keep their own state.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
@@ -85,7 +86,7 @@ export function ItemAIDialog({ open, onOpenChange, context, onApply }: Props) {
   }
   return <Dialog open={open} onOpenChange={value => { if (!busy) onOpenChange(value); }}>
     <DialogContent className="sm:max-w-xl max-h-[90vh] overflow-y-auto" showCloseButton={!busy} onEscapeKeyDown={e => { if (busy) e.preventDefault(); }} onPointerDownOutside={e => { if (busy) e.preventDefault(); }}>
-      <DialogTitle>{result ? "Review AI draft" : "Create item using AI"}</DialogTitle>
+      <DialogTitle>{result ? "Review item details" : "Create item using AI"}</DialogTitle>
       <DialogDescription>{result ? "Check the details and choose which related records to create or reuse." : "Describe the item or attach photos. AI can research details online."}</DialogDescription>
       {!result ? <>
         <Label htmlFor="item-ai-prompt">Item details</Label>

@@ -37,6 +37,12 @@ public struct ItemAIResponse: Codable, Sendable {
     public var sources: [ItemAISource]
 }
 
+public struct BarcodeLookupResponse: Codable, Sendable {
+    public var barcode: String
+    public var itemUrl: String?
+    public var result: ItemAIResponse?
+}
+
 public struct ItemAIRelations: Codable, Sendable {
     public var categoryId: String?
     public var authorId: String?
@@ -45,6 +51,11 @@ public struct ItemAIRelations: Codable, Sendable {
 
 public struct ItemAIService: Sendable {
     public init() {}
+
+    public func lookupBarcode(_ barcode: String, inventory: Bool = true) async throws -> BarcodeLookupResponse {
+        struct Input: Encodable { let barcode: String; let inventory: Bool }
+        return try await post("/api/v1/items/lookup", body: Input(barcode: barcode, inventory: inventory))
+    }
 
     public func generate(_ input: ItemAIRequest) async throws -> ItemAIResponse {
         try await post("/api/v1/items/ai", body: input)

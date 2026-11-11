@@ -2,6 +2,8 @@ import type { NextConfig } from "next";
 import createMDX from "@next/mdx";
 
 const nextConfig: NextConfig = {
+  // Keep browser test builds separate from an already-running development server.
+  distDir: process.env.IS_E2E === "true" ? ".next-e2e" : ".next",
   pageExtensions: ["js", "jsx", "md", "mdx", "ts", "tsx"],
   async headers() {
     return [

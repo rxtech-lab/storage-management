@@ -21,6 +21,12 @@ struct ItemAISheet: View {
     @State private var error: String?
     @State private var feedback = 0
 
+    init(context: ItemAIRequest, initialResponse: ItemAIResponse? = nil, onApply: @escaping (ItemAIResponse, ItemAIRelations, [ImageReference], [String]) -> Void) {
+        self.context = context
+        self.onApply = onApply
+        _result = State(initialValue: initialResponse)
+    }
+
     var body: some View {
         Form {
             if result != nil {
@@ -56,7 +62,7 @@ struct ItemAISheet: View {
         }
         .formStyle(.grouped)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-        .navigationTitle(result == nil ? "Create using AI" : "Review AI draft")
+        .navigationTitle(result == nil ? "Create using AI" : "Review item details")
         #if os(iOS)
             .navigationBarTitleDisplayMode(.inline)
             .sensoryFeedback(.selection, trigger: feedback)

@@ -435,6 +435,32 @@ test.describe.serial("QR Code Scan API", () => {
     });
   });
 
+  test("barcode lookup resolves inventory before contacting external providers", async ({ request }) => {
+    const response = await request.post("/api/v1/items/lookup", {
+      headers: { "X-Test-User-Id": OWNER, "X-Test-User-Email": OWNER_EMAIL },
+      data: { barcode: RAW_QR_CODE_PUBLIC },
+    });
+    expect(response.status()).toBe(200);
+    expect(await response.json()).toEqual({ barcode: RAW_QR_CODE_PUBLIC, itemUrl: expect.stringContaining(`/api/v1/items/${rawQrPublicItemId}`), result: null });
+  });
+
+  test("barcode lookup preserves private inventory permissions", async ({ request }) => {
+    const response = await request.post("/api/v1/items/lookup", {
+      headers: { "X-Test-User-Id": OTHER_USER, "X-Test-User-Email": OTHER_EMAIL },
+      data: { barcode: RAW_QR_CODE_PRIVATE },
+    });
+    expect(response.status()).toBe(403);
+  });
+
+  test("barcode lookup returns no match for unsupported QR data", async ({ request }) => {
+    const response = await request.post("/api/v1/items/lookup", {
+      headers: { "X-Test-User-Id": OWNER, "X-Test-User-Email": OWNER_EMAIL },
+      data: { barcode: "https://example.com/unknown-qr" },
+    });
+    expect(response.status()).toBe(200);
+    expect(await response.json()).toEqual({ barcode: "https://example.com/unknown-qr", itemUrl: null, result: null });
+  });
+
   test.describe("Cleanup", () => {
     test("should delete raw QR private item", async ({ request }) => {
       const response = await request.delete(

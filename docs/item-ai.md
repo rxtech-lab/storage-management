@@ -22,6 +22,14 @@ Research uses Gateway's Perplexity search tool. Failed searches return an error 
 
 Regenerate OpenAPI and native request types with `./scripts/admin-openapi-local.sh` before building native clients.
 
+## Barcode lookup
+
+`POST /api/v1/items/lookup` accepts `{ barcode, inventory?: boolean }` and requires authentication. It returns `{ barcode, itemUrl, result }`. By default it resolves existing inventory first using the QR scan endpoint's permission checks. An existing item returns `itemUrl`; an external match returns an editable `{ draft, sources }` in `result`; no match returns both as null. Lookup creates no records. Provider failures return 502 so users can retry.
+
+ISBN-10/13 and EAN/UPC check digits are validated on the server. ISBNs in supported URL paths/query parameters and `ISBN:`/`urn:isbn:` text are extracted without fetching scanned URLs. Books use [Open Library](https://openlibrary.org/dev/docs/api/books), falling back to an exact ISBN match from [Google Books](https://developers.google.com/books/docs/v1/using). Products use [UPCitemdb](https://www.upcitemdb.com/api/), which is also the final fallback for books missing from the book catalogs. ISBN-10 is converted to ISBN-13 for retail lookup. Coverage and metadata quality depend on the providers. Successful provider responses are cached for 24 hours; each request has a seven-second timeout. UPCitemdb's default free endpoint allows 100 requests per day shared by the deployment. Set optional server-only `UPCITEMDB_API_KEY` to use its paid endpoint for larger usage. Optional `GOOGLE_BOOKS_API_KEY` uses your Google project quota instead of the anonymous Books API quota. Provider limit, timeout, and service failures are logged by provider name without scanned values or credentials, and shown as actionable errors if all fallbacks fail.
+
+The iPhone/iPad global scanner opens existing inventory or a dedicated creation sheet with a details review. Camera and native image import recognize QR, EAN-13, EAN-8, UPC-E, and Code 128. Web image scanning uses ZXing. Item forms offer barcode lookup and show suggestions in a separate sheet/dialog; form lookups set `inventory: false` to research metadata for the current form. Users choose related suggestions and explicitly apply them before saving. Uploaded image handling remains direct to presigned S3 URLs; barcode lookup sends only the decoded text.
+
 ## Tests
 
 `PLAYWRIGHT_PORT=3107 ./scripts/admin-e2e.sh e2e/items/create-item.spec.ts e2e/items/item-ai.spec.ts e2e/api/item-ai-relations.spec.ts` runs the browser and API coverage with isolated SQLite storage. AI responses and S3 transfers are mocked in browser tests; live model/search quality and real storage transfers require separate verification.

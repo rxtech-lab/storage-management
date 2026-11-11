@@ -16,6 +16,7 @@ import Vision
 struct ItemFormSheet: View {
     let item: StorageItem?
     @State private var showingAI = false
+    @State private var lookupResult: ItemAIResponse?
     @State private var showingQRScanner = false
     @State private var showingQRImporter = false
     @State private var qrBusy = false
@@ -57,8 +58,9 @@ struct ItemFormSheet: View {
     /// Photo picker
     @State private var selectedPhotos: [PhotosPickerItem] = []
 
-    init(item: StorageItem? = nil, startWithAI: Bool = false) {
-        _showingAI = State(initialValue: startWithAI)
+    init(item: StorageItem? = nil, startWithAI: Bool = false, lookupResult: ItemAIResponse? = nil) {
+        _lookupResult = State(initialValue: lookupResult)
+        _showingAI = State(initialValue: startWithAI || lookupResult != nil)
         self.item = item
         _viewModel = State(initialValue: ItemFormViewModel(item: item))
     }
@@ -106,7 +108,7 @@ struct ItemFormSheet: View {
             }
             .sheet(isPresented: $showingAI) {
                 NavigationStack {
-                    ItemAISheet(context: ItemAIRequest(title: viewModel.title, description: viewModel.description, originalQrCode: viewModel.originalQrCode, images: Array(viewModel.allImageReferences.prefix(5)))) { response, relations, attachments, selectedTags in
+                    ItemAISheet(context: ItemAIRequest(title: viewModel.title, description: viewModel.description, originalQrCode: viewModel.originalQrCode, images: Array(viewModel.allImageReferences.prefix(5))), initialResponse: lookupResult) { response, relations, attachments, selectedTags in
                         viewModel.title = response.draft.title
                         viewModel.description = response.draft.description
                         if let qr = response.draft.originalQrCode { viewModel.originalQrCode = qr }
@@ -125,7 +127,12 @@ struct ItemFormSheet: View {
         #if os(iOS)
             .sensoryFeedback(.success, trigger: aiFeedback)
             .sheet(isPresented: $showingQRScanner) {
-                QRCodeScannerView { value in viewModel.originalQrCode = value; aiFeedback += 1 }
+                NavigationStack {
+                    QRCodeScannerView { value in
+                        showingQRScanner = false
+                        Task { await lookupScannedBarcode(value) }
+                    }
+                }
             }
         #endif
             .fileImporter(isPresented: $showingQRImporter, allowedContentTypes: [.image]) { result in
@@ -249,23 +256,25 @@ struct ItemFormSheet: View {
                 TextField("Description", text: $viewModel.description, axis: .vertical)
                     .lineLimit(3 ... 6)
                     .accessibilityIdentifier("item-form-description-field")
-                Button { showingAI = true } label: { Image(systemName: "sparkle.magnifyingglass") }
+                Button { lookupResult = nil; showingAI = true } label: { Image(systemName: "sparkle.magnifyingglass") }
                     .buttonStyle(.borderless)
                     .accessibilityLabel("Search item using AI")
                     .accessibilityIdentifier("item-form-ai-search")
             }
             HStack {
-                TextField("Original QR Code", text: $viewModel.originalQrCode)
+                TextField("Barcode or QR Code", text: $viewModel.originalQrCode)
                     .accessibilityIdentifier("item-form-qr-field")
                 Menu {
                     #if os(iOS)
                         Button("Scan with camera") { showingQRScanner = true }
                     #endif
-                    Button("Scan QR image") { showingQRImporter = true }
+                    Button("Scan barcode image") { showingQRImporter = true }
                 } label: { Image(systemName: "qrcode.viewfinder") }
                     .accessibilityLabel("Scan QR code")
                     .accessibilityIdentifier("item-form-qr-scan")
             }
+            Button("Look up barcode") { Task { await lookupScannedBarcode(viewModel.originalQrCode) } }
+                .disabled(viewModel.originalQrCode.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || qrBusy)
             if !aiTagNames.isEmpty { Text("Selected AI tags: " + aiTagNames.joined(separator: ", ")).font(.caption) }
 
             TextField("Price", text: $viewModel.price)
@@ -767,13 +776,27 @@ struct ItemFormSheet: View {
             defer { if access { url.stopAccessingSecurityScopedResource() } }
             let code = try await Task.detached(priority: .userInitiated) {
                 let request = VNDetectBarcodesRequest()
-                request.symbologies = [.qr]
+                request.symbologies = [.qr, .ean13, .ean8, .upce, .code128]
                 try VNImageRequestHandler(url: url).perform([request])
                 guard let code = request.results?.first?.payloadStringValue else { throw APIError.badRequest("No QR code found in the image") }
                 return code
             }.value
-            viewModel.originalQrCode = code
+            await lookupScannedBarcode(code)
             aiFeedback += 1
+        } catch { errorMessage = error.localizedDescription; showingErrorAlert = true }
+    }
+
+    private func lookupScannedBarcode(_ code: String) async {
+        viewModel.originalQrCode = code
+        qrBusy = true
+        defer { qrBusy = false; aiFeedback += 1 }
+        do {
+            let lookup = try await ItemAIService().lookupBarcode(code, inventory: false)
+            guard let result = lookup.result else {
+                throw APIError.badRequest("No book or product found. The barcode is retained so you can enter details manually.")
+            }
+            lookupResult = result
+            showingAI = true
         } catch { errorMessage = error.localizedDescription; showingErrorAlert = true }
     }
 
