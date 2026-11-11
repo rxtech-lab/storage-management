@@ -97,35 +97,57 @@ final class RxStorageEntityNavigationTests: XCTestCase {
         // Verify location detail view appears
         XCTAssertTrue(app.staticTexts["Test Location"].waitForExistence(timeout: 10), "Location detail should be displayed")
 
-        app/*@START_MENU_TOKEN@*/ .buttons["Edit"]/*[[".navigationBars.buttons[\"Edit\"]",".buttons[\"Edit\"]"],[[[-1,1],[-1,0]]],[0]]@END_MENU_TOKEN@*/ .firstMatch.tap()
-        app/*@START_MENU_TOKEN@*/ .buttons["location-form-cancel-button"]/*[[".otherElements[\"location-form-cancel-button\"].buttons",".otherElements",".buttons[\"Cancel\"]",".buttons[\"location-form-cancel-button\"]"],[[[-1,3],[-1,2],[-1,1,1],[-1,0]],[[-1,3],[-1,2]]],[0]]@END_MENU_TOKEN@*/ .firstMatch.tap()
+        let editButton = app.navigationBars["Test Location"].buttons["Edit"].firstMatch
+        XCTAssertTrue(editButton.waitForExistence(timeout: 5))
+        editButton.tap()
+        let cancelButton = app.buttons["location-form-cancel-button"].firstMatch
+        XCTAssertTrue(cancelButton.waitForExistence(timeout: 5))
+        cancelButton.tap()
+        XCTAssertTrue(cancelButton.waitForNonExistence(timeout: 5))
 
-        let cellsQuery = app.cells
-        cellsQuery/*@START_MENU_TOKEN@*/ .containing(.staticText, identifier: "Test Location").firstMatch/*[[".element(boundBy: 0)",".containing(.staticText, identifier: \"37.774900, -122.419400\").firstMatch",".containing(.staticText, identifier: \"Test Location\").firstMatch"],[[[-1,2],[-1,1],[-1,0]]],[0]]@END_MENU_TOKEN@*/ .swipeUp()
+        let locationList = app.collectionViews["location-info-list"].firstMatch
+        let itemsButton = app.buttons["location-items-button"].firstMatch
+        let doneButton = app.buttons["entity-items-done-button"].firstMatch
 
-        let element = app/*@START_MENU_TOKEN@*/ .buttons["Items, (1)"]/*[[".buttons",".containing(.image, identifier: \"chevron.right\")",".containing(.staticText, identifier: \"(1)\")",".containing(.staticText, identifier: \"Items\")",".otherElements.buttons[\"Items, (1)\"]",".buttons[\"Items, (1)\"]"],[[[-1,5],[-1,4],[-1,0,1]],[[-1,3],[-1,2],[-1,1]]],[0]]@END_MENU_TOKEN@*/ .firstMatch
+        func openItemsSheet() {
+            XCTAssertTrue(locationList.waitForExistence(timeout: 10), "Location info should be visible")
+            // Dismissing edit restores the compact info sheet at its initial detent.
+            // Expand and scroll that list instead of tapping an offscreen cached header.
+            let grabber = app.buttons["Sheet Grabber"].firstMatch
+            if grabber.exists {
+                grabber.swipeUp()
+            }
+            locationList.swipeUp()
+            for _ in 0 ..< 8 {
+                let visibleFrame = locationList.frame.intersection(app.frame)
+                if itemsButton.exists, itemsButton.isHittable,
+                   visibleFrame.contains(itemsButton.frame) { break }
+                locationList.swipeUp()
+            }
+            XCTAssertTrue(itemsButton.isHittable, "Items header should be visible before tapping")
+            itemsButton.tap()
+            XCTAssertTrue(doneButton.waitForExistence(timeout: 10), "Items sheet should present its Done button")
+        }
 
-        app.collectionViews/*@START_MENU_TOKEN@*/ .firstMatch/*[[".containing(.cell, identifier: nil).firstMatch",".containing(.other, identifier: nil).firstMatch",".firstMatch"],[[[-1,2],[-1,1],[-1,0]]],[0]]@END_MENU_TOKEN@*/ .swipeUp()
-        cellsQuery/*@START_MENU_TOKEN@*/ .containing(.staticText, identifier: "Latitude").firstMatch/*[[".element(boundBy: 2)",".containing(.staticText, identifier: \"37.774900\").firstMatch",".containing(.staticText, identifier: \"Latitude\").firstMatch"],[[[-1,2],[-1,1],[-1,0]]],[0]]@END_MENU_TOKEN@*/ .swipeUp()
-        app/*@START_MENU_TOKEN@*/ .buttons["item-row"]/*[[".buttons",".containing(.image, identifier: \"chevron.forward\")",".containing(.staticText, identifier: \"This is a public test item for E2E testing\")",".containing(.staticText, identifier: \"item-row\")",".otherElements",".buttons[\"Public Test Item, This is a public test item for E2E testing\"]",".buttons[\"item-row\"]"],[[[-1,6],[-1,5],[-1,4,2],[-1,0,1]],[[-1,3],[-1,2],[-1,1]],[[-1,6],[-1,5]]],[0]]@END_MENU_TOKEN@*/ .firstMatch.tap()
+        openItemsSheet()
+        doneButton.tap()
+        XCTAssertTrue(doneButton.waitForNonExistence(timeout: 5), "Done should dismiss the items sheet")
 
-        app.staticTexts["Test Category"].firstMatch.tap()
-        app.navigationBars.buttons.firstMatch.tap()
+        openItemsSheet()
+        let itemLink = app.buttons["entity-item-link-test-public-item"].firstMatch
+        XCTAssertTrue(itemLink.waitForExistence(timeout: 10), "Items sheet should contain the seeded item")
+        itemLink.tap()
+        XCTAssertTrue(app.itemDetailTitle.waitForExistence(timeout: 10), "Item detail should open inside the sheet")
 
-        app.staticTexts["Test Author"].firstMatch.tap()
-        app.navigationBars.buttons.firstMatch.tap()
-
-        app/*@START_MENU_TOKEN@*/ .buttons["BackButton"]/*[[".navigationBars",".buttons[\"Back\"]",".buttons[\"BackButton\"]"],[[[-1,2],[-1,1],[-1,0,1]],[[-1,2],[-1,1]]],[0]]@END_MENU_TOKEN@*/ .firstMatch.tap()
-
-        element.tap()
-
-        let element2 = app.buttons["entity-items-done-button"].firstMatch
-        XCTAssertTrue(element2.waitForExistence(timeout: 10), "Items sheet should present its Done button")
-        element2.tap()
-        app/*@START_MENU_TOKEN@*/ .buttons["item-row"]/*[[".buttons",".containing(.image, identifier: \"chevron.forward\")",".containing(.staticText, identifier: \"This is a public test item for E2E testing\")",".containing(.staticText, identifier: \"item-row\")",".cells.buttons",".otherElements",".buttons[\"Public Test Item, This is a public test item for E2E testing\"]",".buttons[\"item-row\"]"],[[[-1,7],[-1,6],[-1,5,2],[-1,4],[-1,0,1]],[[-1,3],[-1,2],[-1,1]],[[-1,7],[-1,6]]],[0]]@END_MENU_TOKEN@*/ .firstMatch.tap()
-        app/*@START_MENU_TOKEN@*/ .buttons["BackButton"]/*[[".navigationBars",".buttons[\"Items at Location\"]",".buttons[\"BackButton\"]"],[[[-1,2],[-1,1],[-1,0,1]],[[-1,2],[-1,1]]],[0]]@END_MENU_TOKEN@*/ .firstMatch.tap()
-        XCTAssertTrue(element2.waitForExistence(timeout: 10), "Returning from the item should restore the items sheet")
-        element2.tap()
+        let backButton = app.buttons.matching(NSPredicate(
+            format: "identifier == %@ AND label == %@",
+            "BackButton", "Items at Location"
+        )).firstMatch
+        XCTAssertTrue(backButton.waitForExistence(timeout: 5))
+        backButton.tap()
+        XCTAssertTrue(doneButton.waitForExistence(timeout: 10), "Returning from the item should restore the items sheet")
+        doneButton.tap()
+        XCTAssertTrue(locationList.waitForExistence(timeout: 10), "Dismissing items should restore location info")
     }
 
     // MARK: - Author Navigation

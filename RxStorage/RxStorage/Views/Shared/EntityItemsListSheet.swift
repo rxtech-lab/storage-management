@@ -112,6 +112,7 @@ struct EntityItemsListSheet: View {
                     ItemRow(item: item)
                 }
                 .buttonStyle(.plain)
+                .accessibilityIdentifier("entity-item-link-\(item.id)")
             }
 
             if hasMore {

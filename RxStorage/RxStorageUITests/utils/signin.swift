@@ -90,10 +90,13 @@ extension XCUIApplication {
         NSLog("✅ Sign-in form submitted, waiting for callback...")
         logger.info("✅ Sign-in form submitted, waiting for callback...")
 
-        // find dashboard-view
+        // A pending deep link can open item detail before Dashboard becomes observable.
         if !isAppclips {
-            let exist = staticTexts["dashboard-view-title"].waitForExistence(timeout: 30)
-            XCTAssertTrue(exist, "Failed to sign in and reach dashboard")
+            let authenticatedScreen = staticTexts.matching(NSPredicate(
+                format: "identifier IN %@",
+                ["dashboard-view-title", "item-detail-title"]
+            )).firstMatch
+            XCTAssertTrue(authenticatedScreen.waitForExistence(timeout: 30), "Authenticated screen did not appear after sign-in")
         }
     }
 }
