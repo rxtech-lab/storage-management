@@ -165,7 +165,8 @@ struct ItemDetailView: View {
                         itemId: child.id,
                         itemTitle: child.title,
                         destinationParentId: itemId,
-                        destinationTitle: viewModel.item?.title
+                        destinationTitle: viewModel.item?.title,
+                        initialQuantity: 1
                     ) { result in
                         handleChildMoved(result)
                     }
@@ -429,6 +430,7 @@ struct ItemDetailView: View {
                         item: item,
                         quantity: viewModel.quantity,
                         onStockTapped: { showingStockDetailSheet = true },
+                        isViewOnly: isViewOnly,
                         onCategoryTapped: { categoryId in
                             #if os(macOS)
                                 selectedCategoryId = categoryId
@@ -805,13 +807,7 @@ struct ItemDetailView: View {
                 errorViewModel.showError(AddChildError.cannotAddSelf)
                 return
             }
-            // Use the freshly fetched placements rather than the local children list, which may be stale
-            let hasUnitsElsewhere = child.stocks.contains { $0.quantity > 0 && $0.parentId != itemId }
-            if child.parentId == itemId, !hasUnitsElsewhere {
-                errorViewModel.showError(AddChildError.alreadyChild(child.title))
-                return
-            }
-            // Let the user confirm where it moves from and how many units
+            // Each scan starts a one-unit move, including repeat scans into this parent.
             pendingMoveChild = child
         }
 
@@ -1010,14 +1006,11 @@ struct ItemDetailView: View {
 
 private enum AddChildError: LocalizedError {
     case cannotAddSelf
-    case alreadyChild(String)
 
     var errorDescription: String? {
         switch self {
         case .cannotAddSelf:
             return "An item can't be added as its own child"
-        case let .alreadyChild(title):
-            return "\"\(title)\" is already a child of this item"
         }
     }
 }

@@ -56,6 +56,7 @@ struct ItemDetailDetailsCard: View {
     let item: StorageItemDetail
     let quantity: Int
     let onStockTapped: () -> Void
+    var isViewOnly = false
     var onCategoryTapped: ((String) -> Void)?
     var onLocationTapped: ((String) -> Void)?
     var onAuthorTapped: ((String) -> Void)?
@@ -69,6 +70,21 @@ struct ItemDetailDetailsCard: View {
             Divider()
 
             VStack(spacing: 12) {
+                if let parent = item.parent?.value1 {
+                    NavigationLink {
+                        ItemDetailView(itemId: parent.id, isViewOnly: isViewOnly)
+                    } label: {
+                        DetailInfoRow(
+                            icon: "shippingbox",
+                            label: "Parent Item",
+                            value: parent.title,
+                            showChevron: true
+                        )
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityIdentifier("detail-parent-link")
+                }
+
                 if let category = item.category {
                     #if os(macOS)
                         Button {

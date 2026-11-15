@@ -126,23 +126,42 @@ struct IsoJobListView: View {
 
     // MARK: - Jobs List
 
+    /// Progress polling replaces job records. Keep list selection tied to stable identity.
+    private var selectedJobId: Binding<String?> {
+        Binding(
+            get: { selectedJob?.id },
+            set: { id in
+                selectedJob = id.flatMap { id in viewModel.jobs.first { $0.id == id } }
+            }
+        )
+    }
+
     private var jobsList: some View {
-        AdaptiveList(horizontalSizeClass: horizontalSizeClass, selection: $selectedJob) {
+        AdaptiveList(horizontalSizeClass: horizontalSizeClass, selection: selectedJobId) {
             ForEach(viewModel.jobs) { job in
-                NavigationLink(value: job) {
-                    IsoJobRow(job: job)
-                }
-                #if os(macOS)
-                .contextMenu {
-                    Button(role: .destructive) {
-                        jobToDelete = job
-                        showDeleteConfirmation = true
-                    } label: {
-                        Label("Delete", systemImage: "trash")
+                Group {
+                    if horizontalSizeClass == .regular {
+                        NavigationLink(value: job.id) {
+                            IsoJobRow(job: job)
+                        }
+                    } else {
+                        NavigationLink(value: job) {
+                            IsoJobRow(job: job)
+                        }
                     }
                 }
+                .tag(job.id)
+                #if os(macOS)
+                    .contextMenu {
+                        Button(role: .destructive) {
+                            jobToDelete = job
+                            showDeleteConfirmation = true
+                        } label: {
+                            Label("Delete", systemImage: "trash")
+                        }
+                    }
                 #else
-                .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                    .swipeActions(edge: .trailing, allowsFullSwipe: false) {
                             Button(role: .destructive) {
                                 jobToDelete = job
                                 showDeleteConfirmation = true

@@ -22,6 +22,7 @@ struct MoveStockSheet: View {
 
     @State private var viewModel: MoveStockViewModel
     @State private var errorViewModel = ErrorViewModel()
+    @State private var moveFeedback = 0
     @Environment(\.dismiss) private var dismiss
 
     init(
@@ -30,6 +31,7 @@ struct MoveStockSheet: View {
         destinationParentId: String?,
         destinationTitle: String?,
         preselectedStockId: String? = nil,
+        initialQuantity: Int? = nil,
         onMoved: @escaping (MoveStockResult) -> Void
     ) {
         self.itemTitle = itemTitle
@@ -38,7 +40,8 @@ struct MoveStockSheet: View {
             itemId: itemId,
             destinationParentId: destinationParentId,
             destinationTitle: destinationTitle,
-            preselectedStockId: preselectedStockId
+            preselectedStockId: preselectedStockId,
+            initialQuantity: initialQuantity
         ))
     }
 
@@ -81,8 +84,12 @@ struct MoveStockSheet: View {
                 await viewModel.load()
             }
             .showViewModelError(errorViewModel)
+        #if os(iOS)
+            .sensoryFeedback(.success, trigger: moveFeedback)
+            .sensoryFeedback(.selection, trigger: viewModel.selectedSourceId)
+        #endif
         #if os(macOS)
-            .frame(minWidth: 420, minHeight: 360)
+        .frame(minWidth: 420, minHeight: 360)
         #endif
     }
 
@@ -228,6 +235,7 @@ struct MoveStockSheet: View {
         let sourceParentId = viewModel.selectedSource?.parentId
         do {
             try await viewModel.submit()
+            moveFeedback += 1
             onMoved(MoveStockResult(
                 itemId: viewModel.itemId,
                 sourceParentId: sourceParentId,

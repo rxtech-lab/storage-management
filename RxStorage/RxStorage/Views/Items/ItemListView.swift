@@ -172,23 +172,41 @@ struct ItemListView: View {
 
     // MARK: - Items List
 
+    private var selectedItemId: Binding<String?> {
+        Binding(
+            get: { selectedItem?.id },
+            set: { id in
+                selectedItem = id.flatMap { id in viewModel.items.first { $0.id == id } }
+            }
+        )
+    }
+
     private var itemsList: some View {
-        AdaptiveList(horizontalSizeClass: horizontalSizeClass, selection: $selectedItem) {
+        AdaptiveList(horizontalSizeClass: horizontalSizeClass, selection: selectedItemId) {
             ForEach(viewModel.items) { item in
-                NavigationLink(value: item) {
-                    ItemRow(item: item)
-                }
-                #if os(macOS)
-                .contextMenu {
-                    Button(role: .destructive) {
-                        itemToDelete = item
-                        showDeleteConfirmation = true
-                    } label: {
-                        Label("Delete", systemImage: "trash")
+                Group {
+                    if horizontalSizeClass == .regular {
+                        NavigationLink(value: item.id) {
+                            ItemRow(item: item)
+                        }
+                    } else {
+                        NavigationLink(value: item) {
+                            ItemRow(item: item)
+                        }
                     }
                 }
+                .tag(item.id)
+                #if os(macOS)
+                    .contextMenu {
+                        Button(role: .destructive) {
+                            itemToDelete = item
+                            showDeleteConfirmation = true
+                        } label: {
+                            Label("Delete", systemImage: "trash")
+                        }
+                    }
                 #else
-                .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                    .swipeActions(edge: .trailing, allowsFullSwipe: false) {
                             Button(role: .destructive) {
                                 itemToDelete = item
                                 showDeleteConfirmation = true

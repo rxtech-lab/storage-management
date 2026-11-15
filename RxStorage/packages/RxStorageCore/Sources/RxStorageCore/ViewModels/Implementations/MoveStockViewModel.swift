@@ -63,7 +63,7 @@ public final class MoveStockViewModel {
     public var selectedSourceId: String? {
         didSet {
             if oldValue != selectedSourceId {
-                quantity = maxQuantity
+                quantity = defaultQuantity
             }
         }
     }
@@ -77,6 +77,7 @@ public final class MoveStockViewModel {
     public private(set) var isSubmitting = false
     public private(set) var error: Error?
 
+    private let initialQuantity: Int?
     private let preselectedStockId: String?
     private let itemService: ItemServiceProtocol
     private let stockService: ItemStockServiceProtocol
@@ -88,12 +89,14 @@ public final class MoveStockViewModel {
         destinationParentId: String?,
         destinationTitle: String?,
         preselectedStockId: String? = nil,
+        initialQuantity: Int? = nil,
         itemService: ItemServiceProtocol = ItemService(),
         stockService: ItemStockServiceProtocol = ItemStockService()
     ) {
         self.itemId = itemId
         self.destinationParentId = destinationParentId
         self.destinationTitle = destinationTitle
+        self.initialQuantity = initialQuantity
         self.preselectedStockId = preselectedStockId
         self.itemService = itemService
         self.stockService = stockService
@@ -112,6 +115,10 @@ public final class MoveStockViewModel {
 
     public var maxQuantity: Int {
         max(selectedSource?.quantity ?? 0, 1)
+    }
+
+    private var defaultQuantity: Int {
+        min(max(initialQuantity ?? maxQuantity, 1), maxQuantity)
     }
 
     public var isMovingAll: Bool {
@@ -167,7 +174,9 @@ public final class MoveStockViewModel {
             self.item = item
             sources = Self.makeSources(from: item)
             selectedSourceId = defaultSourceId()
-            quantity = maxQuantity
+            quantity = defaultQuantity
+            // A repeat scan can split one unit into a separate placement in the same parent.
+            keepSeparate = initialQuantity != nil && isSourceInDestination && !isMovingAll
         } catch is CancellationError {
             // View dismissed
         } catch {
