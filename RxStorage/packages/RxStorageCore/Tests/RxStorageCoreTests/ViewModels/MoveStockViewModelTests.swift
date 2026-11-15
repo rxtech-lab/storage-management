@@ -48,7 +48,8 @@ struct MoveStockViewModelTests {
         item: StorageItemDetail,
         destination: String?,
         destinationTitle: String? = nil,
-        preselectedStockId: String? = nil
+        preselectedStockId: String? = nil,
+        initialQuantity: Int? = nil
     ) -> (MoveStockViewModel, MockItemStockService) {
         let itemService = MockItemService()
         itemService.fetchItemResult = .success(item)
@@ -58,6 +59,7 @@ struct MoveStockViewModelTests {
             destinationParentId: destination,
             destinationTitle: destinationTitle,
             preselectedStockId: preselectedStockId,
+            initialQuantity: initialQuantity,
             itemService: itemService,
             stockService: stockService
         )
@@ -91,6 +93,43 @@ struct MoveStockViewModelTests {
         #expect(sut.selectedSource?.id == "stockB")
         #expect(sut.quantity == 2)
         #expect(sut.mergeTarget?.id == "main")
+    }
+
+    @Test("Repeat scans move one unit from another placement into an existing child")
+    @MainActor
+    func repeatScanMovesOneUnit() async throws {
+        let (sut, service) = Self.makeSUT(
+            item: Self.splitItem, destination: "boxA", initialQuantity: 1
+        )
+        await sut.load()
+
+        #expect(sut.selectedSource?.id == "stockB")
+        #expect(sut.quantity == 1)
+        #expect(sut.canSubmit)
+        try await sut.submit()
+        #expect(service.lastMoveRequest?.quantity == 1)
+        #expect(service.lastMoveRequest?.toParentId == "boxA")
+        #expect(service.lastMoveRequest?.fromStockId == "stockB")
+
+        sut.selectedSourceId = "main"
+        #expect(sut.quantity == 1)
+    }
+
+    @Test("Scanning units already in the parent starts a separate one-unit placement")
+    @MainActor
+    func scanSplitsExistingChild() async throws {
+        let item = TestHelpers.makeStorageItemDetail(
+            id: "item", parentId: "boxA", quantity: 4, mainQuantity: 4
+        )
+        let (sut, service) = Self.makeSUT(item: item, destination: "boxA", initialQuantity: 1)
+        await sut.load()
+
+        #expect(sut.quantity == 1)
+        #expect(sut.keepSeparate)
+        #expect(sut.canSubmit)
+        try await sut.submit()
+        #expect(service.lastMoveRequest?.quantity == 1)
+        #expect(service.lastMoveRequest?.merge == false)
     }
 
     @Test("Partial move sends quantity, whole move omits it")
