@@ -9,6 +9,7 @@ export const fileSchema: JSONSchema7 = {
     mime_type: { type: "string", title: "MIME Type", description: "File type (e.g., application/pdf, text/plain)" },
     size: { type: "number", title: "Size (bytes)", description: "File size in bytes" },
     file_path: { type: "string", title: "File Path", description: "Storage path or URL to the file" },
+    sha256: { type: "string", title: "SHA-256", description: "SHA-256 hash of the original file contents", pattern: "^[a-fA-F0-9]{64}$" },
   },
 };
 
@@ -21,6 +22,7 @@ export const imageSchema: JSONSchema7 = {
     mime_type: { type: "string", title: "MIME Type", description: "Image type (e.g., image/jpeg, image/png)" },
     size: { type: "number", title: "Size (bytes)", description: "File size in bytes" },
     file_path: { type: "string", title: "File Path", description: "Storage path or URL to the image" },
+    sha256: { type: "string", title: "SHA-256", description: "SHA-256 hash of the original file contents", pattern: "^[a-fA-F0-9]{64}$" },
     preview_image_url: { type: "string", title: "Preview Image URL", description: "URL for thumbnail or preview version" },
   },
 };
@@ -34,6 +36,7 @@ export const videoSchema: JSONSchema7 = {
     mime_type: { type: "string", title: "MIME Type", description: "Video type (e.g., video/mp4, video/webm)" },
     size: { type: "number", title: "Size (bytes)", description: "File size in bytes" },
     file_path: { type: "string", title: "File Path", description: "Storage path or URL to the video" },
+    sha256: { type: "string", title: "SHA-256", description: "SHA-256 hash of the original file contents", pattern: "^[a-fA-F0-9]{64}$" },
     preview_image_url: { type: "string", title: "Preview Image URL", description: "URL for video thumbnail" },
     video_length: { type: "number", title: "Video Length (seconds)", description: "Duration of the video in seconds" },
     preview_video_url: { type: "string", title: "Preview Video URL", description: "URL for preview/trailer version" },

@@ -8,7 +8,7 @@ import {
   authors,
   positionSchemas,
 } from "@/lib/db";
-import { eq, count, and } from "drizzle-orm";
+import { eq, count, and, isNull } from "drizzle-orm";
 import { DashboardStatsResponseSchema } from "@/lib/schemas/dashboard";
 
 /**
@@ -44,19 +44,19 @@ export async function GET(request: NextRequest) {
     db
       .select({ count: count() })
       .from(items)
-      .where(eq(items.userId, userId)),
+      .where(and(eq(items.userId, userId), isNull(items.deletedAt))),
 
     // Public items count
     db
       .select({ count: count() })
       .from(items)
-      .where(and(eq(items.userId, userId), eq(items.visibility, "publicAccess"))),
+      .where(and(and(eq(items.userId, userId), isNull(items.deletedAt)), eq(items.visibility, "publicAccess"))),
 
     // Private items count
     db
       .select({ count: count() })
       .from(items)
-      .where(and(eq(items.userId, userId), eq(items.visibility, "privateAccess"))),
+      .where(and(and(eq(items.userId, userId), isNull(items.deletedAt)), eq(items.visibility, "privateAccess"))),
 
     // Total categories count
     db
@@ -84,7 +84,7 @@ export async function GET(request: NextRequest) {
 
     // Recent items (last 5)
     db.query.items.findMany({
-      where: eq(items.userId, userId),
+      where: and(eq(items.userId, userId), isNull(items.deletedAt)),
       orderBy: (items, { desc }) => [desc(items.updatedAt)],
       limit: 5,
       with: {

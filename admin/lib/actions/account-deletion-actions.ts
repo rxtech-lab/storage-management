@@ -14,6 +14,8 @@ import {
   accountDeletions,
   deviceTokens,
   liveActivityTokens,
+  mcpOAuthGrants,
+  mcpOAuthRequests,
 } from "@/lib/db";
 import { ensureSchemaInitialized } from "@/lib/db/client";
 import { s3Client, S3_BUCKET } from "@/lib/s3";
@@ -229,6 +231,8 @@ export async function executeAccountDeletion(
     await db.delete(uploadFiles).where(eq(uploadFiles.userId, userId));
 
     // Items reference categories, locations, authors
+    await db.delete(mcpOAuthRequests).where(eq(mcpOAuthRequests.ownerId, userId));
+    await db.delete(mcpOAuthGrants).where(eq(mcpOAuthGrants.ownerId, userId));
     await db.delete(items).where(eq(items.userId, userId));
 
     // Independent tables

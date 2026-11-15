@@ -234,6 +234,7 @@ public struct ContentPreviewUploadRequestItem: Sendable {
     public let mimeType: String
     public let size: Int
     public let filePath: String
+    public let sha256: String?
     public let videoLength: Double?
 
     public init(
@@ -244,6 +245,7 @@ public struct ContentPreviewUploadRequestItem: Sendable {
         mimeType: String,
         size: Int,
         filePath: String,
+        sha256: String? = nil,
         videoLength: Double? = nil
     ) {
         self.filename = filename
@@ -253,6 +255,7 @@ public struct ContentPreviewUploadRequestItem: Sendable {
         self.mimeType = mimeType
         self.size = size
         self.filePath = filePath
+        self.sha256 = sha256
         self.videoLength = videoLength
     }
 }

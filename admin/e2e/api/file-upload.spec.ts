@@ -1,6 +1,9 @@
 import { test, expect } from "@playwright/test";
 
 test.describe.serial("File Upload API", () => {
+  test.use({
+    extraHTTPHeaders: { "X-Test-User-Id": `file-upload-${crypto.randomUUID()}` },
+  });
   let fileId: string;
   let itemId: string;
 
@@ -184,7 +187,7 @@ test.describe.serial("File Upload API", () => {
     expect(body.error).toContain("Invalid");
   });
 
-  test("DELETE /api/v1/items/{id} - should delete associated files", async ({
+  test("DELETE /api/v1/items/{id} - should preserve files until permanently deleted", async ({
     request,
   }) => {
     // Delete the item
@@ -195,7 +198,27 @@ test.describe.serial("File Upload API", () => {
     const getResponse = await request.get(`/api/v1/items/${itemId}`);
     expect(getResponse.status()).toBe(404);
 
-    // File should also be deleted (attempting to use it should fail)
+    // Recycled items retain their files so restoring preserves their images.
+    const recycleResponse = await request.get("/api/v1/recycle-bin");
+    expect(recycleResponse.status()).toBe(200);
+    expect((await recycleResponse.json()).items).toEqual(
+      expect.arrayContaining([expect.objectContaining({ id: itemId })]),
+    );
+
+    const restoreResponse = await request.post(`/api/v1/recycle-bin/${itemId}`);
+    expect(restoreResponse.status()).toBe(204);
+    const restoredResponse = await request.get(`/api/v1/items/${itemId}`);
+    expect(restoredResponse.status()).toBe(200);
+    expect((await restoredResponse.json()).images).toEqual([
+      expect.objectContaining({ id: fileId, url: expect.stringContaining("mock-s3.example.com") }),
+    ]);
+
+    const deleteAgainResponse = await request.delete(`/api/v1/items/${itemId}`);
+    expect(deleteAgainResponse.status()).toBe(204);
+    const purgeResponse = await request.delete(`/api/v1/recycle-bin/${itemId}`);
+    expect(purgeResponse.status()).toBe(204);
+
+    // Permanent deletion removes file records, preventing their reuse.
     const createResponse = await request.post("/api/v1/items", {
       data: {
         title: "Item with Deleted File",

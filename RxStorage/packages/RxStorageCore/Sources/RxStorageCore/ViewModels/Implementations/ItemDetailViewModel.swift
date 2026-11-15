@@ -310,6 +310,7 @@ public final class ItemDetailViewModel: ItemDetailViewModelProtocol {
             mimeType: formData["mime_type"]?.value as? String,
             size: formData["size"]?.value as? Int,
             filePath: formData["file_path"]?.value as? String,
+            sha256: formData["sha256"]?.value as? String,
             previewImageUrl: formData["preview_image_url"]?.value as? String,
             videoLength: formData["video_length"]?.value as? Int,
             previewVideoUrl: formData["preview_video_url"]?.value as? String

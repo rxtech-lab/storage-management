@@ -28,7 +28,7 @@ async function generatePresignedPutUrl(key: string, contentType: string): Promis
 /**
  * Generate presigned upload URLs for content previews
  * @operationId getContentPreviewUploadUrls
- * @description Generate presigned PUT URLs for uploading content preview files. For video type, returns both image thumbnail and video preview URLs. For image type, returns only image preview URL. Titles the item already has are rejected unless overwrite is true, in which case the existing content is replaced.
+ * @description Generate presigned PUT URLs for uploading content preview files. For video type, returns both image thumbnail and video preview URLs. For image type, returns only image preview URL. Matching SHA-256 hashes within the item or batch return 400, including with overwrite. Titles the item already has are rejected unless overwrite is true, in which case the existing content is replaced.
  * @body ContentPreviewUploadRequestSchema
  * @response ContentPreviewUploadResponseSchema
  * @auth bearer
@@ -90,6 +90,22 @@ export async function POST(request: NextRequest) {
     // With overwrite, the existing content (and its preview files) is replaced.
     const titles = new Set(items.map((item) => item.title));
     const existingContents = await getItemContents(itemId);
+    // Reject matching original-file hashes before replacing content or creating previews.
+    const hashes = new Set(
+      existingContents.flatMap((content) => content.data.sha256 ? [content.data.sha256.toLowerCase()] : [])
+    );
+    for (const item of items) {
+      if (!item.sha256) continue;
+      const hash = item.sha256.toLowerCase();
+      if (hashes.has(hash)) {
+        return NextResponse.json(
+          { error: "Content with the same SHA-256 already exists for this item" },
+          { status: 400 }
+        );
+      }
+      hashes.add(hash);
+    }
+
     const conflicting = existingContents.filter((c) => {
       const title = (c.data as unknown as Record<string, unknown>)?.title;
       return typeof title === "string" && titles.has(title);
@@ -163,6 +179,7 @@ export async function POST(request: NextRequest) {
             mime_type: item.mime_type,
             size: item.size,
             file_path: item.file_path,
+            sha256: item.sha256,
             preview_image_url: `file:${imageFileRecord.data.id}`,
             preview_video_url: `file:${videoFileRecord.data.id}`,
             video_length: item.video_length!,
@@ -174,6 +191,7 @@ export async function POST(request: NextRequest) {
             mime_type: item.mime_type,
             size: item.size,
             file_path: item.file_path,
+            sha256: item.sha256,
             preview_image_url: `file:${imageFileRecord.data.id}`,
           } as ImageContentData;
         }
@@ -237,6 +255,7 @@ export async function POST(request: NextRequest) {
             mime_type: item.mime_type,
             size: item.size,
             file_path: item.file_path,
+            sha256: item.sha256,
             preview_image_url: `file:${imageFileRecord.data.id}`,
             preview_video_url: `file:${videoFileRecord.data.id}`,
             video_length: item.video_length!,
@@ -248,6 +267,7 @@ export async function POST(request: NextRequest) {
             mime_type: item.mime_type,
             size: item.size,
             file_path: item.file_path,
+            sha256: item.sha256,
             preview_image_url: `file:${imageFileRecord.data.id}`,
           } as ImageContentData;
         }

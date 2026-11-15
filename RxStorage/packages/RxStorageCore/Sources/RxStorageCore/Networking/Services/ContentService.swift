@@ -115,7 +115,8 @@ extension ContentData {
                 description: description,
                 mime_type: mimeType ?? "",
                 size: Double(size ?? 0),
-                file_path: filePath ?? ""
+                file_path: filePath ?? "",
+                sha256: sha256.map { .init(value1: $0) }
             ))
         case .image:
             return .ImageContentDataSchema(.init(
@@ -124,6 +125,7 @@ extension ContentData {
                 mime_type: mimeType ?? "",
                 size: Double(size ?? 0),
                 file_path: filePath ?? "",
+                sha256: sha256.map { .init(value1: $0) },
                 preview_image_url: previewImageUrl
             ))
         case .video:
@@ -133,6 +135,7 @@ extension ContentData {
                 mime_type: mimeType ?? "",
                 size: Double(size ?? 0),
                 file_path: filePath ?? "",
+                sha256: sha256.map { .init(value1: $0) },
                 preview_image_url: previewImageUrl,
                 video_length: Double(videoLength ?? 0),
                 preview_video_url: previewVideoUrl

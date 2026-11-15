@@ -34,6 +34,7 @@ const fileSchema: JSONSchema7 = {
     mime_type: { type: "string", title: "MIME Type" },
     size: { type: "number", title: "Size (bytes)" },
     file_path: { type: "string", title: "File Path" },
+    sha256: { type: "string", title: "SHA-256", description: "SHA-256 hash of the original file contents", pattern: "^[a-fA-F0-9]{64}$" },
   },
 };
 
@@ -46,6 +47,7 @@ const imageSchema: JSONSchema7 = {
     mime_type: { type: "string", title: "MIME Type" },
     size: { type: "number", title: "Size (bytes)" },
     file_path: { type: "string", title: "File Path" },
+    sha256: { type: "string", title: "SHA-256", description: "SHA-256 hash of the original file contents", pattern: "^[a-fA-F0-9]{64}$" },
     preview_image_url: { type: "string", title: "Preview Image URL" },
   },
 };
@@ -59,6 +61,7 @@ const videoSchema: JSONSchema7 = {
     mime_type: { type: "string", title: "MIME Type" },
     size: { type: "number", title: "Size (bytes)" },
     file_path: { type: "string", title: "File Path" },
+    sha256: { type: "string", title: "SHA-256", description: "SHA-256 hash of the original file contents", pattern: "^[a-fA-F0-9]{64}$" },
     preview_image_url: { type: "string", title: "Preview Image URL" },
     video_length: { type: "number", title: "Video Length (seconds)" },
     preview_video_url: { type: "string", title: "Preview Video URL" },

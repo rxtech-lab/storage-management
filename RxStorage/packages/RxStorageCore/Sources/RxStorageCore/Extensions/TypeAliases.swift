@@ -279,6 +279,7 @@ public extension Components.Schemas.ContentResponseSchema {
             mimeType: props["mime_type"]?.value as? String,
             size: (props["size"]?.value as? Double).flatMap { Int($0) },
             filePath: props["file_path"]?.value as? String,
+            sha256: props["sha256"]?.value as? String,
             previewImageUrl: props["preview_image_url"]?.value as? String,
             videoLength: (props["video_length"]?.value as? Double).flatMap { Int($0) },
             previewVideoUrl: props["preview_video_url"]?.value as? String

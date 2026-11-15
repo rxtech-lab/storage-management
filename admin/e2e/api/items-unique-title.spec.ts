@@ -136,7 +136,7 @@ test.describe.serial("Items Unique Title", () => {
     });
   });
 
-  test("POST /api/v1/items - should allow reusing title after deletion", async ({
+  test("POST /api/v1/items - should reserve recycled titles until permanent deletion", async ({
     request,
   }) => {
     // Delete the first item
@@ -145,6 +145,19 @@ test.describe.serial("Items Unique Title", () => {
       { headers },
     );
     expect(deleteResponse.status()).toBe(204);
+
+    const recycledTitleResponse = await request.post("/api/v1/items", {
+      headers,
+      data: { title: "Unique Title Item", visibility: "privateAccess" },
+    });
+    expect(recycledTitleResponse.status()).toBe(409);
+    expect((await recycledTitleResponse.json()).error).toContain("already exists");
+
+    const purgeResponse = await request.delete(
+      `/api/v1/recycle-bin/${createdItemId}`,
+      { headers },
+    );
+    expect(purgeResponse.status()).toBe(204);
 
     // Create a new item with the same title
     const response = await request.post("/api/v1/items", {

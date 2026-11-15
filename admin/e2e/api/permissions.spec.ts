@@ -251,6 +251,13 @@ test.describe.serial("Permission Tests", () => {
       expect(response.status()).toBe(204);
     });
 
+    test("should permanently delete recycled item before related resources", async ({ request }) => {
+      const response = await request.delete(`/api/v1/recycle-bin/${user1ItemId}`, {
+        headers: { "X-Test-User-Id": USER_1 },
+      });
+      expect(response.status()).toBe(204);
+    });
+
     test("should delete category", async ({ request }) => {
       const response = await request.delete(`/api/v1/categories/${user1CategoryId}`, {
         headers: { "X-Test-User-Id": USER_1 },
