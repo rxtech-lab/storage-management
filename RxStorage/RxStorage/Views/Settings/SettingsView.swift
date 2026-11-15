@@ -12,6 +12,9 @@ import SwiftUI
 struct SettingsView: View {
     @Environment(NavigationManager.self) private var navigationManager
     @Environment(OAuthManager.self) private var authManager
+    @State private var showingMCP = false
+    @State private var showingRecycleBin = false
+    @State private var settingsFeedback = false
     @State private var showingSignOutConfirmation = false
     @State private var showingDeleteAccountConfirmation = false
     @State private var showingCancelDeletionConfirmation = false
@@ -65,6 +68,11 @@ struct SettingsView: View {
                     }
                     .padding(.vertical, 8)
                 }
+            }
+
+            Section("Integrations & Storage") {
+                Button("MCP Server", systemImage: "network") { showingMCP = true; settingsFeedback.toggle() }
+                Button("Recycle Bin", systemImage: "trash") { showingRecycleBin = true; settingsFeedback.toggle() }
             }
 
             // App Info Section
@@ -193,6 +201,9 @@ struct SettingsView: View {
                 }
             }
         }
+        .sheet(isPresented: $showingMCP) { MCPSettingsView() }
+        .sheet(isPresented: $showingRecycleBin) { RecycleBinView() }
+        .sensoryFeedback(.selection, trigger: settingsFeedback)
         .navigationTitle("Settings")
         .formStyle(.grouped)
         .confirmationDialog(

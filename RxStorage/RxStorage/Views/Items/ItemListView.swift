@@ -146,7 +146,7 @@ struct ItemListView: View {
             }
             .confirmationDialog(
                 title: "Delete Item",
-                message: "Are you sure you want to delete \"\(itemToDelete?.title ?? "")\"? This action cannot be undone.",
+                message: "Are you sure you want to delete \"\(itemToDelete?.title ?? "")\"? You can restore it from the recycle bin in Settings.",
                 confirmButtonTitle: "Delete",
                 isPresented: $showDeleteConfirmation,
                 onConfirm: {

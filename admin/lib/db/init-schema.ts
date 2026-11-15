@@ -31,6 +31,7 @@ export async function initializeSchema(client: Client) {
       // E2E in-memory DB must match current string ID schema even if migrations are older.
       .map((s) =>
         s
+          .replace(/CREATE TABLE IF NOT EXISTS `items` \(/g, "CREATE TABLE IF NOT EXISTS `items` (`deleted_at` integer,")
           .replace(
             /`id`\s+integer\s+PRIMARY KEY AUTOINCREMENT NOT NULL/g,
             "`id` text PRIMARY KEY NOT NULL"

@@ -10,6 +10,7 @@ export const items = sqliteTable("items", {
     .primaryKey()
     .$defaultFn(() => nanoid()),
   userId: text("user_id").notNull(),
+  deletedAt: integer("deleted_at", { mode: "timestamp" }),
   title: text("title").notNull(),
   description: text("description"),
   originalQrCode: text("original_qr_code"),

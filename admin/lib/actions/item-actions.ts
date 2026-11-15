@@ -23,7 +23,6 @@ import {
   validateFilesExistInS3,
   associateFilesWithItem,
   disassociateFilesFromItem,
-  deleteFilesForItem,
 } from "./file-actions";
 import { parseFileIds } from "@/lib/utils/file-utils";
 import {
@@ -120,6 +119,7 @@ export async function getItems(
 
   let query = db
     .select({
+      deletedAt: items.deletedAt,
       id: items.id,
       userId: items.userId,
       title: items.title,
@@ -163,7 +163,7 @@ export async function getItems(
     .$dynamic();
 
   // Show user's own items OR public items from other users
-  const conditions = [
+  const conditions = [isNull(items.deletedAt),
     or(eq(items.userId, sessionUserId), eq(items.visibility, "publicAccess")),
   ];
 
@@ -216,6 +216,7 @@ export async function getItem(
   await ensureSchemaInitialized();
   const results = await db
     .select({
+      deletedAt: items.deletedAt,
       id: items.id,
       userId: items.userId,
       title: items.title,
@@ -255,7 +256,7 @@ export async function getItem(
     .leftJoin(categories, eq(items.categoryId, categories.id))
     .leftJoin(locations, eq(items.locationId, locations.id))
     .leftJoin(authors, eq(items.authorId, authors.id))
-    .where(eq(items.id, id))
+    .where(and(eq(items.id, id), isNull(items.deletedAt)))
     .limit(1);
 
   if (!results[0]) return undefined;
@@ -288,7 +289,7 @@ export async function getItemChildrenCount(
   const result = await db
     .select({ count: count() })
     .from(items)
-    .where(eq(items.parentId, parentId));
+    .where(and(eq(items.parentId, parentId), isNull(items.deletedAt)));
   return result[0]?.count ?? 0;
 }
 
@@ -304,7 +305,7 @@ export async function findItemByOriginalQrCode(
   const result = await db
     .select()
     .from(items)
-    .where(eq(items.originalQrCode, qrCode))
+    .where(and(eq(items.originalQrCode, qrCode), isNull(items.deletedAt)))
     .limit(1);
   return result[0] || null;
 }
@@ -407,7 +408,7 @@ export async function createItemAction(
       const parent = await db
         .select({ userId: items.userId })
         .from(items)
-        .where(eq(items.id, insertData.parentId))
+        .where(and(eq(items.id, insertData.parentId), isNull(items.deletedAt)))
         .limit(1);
       if (!parent[0] || parent[0].userId !== resolvedUserId) {
         return { success: false, error: "Parent item not found or not owned by user" };
@@ -451,7 +452,7 @@ export async function createItemAction(
       await db
         .update(items)
         .set({ lastUsedAsParent: now })
-        .where(eq(items.id, insertData.parentId));
+        .where(and(eq(items.id, insertData.parentId), isNull(items.deletedAt)));
     }
 
     revalidatePath("/items");
@@ -502,7 +503,7 @@ export async function updateItemAction(
     const existing = await db
       .select({ userId: items.userId, images: items.images })
       .from(items)
-      .where(eq(items.id, id))
+      .where(and(eq(items.id, id), isNull(items.deletedAt)))
       .limit(1);
 
     if (!existing[0] || existing[0].userId !== resolvedUserId) {
@@ -588,7 +589,7 @@ export async function updateItemAction(
       if (ownedTags.length !== selectedTagIds.length) return { success: false, error: "Invalid or unauthorized tags" };
     }
     await db.transaction(async tx => {
-      await tx.update(items).set({ ...itemData, updatedAt: now }).where(eq(items.id, id));
+      await tx.update(items).set({ ...itemData, updatedAt: now }).where(and(eq(items.id, id), isNull(items.deletedAt)));
       for (const tagId of selectedTagIds) await tx.insert(itemTags).values({ itemId: id, tagId }).onConflictDoNothing();
     });
 
@@ -652,7 +653,7 @@ export async function deleteItemAction(
     const existing = await db
       .select({ userId: items.userId })
       .from(items)
-      .where(eq(items.id, id))
+      .where(and(eq(items.id, id), isNull(items.deletedAt)))
       .limit(1);
 
     if (!existing[0]) {
@@ -663,12 +664,8 @@ export async function deleteItemAction(
       return { success: false, error: "Permission denied" };
     }
 
-    // Delete associated files from S3 and database
-    // Note: The database cascade will set itemId to null on uploadFiles,
-    // but we want to actually delete the files
-    await deleteFilesForItem(id);
-
-    await db.delete(items).where(eq(items.id, id));
+    await db.update(items).set({ deletedAt: new Date(), updatedAt: new Date() })
+      .where(and(eq(items.id, id), eq(items.userId, resolvedUserId), isNull(items.deletedAt)));
     revalidatePath("/items");
     return { success: true };
   } catch (error) {
@@ -728,7 +725,7 @@ export async function setItemParent(
     const existing = await db
       .select({ userId: items.userId })
       .from(items)
-      .where(eq(items.id, childId))
+      .where(and(eq(items.id, childId), isNull(items.deletedAt)))
       .limit(1);
 
     if (!existing[0] || existing[0].userId !== resolvedUserId) {
@@ -740,7 +737,7 @@ export async function setItemParent(
       const parent = await db
         .select({ userId: items.userId })
         .from(items)
-        .where(eq(items.id, parentId))
+        .where(and(eq(items.id, parentId), isNull(items.deletedAt)))
         .limit(1);
 
       if (!parent[0] || parent[0].userId !== resolvedUserId) {
@@ -756,7 +753,7 @@ export async function setItemParent(
     const result = await db
       .update(items)
       .set({ parentId, updatedAt: now })
-      .where(eq(items.id, childId))
+      .where(and(eq(items.id, childId), isNull(items.deletedAt)))
       .returning();
 
     // Update parent's lastUsedAsParent timestamp
@@ -764,7 +761,7 @@ export async function setItemParent(
       await db
         .update(items)
         .set({ lastUsedAsParent: now })
-        .where(eq(items.id, parentId));
+        .where(and(eq(items.id, parentId), isNull(items.deletedAt)));
     }
 
     revalidatePath("/items");
@@ -796,7 +793,7 @@ export async function searchItems(
     resolvedUserId = session?.user?.id;
   }
 
-  const conditions = [];
+  const conditions: (ReturnType<typeof isNull> | undefined)[] = [isNull(items.deletedAt)];
 
   // Filter by userId: show user's own items OR public items
   if (resolvedUserId) {
@@ -834,6 +831,7 @@ export async function searchItems(
 
   const results = await db
     .select({
+      deletedAt: items.deletedAt,
       id: items.id,
       title: items.title,
     })
@@ -883,7 +881,7 @@ export async function getItemsPaginated(
   const cursor = filters?.cursor ? decodeCursor(filters.cursor) : null;
 
   // Build base conditions (same as getItems)
-  const conditions = [eq(items.userId, sessionUserId)];
+  const conditions = [isNull(items.deletedAt), eq(items.userId, sessionUserId)];
 
   if (filters?.categoryId) {
     conditions.push(eq(items.categoryId, filters.categoryId));
@@ -1018,6 +1016,7 @@ export async function getItemsPaginated(
   // Build query with appropriate order
   let query = db
     .select({
+      deletedAt: items.deletedAt,
       id: items.id,
       userId: items.userId,
       title: items.title,

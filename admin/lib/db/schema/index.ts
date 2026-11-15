@@ -85,3 +85,5 @@ export {
   type LiveActivityToken,
   type NewLiveActivityToken,
 } from "./live-activity-tokens";
+
+export * from "./mcp-oauth";

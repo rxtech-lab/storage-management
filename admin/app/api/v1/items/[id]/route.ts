@@ -15,7 +15,7 @@ import { isEmailWhitelisted } from "@/lib/actions/whitelist-actions";
 import { getItemTags } from "@/lib/actions/tag-actions";
 import { getItemStockPlacements, getStoredStocks } from "@/lib/actions/item-stock-actions";
 import { db, items } from "@/lib/db";
-import { eq } from "drizzle-orm";
+import { eq, and, isNull } from "drizzle-orm";
 import {
   ItemDetailResponseSchema,
   ItemResponseSchema,
@@ -114,7 +114,7 @@ async function buildItemResponse(
       ? db
           .select({ id: items.id, title: items.title })
           .from(items)
-          .where(eq(items.id, item.parentId))
+          .where(and(eq(items.id, item.parentId), isNull(items.deletedAt)))
           .limit(1)
       : Promise.resolve([]),
   ]);

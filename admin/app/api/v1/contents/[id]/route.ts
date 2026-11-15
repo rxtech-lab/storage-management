@@ -7,6 +7,7 @@ import {
   deleteContentAction,
   resolveContentFileRefs,
 } from "@/lib/actions/content-actions";
+import { SHA256Schema } from "@/lib/schemas/contents";
 import type { ContentData } from "@/lib/db";
 
 /**
@@ -86,6 +87,13 @@ export async function PUT(
   if (type && !["file", "image", "video"].includes(type)) {
     return NextResponse.json(
       { error: "Invalid content type. Must be: file, image, or video" },
+      { status: 400 }
+    );
+  }
+
+  if (data?.sha256 !== undefined && !SHA256Schema.safeParse(data.sha256).success) {
+    return NextResponse.json(
+      { error: "SHA-256 must be 64 hexadecimal characters" },
       { status: 400 }
     );
   }

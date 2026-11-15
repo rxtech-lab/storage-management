@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { SHA256Schema } from "./contents";
 
 // Request to get presigned URL for upload
 export const PresignedUploadRequestSchema = z.object({
@@ -25,6 +26,7 @@ export const ContentPreviewUploadItemSchema = z.object({
   mime_type: z.string().min(1).describe("MIME type of the file"),
   size: z.number().int().nonnegative().describe("File size in bytes"),
   file_path: z.string().min(1).describe("S3 file path/key of the original file"),
+  sha256: SHA256Schema.optional(),
   video_length: z.number().nonnegative().optional().describe("Video length in seconds (required for video type)"),
 });
 

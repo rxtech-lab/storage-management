@@ -10,6 +10,7 @@ export interface FileContentData {
   mime_type: string;
   size: number;
   file_path: string;
+  sha256?: string;
 }
 
 export interface ImageContentData extends FileContentData {

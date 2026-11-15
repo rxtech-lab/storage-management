@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth-helper";
 import { db, items, categories, locations, tags, itemTags, authors } from "@/lib/db";
-import { eq, count, sql, desc } from "drizzle-orm";
+import { eq, count, sql, desc, and, isNull } from "drizzle-orm";
 import { DashboardChartsResponseSchema } from "@/lib/schemas/dashboard";
 
 /**
@@ -38,7 +38,7 @@ export async function GET(request: NextRequest) {
       })
       .from(items)
       .innerJoin(locations, eq(items.locationId, locations.id))
-      .where(eq(items.userId, userId))
+      .where(and(eq(items.userId, userId), isNull(items.deletedAt)))
       .groupBy(locations.title)
       .orderBy(desc(count()))
       .limit(5),
@@ -53,7 +53,7 @@ export async function GET(request: NextRequest) {
       .from(itemTags)
       .innerJoin(items, eq(itemTags.itemId, items.id))
       .innerJoin(tags, eq(itemTags.tagId, tags.id))
-      .where(eq(items.userId, userId))
+      .where(and(eq(items.userId, userId), isNull(items.deletedAt)))
       .groupBy(tags.title, tags.color)
       .orderBy(desc(count()))
       .limit(5),
@@ -67,7 +67,7 @@ export async function GET(request: NextRequest) {
         value: count(),
       })
       .from(items)
-      .where(eq(items.userId, userId))
+      .where(and(eq(items.userId, userId), isNull(items.deletedAt)))
       .groupBy(sql`strftime('%Y-%m', datetime(${items.createdAt}, 'unixepoch'))`)
       .orderBy(
         desc(
@@ -84,7 +84,7 @@ export async function GET(request: NextRequest) {
       })
       .from(items)
       .innerJoin(categories, eq(items.categoryId, categories.id))
-      .where(eq(items.userId, userId))
+      .where(and(eq(items.userId, userId), isNull(items.deletedAt)))
       .groupBy(categories.name)
       .orderBy(desc(count()))
       .limit(5),
@@ -96,7 +96,7 @@ export async function GET(request: NextRequest) {
         value: count(),
       })
       .from(items)
-      .where(eq(items.userId, userId))
+      .where(and(eq(items.userId, userId), isNull(items.deletedAt)))
       .groupBy(items.visibility),
 
     // Top 5 authors by item count
@@ -107,7 +107,7 @@ export async function GET(request: NextRequest) {
       })
       .from(items)
       .innerJoin(authors, eq(items.authorId, authors.id))
-      .where(eq(items.userId, userId))
+      .where(and(eq(items.userId, userId), isNull(items.deletedAt)))
       .groupBy(authors.name)
       .orderBy(desc(count()))
       .limit(5),

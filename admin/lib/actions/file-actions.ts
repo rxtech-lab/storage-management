@@ -290,7 +290,8 @@ export async function deleteFileAction(
  * Called when an item is deleted
  */
 export async function deleteFilesForItem(
-  itemId: string
+  itemId: string,
+  strict = false
 ): Promise<{ success: boolean; error?: string }> {
   try {
     await ensureSchemaInitialized();
@@ -313,6 +314,7 @@ export async function deleteFilesForItem(
           await s3Client.send(command);
         } catch (error) {
           console.error(`Failed to delete file ${file.key} from S3:`, error);
+          if (strict) throw error;
           // Continue with other deletions
         }
       }

@@ -97,6 +97,7 @@ public struct PendingContent: Identifiable, Sendable {
             mimeType: formData["mime_type"]?.value as? String,
             size: formData["size"]?.value as? Int,
             filePath: formData["file_path"]?.value as? String,
+            sha256: formData["sha256"]?.value as? String,
             previewImageUrl: formData["preview_image_url"]?.value as? String,
             videoLength: formData["video_length"]?.value as? Int,
             previewVideoUrl: formData["preview_video_url"]?.value as? String
@@ -125,6 +126,7 @@ public struct ContentData: Codable, Sendable {
     public let mimeType: String?
     public let size: Int?
     public let filePath: String?
+    public let sha256: String?
     public let previewImageUrl: String?
     public let videoLength: Int?
     public let previewVideoUrl: String?
@@ -135,6 +137,7 @@ public struct ContentData: Codable, Sendable {
         mimeType: String? = nil,
         size: Int? = nil,
         filePath: String? = nil,
+        sha256: String? = nil,
         previewImageUrl: String? = nil,
         videoLength: Int? = nil,
         previewVideoUrl: String? = nil
@@ -144,6 +147,7 @@ public struct ContentData: Codable, Sendable {
         self.mimeType = mimeType
         self.size = size
         self.filePath = filePath
+        self.sha256 = sha256
         self.previewImageUrl = previewImageUrl
         self.videoLength = videoLength
         self.previewVideoUrl = previewVideoUrl

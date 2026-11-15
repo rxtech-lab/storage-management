@@ -3,6 +3,8 @@ import { z } from "zod";
 import { contents } from "@/lib/db/schema";
 import { PaginationInfo, PaginationQueryParams } from "./common";
 
+export const SHA256Schema = z.string().regex(/^[a-fA-F0-9]{64}$/, "SHA-256 must be 64 hexadecimal characters").describe("SHA-256 hash of the original file contents");
+
 // File content data schema
 export const FileContentDataSchema = z.object({
   title: z.string().describe("File title"),
@@ -10,6 +12,7 @@ export const FileContentDataSchema = z.object({
   mime_type: z.string().describe("MIME type of the file"),
   size: z.number().describe("File size in bytes"),
   file_path: z.string().describe("S3 file path/key"),
+  sha256: SHA256Schema.optional(),
 });
 
 // Image content data schema (extends file)

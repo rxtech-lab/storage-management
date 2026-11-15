@@ -121,6 +121,7 @@ struct ContentUploadCenterViewModelTests {
                     mimeType: "video/mp4",
                     size: 1024,
                     filePath: "folder/clip.mp4",
+                    sha256: String(repeating: "ab", count: 32),
                     videoLength: 12.5
                 ),
             ]
@@ -133,6 +134,7 @@ struct ContentUploadCenterViewModelTests {
         #expect(body.items[0].mime_type == "video/mp4")
         #expect(body.items[0].file_path == "folder/clip.mp4")
         #expect(body.items[0].video_length == 12.5)
+        #expect(body.items[0].sha256?.value1 == String(repeating: "ab", count: 32))
     }
 }
 

@@ -59,6 +59,7 @@ public struct ContentPreviewUploadService: ContentPreviewUploadServiceProtocol {
                 mime_type: item.mimeType,
                 size: item.size,
                 file_path: item.filePath,
+                sha256: item.sha256.map { .init(value1: $0) },
                 video_length: item.videoLength
             )
         }

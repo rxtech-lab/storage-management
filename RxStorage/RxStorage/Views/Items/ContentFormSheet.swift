@@ -158,6 +158,9 @@ struct ContentFormSheet: View {
         if let filePath = data.filePath {
             properties["file_path"] = .string(filePath)
         }
+        if let sha256 = data.sha256 {
+            properties["sha256"] = .string(sha256)
+        }
         if let previewImageUrl = data.previewImageUrl {
             properties["preview_image_url"] = .string(previewImageUrl)
         }
